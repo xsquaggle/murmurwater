@@ -1,0 +1,97 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#2b2433}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/tools/node_modules/three/build/three.module.js","three/addons/":"/tools/node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+const q = new URLSearchParams(location.search);
+const url = q.get('model');
+const cell = +(q.get('cell') || 512);
+const cols = +(q.get('cols') || 4);
+const flat = q.get('flat') === '1';
+const clip = q.get('clip');           // clip name or index
+const times = (q.get('times') || '').split(',').filter(Boolean).map(Number); // fractions 0..1
+const viewsParam = q.get('views');
+
+// yaw (deg, 0 = camera on +Z looking at model front), elevation deg
+let views = [[0,8],[45,12],[90,8],[135,12],[180,8],[270,8],[35,35],[0,89]];
+if (viewsParam) views = viewsParam.split(';').map(v => v.split(',').map(Number));
+const frames = times.length ? times.map(t => ({ t, view: views[0] })) : views.map(view => ({ t: null, view }));
+const rows = Math.ceil(frames.length / cols);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(cell * cols, cell * rows);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.setScissorTest(true);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(q.get('bg') || '#3B2A4F');
+scene.add(new THREE.HemisphereLight(0xdfe9ff, 0x4a3d55, 1.6));
+const key = new THREE.DirectionalLight(0xffe2b0, 2.6); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fd8ff, 0.9); scene.add(rim);
+if (q.get('dark') === '1') { scene.children.forEach(l => { if (l.isLight) l.intensity *= 0.04; }); scene.background = new THREE.Color('#050508'); }
+const cam = new THREE.PerspectiveCamera(28, 1, 0.01, 500);
+
+const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+loader.load(url, (gltf) => {
+  const root = gltf.scene; scene.add(root);
+  let tris = 0, verts = 0, mats = new Set(), texs = new Set(), skinned = 0;
+  root.traverse(o => {
+    if (o.isMesh) {
+      const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; verts += g.attributes.position.count;
+      if (o.isSkinnedMesh) { skinned++; o.frustumCulled = false; }
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+        mats.add(m.name || m.uuid); if (m.map) texs.add(m.map.source.uuid);
+        if (flat) { m.flatShading = true; m.needsUpdate = true; }
+      });
+    }
+  });
+  let mixer = null, action = null, dur = 0;
+  if (gltf.animations.length && clip !== null) {
+    mixer = new THREE.AnimationMixer(root);
+    const c = gltf.animations.find(a => a.name === clip) || gltf.animations[+clip || 0];
+    action = mixer.clipAction(c); action.play(); dur = c.duration;
+  }
+  root.updateMatrixWorld(true);
+  const box0 = new THREE.Box3().setFromObject(root, true);
+  const size0 = box0.getSize(new THREE.Vector3());
+  // grid floor for scale reference (1 m squares)
+  const grid = new THREE.GridHelper(Math.ceil(Math.max(size0.x, size0.z) * 2) + 2, Math.ceil(Math.max(size0.x, size0.z) * 2) + 2, 0x7a6390, 0x5a4a6a);
+  grid.position.y = box0.min.y - 0.0005; scene.add(grid);
+  const axes = new THREE.AxesHelper(Math.max(size0.x, size0.y, size0.z) * 0.6); scene.add(axes);
+
+  frames.forEach((f, i) => {
+    if (mixer && f.t !== null) { mixer.setTime(f.t * dur); }
+    root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(root, true);
+    const c = box.getCenter(new THREE.Vector3());
+    const r = box.getBoundingSphere(new THREE.Sphere()).radius;
+    const dist = r / Math.sin(THREE.MathUtils.degToRad(cam.fov / 2)) * 1.02;
+    const [yaw, el] = f.view;
+    const y = THREE.MathUtils.degToRad(yaw), e = THREE.MathUtils.degToRad(el);
+    cam.position.set(c.x + dist * Math.sin(y) * Math.cos(e), c.y + dist * Math.sin(e), c.z + dist * Math.cos(y) * Math.cos(e));
+    cam.up.set(0, 1, 0); if (el > 85) cam.up.set(0, 0, -1);
+    cam.lookAt(c); cam.near = dist / 100; cam.far = dist * 10; cam.updateProjectionMatrix();
+    // lights follow the camera: key up-left of camera, rim behind
+    key.position.copy(cam.position).add(new THREE.Vector3(-0.6, 1.0, 0).applyQuaternion(cam.quaternion).multiplyScalar(dist)); key.target.position.copy(c); key.target.updateMatrixWorld();
+    rim.position.copy(c).add(cam.position.clone().sub(c).multiplyScalar(-1)).add(new THREE.Vector3(0, dist, 0)); rim.target.position.copy(c); rim.target.updateMatrixWorld();
+    const cx = (i % cols) * cell, cy = (rows - 1 - Math.floor(i / cols)) * cell;
+    renderer.setViewport(cx, cy, cell, cell); renderer.setScissor(cx, cy, cell, cell);
+    renderer.render(scene, cam);
+  });
+  window.__info = {
+    tris: Math.round(tris), verts, materials: mats.size, textures: texs.size, skinned,
+    size: size0.toArray().map(v => +v.toFixed(3)), min: box0.min.toArray().map(v => +v.toFixed(3)), max: box0.max.toArray().map(v => +v.toFixed(3)),
+    clips: gltf.animations.map(a => `${a.name}:${a.duration.toFixed(2)}s`),
+  };
+  window.__done = true;
+}, undefined, (e) => { window.__info = { error: String(e) }; window.__done = true; });
+</script></body></html>
