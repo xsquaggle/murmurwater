@@ -37,7 +37,13 @@ npm run voice         # voice script (docs/voice) and recording status
 npm run electron:dev  # build and run the desktop app
 npm run dist:win      # Windows installer and portable exe (on Windows)
 ```
-Bots (need `npx vite build && npx vite preview --port 4173` running): `node e2e/story.cjs shots/story` plays the whole Hearthbay story, `node e2e/play.cjs shots` the core loop, `node e2e/poses.cjs shots/poses` renders the player's poses.
+Bots (need `npx vite build && npx vite preview --port 4173` running):
+- `node e2e/story.cjs shots/story` plays the whole Hearthbay story
+- `node e2e/play.cjs shots` the core loop
+- `node e2e/walk.cjs shots/walk` walks into everything solid and up to everyone
+- `node e2e/shadows.cjs shots/shadows` follows a fish shadow to the bite
+- `node e2e/audio.cjs` checks every sound loads and measures the mix
+- `node e2e/cast.cjs shots/cast` frame-by-frame sheets of a cast; `node e2e/poses.cjs shots/poses` the player's poses
 
 Releases are built by the **Release** workflow in GitHub Actions (run it by hand with a tag such as `v0.1.0`); release notes come from `docs/release-notes/<tag>.md`.
 

@@ -5,7 +5,7 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 | # | Phase | Goal | Status |
 |---|---|---|---|
 | 0 | Pre-production | Vision, design, art bible, tech plan, repo, CI skeleton, style refs | Done (v0.0.1) |
-| 1 | Vertical slice | Hearthbay at final quality: water, sky/time, lighthouse, dock, cast/bite/hook/fight feel, 8 fish, sell, 2 rods, first quest chain, save/load, settings, Windows build on a Release | **In progress** (v0.1.0) |
+| 1 | Vertical slice | Hearthbay at final quality: water, sky/time, lighthouse, dock, cast/bite/hook/fight feel, 8 fish, sell, 2 rods, first quest chain, save/load, settings, Windows build on a Release | Done (v0.1.0) |
 | 2 | Production A | Economy core + simulator, gear/bait/lures/wearables, boats + free sailing + discovery + fast travel, Mossglass Fen, automation, the Bell (prestige), notice board | |
 | 3 | Production B | Saltbone Reach, The Hush, Sunken Lanterns; relics, chests, crates fully populated; story chain through act 4 | |
 | 4 | Alpha (content complete) | Still Eye finale + ending + postgame; all fish/gear/quests in; automated full playthrough passes | |
@@ -27,8 +27,10 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 - [x] Story bot plays the whole chain; playtest bot; unit tests for quests, talk, saves, layout
 - [x] Voice lines for all 40 lines (asset thread, Higgsfield)
 - [x] Art pass: finer terrain with softer facets, cobble and dirt detail, Gull Point path, house footings
-- [ ] Lighting pass for dusk (19:00 reads too dark near the ground)
-- [ ] Sound effects and music (asset thread)
+- [x] Lighting: brighter dusk and night fill, a lantern glow on the player at night, lit lighthouse with a beam
+- [x] Sound effects and music (asset thread), wired in with an audio bot that measures the mix
+- [x] Cast feel pass (thrown lure, line, splash, camera, sound) and fish shadows that stalk the float
+- [x] Fresh reviewer pass and fixes: quest fish reachable, solid props, save safety, input, conversation camera
 - [x] F3 performance overlay
 - [ ] Frame profiling on the 3060 target (Lawson reads F3 on their PC)
-- [ ] v0.1.0 Windows build on a Release, milestone report, fresh reviewer pass
+- [x] v0.1.0 Windows build on a Release, milestone report
