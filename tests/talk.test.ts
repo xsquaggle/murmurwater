@@ -4,7 +4,7 @@ import { accept, onQuestEvent, turnIn, QUESTS } from '../src/core/quests';
 import { REGIONS } from '../src/core/content';
 import { Heightfield } from '../src/core/world';
 import { dockDeckAt } from '../src/core/dock';
-import { afterTurnIn, allVoiceLines, converse } from '../src/game/talk';
+import { afterTurnIn, allVoiceLines, converse, textHash } from '../src/game/talk';
 
 describe('conversations', () => {
   it('Mara opens with the first job, then reminds, then hands in and offers the next', () => {
@@ -70,5 +70,13 @@ describe('world layout', () => {
       for (const p of r.places ?? []) expect(walkable(p.x, p.z), `place ${p.id}`).toBe(true);
       for (const [k, f] of Object.entries(r.ferry ?? {})) expect(walkable(f.x, f.z), `ferry landing ${k}`).toBe(true);
     }
+  });
+});
+
+describe('voice lines', () => {
+  it('hashes text stably so recordings can be matched to their lines', () => {
+    expect(textHash('Three fish, love.')).toBe(textHash('Three fish, love.'));
+    expect(textHash('Three fish, love.')).not.toBe(textHash('Three fish, love!'));
+    expect(textHash('')).toBe('811c9dc5');
   });
 });

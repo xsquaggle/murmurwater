@@ -6,7 +6,7 @@ import { Vector3 } from 'three';
 import type { Game } from './game';
 import { NpcFigure } from '../render/npc-figure';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
-import { converse, afterTurnIn, type Conversation, type Line, type TalkAction } from './talk';
+import { converse, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
   QUESTS_BY_ID, accept, acceptBoard, boardOpen, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
   readySet, newlyReady, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
@@ -47,6 +47,8 @@ export class Town {
     g.world.lighthouseLit = this.lampLit;
 
     this.dialogue = new Dialogue(uiRoot, (line) => this.playVoice(line));
+    // Which lines have a recording that matches their current text (see tools/voice-manifest.ts).
+    void fetch('audio/voice/voiced.json').then((r) => (r.ok ? r.json() : {})).then((v) => { this.voiced = v ?? {}; }).catch(() => {});
     const host: UiHost = {
       state: g.state, settings,
       buyRod: (id) => this.buyRod(id), equipRod: (id) => { g.state.gear.rod = id; g.refreshSession(); },
@@ -223,8 +225,11 @@ export class Town {
     if (relock) this.g.input.requestLock();
   }
 
+  private voiced: Record<string, string> = {};
+
   private playVoice(line: Line): () => void {
     const g = this.g;
+    if (this.voiced[line.voice] !== textHash(line.text)) return () => {};
     let src: AudioBufferSourceNode | null = null, stopped = false;
     void g.audio.play(`audio/voice/${line.voice}.mp3`, 'voice').then((s) => { src = s; if (stopped) s?.stop(); });
     return () => { stopped = true; try { src?.stop(); } catch { /* already ended */ } };

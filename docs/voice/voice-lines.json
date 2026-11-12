@@ -1,0 +1,365 @@
+{
+  "count": 40,
+  "lines": [
+    {
+      "key": "mara/hb-01-salt.intro.0",
+      "file": "public/audio/voice/mara/hb-01-salt.intro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "You'll be the new tenant, then. Bait shop's yours till somebody says otherwise.",
+      "hash": "16df58a3"
+    },
+    {
+      "key": "mara/hb-01-salt.intro.1",
+      "file": "public/audio/voice/mara/hb-01-salt.intro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Rod's on the hook by the door. Your aunt's, it was. Go on, end of the dock.",
+      "hash": "b7402307"
+    },
+    {
+      "key": "mara/hb-01-salt.intro.2",
+      "file": "public/audio/voice/mara/hb-01-salt.intro.2.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Hold to cast, let go in the bright bit. Bring me three fish and I'll show you how we do things.",
+      "hash": "91265989"
+    },
+    {
+      "key": "mara/hb-01-salt.reminder",
+      "file": "public/audio/voice/mara/hb-01-salt.reminder.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Three fish, love. End of the dock. I'll be right here, pretending not to watch.",
+      "hash": "3e9d419b"
+    },
+    {
+      "key": "mara/hb-01-salt.outro.0",
+      "file": "public/audio/voice/mara/hb-01-salt.outro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Three! And none of them looking at you funny. Good start.",
+      "hash": "73f0985e"
+    },
+    {
+      "key": "mara/hb-01-salt.outro.1",
+      "file": "public/audio/voice/mara/hb-01-salt.outro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "I'll buy what you catch, right here at the stall. Fair prices. Mostly fair.",
+      "hash": "d26662ed"
+    },
+    {
+      "key": "mara/hb-02-supper.intro.0",
+      "file": "public/audio/voice/mara/hb-02-supper.intro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Half the village eats what comes off this dock. Lately it's been… thin.",
+      "hash": "c3b5bb4e"
+    },
+    {
+      "key": "mara/hb-02-supper.intro.1",
+      "file": "public/audio/voice/mara/hb-02-supper.intro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Sell me eight fish. The bigger the better. The odder the better, honestly.",
+      "hash": "2333ac96"
+    },
+    {
+      "key": "mara/hb-02-supper.reminder",
+      "file": "public/audio/voice/mara/hb-02-supper.reminder.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Eight fish for the stall. Bring them here and I'll do the sums.",
+      "hash": "27bfe7db"
+    },
+    {
+      "key": "mara/hb-02-supper.outro.0",
+      "file": "public/audio/voice/mara/hb-02-supper.outro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "That'll feed the Pollards and then some. Here, you've earned a look at the good shelf.",
+      "hash": "966727cc"
+    },
+    {
+      "key": "mara/hb-02-supper.outro.1",
+      "file": "public/audio/voice/mara/hb-02-supper.outro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "And the notice board by the stall's got odd jobs, if you want more coin. Folk pay well for strange requests.",
+      "hash": "3729970d"
+    },
+    {
+      "key": "mara/hb-03-proper-rod.intro.0",
+      "file": "public/audio/voice/mara/hb-03-proper-rod.intro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "That driftwood stick will snap the first time something with opinions bites.",
+      "hash": "f1cf813a"
+    },
+    {
+      "key": "mara/hb-03-proper-rod.intro.1",
+      "file": "public/audio/voice/mara/hb-03-proper-rod.intro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Harbour Rod. Four hundred and fifty. I'll even throw in some worms.",
+      "hash": "967de95f"
+    },
+    {
+      "key": "mara/hb-03-proper-rod.reminder",
+      "file": "public/audio/voice/mara/hb-03-proper-rod.reminder.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Harbour Rod's on the good shelf. Four-fifty. I don't haggle. Much.",
+      "hash": "5ba0c5c9"
+    },
+    {
+      "key": "mara/hb-03-proper-rod.outro.0",
+      "file": "public/audio/voice/mara/hb-03-proper-rod.outro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Now you look like you mean it. Worms are in the tin. Don't open it indoors.",
+      "hash": "d579bec9"
+    },
+    {
+      "key": "wick/hb-04-drawing.intro.0",
+      "file": "public/audio/voice/wick/hb-04-drawing.intro.0.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "Look! I drew it before I saw it. That means it's real. That's how it works.",
+      "hash": "9d65f963"
+    },
+    {
+      "key": "wick/hb-04-drawing.intro.1",
+      "file": "public/audio/voice/wick/hb-04-drawing.intro.1.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "It's pink and it bites sunsets. It lives near the cove or the Teeth. Catch it? Please?",
+      "hash": "bf2079d0"
+    },
+    {
+      "key": "wick/hb-04-drawing.reminder",
+      "file": "public/audio/voice/wick/hb-04-drawing.reminder.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "The pink one! Near the cove or the Teeth. It likes sunsets best.",
+      "hash": "faa53ec9"
+    },
+    {
+      "key": "wick/hb-04-drawing.outro.0",
+      "file": "public/audio/voice/wick/hb-04-drawing.outro.0.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "It looks EXACTLY like my drawing! Except it has fewer legs. I'll fix that.",
+      "hash": "a134cc9c"
+    },
+    {
+      "key": "pell/hb-05-dark-lamp.intro.0",
+      "file": "public/audio/voice/pell/hb-05-dark-lamp.intro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The light on Gull Point's been dark since the keeper went down. Down, I said. Not away.",
+      "hash": "082e7a6d"
+    },
+    {
+      "key": "pell/hb-05-dark-lamp.intro.1",
+      "file": "public/audio/voice/pell/hb-05-dark-lamp.intro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "A lamp like that won't take ordinary oil. It wants a light the sea made.",
+      "hash": "6855c22c"
+    },
+    {
+      "key": "pell/hb-05-dark-lamp.intro.2",
+      "file": "public/audio/voice/pell/hb-05-dark-lamp.intro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Lampjaw. After the sun's gone. Bring me one.",
+      "hash": "03b8389d"
+    },
+    {
+      "key": "pell/hb-05-dark-lamp.reminder",
+      "file": "public/audio/voice/pell/hb-05-dark-lamp.reminder.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Lampjaw only shows once the sun's gone. Be patient. The sea is.",
+      "hash": "b40c7b82"
+    },
+    {
+      "key": "pell/hb-05-dark-lamp.outro.0",
+      "file": "public/audio/voice/pell/hb-05-dark-lamp.outro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "There. Still warm. Hold onto it, it'll want to go home.",
+      "hash": "54f9b7fc"
+    },
+    {
+      "key": "pell/hb-06-relight.intro.0",
+      "file": "public/audio/voice/pell/hb-06-relight.intro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Up the stairs, all the way. Put the light where the light goes.",
+      "hash": "ff1e7a36"
+    },
+    {
+      "key": "pell/hb-06-relight.intro.1",
+      "file": "public/audio/voice/pell/hb-06-relight.intro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "And when it catches, don't look at the water. Not straight away.",
+      "hash": "a45fcc9d"
+    },
+    {
+      "key": "pell/hb-06-relight.reminder",
+      "file": "public/audio/voice/pell/hb-06-relight.reminder.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "I'll row you out to Gull Point when you're ready. Just say.",
+      "hash": "26cad868"
+    },
+    {
+      "key": "pell/hb-06-relight.outro.0",
+      "file": "public/audio/voice/pell/hb-06-relight.outro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "There she is. Hearthbay's been holding its breath a long while.",
+      "hash": "a5bb3c78"
+    },
+    {
+      "key": "pell/hb-06-relight.outro.1",
+      "file": "public/audio/voice/pell/hb-06-relight.outro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "You saw it, didn't you. In the water. Two of them.",
+      "hash": "c22bd8db"
+    },
+    {
+      "key": "pell/hb-06-relight.outro.2",
+      "file": "public/audio/voice/pell/hb-06-relight.outro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Good. Then you're the keeper now. Nobody chooses it. Take the skiff, it was hers.",
+      "hash": "c8c124f2"
+    },
+    {
+      "key": "mara/bark.0",
+      "file": "public/audio/voice/mara/bark.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Tide's kind today. Don't waste it talking to me.",
+      "hash": "4a5ccfb0"
+    },
+    {
+      "key": "mara/bark.1",
+      "file": "public/audio/voice/mara/bark.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Butterperch fry up lovely. Not that I'd know. I'm far too busy.",
+      "hash": "77be48a8"
+    },
+    {
+      "key": "mara/bark.2",
+      "file": "public/audio/voice/mara/bark.2.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "If you see a light out past the Teeth, don't row toward it. Just… don't.",
+      "hash": "e7e630b6"
+    },
+    {
+      "key": "mara/bark.3",
+      "file": "public/audio/voice/mara/bark.3.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Your rod's older than you are. Treat it gently.",
+      "hash": "dc5d1359"
+    },
+    {
+      "key": "wick/bark.0",
+      "file": "public/audio/voice/wick/bark.0.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "I'm drawing a fish with nine eyes. No, ten. It keeps changing.",
+      "hash": "851ec861"
+    },
+    {
+      "key": "wick/bark.1",
+      "file": "public/audio/voice/wick/bark.1.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "Biscuit ate my blue crayon. Now everything's a bit green.",
+      "hash": "6609766c"
+    },
+    {
+      "key": "wick/bark.2",
+      "file": "public/audio/voice/wick/bark.2.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "Did you know fish dream? I asked one. It said yes.",
+      "hash": "ec89303e"
+    },
+    {
+      "key": "pell/bark.0",
+      "file": "public/audio/voice/pell/bark.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "High water at a quarter past never. Low water just after you've forgotten.",
+      "hash": "5036d214"
+    },
+    {
+      "key": "pell/bark.1",
+      "file": "public/audio/voice/pell/bark.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The lamp remembers. That's the trouble with lamps.",
+      "hash": "b2462cdc"
+    },
+    {
+      "key": "pell/bark.2",
+      "file": "public/audio/voice/pell/bark.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Mind the second moon. It minds you.",
+      "hash": "42f18078"
+    }
+  ]
+}
