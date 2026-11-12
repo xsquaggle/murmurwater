@@ -93,6 +93,9 @@ export class Hud {
 
   toast(html: string, kind = '') {
     const t = h('div', 'toast ' + kind, this.toasts, html);
+    // At most four at once: a burst pushes the oldest out early.
+    const live = [...this.toasts.children].filter((c) => !c.classList.contains('out'));
+    for (const old of live.slice(0, Math.max(0, live.length - 4))) { old.classList.add('out'); setTimeout(() => old.remove(), 600); }
     setTimeout(() => t.classList.add('out'), 2600);
     setTimeout(() => t.remove(), 3200);
   }

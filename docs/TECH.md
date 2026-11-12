@@ -1,6 +1,6 @@
 # Murmurwater — Technical Plan
 
-Status: v1 (2026-11-12).
+Status: v2 (2026-11-12).
 
 ## Stack
 - **Language:** TypeScript (strict).
@@ -57,4 +57,11 @@ Fixed-step simulation at 60 Hz for core logic (`core.tick(dt)`), variable-rate r
 
 ## CI
 - `.github/workflows/ci.yml`: on push/PR — install, typecheck, test, simulate.
-- `.github/workflows/release.yml`: on tag `v*` — build on windows-latest, electron-builder → attach installer and portable zip to the GitHub Release.
+- `.github/workflows/release.yml`: run by hand (workflow_dispatch with a `tag` input, because the git proxy here can't push tags); builds on windows-latest and attaches the setup .exe and the portable .exe to a GitHub Release with the notes in `docs/release-notes/<tag>.md`.
+
+## Content pipeline additions (v2)
+- **Models:** `src/render/assets.ts` loads every GLB in `public/models` at boot and clones per use; a missing file falls back to a stand-in and is listed in `assets.missing`.
+- **Talk:** `src/game/talk.ts` builds every conversation from quest and NPC data (pure, tested). Voice keys are `<npc>/<quest>.intro.<i>`, `.outro.<i>`, `.reminder`, `<npc>/bark.<i>`.
+- **Voice:** `npm run voice` writes `docs/voice/SCRIPT.md` and `voice-lines.json` with a text hash per line; the game plays `public/audio/voice/<key>.mp3` only when `voiced.json` records the same hash.
+- **Settings:** `src/game/settings.ts`, stored apart from the save (Electron `userData/settings.json`, else localStorage); Electron reads it at startup for window mode and resolution.
+- **Bots:** `e2e/story.cjs` (whole Hearthbay chain), `e2e/play.cjs` (core loop and selling), `e2e/poses.cjs` (player pose sheet), `e2e/shot.cjs` (one screenshot with `?cam=x,y,z&look=x,y,z`).

@@ -13,6 +13,11 @@ export const MODEL_PATHS = {
   barrel: 'models/props/barrel.glb',
   tackleBox: 'models/props/tackle-box.glb',
   dockLantern: 'models/props/dock-lantern.glb',
+  fishStall: 'models/props/fish-stall.glb',
+  noticeBoard: 'models/props/notice-board.glb',
+  sketchbook: 'models/props/sketchbook.glb',
+  biscuit: 'models/characters/biscuit.glb',
+  biscuitSit: 'models/characters/biscuit-sit.glb',
 } as const;
 /** Optional NPC models; each falls back to a procedural stand-in until its file exists. */
 export const NPC_MODEL_IDS = ['mara', 'pell', 'wick'];

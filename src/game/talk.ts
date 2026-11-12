@@ -4,6 +4,7 @@
  */
 import { QUESTS, npc, npcOffer, questStatus, type QuestDef } from '../core/quests';
 import type { GameState } from '../core/state';
+import { hashString } from '../core/rng';
 
 export interface Line { npc: string; text: string; /** voice file key: audio/voice/<key>.mp3 */ voice: string }
 export type TalkAction =
@@ -36,11 +37,7 @@ export const barkLine = (npcId: string, i: number): Line => {
  * FNV-1a hash of a line's text. The voice index (audio/voice/voiced.json) records the hash each file was
  * recorded from, so a line whose text changes later goes quiet instead of playing the old recording.
  */
-export function textHash(text: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-  return h.toString(16).padStart(8, '0');
-}
+export const textHash = (text: string): string => hashString(text).toString(16).padStart(8, '0');
 
 /** Every voiced line in the game, for the voice-generation manifest. */
 export function allVoiceLines(): (Line & { speaker: string; voiceStyle: string })[] {

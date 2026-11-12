@@ -3,7 +3,7 @@
  * otherwise a TEMPORARY procedural stand-in with the character's silhouette and colours.
  */
 import {
-  AnimationAction, AnimationMixer, BoxGeometry, CapsuleGeometry, Color, ConeGeometry, CylinderGeometry, Group, LoopRepeat, Mesh,
+  AnimationAction, AnimationMixer, BoxGeometry, LoopOnce, Object3D, CapsuleGeometry, Color, ConeGeometry, CylinderGeometry, Group, LoopRepeat, Mesh,
   MeshStandardMaterial, SphereGeometry, Vector3,
 } from 'three';
 import { assets } from './assets';
@@ -45,53 +45,120 @@ function standIn(id: string): Group {
   return g;
 }
 
+/**
+ * An NPC: the model's idle loop at rest (or `sit` on a seat when it has one and the player is away),
+ * a crossfade into `talk` while talking, a `wave` when the player walks up after a while away,
+ * and an occasional `idle_look`. Stand-ins just bob.
+ */
 export class NpcFigure {
+  /** Stays at the NPC's spot; holds the seat (if any) and the turning figure. */
   readonly root = new Group();
+  private fig = new Group();
   private mixer: AnimationMixer | null = null;
-  private idle: AnimationAction | null = null;
-  private talk: AnimationAction | null = null;
+  private acts: Record<string, AnimationAction> = {};
+  private w: Record<string, number> = {};
+  private oneShot: { name: string; until: number } | null = null;
   private body: Group | null = null;
+  private seat: Group | null = null;
+  private sitW = 0;
+  /** Clip names for each role (Wick's sketchbook versions replace the plain ones). */
+  private role = { idle: 'idle', talk: 'talk', look: 'idle_look' };
+  private heldBook: Object3D | null = null;
+  private groundBook: Object3D | null = null;
   private t = Math.random() * 10;
+  private nextLook = 8 + Math.random() * 10;
+  private awayFor = 999;
+  private wasNear = false;
   private yaw: number;
   /** Height above the root for the name/marker label. */
-  readonly labelHeight: number;
+  labelHeight: number;
 
   constructor(readonly id: string, public restYaw: number) {
     this.yaw = restYaw;
+    this.root.add(this.fig);
     const model = assets.instance(`npc:${id}`);
     if (model) {
-      this.root.add(model);
+      this.fig.add(model);
       this.mixer = new AnimationMixer(model);
-      const clips = assets.clips(`npc:${id}`);
-      const find = (n: string) => clips.find((c) => c.name === n) ?? null;
-      const idle = find('idle') ?? clips[0] ?? null;
-      if (idle) { this.idle = this.mixer.clipAction(idle); this.idle.setLoop(LoopRepeat, Infinity).play(); }
-      const talk = find('talk');
-      if (talk) { this.talk = this.mixer.clipAction(talk); this.talk.setLoop(LoopRepeat, Infinity).play(); this.talk.setEffectiveWeight(0); }
+      for (const clip of assets.clips(`npc:${id}`)) {
+        const a = this.mixer.clipAction(clip);
+        if (clip.name === 'wave' || clip.name === 'idle_look') a.setLoop(LoopOnce, 1);
+        else { a.setLoop(LoopRepeat, Infinity); a.play(); }
+        a.setEffectiveWeight(0);
+        this.acts[clip.name] = a; this.w[clip.name] = 0;
+      }
+      if (!this.acts.idle) { const first = Object.keys(this.acts)[0]; if (first) this.acts.idle = this.acts[first]; }
+      // Holding a sketchbook: the book_* clips with the book in BookSocket.
+      const bookSocket = model.getObjectByName('BookSocket');
+      if (this.acts.book_idle && bookSocket && assets.has('sketchbook')) {
+        this.role = { idle: 'book_idle', talk: this.acts.book_talk ? 'book_talk' : 'talk', look: this.acts.book_idle_look ? 'book_idle_look' : 'idle_look' };
+        this.heldBook = assets.instance('sketchbook')!;
+        bookSocket.add(this.heldBook);
+      }
+      for (const n of ['wave', 'book_idle_look']) if (this.acts[n]) { this.acts[n].stop(); this.acts[n].setLoop(LoopOnce, 1); }
+      // A sitter gets an upturned tackle box for a seat, with the sketchbook put down beside it.
+      if (this.acts.sit && assets.has('tackleBox')) {
+        this.seat = new Group();
+        const box = assets.instance('tackleBox')!; this.seat.add(box);
+        const book = assets.instance('sketchbook');
+        if (book) { book.rotation.set(-Math.PI / 2, 0, 0.5); book.position.set(0.36, 0.03, 0.12); this.seat.add(book); this.groundBook = book; }
+        this.root.add(this.seat);
+      }
       this.labelHeight = (LOOKS[id]?.height ?? 1.7) + 0.45;
     } else {
       const s = standIn(id);
       this.body = s.userData.body as Group;
-      this.root.add(s);
+      this.fig.add(s);
       this.labelHeight = (LOOKS[id]?.height ?? 1.7) + 0.5;
     }
+  }
+
+  private play(name: string) {
+    const a = this.acts[name]; if (!a) return;
+    a.reset().play();
+    this.oneShot = { name, until: this.t + a.getClip().duration - 0.35 };
   }
 
   /** player: where to look when they're close; talking: gesture. */
   update(dt: number, player: Vector3 | null, talking: boolean) {
     this.t += dt;
+    let d2 = Infinity;
+    if (player) { const dx = player.x - this.root.position.x, dz = player.z - this.root.position.z; d2 = dx * dx + dz * dz; }
+    const near = d2 < 64;
+    // Sitters stay seated until the player is close, and face their rest direction while seated.
+    const sitting = !!this.seat && !talking && d2 > 4.5 * 4.5;
+    this.sitW += ((sitting ? 1 : 0) - this.sitW) * Math.min(1, dt * 3);
     let want = this.restYaw;
-    if (player) {
-      const dx = player.x - this.root.position.x, dz = player.z - this.root.position.z;
-      if (dx * dx + dz * dz < 64) want = Math.atan2(dx, dz);
+    if (near && this.sitW < 0.5 && player) want = Math.atan2(player.x - this.root.position.x, player.z - this.root.position.z);
+    let dy = want - this.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+    this.yaw += dy * Math.min(1, dt * 3);
+    this.fig.rotation.y = this.yaw;
+    if (this.seat) {
+      // Seated on the box; standing a step in front of it.
+      this.seat.rotation.y = this.restYaw;
+      const f = 0.42 * (1 - this.sitW);
+      this.fig.position.set(Math.sin(this.restYaw) * f, 0.04 * this.sitW, Math.cos(this.restYaw) * f);
     }
-    let d = want - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
-    this.yaw += d * Math.min(1, dt * 3);
-    this.root.rotation.y = this.yaw;
     if (this.mixer) {
-      if (this.talk) {
-        const w = this.talk.getEffectiveWeight() + ((talking ? 1 : 0) - this.talk.getEffectiveWeight()) * Math.min(1, dt * 5);
-        this.talk.setEffectiveWeight(w); this.idle?.setEffectiveWeight(1 - w);
+      // A wave when the player walks up after a while away; a look around now and then when alone.
+      if (near && !this.wasNear && this.awayFor > 20 && !talking && this.acts.wave) this.play('wave');
+      this.awayFor = near ? 0 : this.awayFor + dt;
+      this.wasNear = near;
+      if (!near && !sitting && this.t > this.nextLook && this.acts[this.role.look] && !this.oneShot) { this.play(this.role.look); this.nextLook = this.t + 12 + Math.random() * 10; }
+      if (this.oneShot && (this.t > this.oneShot.until || talking || sitting)) this.oneShot = null;
+      const target: Record<string, number> = {};
+      const base = talking && this.acts[this.role.talk] ? this.role.talk : this.role.idle;
+      if (this.oneShot) target[this.oneShot.name] = 1;
+      else if (this.seat && this.sitW > 0.02 && !talking) { target.sit = this.sitW; target[this.role.idle] = 1 - this.sitW; }
+      else target[base] = 1;
+      // The book is in hand unless seated (then it lies beside the seat).
+      const inHand = !this.seat || this.sitW < 0.5;
+      if (this.heldBook) this.heldBook.visible = inHand;
+      if (this.groundBook) this.groundBook.visible = !this.heldBook || !inHand;
+      const rate = Math.min(1, dt * 5);
+      for (const n of Object.keys(this.acts)) {
+        this.w[n] += ((target[n] ?? 0) - this.w[n]) * rate;
+        this.acts[n].setEffectiveWeight(this.w[n]);
       }
       this.mixer.update(dt);
     } else if (this.body) {

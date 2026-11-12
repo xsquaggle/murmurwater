@@ -4,20 +4,28 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 
 | # | Phase | Goal | Status |
 |---|---|---|---|
-| 0 | Pre-production | Vision, design, art bible, tech plan, repo, CI skeleton, style refs | **In progress** |
-| 1 | Vertical slice | Hearthbay at final quality: water, sky/time, lighthouse, dock, cast/bite/hook/fight feel, 8 fish, sell, 2 rods, first quest chain, save/load, settings, Windows build on a Release | Next |
+| 0 | Pre-production | Vision, design, art bible, tech plan, repo, CI skeleton, style refs | Done (v0.0.1) |
+| 1 | Vertical slice | Hearthbay at final quality: water, sky/time, lighthouse, dock, cast/bite/hook/fight feel, 8 fish, sell, 2 rods, first quest chain, save/load, settings, Windows build on a Release | **In progress** (v0.1.0) |
 | 2 | Production A | Economy core + simulator, gear/bait/lures/wearables, boats + free sailing + discovery + fast travel, Mossglass Fen, automation, the Bell (prestige), notice board | |
 | 3 | Production B | Saltbone Reach, The Hush, Sunken Lanterns; relics, chests, crates fully populated; story chain through act 4 | |
 | 4 | Alpha (content complete) | Still Eye finale + ending + postgame; all fish/gear/quests in; automated full playthrough passes | |
 | 5 | Beta (balance + polish) | Simulator-tuned 10–15 h arc, audio pass, VFX pass, perf pass, onboarding pass, controller decision, reviewer playtests | |
 | 6 | Release 1.0 | Final Windows build on GitHub Release, README, final report | |
 
-## Phase 0 checklist
-- [x] Stack + working title
-- [x] Repo created, DIRECTIVE saved
-- [x] DESIGN, ART_BIBLE, TECH, ROADMAP, DECISIONS, HANDOFF v1
-- [ ] Project scaffold (Vite + TS + three + Electron), CI test workflow, release workflow
-- [ ] Rendering prototype: water + sky + island + lighting, screenshot reviewed against art bible
-- [ ] Fishing feel prototype (core state machine + tests)
-- [ ] Style reference images generated and locked
-- [ ] First Windows build on a Release (proves the pipeline early)
+## Phase 0 checklist (done)
+- [x] Stack + working title; repo; DIRECTIVE saved; DESIGN, ART_BIBLE, TECH, ROADMAP, DECISIONS, HANDOFF v1
+- [x] Scaffold (Vite + TS + three + Electron), CI test workflow, release workflow
+- [x] Rendering prototype reviewed against the art bible; fishing feel prototype with tests
+- [x] Style reference images locked; first Windows build on a Release (v0.0.1)
+
+## Phase 1 checklist (vertical slice)
+- [x] Generated player, 9 fish, skiff, harbour props, Mara, Pell, Wick, Biscuit, stall, notice board
+- [x] Player animation: authored rod clips + procedural rod and IK while fishing; show-catch
+- [x] Quest engine, Hearthbay story chain (6 quests), notice board jobs, relics; save v2 with migration
+- [x] Town: NPCs with idle/talk/wave/sit, dialogue with choices, shop, satchel (hold, gear, journal, quests), pause, settings with key rebinding
+- [x] Ferry to Gull Point; lighting the lighthouse lamp
+- [x] Story bot plays the whole chain; playtest bot; unit tests for quests, talk, saves, layout
+- [ ] Voice lines for all 40 lines (asset thread, Higgsfield)
+- [ ] Art pass: harbour cliff faceting, Gull Point arrival view, houses floating slightly
+- [ ] Frame profiling on the 3060 target (Lawson) and on SwiftShader
+- [ ] v0.1.0 Windows build on a Release, milestone report, fresh reviewer pass

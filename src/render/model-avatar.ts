@@ -1,18 +1,21 @@
 /**
  * The player as the generated, rigged model (public/models/characters/player.glb).
  *
- * The body plays the model's clips (idle, walk, run); fishing is layered on procedurally so the rod
- * can answer the fight in real time: the rod's grip follows a sprung pose target, two-bone IK puts the
- * right hand on the grip and (while fighting) the left hand on the reel, and the spine twists and leans
- * into the cast and against a running fish.
+ * Away from the water the body plays the authored rod-carrying clips and the rod sits in the hand's
+ * RodSocket. While fishing the rod is placed procedurally so it can answer the fight in real time: its
+ * grip follows a sprung pose target, two-bone IK brings the right fist onto the grip (turned so the socket
+ * lines up with the rod) and, while fighting, the left hand onto the reel crank; the spine twists and leans
+ * into the cast and against a running fish, over the authored fishing stance and lean clips.
+ * A landed fish is shown with the authored show_catch clip, sitting in the CatchSocket between the palms.
  */
-import { AnimationAction, AnimationMixer, Group, LoopRepeat, Object3D, Quaternion, Vector3 } from 'three';
+import { AnimationAction, AnimationMixer, Euler, Group, LoopOnce, LoopRepeat, Matrix4, Object3D, Quaternion, Vector3 } from 'three';
 import { RodRig, type PlayerAvatar, type Pose } from './avatar';
 import { assets } from './assets';
 
 const UP = new Vector3(0, 1, 0);
 const _a = new Vector3(), _b = new Vector3(), _c = new Vector3(), _t = new Vector3(), _d = new Vector3(), _p = new Vector3(), _e = new Vector3();
-const _q = new Quaternion(), _wq = new Quaternion(), _pq = new Quaternion();
+const _q = new Quaternion(), _wq = new Quaternion(), _pq = new Quaternion(), _hq = new Quaternion(), _sq = new Quaternion();
+const _m = new Matrix4(), _sp = new Vector3(), _ss = new Vector3(), _eu = new Euler(0, 0, 0, 'YXZ');
 
 /** Rotates a bone so that its world-space direction `from` turns to `to` (both world vectors). */
 function aimBone(bone: Object3D, from: Vector3, to: Vector3) {
@@ -87,7 +90,20 @@ export class ModelAvatar implements PlayerAvatar {
   private crank = 0;
   private held: Object3D | null = null;
   private holdT = 0;
-  private locoW = { idle: 1, walk: 0, run: 0 };
+  /** Body clip weights, eased toward their targets each frame (they always sum to about 1). */
+  private w: Record<string, number> = {};
+  /** 0 = rod in the hand socket (walking about), 1 = rod placed procedurally (fishing). */
+  private fishW = 0;
+  private rodSocket: Object3D | null = null;
+  private catchSocket: Object3D | null = null;
+  /** Clip names for each role, preferring the authored rod clips when the model has them. */
+  private clip: { idle: string; walk: string; run: string; wait: string; leanL?: string; leanR?: string; show?: string };
+  /**
+   * The mixer's output for the bones edited procedurally. three's mixer only writes a bone when its
+   * animated value changes, so without restoring this each frame the IK and spine edits would pile up
+   * on static or slow clips.
+   */
+  private animQ = new Map<Object3D, Quaternion>();
 
   static available(): boolean { return assets.has('player'); }
 
@@ -101,7 +117,23 @@ export class ModelAvatar implements PlayerAvatar {
       a.setLoop(LoopRepeat, Infinity);
       this.actions[clip.name] = a;
     }
-    for (const n of ['idle', 'walk', 'run']) { const a = this.actions[n]; if (a) { a.play(); a.setEffectiveWeight(n === 'idle' ? 1 : 0); } }
+    const has = (n: string) => (this.actions[n] ? n : undefined);
+    const idle = has('rod_idle') ?? 'idle';
+    this.clip = {
+      idle, walk: has('rod_walk') ?? 'walk', run: has('rod_run') ?? 'run', wait: has('rod_wait') ?? idle,
+      leanL: has('rod_lean_left'), leanR: has('rod_lean_right'), show: has('show_catch'),
+    };
+    if (this.clip.show) { const a = this.actions[this.clip.show]; a.setLoop(LoopOnce, 1); a.clampWhenFinished = true; }
+    for (const n of new Set(Object.values(this.clip))) {
+      const a = n ? this.actions[n] : undefined;
+      if (a && n !== this.clip.show) { a.play(); a.setEffectiveWeight(n === idle ? 1 : 0); }
+      if (n) this.w[n] = n === idle ? 1 : 0;
+    }
+    for (const n of ['Spine01', 'Spine', 'RightArm', 'RightForeArm', 'RightHand', 'LeftArm', 'LeftForeArm', 'LeftHand']) {
+      const b = this.bones[n]; if (b) this.animQ.set(b, b.quaternion.clone());
+    }
+    this.rodSocket = this.model.getObjectByName('RodSocket') ?? null;
+    this.catchSocket = this.model.getObjectByName('CatchSocket') ?? null;
     this.root.add(this.rod.pivot);
     this.rod.pivot.rotation.order = 'YXZ';
   }
@@ -123,19 +155,39 @@ export class ModelAvatar implements PlayerAvatar {
 
   update(dt: number, pose: Pose, speed: number, opts: { power?: number; tension?: number; lateral?: number; reeling?: boolean } = {}) {
     this.t += dt;
-    // ---- body clips: idle / walk / run blended by ground speed.
+    // ---- body clips: locomotion by ground speed; the fishing stance (and lean against a run) while fishing;
+    // show_catch while holding a fish up.
     const fishing = pose === 'charge' || pose === 'cast' || pose === 'wait' || pose === 'fight';
-    const s = fishing ? 0 : speed;
-    const want = { idle: s < 0.3 ? 1 : 0, walk: s >= 0.3 && s < 3.4 ? 1 : 0, run: s >= 3.4 ? 1 : 0 };
-    if (s >= 2.2 && s < 3.4) { const k = (s - 2.2) / 1.2; want.walk = 1 - k; want.run = k; }
-    for (const n of ['idle', 'walk', 'run'] as const) {
-      this.locoW[n] += (want[n] - this.locoW[n]) * Math.min(1, dt * 8);
-      this.actions[n]?.setEffectiveWeight(this.locoW[n]);
+    const C = this.clip;
+    const want: Record<string, number> = {};
+    for (const n of Object.keys(this.w)) want[n] = 0;
+    const showing = !!(this.held && C.show && this.catchSocket);
+    if (showing) want[C.show!] = 1;
+    else if (fishing) {
+      const lat = pose === 'fight' ? Math.max(-1, Math.min(1, opts.lateral ?? 0)) : 0;
+      const lean = Math.abs(lat) * 0.75;
+      // Lean away from the fish: a run to the left (+lateral) is fought by leaning right.
+      const leanClip = lat > 0 ? C.leanR : C.leanL;
+      if (leanClip && lean > 0) { want[leanClip] = lean; want[C.wait] = (want[C.wait] ?? 0) + 1 - lean; }
+      else want[C.wait] = 1;
+    } else {
+      const s = speed;
+      let walk = s >= 0.3 && s < 3.4 ? 1 : 0, run = s >= 3.4 ? 1 : 0;
+      if (s >= 2.2 && s < 3.4) { const k = (s - 2.2) / 1.2; walk = 1 - k; run = k; }
+      want[C.walk] = (want[C.walk] ?? 0) + walk; want[C.run] = (want[C.run] ?? 0) + run; want[C.idle] = (want[C.idle] ?? 0) + (s < 0.3 ? 1 : 0);
+      // In-place clips: playback speed matches ground speed (walk ≈ 0.6 m/s, run ≈ 3.1 m/s at 1×).
+      this.actions[C.walk]?.setEffectiveTimeScale(Math.max(0.6, Math.min(3.2, s / 0.6)));
+      this.actions[C.run]?.setEffectiveTimeScale(Math.max(0.6, Math.min(1.6, s / 3.1)));
     }
-    // In-place clips: playback speed matches ground speed (walk ≈ 0.6 m/s, run ≈ 3.1 m/s at 1×).
-    this.actions.walk?.setEffectiveTimeScale(Math.max(0.6, Math.min(3.2, s / 0.6)));
-    this.actions.run?.setEffectiveTimeScale(Math.max(0.6, Math.min(1.6, s / 3.1)));
+    const rate = Math.min(1, dt * (showing ? 12 : 8));
+    for (const n of Object.keys(this.w)) {
+      this.w[n] += (want[n] - this.w[n]) * rate;
+      this.actions[n]?.setEffectiveWeight(this.w[n]);
+    }
+    this.fishW += ((fishing ? 1 : 0) - this.fishW) * Math.min(1, dt * 7);
+    for (const [b, q] of this.animQ) b.quaternion.copy(q);
     this.mixer.update(dt);
+    for (const [b, q] of this.animQ) q.copy(b.quaternion);
     this.model.updateMatrixWorld(true);
 
     // ---- rod pose: sprung grip position and rod lean (the cast whips faster than it winds back).
@@ -162,36 +214,67 @@ export class ModelAvatar implements PlayerAvatar {
       if (this.bones.Spine) { turnBone(this.bones.Spine, UP, this.twist * 0.5); turnBone(this.bones.Spine, right, this.spineLean * 0.4); }
     }
 
-    // ---- rod placement in body space, then hands onto it.
+    // ---- rod placement in body space: the hand's socket when walking about, the sprung target when fishing.
     this.rod.pivot.visible = !this.held;
-    this.rod.pivot.position.copy(this.grip.v);
-    this.rod.pivot.rotation.set(this.lean, this.yaw, 0);
-    this.rod.setBend(this.bend, this.side);
+    _eu.set(this.lean, this.yaw, 0);
+    const procQ = _q.setFromEuler(_eu).clone();
+    const fw = this.rodSocket ? this.fishW : 1;
+    if (this.rodSocket && fw < 0.999) {
+      this.root.updateMatrixWorld(true);
+      _m.copy(this.root.matrixWorld).invert().multiply(this.rodSocket.matrixWorld).decompose(_sp, _sq, _ss);
+      this.rod.pivot.position.lerpVectors(_sp, this.grip.v, fw);
+      this.rod.pivot.quaternion.slerpQuaternions(_sq, procQ, fw);
+    } else {
+      this.rod.pivot.position.copy(this.grip.v);
+      this.rod.pivot.quaternion.copy(procQ);
+    }
+    this.rod.setBend(this.bend * fw, this.side * fw);
     this.root.updateMatrixWorld(true);
     const B = this.bones;
-    if (B.RightArm && B.RightForeArm && B.RightHand) {
-      const target = this.rod.pivot.localToWorld(_c.set(0, 0.02, 0)).clone();
-      const pole = this.rootDir(-1, -0.7, -0.4);
-      if (this.held) {
-        this.holdT += dt;
-        const lift = Math.min(1, this.holdT * 3);
-        const center = this.root.localToWorld(new Vector3(0, 1.05 + 0.18 * lift, 0.32));
-        this.held.position.copy(center);
-        this.held.quaternion.copy(this.root.getWorldQuaternion(_wq)).multiply(_q.setFromAxisAngle(UP, Math.PI / 2));
-        this.held.rotateZ(Math.sin(this.t * 9) * 0.12 * (1 - Math.min(1, this.holdT / 2)));
-        twoBoneIK(B.RightArm, B.RightForeArm, B.RightHand, this.root.localToWorld(new Vector3(-0.11, 1.07 + 0.18 * lift, 0.3)), this.rootDir(-1, -0.6, -0.2));
-        if (B.LeftArm && B.LeftForeArm && B.LeftHand) twoBoneIK(B.LeftArm, B.LeftForeArm, B.LeftHand, this.root.localToWorld(new Vector3(0.11, 1.07 + 0.18 * lift, 0.3)), this.rootDir(1, -0.6, -0.2));
-      } else {
-        twoBoneIK(B.RightArm, B.RightForeArm, B.RightHand, target, pole, this.rightW);
+    if (this.held) this.placeHeld(dt);
+    else if (B.RightArm && B.RightForeArm && B.RightHand) {
+      const w = this.rightW * fw;
+      if (this.rodSocket && w > 0.001) {
+        // Where the wrist must be, and how the fist must turn, for the socket to land on the rod's grip.
+        const hand = B.RightHand, sock = this.rodSocket;
+        this.rod.pivot.getWorldQuaternion(_hq).multiply(_sq.copy(sock.quaternion).invert());
+        hand.getWorldScale(_ss);
+        const wrist = this.rod.pivot.getWorldPosition(new Vector3()).sub(_sp.copy(sock.position).multiply(_ss).applyQuaternion(_hq));
+        twoBoneIK(B.RightArm, B.RightForeArm, hand, wrist, this.rootDir(-1, -0.7, -0.4), w);
+        hand.getWorldQuaternion(_wq).slerp(_hq, w);
+        hand.parent!.getWorldQuaternion(_pq);
+        hand.quaternion.copy(_pq.invert().multiply(_wq));
+        hand.updateMatrixWorld(true);
+      } else if (!this.rodSocket) {
+        twoBoneIK(B.RightArm, B.RightForeArm, B.RightHand, this.rod.pivot.localToWorld(_c.set(0, 0.02, 0)).clone(), this.rootDir(-1, -0.7, -0.4), this.rightW);
       }
     }
-    if (!this.held && this.leftW > 0.01 && B.LeftArm && B.LeftForeArm && B.LeftHand) {
+    if (!this.held && this.leftW * fw > 0.01 && B.LeftArm && B.LeftForeArm && B.LeftHand) {
       if (opts.reeling && pose === 'fight') this.crank += dt * 13;
       const h = this.rod.reelHandle;
       const local = _d.set(h.x + 0.02, h.y + Math.sin(this.crank) * 0.035, Math.cos(this.crank) * 0.035);
       const target = this.rod.pivot.localToWorld(local.clone());
-      twoBoneIK(B.LeftArm, B.LeftForeArm, B.LeftHand, target, this.rootDir(1, -0.8, -0.3), this.leftW);
+      twoBoneIK(B.LeftArm, B.LeftForeArm, B.LeftHand, target, this.rootDir(1, -0.8, -0.3), this.leftW * fw);
     }
+  }
+
+  /** The caught fish: in the CatchSocket under show_catch, or held up by two-hand IK without it. */
+  private placeHeld(dt: number) {
+    const held = this.held!, B = this.bones;
+    this.holdT += dt;
+    const wiggle = Math.sin(this.t * 9) * 0.12 * (1 - Math.min(1, this.holdT / 2));
+    if (this.clip.show && this.catchSocket) {
+      held.position.set(0, 0, 0);
+      held.rotation.set(0, 0, wiggle);
+      return;
+    }
+    const lift = Math.min(1, this.holdT * 3);
+    const center = this.root.localToWorld(new Vector3(0, 1.05 + 0.18 * lift, 0.32));
+    held.position.copy(center);
+    held.quaternion.copy(this.root.getWorldQuaternion(_wq)).multiply(_q.setFromAxisAngle(UP, Math.PI / 2));
+    held.rotateZ(wiggle);
+    if (B.RightArm && B.RightForeArm && B.RightHand) twoBoneIK(B.RightArm, B.RightForeArm, B.RightHand, this.root.localToWorld(new Vector3(-0.11, 1.07 + 0.18 * lift, 0.3)), this.rootDir(-1, -0.6, -0.2));
+    if (B.LeftArm && B.LeftForeArm && B.LeftHand) twoBoneIK(B.LeftArm, B.LeftForeArm, B.LeftHand, this.root.localToWorld(new Vector3(0.11, 1.07 + 0.18 * lift, 0.3)), this.rootDir(1, -0.6, -0.2));
   }
 
   /** A direction in the avatar's local frame, as a world vector. */
@@ -202,9 +285,21 @@ export class ModelAvatar implements PlayerAvatar {
   tipWorld(out = new Vector3()): Vector3 { return this.rod.tip.getWorldPosition(out); }
 
   holdFish(fish: Object3D | null) {
-    if (this.held && this.held !== fish) this.held.removeFromParent();
+    if (this.held && this.held !== fish) {
+      if (this.held.userData.socketScale) { this.held.scale.multiplyScalar(this.held.userData.socketScale); delete this.held.userData.socketScale; }
+      this.held.removeFromParent();
+    }
     this.held = fish;
     this.holdT = 0;
-    if (fish) this.root.parent?.add(fish);
+    if (!fish) return;
+    const show = this.clip.show ? this.actions[this.clip.show] : undefined;
+    if (show && this.catchSocket) {
+      // Parent to the socket, undoing any scale the skeleton applies so the fish keeps its size.
+      this.catchSocket.getWorldScale(_ss);
+      fish.userData.socketScale = _ss.x;
+      fish.scale.divideScalar(_ss.x);
+      this.catchSocket.add(fish);
+      show.reset().play();
+    } else this.root.parent?.add(fish);
   }
 }

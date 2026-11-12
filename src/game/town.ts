@@ -5,6 +5,8 @@
 import { Vector3 } from 'three';
 import type { Game } from './game';
 import { NpcFigure } from '../render/npc-figure';
+import { Cat } from '../render/cat';
+import { hashString } from '../core/rng';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
 import { converse, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
@@ -21,6 +23,7 @@ interface Step { at: number; run: () => void }
 
 export class Town {
   readonly npcs = new Map<string, { fig: NpcFigure; spots: NpcSpot[] }>();
+  readonly critters: { island: string; cat: Cat }[] = [];
   readonly dialogue: Dialogue;
   readonly screens: Screens;
   island = 'hearthbay';
@@ -40,6 +43,11 @@ export class Town {
       let e = this.npcs.get(sp.npc);
       if (!e) { e = { fig: new NpcFigure(sp.npc, sp.yaw), spots: [] }; this.npcs.set(sp.npc, e); g.world.scene.add(e.fig.root); }
       e.spots.push(sp);
+    }
+    for (const c of this.region.critters ?? []) {
+      if (c.kind !== 'cat' || !Cat.available()) continue;
+      const cat = new Cat(new Vector3(c.x, 0, c.z), c.r, (x, z) => g.groundAt(x, z), hashString(c.id));
+      this.critters.push({ island: c.island, cat }); g.world.scene.add(cat.root);
     }
     this.island = this.islandAt(g.pos);
     this.placeNpcs();
@@ -378,6 +386,10 @@ export class Town {
     const g = this.g, s = g.state;
     const w = window.innerWidth, h = window.innerHeight;
     const items: Parameters<typeof g.hud.setMarkers>[0] = [];
+    for (const c of this.critters) {
+      c.cat.root.visible = c.island === this.island;
+      if (c.cat.root.visible) c.cat.update(dt, g.pos);
+    }
     for (const [id, e] of this.npcs) {
       const f = e.fig;
       f.update(dt, f.root.visible ? g.pos : null, this.talking === id);

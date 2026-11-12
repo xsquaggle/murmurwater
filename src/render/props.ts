@@ -95,8 +95,8 @@ export function buildCottage(seed: number): BufferGeometry {
   const b = new Builder(seed, 0.05);
   const w = rng.range(4.6, 6.4), d = rng.range(4.0, 5.4), h = rng.range(2.8, 3.6);
   const wall = C(rng.pick(WALLS)), roof = C(rng.pick(ROOFS));
-  // Stone footing
-  b.add(new BoxGeometry(w + 0.4, 0.9, d + 0.4), C('#7C7F86'), { pos: [0, -0.1, 0] });
+  // Stone footing, deep enough to meet the ground on the downhill side of a slope.
+  b.add(new BoxGeometry(w + 0.4, 2.6, d + 0.4), C('#7C7F86'), { pos: [0, -0.95, 0] });
   b.add(Builder.wobble(new BoxGeometry(w, h, d, 2, 2, 2), 0.08, seed), wall, { pos: [0, h / 2 + 0.3, 0] });
   // Gable roof as a 3-sided prism, with overhang
   const roofH = rng.range(1.8, 2.6);

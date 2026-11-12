@@ -29,9 +29,11 @@ export interface ZoneDef { id: string; name: string; x: number; z: number; r: nu
 export interface PlaceDef { id: string; name: string; x: number; z: number; r: number }
 /** Where an NPC stands; an NPC can have one spot per island (Pell follows the ferry). */
 export interface NpcSpot { npc: string; island: string; x: number; z: number; yaw: number }
+/** An ambient animal that wanders within `r` of (x, z). */
+export interface CritterDef { id: string; kind: 'cat'; island: string; x: number; z: number; r: number }
 export interface FerryPoint { x: number; z: number; yaw: number; boat: [number, number, number] }
 export interface RegionContent extends RegionDef {
-  zones: ZoneDef[]; places?: PlaceDef[]; npcSpots?: NpcSpot[]; ferry?: Record<string, FerryPoint>;
+  zones: ZoneDef[]; places?: PlaceDef[]; npcSpots?: NpcSpot[]; critters?: CritterDef[]; ferry?: Record<string, FerryPoint>;
 }
 
 export const FISH: FishDef[] = fishJson.fish as FishDef[];
@@ -82,6 +84,7 @@ export function validateContent(): string[] {
     if (!r.zones.length) errs.push(`region ${r.id}: no zones`);
     const islands = new Set(r.islands.map((i) => i.id));
     for (const sp of r.npcSpots ?? []) if (!islands.has(sp.island)) errs.push(`region ${r.id}: npc ${sp.npc} on unknown island ${sp.island}`);
+    for (const c of r.critters ?? []) if (!islands.has(c.island)) errs.push(`region ${r.id}: critter ${c.id} on unknown island ${c.island}`);
     for (const k of Object.keys(r.ferry ?? {})) if (!islands.has(k)) errs.push(`region ${r.id}: ferry to unknown island ${k}`);
   }
   return errs;

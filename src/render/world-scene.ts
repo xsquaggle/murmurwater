@@ -1,6 +1,6 @@
 /** Assembles a region's 3D scene: sky, water, terrain, landmarks, scatter, lighting, time of day. */
 import {
-  Object3D, Color, DirectionalLight, FogExp2, HemisphereLight, Mesh, MeshStandardMaterial, PerspectiveCamera, PointLight, Scene, Vector3,
+  BufferGeometry, Object3D, Color, DirectionalLight, FogExp2, HemisphereLight, Mesh, MeshStandardMaterial, PerspectiveCamera, PointLight, Scene, Vector3,
 } from 'three';
 import { Heightfield, type RegionDef } from '../core/world';
 import { createSky, createSkyUniforms, type SkyUniforms } from './sky';
@@ -78,11 +78,17 @@ export class WorldScene {
     const side = new Vector3(dir.z, 0, -dir.x);
     const at = (t: number, sd: number) => new Vector3(L.dock.x, this.deckY + 0.07, L.dock.z).addScaledVector(dir, t).addScaledVector(side, sd);
     const facing = (v: Vector3) => Math.atan2(v.x, v.z);
-    const stall = new Mesh(buildStall(), createPropMaterial());
+    // The generated stall and board when present, else the TEMPORARY procedural ones.
+    const prop = (key: string, build: () => BufferGeometry): Object3D => {
+      const o = assets.instance(key);
+      if (o) return o;
+      const m = new Mesh(build(), createPropMaterial()); this.propMats.push(m.material as MeshStandardMaterial); return m;
+    };
+    const stall = prop('fishStall', buildStall);
     stall.position.copy(at(3.2, 3.2)); stall.rotation.y = facing(side.clone().negate());
-    const board = new Mesh(buildNoticeBoard(), createPropMaterial());
+    const board = prop('noticeBoard', buildNoticeBoard);
     board.position.copy(at(3.0, -3.75)); board.rotation.y = facing(side);
-    for (const m of [stall, board]) { m.castShadow = true; m.receiveShadow = true; this.propMats.push(m.material as MeshStandardMaterial); s.add(m); }
+    for (const m of [stall, board]) { m.traverse((o) => { if ((o as Mesh).isMesh) { o.castShadow = true; o.receiveShadow = true; } }); s.add(m); }
     const place = (key: string, p: Vector3, rot: number, scale = 1) => {
       const o = assets.instance(key); if (!o) return;
       o.position.copy(p); o.rotation.y = rot; o.scale.setScalar(scale); s.add(o);

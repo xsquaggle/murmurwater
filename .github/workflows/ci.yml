@@ -23,6 +23,8 @@ jobs:
           sleep 3
           mkdir -p shots
           node e2e/play.cjs shots
+      - name: Story bot (whole Hearthbay chain)
+        run: node e2e/story.cjs shots/story
       - uses: actions/upload-artifact@v4
         if: always()
         with:
