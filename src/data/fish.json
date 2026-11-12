@@ -1,0 +1,58 @@
+{
+  "fish": [
+    {
+      "id": "butterperch", "name": "Butterperch", "rarity": "common", "region": "hearthbay",
+      "zones": ["hb-dock", "hb-bay", "hb-open"], "baseValue": 6, "weight": [0.2, 1.4],
+      "fight": { "strength": 0.9, "stamina": 0.7, "temper": 0.6, "thrash": 0.0 }, "biteWindow": 1.0,
+      "lore": "Fat, golden and pleased with itself. Mara swears it tastes of toast."
+    },
+    {
+      "id": "pebble-goby", "name": "Pebble Goby", "rarity": "common", "region": "hearthbay",
+      "zones": ["hb-dock", "hb-bay"], "baseValue": 4, "weight": [0.05, 0.4],
+      "fight": { "strength": 0.6, "stamina": 0.5, "temper": 0.9, "thrash": 0.0 }, "biteWindow": 1.0,
+      "lore": "Sits on the bottom pretending to be a stone. Very convincing. Too convincing, some say."
+    },
+    {
+      "id": "kettle-carp", "name": "Kettle Carp", "rarity": "common", "region": "hearthbay",
+      "zones": ["hb-bay", "hb-open"], "baseValue": 9, "weight": [0.8, 3.2],
+      "fight": { "strength": 1.2, "stamina": 1.0, "temper": 0.4, "thrash": 0.05 }, "biteWindow": 0.95,
+      "lore": "Whistles faintly when it surfaces. Nobody has worked out how, or why it always sounds like the same tune."
+    },
+    {
+      "id": "coral-snapper", "name": "Coral Snapper", "rarity": "uncommon", "region": "hearthbay",
+      "zones": ["hb-bay", "hb-teeth"], "baseValue": 22, "weight": [0.6, 2.6],
+      "fight": { "strength": 1.4, "stamina": 1.1, "temper": 0.8, "thrash": 0.1 }, "biteWindow": 0.85,
+      "lore": "Bites at anything pink. Has, on record, bitten a sunset."
+    },
+    {
+      "id": "lampjaw", "name": "Lampjaw", "rarity": "uncommon", "region": "hearthbay",
+      "zones": ["hb-open", "hb-teeth"], "baseValue": 28, "weight": [0.5, 2.0], "hours": [17, 6],
+      "fight": { "strength": 1.3, "stamina": 1.0, "temper": 1.0, "thrash": 0.1 }, "biteWindow": 0.8,
+      "lore": "Carries its own little lantern. The light goes out the moment it is caught, and comes back on in the bucket."
+    },
+    {
+      "id": "moss-eel", "name": "Moss Eel", "rarity": "rare", "region": "hearthbay",
+      "zones": ["hb-dock", "hb-bay"], "baseValue": 60, "weight": [1.0, 4.5],
+      "fight": { "strength": 1.6, "stamina": 1.6, "temper": 1.3, "thrash": 0.25 }, "biteWindow": 0.7,
+      "lore": "Grows leaves. Drops them in autumn. Hearthbay has no autumn."
+    },
+    {
+      "id": "twofold-flounder", "name": "Twofold Flounder", "rarity": "epic", "region": "hearthbay",
+      "zones": ["hb-teeth", "hb-open"], "baseValue": 150, "weight": [1.5, 6.0],
+      "fight": { "strength": 1.8, "stamina": 2.0, "temper": 1.1, "thrash": 0.3 }, "biteWindow": 0.6,
+      "lore": "Both faces are the front. Both faces disagree about which way to swim."
+    },
+    {
+      "id": "hollow-lantern", "name": "Hollow Lantern", "rarity": "legendary", "region": "hearthbay",
+      "zones": ["hb-teeth"], "baseValue": 480, "weight": [2.0, 7.5], "hours": [19, 5],
+      "fight": { "strength": 2.1, "stamina": 2.6, "temper": 1.4, "thrash": 0.4 }, "biteWindow": 0.5,
+      "lore": "There is nothing inside it but a small warm light. It is alive anyway. It seems to be looking for something."
+    },
+    {
+      "id": "manyeye", "name": "Manyeye", "rarity": "uncanny", "region": "hearthbay",
+      "zones": ["hb-open"], "baseValue": 900, "weight": [3.0, 9.0], "hours": [0, 3], "requires": "story:hb-lighthouse-lit",
+      "fight": { "strength": 2.4, "stamina": 3.0, "temper": 1.8, "thrash": 0.5 }, "biteWindow": 0.45,
+      "lore": "It has seen you before. All of its eyes agree on that."
+    }
+  ]
+}

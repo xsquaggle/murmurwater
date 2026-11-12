@@ -1,0 +1,7 @@
+{
+  "baits": [
+    { "id": "breadcrumb", "name": "Breadcrumbs", "price": 0, "biteSpeed": 1.0, "affinity": {}, "desc": "Free, endless, and frankly beneath most fish." },
+    { "id": "sandworm", "name": "Sandworm", "price": 3, "biteSpeed": 1.25, "affinity": { "pebble-goby": 1.5, "moss-eel": 1.4 }, "desc": "Wriggles convincingly." },
+    { "id": "glowgrub", "name": "Glowgrub", "price": 12, "biteSpeed": 1.15, "affinity": { "lampjaw": 2.0, "hollow-lantern": 1.6 }, "rarityBoost": 0.1, "desc": "A grub that glows. Night fish find it irresistible." }
+  ]
+}
