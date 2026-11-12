@@ -120,36 +120,36 @@
   "prompt": "[approving] Now you look like you mean it. Worms are in the tin. Don't open it indoors."
  },
  "wick/hb-04-drawing.intro.0": {
-  "take": 1,
-  "takes_recorded": 1,
-  "job": "5ac69a48-37dd-4c0e-87b6-43013d43e264",
+  "take": 4,
+  "takes_recorded": 5,
+  "job": "cea5b1b5-4c91-4e32-a418-ccd70e7b93e0",
   "voice_id": "1c3a4775-9afb-52c1-a2bf-b6543231a9a1",
   "hash": "9d65f963",
-  "prompt": "[excited, breathless, fast] Look! I drew it before I saw it. That means it's real. That's how it works."
+  "prompt": "[conspiratorial, quick, sure of himself] Look! I drew it before I saw it. That means it's real. That's how it works."
  },
  "wick/hb-04-drawing.intro.1": {
-  "take": 1,
-  "takes_recorded": 1,
-  "job": "e15da7d9-aba2-442e-949d-b99a3f3a3590",
+  "take": 3,
+  "takes_recorded": 4,
+  "job": "7801945c-8950-4463-b5f4-2e22a4b2300f",
   "voice_id": "1c3a4775-9afb-52c1-a2bf-b6543231a9a1",
   "hash": "bf2079d0",
-  "prompt": "[excited, fast] It's pink and it bites sunsets. It lives near the cove or the Teeth. [pleading] Catch it? Please?"
+  "prompt": "[quick, earnest, a little breathless] It's pink and it bites sunsets. It lives near the cove or the Teeth. [hopeful] Catch it? Please?"
  },
  "wick/hb-04-drawing.reminder": {
-  "take": 1,
-  "takes_recorded": 1,
-  "job": "38e324bc-6861-439b-8db1-3bd95a1961b2",
+  "take": 2,
+  "takes_recorded": 3,
+  "job": "d394bd2d-c5db-4e6c-968c-49a9162ecce1",
   "voice_id": "1c3a4775-9afb-52c1-a2bf-b6543231a9a1",
   "hash": "faa53ec9",
-  "prompt": "[excited, fast] The pink one! Near the cove or the Teeth. It likes sunsets best."
+  "prompt": "[eager, quick, matter-of-fact] The pink one! Near the cove or the Teeth. It likes sunsets best."
  },
  "wick/hb-04-drawing.outro.0": {
-  "take": 1,
-  "takes_recorded": 1,
-  "job": "e251dfd0-1ce2-47ba-8b1a-c8bc574fcf07",
+  "take": 4,
+  "takes_recorded": 5,
+  "job": "46ea73b7-522f-484b-a6f5-c2bfa102a115",
   "voice_id": "1c3a4775-9afb-52c1-a2bf-b6543231a9a1",
   "hash": "a134cc9c",
-  "prompt": "[amazed, breathless] It looks EXACTLY like my drawing! Except it has fewer legs. [matter-of-fact] I'll fix that."
+  "prompt": "[conspiratorial, quick, amazed] It looks EXACTLY like my drawing! Except it has fewer legs. [matter-of-fact] I'll fix that."
  },
  "pell/hb-05-dark-lamp.intro.0": {
   "take": 1,

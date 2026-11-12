@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """process.py [--all-takes] [filters] : chosen raw take -> tuned, trimmed, levelled MP3 in final/<key>.mp3
 Raw takes are raw/<speaker>__<line>.t<n>.mp3 (written by add.py); takes.json says which take each line uses.
-Per speaker: Mara as recorded; Pell 6 % lower in pitch and formants and about 10 % slower; Wick pitch and formants up 25 % (child voice)."""
+Per speaker: Mara as recorded; Pell 6 % lower in pitch and formants and about 10 % slower; Wick pitch and formants up 10 % (child voice)."""
 import json, os, subprocess, sys, re, numpy as np, soundfile as sf
 R = os.path.dirname(os.path.abspath(__file__))
 TAKES = json.load(open(os.path.join(R, 'takes.json')))
@@ -9,7 +9,7 @@ raw = lambda key, take: os.path.join(R, 'raw', key.replace('/', '__') + f'.t{tak
 FX = {
     'mara': 'highpass=f=70',
     'pell': 'highpass=f=50,asetrate=44100*0.94,aresample=44100:resampler=soxr,atempo=0.96',
-    'wick': 'highpass=f=90,asetrate=44100*1.25,aresample=44100:resampler=soxr,atempo=0.824',
+    'wick': 'highpass=f=90,asetrate=44100*1.10,aresample=44100:resampler=soxr,atempo=0.936',
 }
 TARGET, LIMIT = -16.0, 0.84            # LUFS, limiter ceiling (-1.5 dBFS)
 LEAD, TAIL = 0.03, 0.08                # seconds of room kept before the first and after the last sound

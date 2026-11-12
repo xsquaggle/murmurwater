@@ -148,13 +148,13 @@ The 40 spoken lines listed in `docs/voice/voice-lines.json`, one file per line a
 |---|---|---|---|
 | Mara Thimble | Celine | `57ccb351-84d7-54ba-afd4-26b566ca6023` | none |
 | Pell | Arthur | `30fc8796-ceb6-4a66-b3a7-4a145ef7f346` | pitch and formants 6 % lower, about 10 % slower (older, deeper) |
-| Wick | Raina | `1c3a4775-9afb-52c1-a2bf-b6543231a9a1` | pitch and formants 25 % higher at 3 % faster tempo (an adult voice turned into a nine-year-old's) |
+| Wick | Raina | `1c3a4775-9afb-52c1-a2bf-b6543231a9a1` | pitch and formants 10 % higher at 3 % faster tempo (an adult voice nudged toward a nine-year-old's; first delivered at 25 %, lowered after Lawson found it too high, with the four quest lines re-recorded in a calmer delivery) |
 
-The voices were cast from trial takes of 14 library voices, measured for perceived age, accent and pace. Each line is sent with a short delivery direction in square brackets ahead of the text (the model acts on it and does not speak it); the exact prompt of every kept take is in `docs/art/pipeline/voice/takes.json`. 58 takes were recorded for the 40 lines: 18 were retakes or alternates, for a repeated word, a word two recognisers both misheard, quiet directions that pulled Mara's voice away from her other lines, and second options for the lines heard first.
+The voices were cast from trial takes of 14 library voices, measured for perceived age, accent and pace. Each line is sent with a short delivery direction in square brackets ahead of the text (the model acts on it and does not speak it); the exact prompt of every kept take is in `docs/art/pipeline/voice/takes.json`. 71 takes were recorded for the 40 lines: 31 were retakes or alternates, for a repeated word, a word two recognisers both misheard, quiet directions that pulled Mara's voice away from her other lines, second options for the lines heard first, and calmer, lower-pitched deliveries of Wick's lines.
 
 Processing (`docs/art/pipeline/voice/process.py`): high-pass, the speaker tuning above, cut to the speech with 0.03 s before and 0.08 s after (clicks after the speech are dropped), limiter at -1.5 dBFS, gain set so the encoded file measures -16 LUFS.
 
-Checks on the 40 finished files (`check.py`, `second.py`, `spk.py`, `browser-check.cjs` in the same folder): all decode in Chromium with at most 0.04 s of silence before and 0.08 s after the speech; loudness -16.0 to -16.1 LUFS, peaks at or below -1.6 dBFS; two speech recognisers transcribe every line as written apart from spellings of numbers and names; the age estimator hears Mara as 60 to 68 and Pell as 62 to 71, and gives Wick a 0.74 to 1.0 probability of being a child; every take sits close to its own character's average voice (speaker similarity at least 0.72) and far from the other two (0.2 or less).
+Checks on the 40 finished files (`check.py`, `second.py`, `spk.py`, `browser-check.cjs` in the same folder): all decode in Chromium with at most 0.04 s of silence before and 0.08 s after the speech; loudness -15.9 to -16.1 LUFS, peaks at or below -1.2 dBFS; two speech recognisers transcribe every line as written apart from spellings of numbers and names; the age estimator hears Mara as 60 to 68 and Pell as 62 to 71, and hears Wick at the lower pitch as 18 to 23 (a 0.74 to 1.0 probability of being a child at the first, higher setting; his lines now sit at a median of 267 to 320 Hz); every take sits close to its own character's average voice (speaker similarity at least 0.72) and far from the other two (0.2 or less).
 
 | Key | Take kept | Job id |
 |---|---|---|
@@ -173,10 +173,10 @@ Checks on the 40 finished files (`check.py`, `second.py`, `spk.py`, `browser-che
 | `mara/hb-03-proper-rod.intro.1` | 1 of 1 | `59c068c9-6730-47fc-9a71-5807d6f2a97e` |
 | `mara/hb-03-proper-rod.reminder` | 1 of 1 | `9831184d-a318-4635-8710-2f4836dd1353` |
 | `mara/hb-03-proper-rod.outro.0` | 1 of 1 | `56330bea-0e4e-433c-b296-4a22cd22d2e5` |
-| `wick/hb-04-drawing.intro.0` | 1 of 1 | `5ac69a48-37dd-4c0e-87b6-43013d43e264` |
-| `wick/hb-04-drawing.intro.1` | 1 of 1 | `e15da7d9-aba2-442e-949d-b99a3f3a3590` |
-| `wick/hb-04-drawing.reminder` | 1 of 1 | `38e324bc-6861-439b-8db1-3bd95a1961b2` |
-| `wick/hb-04-drawing.outro.0` | 1 of 1 | `e251dfd0-1ce2-47ba-8b1a-c8bc574fcf07` |
+| `wick/hb-04-drawing.intro.0` | 4 of 5 | `cea5b1b5-4c91-4e32-a418-ccd70e7b93e0` |
+| `wick/hb-04-drawing.intro.1` | 3 of 4 | `7801945c-8950-4463-b5f4-2e22a4b2300f` |
+| `wick/hb-04-drawing.reminder` | 2 of 3 | `d394bd2d-c5db-4e6c-968c-49a9162ecce1` |
+| `wick/hb-04-drawing.outro.0` | 4 of 5 | `46ea73b7-522f-484b-a6f5-c2bfa102a115` |
 | `pell/hb-05-dark-lamp.intro.0` | 1 of 1 | `6bb52020-bf97-4bcc-b394-4108eafaaeaa` |
 | `pell/hb-05-dark-lamp.intro.1` | 1 of 1 | `9cbdda37-e8c5-4e96-b537-bb597f50db55` |
 | `pell/hb-05-dark-lamp.intro.2` | 1 of 1 | `8b03eb9a-bfde-48e6-9237-31019654cd31` |
