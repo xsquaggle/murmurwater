@@ -84,6 +84,7 @@ async function boot() {
     get phase() { return game.session.phase; },
     renderer: game.renderer,
     makeFish,
+    get assetsMissing() { return [...assets.missing]; },
     quests,
     buildMs: 0,
     frameStats() { return game.perf?.stats() ?? { fps: 0, p50: 0, p99: 0, cpu: 0 }; },

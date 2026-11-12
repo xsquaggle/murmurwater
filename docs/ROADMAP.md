@@ -25,7 +25,10 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 - [x] Town: NPCs with idle/talk/wave/sit, dialogue with choices, shop, satchel (hold, gear, journal, quests), pause, settings with key rebinding
 - [x] Ferry to Gull Point; lighting the lighthouse lamp
 - [x] Story bot plays the whole chain; playtest bot; unit tests for quests, talk, saves, layout
-- [ ] Voice lines for all 40 lines (asset thread, Higgsfield)
-- [ ] Art pass: harbour cliff faceting, Gull Point arrival view, houses floating slightly
-- [ ] Frame profiling on the 3060 target (Lawson) and on SwiftShader
+- [x] Voice lines for all 40 lines (asset thread, Higgsfield)
+- [x] Art pass: finer terrain with softer facets, cobble and dirt detail, Gull Point path, house footings
+- [ ] Lighting pass for dusk (19:00 reads too dark near the ground)
+- [ ] Sound effects and music (asset thread)
+- [x] F3 performance overlay
+- [ ] Frame profiling on the 3060 target (Lawson reads F3 on their PC)
 - [ ] v0.1.0 Windows build on a Release, milestone report, fresh reviewer pass
