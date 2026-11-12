@@ -1,7 +1,7 @@
 {
   "name": "murmurwater",
   "productName": "Murmurwater",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "A cozy-but-weird fishing incremental.",
   "private": true,
   "type": "module",
@@ -61,14 +61,14 @@
             "x64"
           ]
         }
-      ],
-      "artifactName": "Murmurwater-${version}-${arch}-${target}.${ext}"
+      ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "Murmurwater"
+      "shortcutName": "Murmurwater",
+      "artifactName": "Murmurwater-${version}-setup.${ext}"
     },
     "portable": {
       "artifactName": "Murmurwater-${version}-portable.exe"
