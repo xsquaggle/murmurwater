@@ -18,3 +18,19 @@ Setup, in any scratch folder: create `tools/`, copy these files into it, then
 | `clip-sheet.sh`, `pose-sheet.sh` | Clip strips (one row per clip, six frames) and pose comparisons, built on `render.mjs` and ImageMagick. |
 
 Conventions for every model: glTF, +Y up, metres, front (face, mouth, bow) toward +Z, one material, base-colour texture in WebP (`EXT_texture_webp`), metallic 0, roughness 0.9, no mesh compression.
+
+## Voice lines (`voice/`)
+
+The scripts that turn generated speech into the files in `public/audio/voice/`. Setup: Python 3 with `torch transformers soundfile numpy scipy faster-whisper speechbrain`, ffmpeg with libmp3lame and libsoxr, and Playwright for the browser check. Raw takes are not kept in the repo; each line's job id is in `takes.json` and `docs/ASSETS.md`.
+
+| File | What it does |
+|---|---|
+| `takes.json` | One entry per line: the take that was kept, its generation job id, the voice id, the text hash and the exact prompt (delivery direction in square brackets, then the line). |
+| `add.py` | `add.py <key>=<result url> ...` downloads a take to `raw/<speaker>__<line>.t<n>.mp3` and notes it in `jobs.json`. |
+| `process.py` | Chosen take to finished file: speaker tuning (Pell lower and slower, Wick raised into a child's voice), cut to the speech, limiter, -16 LUFS measured on the encoded MP3, mono 44.1 kHz 128 kbps. `--all-takes` writes every take to `alt/` for comparison. |
+| `check.py` + `analyze.py` | The "ears": for every file, perceived age and child probability (wav2vec2 age-gender model), pitch, pace, a transcript compared with the script (faster-whisper `small.en`), silence at both ends, loudness and peak. |
+| `second.py` | A second transcript with a larger recogniser (`medium.en`), listing only the lines that differ from the script. |
+| `spk.py` | Speaker-embedding similarity of every take to its character's average, to catch takes that drift from the voice. |
+| `browser-check.cjs` | Decodes every file listed in `voiced.json` in headless Chromium, the game's runtime, and reports silence at both ends and peaks. |
+
+To redo a line after its text changes: generate it with the same voice id and a direction in the style of `takes.json`, `add.py` the result, set the take in `takes.json`, run `process.py <key>`, run the checks, copy `final/<key>.mp3` to `public/audio/voice/` and put the new hash in `voiced.json`.

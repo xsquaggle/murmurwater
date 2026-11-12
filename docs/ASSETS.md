@@ -139,3 +139,62 @@ The auto-rigger only handles bipeds, so `rig-cat.mjs` builds the cat's skeleton,
 |---|---|---|
 | `biscuit.glb` | Root, Body, Hips, Chest, Head, Tail1 to Tail3, FrontLeftLeg, FrontRightLeg, HindLeftLeg, HindRightLeg | `walk` 0.72 s loop, in place, one stride covers about 0.17 m; `idle` 4.0 s loop |
 | `biscuit-sit.glb` | Root, Body, Chest, Head | `sit` 5.0 s loop, breathing and a slow head sway |
+
+## Voice lines (`public/audio/voice/`)
+
+The 40 spoken lines listed in `docs/voice/voice-lines.json`, one file per line at `public/audio/voice/<key>.mp3` (mono, 44.1 kHz, 128 kbps MP3, 204 s in total), with `voiced.json` recording the text hash each file was made for. All: Higgsfield `generate_audio`, model `elevenlabs_v4` (ElevenLabs text to speech), preset voices from the Higgsfield voice library, 2026-11-12, generated for this project. Each character has one voice, used for every line:
+
+| Character | Preset voice | Voice id | Tuning after generation |
+|---|---|---|---|
+| Mara Thimble | Celine | `57ccb351-84d7-54ba-afd4-26b566ca6023` | none |
+| Pell | Arthur | `30fc8796-ceb6-4a66-b3a7-4a145ef7f346` | pitch and formants 6 % lower, about 10 % slower (older, deeper) |
+| Wick | Raina | `1c3a4775-9afb-52c1-a2bf-b6543231a9a1` | pitch and formants 25 % higher at 3 % faster tempo (an adult voice turned into a nine-year-old's) |
+
+The voices were cast from trial takes of 14 library voices, measured for perceived age, accent and pace. Each line is sent with a short delivery direction in square brackets ahead of the text (the model acts on it and does not speak it); the exact prompt of every kept take is in `docs/art/pipeline/voice/takes.json`. 58 takes were recorded for the 40 lines: 18 were retakes or alternates, for a repeated word, a word two recognisers both misheard, quiet directions that pulled Mara's voice away from her other lines, and second options for the lines heard first.
+
+Processing (`docs/art/pipeline/voice/process.py`): high-pass, the speaker tuning above, cut to the speech with 0.03 s before and 0.08 s after (clicks after the speech are dropped), limiter at -1.5 dBFS, gain set so the encoded file measures -16 LUFS.
+
+Checks on the 40 finished files (`check.py`, `second.py`, `spk.py`, `browser-check.cjs` in the same folder): all decode in Chromium with at most 0.04 s of silence before and 0.08 s after the speech; loudness -16.0 to -16.1 LUFS, peaks at or below -1.6 dBFS; two speech recognisers transcribe every line as written apart from spellings of numbers and names; the age estimator hears Mara as 60 to 68 and Pell as 62 to 71, and gives Wick a 0.74 to 1.0 probability of being a child; every take sits close to its own character's average voice (speaker similarity at least 0.72) and far from the other two (0.2 or less).
+
+| Key | Take kept | Job id |
+|---|---|---|
+| `mara/hb-01-salt.intro.0` | 1 of 1 | `cd2343b4-5947-46bb-84da-72201af44e16` |
+| `mara/hb-01-salt.intro.1` | 3 of 3 | `db311d4a-179a-46b7-9a63-dc5c45d468d6` |
+| `mara/hb-01-salt.intro.2` | 1 of 1 | `d704f850-aa68-4804-97cc-6ebce43665fd` |
+| `mara/hb-01-salt.reminder` | 1 of 1 | `802b9799-3e49-42ef-859d-c2420680b829` |
+| `mara/hb-01-salt.outro.0` | 1 of 1 | `fea9ad38-409d-4e9e-ae96-ba0495cd1550` |
+| `mara/hb-01-salt.outro.1` | 1 of 1 | `ef5dd4a5-50a8-4bba-b5e0-941dd3e26484` |
+| `mara/hb-02-supper.intro.0` | 2 of 2 | `8de7c900-c8c6-4791-906b-3454bbcebb14` |
+| `mara/hb-02-supper.intro.1` | 1 of 2 | `3d46f0e8-a760-477d-8d57-7acb56782953` |
+| `mara/hb-02-supper.reminder` | 3 of 3 | `22ec1347-25c5-4be3-8d8d-b10ff7237765` |
+| `mara/hb-02-supper.outro.0` | 2 of 2 | `a07f75a5-9338-44ce-9afd-64a8f1fe1448` |
+| `mara/hb-02-supper.outro.1` | 1 of 1 | `77fb5919-70ee-44ac-acfa-c3c1c2aa652c` |
+| `mara/hb-03-proper-rod.intro.0` | 1 of 1 | `36ebe715-7474-4c82-ac6f-22d81650ff2d` |
+| `mara/hb-03-proper-rod.intro.1` | 1 of 1 | `59c068c9-6730-47fc-9a71-5807d6f2a97e` |
+| `mara/hb-03-proper-rod.reminder` | 1 of 1 | `9831184d-a318-4635-8710-2f4836dd1353` |
+| `mara/hb-03-proper-rod.outro.0` | 1 of 1 | `56330bea-0e4e-433c-b296-4a22cd22d2e5` |
+| `wick/hb-04-drawing.intro.0` | 1 of 1 | `5ac69a48-37dd-4c0e-87b6-43013d43e264` |
+| `wick/hb-04-drawing.intro.1` | 1 of 1 | `e15da7d9-aba2-442e-949d-b99a3f3a3590` |
+| `wick/hb-04-drawing.reminder` | 1 of 1 | `38e324bc-6861-439b-8db1-3bd95a1961b2` |
+| `wick/hb-04-drawing.outro.0` | 1 of 1 | `e251dfd0-1ce2-47ba-8b1a-c8bc574fcf07` |
+| `pell/hb-05-dark-lamp.intro.0` | 1 of 1 | `6bb52020-bf97-4bcc-b394-4108eafaaeaa` |
+| `pell/hb-05-dark-lamp.intro.1` | 1 of 1 | `9cbdda37-e8c5-4e96-b537-bb597f50db55` |
+| `pell/hb-05-dark-lamp.intro.2` | 1 of 1 | `8b03eb9a-bfde-48e6-9237-31019654cd31` |
+| `pell/hb-05-dark-lamp.reminder` | 1 of 1 | `875290ee-33fa-487f-9d60-9e233d3d1739` |
+| `pell/hb-05-dark-lamp.outro.0` | 2 of 2 | `91306543-ddfe-4279-8391-28b3f031902f` |
+| `pell/hb-06-relight.intro.0` | 1 of 1 | `fcbfa1c7-90cb-4dc6-8825-b26ba63f4bdb` |
+| `pell/hb-06-relight.intro.1` | 1 of 1 | `6f404df8-e8c8-48a3-9573-bf7c1fb3cd76` |
+| `pell/hb-06-relight.reminder` | 2 of 2 | `1053c4e4-5da2-4aeb-aa0e-a9ea41b1d68f` |
+| `pell/hb-06-relight.outro.0` | 1 of 1 | `0310ec7e-b389-429b-95fe-70c4482e0e1d` |
+| `pell/hb-06-relight.outro.1` | 1 of 1 | `d9479568-fab1-487d-82c4-40195f526564` |
+| `pell/hb-06-relight.outro.2` | 1 of 1 | `6a7cbb93-2ca6-44be-af0b-cd79577ce481` |
+| `mara/bark.0` | 1 of 1 | `96dffe35-2807-4627-b126-912edf4da1b8` |
+| `mara/bark.1` | 1 of 1 | `2da9586a-90e3-440b-a1d3-0f6db986b432` |
+| `mara/bark.2` | 2 of 2 | `e978b504-08c7-4170-b4d8-981f2c1f49ea` |
+| `mara/bark.3` | 2 of 3 | `bf47c33b-0575-4e03-a53c-91f67abf12d9` |
+| `wick/bark.0` | 3 of 3 | `7a62b293-1249-49ff-91a1-c471b5b5e369` |
+| `wick/bark.1` | 2 of 3 | `aba51e0e-2590-44e8-9167-af7a6641d4a6` |
+| `wick/bark.2` | 1 of 2 | `c2a779bf-5934-477a-a044-763c6b577011` |
+| `pell/bark.0` | 2 of 2 | `306dc972-23d4-4499-bc13-b7f1640779d6` |
+| `pell/bark.1` | 1 of 1 | `b4b663f4-6b42-4a17-a0f8-50e25e72b63c` |
+| `pell/bark.2` | 1 of 1 | `d3b30d5f-7df2-4cbf-8da2-6175a768e122` |
