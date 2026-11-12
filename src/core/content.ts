@@ -25,7 +25,14 @@ export interface BaitDef {
   id: string; name: string; price: number; biteSpeed: number; affinity: Record<string, number>; rarityBoost?: number; desc: string;
 }
 export interface ZoneDef { id: string; name: string; x: number; z: number; r: number; priority: number }
-export interface RegionContent extends RegionDef { zones: ZoneDef[] }
+/** A spot in the world the player can interact with (quest targets, stalls, the ferry). */
+export interface PlaceDef { id: string; name: string; x: number; z: number; r: number }
+/** Where an NPC stands; an NPC can have one spot per island (Pell follows the ferry). */
+export interface NpcSpot { npc: string; island: string; x: number; z: number; yaw: number }
+export interface FerryPoint { x: number; z: number; yaw: number; boat: [number, number, number] }
+export interface RegionContent extends RegionDef {
+  zones: ZoneDef[]; places?: PlaceDef[]; npcSpots?: NpcSpot[]; ferry?: Record<string, FerryPoint>;
+}
 
 export const FISH: FishDef[] = fishJson.fish as FishDef[];
 export const RODS: RodDef[] = rodsJson.rods as RodDef[];
@@ -70,7 +77,12 @@ export function validateContent(): string[] {
   }
   for (const r of RODS) { if (r.reach <= 0 || r.power <= 0 || r.control <= 0) errs.push(`rod ${r.id}: stats must be > 0`); }
   for (const b of BAITS) { for (const k of Object.keys(b.affinity)) if (!FISH_BY_ID.has(k)) errs.push(`bait ${b.id}: unknown fish ${k}`); }
-  for (const r of REGIONS) { if (!r.zones.length) errs.push(`region ${r.id}: no zones`); }
+  for (const r of REGIONS) {
+    if (!r.zones.length) errs.push(`region ${r.id}: no zones`);
+    const islands = new Set(r.islands.map((i) => i.id));
+    for (const sp of r.npcSpots ?? []) if (!islands.has(sp.island)) errs.push(`region ${r.id}: npc ${sp.npc} on unknown island ${sp.island}`);
+    for (const k of Object.keys(r.ferry ?? {})) if (!islands.has(k)) errs.push(`region ${r.id}: ferry to unknown island ${k}`);
+  }
   return errs;
 }
 

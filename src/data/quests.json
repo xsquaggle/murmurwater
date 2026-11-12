@@ -1,0 +1,195 @@
+{
+  "quests": [
+    {
+      "id": "hb-01-salt",
+      "chain": "main",
+      "giver": "mara",
+      "title": "Salt on the Wind",
+      "summary": "Catch three fish off the Hearthbay dock.",
+      "requires": [],
+      "intro": [
+        "You'll be the new tenant, then. Bait shop's yours till somebody says otherwise.",
+        "Rod's on the hook by the door. Your aunt's, it was. Go on, end of the dock.",
+        "Hold to cast, let go in the bright bit. Bring me three fish and I'll show you how we do things."
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "count": 3,
+          "label": "Catch 3 fish"
+        }
+      ],
+      "reminder": "Three fish, love. End of the dock. I'll be right here, pretending not to watch.",
+      "outro": [
+        "Three! And none of them looking at you funny. Good start.",
+        "I'll buy what you catch, right here at the stall. Fair prices. Mostly fair."
+      ],
+      "rewards": {
+        "coins": 25
+      }
+    },
+    {
+      "id": "hb-02-supper",
+      "chain": "main",
+      "giver": "mara",
+      "title": "Supper for the Village",
+      "summary": "Sell eight fish at Mara's stall.",
+      "requires": [
+        "hb-01-salt"
+      ],
+      "intro": [
+        "Half the village eats what comes off this dock. Lately it's been… thin.",
+        "Sell me eight fish. The bigger the better. The odder the better, honestly."
+      ],
+      "objectives": [
+        {
+          "type": "sell",
+          "count": 8,
+          "label": "Sell 8 fish"
+        }
+      ],
+      "reminder": "Eight fish for the stall. Bring them here and I'll do the sums.",
+      "outro": [
+        "That'll feed the Pollards and then some. Here, you've earned a look at the good shelf.",
+        "And the notice board by the stall's got odd jobs, if you want more coin. Folk pay well for strange requests."
+      ],
+      "rewards": {
+        "coins": 60,
+        "flags": [
+          "shop-open",
+          "board-open"
+        ]
+      }
+    },
+    {
+      "id": "hb-03-proper-rod",
+      "chain": "main",
+      "giver": "mara",
+      "title": "A Proper Rod",
+      "summary": "Buy the Harbour Rod from Mara's shop.",
+      "requires": [
+        "hb-02-supper"
+      ],
+      "intro": [
+        "That driftwood stick will snap the first time something with opinions bites.",
+        "Harbour Rod. Four hundred and fifty. I'll even throw in some worms."
+      ],
+      "objectives": [
+        {
+          "type": "own",
+          "item": "harbour-rod",
+          "label": "Buy the Harbour Rod"
+        }
+      ],
+      "reminder": "Harbour Rod's on the good shelf. Four-fifty. I don't haggle. Much.",
+      "outro": [
+        "Now you look like you mean it. Worms are in the tin. Don't open it indoors."
+      ],
+      "rewards": {
+        "items": {
+          "sandworm": 20
+        }
+      }
+    },
+    {
+      "id": "hb-04-drawing",
+      "chain": "main",
+      "giver": "wick",
+      "title": "Wick's Drawing",
+      "summary": "Catch the pink fish from Wick's drawing.",
+      "requires": [
+        "hb-01-salt"
+      ],
+      "intro": [
+        "Look! I drew it before I saw it. That means it's real. That's how it works.",
+        "It's pink and it bites sunsets. It lives near the cove or the Teeth. Catch it? Please?"
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "fish": "coral-snapper",
+          "count": 1,
+          "label": "Catch a Coral Snapper"
+        }
+      ],
+      "reminder": "The pink one! Near the cove or the Teeth. It likes sunsets best.",
+      "outro": [
+        "It looks EXACTLY like my drawing! Except it has fewer legs. I'll fix that."
+      ],
+      "rewards": {
+        "coins": 40,
+        "relics": [
+          "wicks-drawing"
+        ]
+      }
+    },
+    {
+      "id": "hb-05-dark-lamp",
+      "chain": "main",
+      "giver": "pell",
+      "title": "The Dark Lamp",
+      "summary": "Catch a Lampjaw after dusk.",
+      "requires": [
+        "hb-03-proper-rod"
+      ],
+      "intro": [
+        "The light on Gull Point's been dark since the keeper went down. Down, I said. Not away.",
+        "A lamp like that won't take ordinary oil. It wants a light the sea made.",
+        "Lampjaw. After the sun's gone. Bring me one."
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "fish": "lampjaw",
+          "count": 1,
+          "label": "Catch a Lampjaw at night"
+        }
+      ],
+      "reminder": "Lampjaw only shows once the sun's gone. Be patient. The sea is.",
+      "outro": [
+        "There. Still warm. Hold onto it, it'll want to go home."
+      ],
+      "rewards": {
+        "flags": [
+          "has-lampjaw-light"
+        ]
+      }
+    },
+    {
+      "id": "hb-06-relight",
+      "chain": "main",
+      "giver": "pell",
+      "title": "Relight",
+      "summary": "Climb the lighthouse on Gull Point and light the lamp.",
+      "requires": [
+        "hb-05-dark-lamp"
+      ],
+      "intro": [
+        "Up the stairs, all the way. Put the light where the light goes.",
+        "And when it catches, don't look at the water. Not straight away."
+      ],
+      "objectives": [
+        {
+          "type": "visit",
+          "place": "lighthouse-lamp",
+          "label": "Light the Gull Point lamp"
+        }
+      ],
+      "reminder": "I'll row you out to Gull Point when you're ready. Just say.",
+      "outro": [
+        "There she is. Hearthbay's been holding its breath a long while.",
+        "You saw it, didn't you. In the water. Two of them.",
+        "Good. Then you're the keeper now. Nobody chooses it. Take the skiff, it was hers."
+      ],
+      "rewards": {
+        "flags": [
+          "hb-lighthouse-lit"
+        ],
+        "boats": [
+          "skiff"
+        ],
+        "moonpearls": 1
+      }
+    }
+  ]
+}

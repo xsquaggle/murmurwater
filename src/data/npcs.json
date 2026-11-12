@@ -1,0 +1,23 @@
+{
+  "npcs": [
+    { "id": "mara", "name": "Mara Thimble", "role": "Harbormistress", "region": "hearthbay", "voice": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "barks": [
+        "Tide's kind today. Don't waste it talking to me.",
+        "Butterperch fry up lovely. Not that I'd know. I'm far too busy.",
+        "If you see a light out past the Teeth, don't row toward it. Just… don't.",
+        "Your rod's older than you are. Treat it gently."
+      ] },
+    { "id": "pell", "name": "Pell", "role": "Ferryman", "region": "hearthbay", "voice": "very old, slow, gentle man; deep, dry, a little amused",
+      "barks": [
+        "High water at a quarter past never. Low water just after you've forgotten.",
+        "The lamp remembers. That's the trouble with lamps.",
+        "Mind the second moon. It minds you."
+      ] },
+    { "id": "wick", "name": "Wick", "role": "Fish artist, age nine", "region": "hearthbay", "voice": "excited young child, quick and breathless",
+      "barks": [
+        "I'm drawing a fish with nine eyes. No, ten. It keeps changing.",
+        "Biscuit ate my blue crayon. Now everything's a bit green.",
+        "Did you know fish dream? I asked one. It said yes."
+      ] }
+  ]
+}

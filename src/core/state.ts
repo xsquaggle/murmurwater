@@ -2,7 +2,9 @@
  * The whole persistent game state. Everything here is saved; nothing else is.
  * Changing this shape REQUIRES bumping SAVE_VERSION and adding a migration in save.ts.
  */
-export const SAVE_VERSION = 1;
+import type { BoardQuest } from './quests';
+
+export const SAVE_VERSION = 2;
 
 export interface CatchItem {
   uid: number; fishId: string; weight: number; trait: string | null; value: number; perfect: boolean;
@@ -31,7 +33,8 @@ export interface GameState {
   };
   boats: { owned: string[]; current: string | null; upgrades: Record<string, number> };
   world: { region: string; pos: [number, number, number]; yaw: number; discovered: string[]; onBoat: boolean };
-  quests: { active: Record<string, Record<string, number>>; done: string[]; board: { id: string; progress: number }[]; boardTimer: number };
+  /** active: quest id → objective index → progress. board: the rotating notice-board jobs (v2). */
+  quests: { active: Record<string, Record<string, number>>; done: string[]; board: { quests: BoardQuest[]; timer: number; serial: number } };
   flags: string[];
   relics: string[];
   echoUpgrades: Record<string, number>;
@@ -61,7 +64,7 @@ export function newGame(seed = Date.now() % 1_000_000): GameState {
     },
     boats: { owned: [], current: null, upgrades: {} },
     world: { region: 'hearthbay', pos: [-118, 1.4, 22], yaw: -Math.PI / 2, discovered: ['hearthbay'], onBoat: false },
-    quests: { active: {}, done: [], board: [], boardTimer: 0 },
+    quests: { active: {}, done: [], board: { quests: [], timer: 0, serial: 0 } },
     flags: [],
     relics: [],
     echoUpgrades: {},

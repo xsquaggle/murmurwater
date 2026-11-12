@@ -37,6 +37,13 @@ describe('saves', () => {
     expect(back.relics).toEqual([]);
     expect(back.gear.worn).toEqual({ hat: null, coat: null, boots: null, charm: null });
   });
+  it('v1 saves migrate to the v2 notice-board shape', () => {
+    const st = deserialize(readFileSync(join(__dirname, 'fixtures', 'saves', 'v1.json'), 'utf8'));
+    expect(st.quests.board).toEqual({ quests: [], timer: 0, serial: 0 });
+    expect((st.quests as any).boardTimer).toBeUndefined();
+    expect(st.coins).toBe(1530);
+    expect(st.journal['kettle-carp'].caught).toBe(3);
+  });
   it('every fixture save from every past version still loads', () => {
     const dir = join(__dirname, 'fixtures', 'saves');
     const files = readdirSync(dir).filter((f) => f.endsWith('.json'));

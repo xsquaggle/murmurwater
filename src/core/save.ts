@@ -9,7 +9,14 @@ export const SAVE_FORMAT = 'murmurwater-save';
 
 type Migration = (s: any) => any;
 /** MIGRATIONS[n] upgrades a version-n state to version n+1. */
-export const MIGRATIONS: Record<number, Migration> = {};
+export const MIGRATIONS: Record<number, Migration> = {
+  // v1 → v2: the notice board became an object holding generated jobs and its own timer.
+  1: (s) => {
+    const q = s.quests ?? {};
+    s.quests = { active: q.active ?? {}, done: q.done ?? [], board: { quests: [], timer: 0, serial: 0 } };
+    return s;
+  },
+};
 
 // JSON can't hold Infinity (the free breadcrumb stack); encode it.
 const INF = '__inf__';

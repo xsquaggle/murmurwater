@@ -155,7 +155,96 @@
           "r": 700,
           "priority": 0
         }
-      ]
+      ],
+      "places": [
+        {
+          "id": "mara-stall",
+          "name": "Mara's stall",
+          "x": -95.2,
+          "z": 23.4,
+          "r": 2.6
+        },
+        {
+          "id": "notice-board",
+          "name": "Notice board",
+          "x": -95.0,
+          "z": 19.6,
+          "r": 2.2
+        },
+        {
+          "id": "ferry-dock",
+          "name": "Pell's ferry",
+          "x": -129.0,
+          "z": 24.2,
+          "r": 3.0
+        },
+        {
+          "id": "ferry-gull",
+          "name": "Gull Point landing",
+          "x": -119.0,
+          "z": -108.5,
+          "r": 3.0
+        },
+        {
+          "id": "lighthouse-lamp",
+          "name": "Gull Point lighthouse",
+          "x": -162.0,
+          "z": -124.6,
+          "r": 3.6
+        }
+      ],
+      "npcSpots": [
+        {
+          "npc": "mara",
+          "island": "hearthbay",
+          "x": -95.2,
+          "z": 25.9,
+          "yaw": 3.1416
+        },
+        {
+          "npc": "pell",
+          "island": "hearthbay",
+          "x": -129.0,
+          "z": 24.6,
+          "yaw": -1.5708
+        },
+        {
+          "npc": "pell",
+          "island": "gull-point",
+          "x": -119.0,
+          "z": -108.2,
+          "yaw": 1.5708
+        },
+        {
+          "npc": "wick",
+          "island": "hearthbay",
+          "x": -73.0,
+          "z": 41.0,
+          "yaw": -2.3
+        }
+      ],
+      "ferry": {
+        "hearthbay": {
+          "x": -127.0,
+          "z": 22.6,
+          "yaw": -1.5708,
+          "boat": [
+            -131.5,
+            25.8,
+            0.3
+          ]
+        },
+        "gull-point": {
+          "x": -121.0,
+          "z": -110.5,
+          "yaw": -2.2,
+          "boat": [
+            -115.8,
+            -109.0,
+            1.2
+          ]
+        }
+      }
     }
   ]
 }

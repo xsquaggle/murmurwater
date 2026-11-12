@@ -1,0 +1,13 @@
+{
+  "boats": [
+    {
+      "id": "skiff",
+      "name": "The Keeper's Skiff",
+      "speed": 7,
+      "turn": 1.2,
+      "hold": 12,
+      "price": 0,
+      "desc": "A patched blue rowing skiff with a lantern hook at the bow. It was your aunt's."
+    }
+  ]
+}
