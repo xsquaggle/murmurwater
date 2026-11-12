@@ -1,5 +1,5 @@
 /** WebGL renderer + post-processing chain, configured by graphics quality. */
-import { HalfFloatType, NoToneMapping, PCFSoftShadowMap, PerspectiveCamera, Scene, SRGBColorSpace, Uniform, Vector3, WebGLRenderer } from 'three';
+import { HalfFloatType, NoToneMapping, PCFShadowMap, PerspectiveCamera, Scene, SRGBColorSpace, Uniform, Vector3, WebGLRenderer } from 'three';
 import {
   BlendFunction, BloomEffect, Effect, EffectComposer, EffectPass, RenderPass, SMAAEffect, ToneMappingEffect, ToneMappingMode, VignetteEffect,
 } from 'postprocessing';
@@ -65,7 +65,7 @@ export class Renderer {
     this.gl = new WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false, depth: true, preserveDrawingBuffer: false });
     this.gl.outputColorSpace = SRGBColorSpace;
     this.gl.toneMapping = NoToneMapping;
-    this.gl.shadowMap.type = PCFSoftShadowMap;
+    this.gl.shadowMap.type = PCFShadowMap;
     this.setQuality(quality);
   }
 

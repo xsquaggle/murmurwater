@@ -26,7 +26,10 @@ export class WorldScene {
   readonly dockEnd: Vector3;
   readonly deckY: number;
   readonly spawn: Vector3;
-  private time = 0;
+  time = 0;
+  readonly dockStart: Vector3;
+  private dockYaw: number;
+  private dockLength: number;
   hour = 17.6;
 
   constructor(readonly region: RegionDef, profile: QualityProfile) {
@@ -54,6 +57,9 @@ export class WorldScene {
     s.add(dock.group);
     dock.group.traverse((o) => { if ((o as Mesh).isMesh) this.propMats.push((o as Mesh).material as MeshStandardMaterial); });
     this.dockEnd = dock.endPoint;
+    this.dockStart = new Vector3(L.dock.x, dock.deckY, L.dock.z);
+    this.dockYaw = L.dock.rot ?? 0;
+    this.dockLength = L.dock.length ?? 30;
     this.deckY = dock.deckY;
     for (const p of dock.lanternPositions) this.lanterns.push(addLanternLight(s, p, 7, 18));
 
@@ -141,6 +147,17 @@ export class WorldScene {
 
     this.boat.position.y = 0.42 + Math.sin(this.time * 1.3) * 0.08;
     this.boat.rotation.z = Math.sin(this.time * 1.1) * 0.04;
+  }
+
+  /** Deck height if (x, z) is on the dock, else null. */
+  dockDeckAt(x: number, z: number): number | null {
+    const dx = x - this.dockStart.x, dz = z - this.dockStart.z;
+    const fx = Math.sin(this.dockYaw), fz = Math.cos(this.dockYaw);
+    const along = dx * fx + dz * fz;
+    const side = Math.abs(dx * fz - dz * fx);
+    if (along < -1 || along > this.dockLength + 5) return null;
+    const half = along > this.dockLength ? 3.5 : 1.35;
+    return side <= half ? this.deckY + 0.07 : null;
   }
 
   get light(): Lighting { return this.lighting; }

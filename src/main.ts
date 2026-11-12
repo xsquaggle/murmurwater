@@ -1,53 +1,71 @@
-import { PerspectiveCamera, Vector3 } from 'three';
-import regions from './data/regions.json';
-import type { RegionDef } from './core/world';
-import { Renderer, type Quality } from './render/renderer';
-import { WorldScene } from './render/world-scene';
+import { Game } from './game/game';
+import type { Quality } from './render/renderer';
+import { loadGame, localStorageStore, type SaveStore } from './core/save';
+import { newGame } from './core/state';
+
+declare global {
+  interface Window {
+    mwNative?: {
+      readSave(): Promise<{ main: string | null; backup: string | null }>;
+      writeSave(text: string): Promise<boolean>;
+      readSettings(): Promise<string | null>;
+      writeSettings(text: string): Promise<boolean>;
+      setWindowMode(mode: string): Promise<void>;
+      setResolution(w: number, h: number): Promise<void>;
+      quit(): Promise<void>;
+    };
+    __MW__?: any;
+  }
+}
 
 const params = new URLSearchParams(location.search);
 const quality = (params.get('quality') as Quality) ?? 'high';
-const canvas = document.getElementById('view') as HTMLCanvasElement;
-const camera = new PerspectiveCamera(50, 16 / 9, 0.3, 9000);
-const region = (regions.regions as unknown as RegionDef[])[0];
 
-const t0 = performance.now();
-const world = new WorldScene(region, (await import('./render/renderer')).QUALITY[quality]);
-const renderer = new Renderer(canvas, quality, world.scene, camera);
-const buildMs = performance.now() - t0;
-if (params.has('hour')) world.hour = Number(params.get('hour'));
+const nativeStore = (): SaveStore => ({
+  read: () => window.mwNative!.readSave(),
+  write: async (t) => { await window.mwNative!.writeSave(t); },
+});
+const store: SaveStore = window.mwNative ? nativeStore() : localStorageStore(params.has('fresh') ? 'murmurwater.test' : 'murmurwater.save');
 
-// Temporary prototype camera (replaced by the player/fishing camera in the vertical slice).
-const focus = world.dockEnd.clone();
-camera.position.copy(world.dockEnd).add(new Vector3(18, 7, 10));
-camera.lookAt(world.dockEnd.clone().add(new Vector3(-40, 2, 0)));
-const parseV = (s: string | null) => (s ? new Vector3(...s.split(',').map(Number)) : null);
-const camP = parseV(params.get('cam')), lookP = parseV(params.get('look'));
-if (camP) camera.position.copy(camP);
-if (lookP) camera.lookAt(lookP);
+async function boot() {
+  const ui = document.getElementById('ui')!;
+  const canvas = document.getElementById('view') as HTMLCanvasElement;
+  let loaded;
+  try { loaded = await loadGame(store); }
+  catch (e) {
+    ui.innerHTML = `<div class="fatal">This save was made by a newer version of Murmurwater. Update the game to keep playing — your save has not been touched.<br><small>${(e as Error).message}</small></div>`;
+    return;
+  }
+  const state = params.has('fresh') ? newGame(1234) : loaded.state;
+  if (params.has('hour')) state.hour = Number(params.get('hour'));
+  const game = new Game(state, canvas, ui, quality, store);
+  if (loaded.warning) game.hud.toast(loaded.warning, 'bad');
 
-window.addEventListener('resize', () => renderer.resize());
+  // Title card: a click starts audio (browser rule) and captures the mouse.
+  const title = document.createElement('div');
+  title.className = 'title';
+  title.innerHTML = `<div class="title-inner"><div class="title-name">Murmurwater</div><div class="title-sub">the sea is listening</div><div class="title-go">Click to begin</div></div>`;
+  ui.appendChild(title);
+  document.body.classList.add('titled');
+  const begin = () => {
+    title.classList.add('out');
+    document.body.classList.remove('titled');
+    setTimeout(() => title.remove(), 900);
+    game.audio.start();
+    game.input.requestLock();
+  };
+  if (params.has('notitle')) { title.remove(); document.body.classList.remove('titled'); } else title.addEventListener('click', begin, { once: true });
+  canvas.addEventListener('click', () => { game.audio.start(); game.input.requestLock(); });
 
-let last = performance.now();
-let frames = 0;
-const frameTimes: number[] = [];
-function loop(now: number) {
-  const dt = Math.min(0.1, (now - last) / 1000);
-  last = now;
-  frameTimes.push(dt * 1000);
-  if (frameTimes.length > 600) frameTimes.shift();
-  world.update(dt, camera, focus);
-  renderer.render(dt);
-  frames++;
-  requestAnimationFrame(loop);
+  game.start();
+  window.__MW__ = {
+    game,
+    get frames() { return game.frames; },
+    get state() { return game.state; },
+    get phase() { return game.session.phase; },
+    renderer: game.renderer,
+    buildMs: 0,
+    frameStats() { return { p50: 0, p99: 0 }; },
+  };
 }
-requestAnimationFrame(loop);
-
-// Debug/test hook (used by e2e screenshots and the bot).
-(window as any).__MW__ = {
-  get frames() { return frames; },
-  buildMs,
-  world, camera, renderer,
-  setHour(h: number) { world.hour = h; },
-  setCamera(p: number[], l: number[]) { camera.position.set(p[0], p[1], p[2]); camera.lookAt(l[0], l[1], l[2]); },
-  frameStats() { const s = [...frameTimes].sort((a, b) => a - b); return { p50: s[Math.floor(s.length * 0.5)], p99: s[Math.floor(s.length * 0.99)] }; },
-};
+void boot();

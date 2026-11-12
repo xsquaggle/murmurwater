@@ -1,0 +1,39 @@
+name: Release (Windows)
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npx electron-builder --win --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            release/*.exe
+            release/*.yml
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          NOTES_FILE=docs/release-notes/${TAG}.md
+          if [ -f "$NOTES_FILE" ]; then NOTES="--notes-file $NOTES_FILE"; else NOTES="--notes Windows build of $TAG"; fi
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "Murmurwater $TAG" $NOTES --prerelease
+          gh release upload "$TAG" release/*.exe --clobber

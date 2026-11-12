@@ -76,7 +76,7 @@ export interface FishingInput {
 }
 export const NO_INPUT: FishingInput = { primary: false, primaryPressed: false, primaryReleased: false, steer: 0, cancel: false };
 
-export interface SpotInfo { zoneId: string | null; depth: number; hotspot: boolean }
+export interface SpotInfo { zoneId: string | null; depth: number; hotspot: boolean; distance?: number }
 
 export interface FishingContext {
   rod: RodDef;
@@ -173,6 +173,10 @@ export class FishingSession {
     // Overcharged casts (falling back from max) lose a bit of distance.
     this.castDistance = Math.max(3, this.ctx.rod.reach * (0.25 + 0.75 * p));
     this.spot = this.ctx.spot(this.castDistance);
+    if (this.spot.distance !== undefined) {
+      if (this.spot.distance <= 0) { this.phase = 'idle'; return; } // nowhere wet to land
+      this.castDistance = this.spot.distance;
+    }
     this.flight = FEEL.flightBase + this.castDistance * FEEL.flightPerMetre;
     this.phase = 'casting';
     this.events.push({ type: 'cast', power: p, clean: this.cleanCast, distance: this.castDistance });
