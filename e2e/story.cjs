@@ -18,9 +18,11 @@ const { chromium } = require('playwright');
     // The bot runs game time far faster than real time; let CSS fades (dialogue, screen fade) finish so
     // the shot shows what a player would see.
     await page.waitForTimeout(900);
-    await page.screenshot({ path: `${outDir}/${name}.png`, timeout: 120000 });
+    // Screenshots are evidence, not the test: on a slow software renderer a timeout is only a warning.
+    try { await page.screenshot({ path: `${outDir}/${name}.png`, timeout: 120000 }); }
+    catch (e) { console.warn(`shot ${name} skipped: ${e.message.split('\n')[0]}`); }
   };
-  await page.goto(`http://localhost:${port}/?fresh&notitle&hour=16.5&quality=medium`);
+  await page.goto(`http://localhost:${port}/?fresh&notitle&hour=16.5&quality=${process.env.MW_QUALITY || 'medium'}`);
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 2, null, { timeout: 180000 });
 
   // Helpers living in the page.

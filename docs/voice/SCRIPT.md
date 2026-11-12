@@ -9,25 +9,25 @@ Voice: warm, brisk, middle-aged woman with a soft coastal accent.
 
 | Key | Hash | Status | Line |
 |---|---|---|---|
-| `mara/hb-01-salt.intro.0` | 16df58a3 | missing | You'll be the new tenant, then. Bait shop's yours till somebody says otherwise. |
-| `mara/hb-01-salt.intro.1` | b7402307 | missing | Rod's on the hook by the door. Your aunt's, it was. Go on, end of the dock. |
-| `mara/hb-01-salt.intro.2` | 91265989 | missing | Hold to cast, let go in the bright bit. Bring me three fish and I'll show you how we do things. |
-| `mara/hb-01-salt.reminder` | 3e9d419b | missing | Three fish, love. End of the dock. I'll be right here, pretending not to watch. |
-| `mara/hb-01-salt.outro.0` | 73f0985e | missing | Three! And none of them looking at you funny. Good start. |
-| `mara/hb-01-salt.outro.1` | d26662ed | missing | I'll buy what you catch, right here at the stall. Fair prices. Mostly fair. |
-| `mara/hb-02-supper.intro.0` | c3b5bb4e | missing | Half the village eats what comes off this dock. Lately it's been… thin. |
-| `mara/hb-02-supper.intro.1` | 2333ac96 | missing | Sell me eight fish. The bigger the better. The odder the better, honestly. |
-| `mara/hb-02-supper.reminder` | 27bfe7db | missing | Eight fish for the stall. Bring them here and I'll do the sums. |
-| `mara/hb-02-supper.outro.0` | 966727cc | missing | That'll feed the Pollards and then some. Here, you've earned a look at the good shelf. |
-| `mara/hb-02-supper.outro.1` | 3729970d | missing | And the notice board by the stall's got odd jobs, if you want more coin. Folk pay well for strange requests. |
-| `mara/hb-03-proper-rod.intro.0` | f1cf813a | missing | That driftwood stick will snap the first time something with opinions bites. |
-| `mara/hb-03-proper-rod.intro.1` | 967de95f | missing | Harbour Rod. Four hundred and fifty. I'll even throw in some worms. |
-| `mara/hb-03-proper-rod.reminder` | 5ba0c5c9 | missing | Harbour Rod's on the good shelf. Four-fifty. I don't haggle. Much. |
-| `mara/hb-03-proper-rod.outro.0` | d579bec9 | missing | Now you look like you mean it. Worms are in the tin. Don't open it indoors. |
-| `mara/bark.0` | 4a5ccfb0 | missing | Tide's kind today. Don't waste it talking to me. |
-| `mara/bark.1` | 77be48a8 | missing | Butterperch fry up lovely. Not that I'd know. I'm far too busy. |
-| `mara/bark.2` | e7e630b6 | missing | If you see a light out past the Teeth, don't row toward it. Just… don't. |
-| `mara/bark.3` | dc5d1359 | missing | Your rod's older than you are. Treat it gently. |
+| `mara/hb-01-salt.intro.0` | 16df58a3 | ok | You'll be the new tenant, then. Bait shop's yours till somebody says otherwise. |
+| `mara/hb-01-salt.intro.1` | b7402307 | ok | Rod's on the hook by the door. Your aunt's, it was. Go on, end of the dock. |
+| `mara/hb-01-salt.intro.2` | 91265989 | ok | Hold to cast, let go in the bright bit. Bring me three fish and I'll show you how we do things. |
+| `mara/hb-01-salt.reminder` | 3e9d419b | ok | Three fish, love. End of the dock. I'll be right here, pretending not to watch. |
+| `mara/hb-01-salt.outro.0` | 73f0985e | ok | Three! And none of them looking at you funny. Good start. |
+| `mara/hb-01-salt.outro.1` | d26662ed | ok | I'll buy what you catch, right here at the stall. Fair prices. Mostly fair. |
+| `mara/hb-02-supper.intro.0` | c3b5bb4e | ok | Half the village eats what comes off this dock. Lately it's been… thin. |
+| `mara/hb-02-supper.intro.1` | 2333ac96 | ok | Sell me eight fish. The bigger the better. The odder the better, honestly. |
+| `mara/hb-02-supper.reminder` | 27bfe7db | ok | Eight fish for the stall. Bring them here and I'll do the sums. |
+| `mara/hb-02-supper.outro.0` | 966727cc | ok | That'll feed the Pollards and then some. Here, you've earned a look at the good shelf. |
+| `mara/hb-02-supper.outro.1` | 3729970d | ok | And the notice board by the stall's got odd jobs, if you want more coin. Folk pay well for strange requests. |
+| `mara/hb-03-proper-rod.intro.0` | f1cf813a | ok | That driftwood stick will snap the first time something with opinions bites. |
+| `mara/hb-03-proper-rod.intro.1` | 967de95f | ok | Harbour Rod. Four hundred and fifty. I'll even throw in some worms. |
+| `mara/hb-03-proper-rod.reminder` | 5ba0c5c9 | ok | Harbour Rod's on the good shelf. Four-fifty. I don't haggle. Much. |
+| `mara/hb-03-proper-rod.outro.0` | d579bec9 | ok | Now you look like you mean it. Worms are in the tin. Don't open it indoors. |
+| `mara/bark.0` | 4a5ccfb0 | ok | Tide's kind today. Don't waste it talking to me. |
+| `mara/bark.1` | 77be48a8 | ok | Butterperch fry up lovely. Not that I'd know. I'm far too busy. |
+| `mara/bark.2` | e7e630b6 | ok | If you see a light out past the Teeth, don't row toward it. Just… don't. |
+| `mara/bark.3` | dc5d1359 | ok | Your rod's older than you are. Treat it gently. |
 
 ## Pell (Ferryman)
 
@@ -35,20 +35,20 @@ Voice: very old, slow, gentle man; deep, dry, a little amused.
 
 | Key | Hash | Status | Line |
 |---|---|---|---|
-| `pell/hb-05-dark-lamp.intro.0` | 082e7a6d | missing | The light on Gull Point's been dark since the keeper went down. Down, I said. Not away. |
-| `pell/hb-05-dark-lamp.intro.1` | 6855c22c | missing | A lamp like that won't take ordinary oil. It wants a light the sea made. |
-| `pell/hb-05-dark-lamp.intro.2` | 03b8389d | missing | Lampjaw. After the sun's gone. Bring me one. |
-| `pell/hb-05-dark-lamp.reminder` | b40c7b82 | missing | Lampjaw only shows once the sun's gone. Be patient. The sea is. |
-| `pell/hb-05-dark-lamp.outro.0` | 54f9b7fc | missing | There. Still warm. Hold onto it, it'll want to go home. |
-| `pell/hb-06-relight.intro.0` | ff1e7a36 | missing | Up the stairs, all the way. Put the light where the light goes. |
-| `pell/hb-06-relight.intro.1` | a45fcc9d | missing | And when it catches, don't look at the water. Not straight away. |
-| `pell/hb-06-relight.reminder` | 26cad868 | missing | I'll row you out to Gull Point when you're ready. Just say. |
-| `pell/hb-06-relight.outro.0` | a5bb3c78 | missing | There she is. Hearthbay's been holding its breath a long while. |
-| `pell/hb-06-relight.outro.1` | c22bd8db | missing | You saw it, didn't you. In the water. Two of them. |
-| `pell/hb-06-relight.outro.2` | c8c124f2 | missing | Good. Then you're the keeper now. Nobody chooses it. Take the skiff, it was hers. |
-| `pell/bark.0` | 5036d214 | missing | High water at a quarter past never. Low water just after you've forgotten. |
-| `pell/bark.1` | b2462cdc | missing | The lamp remembers. That's the trouble with lamps. |
-| `pell/bark.2` | 42f18078 | missing | Mind the second moon. It minds you. |
+| `pell/hb-05-dark-lamp.intro.0` | 082e7a6d | ok | The light on Gull Point's been dark since the keeper went down. Down, I said. Not away. |
+| `pell/hb-05-dark-lamp.intro.1` | 6855c22c | ok | A lamp like that won't take ordinary oil. It wants a light the sea made. |
+| `pell/hb-05-dark-lamp.intro.2` | 03b8389d | ok | Lampjaw. After the sun's gone. Bring me one. |
+| `pell/hb-05-dark-lamp.reminder` | b40c7b82 | ok | Lampjaw only shows once the sun's gone. Be patient. The sea is. |
+| `pell/hb-05-dark-lamp.outro.0` | 54f9b7fc | ok | There. Still warm. Hold onto it, it'll want to go home. |
+| `pell/hb-06-relight.intro.0` | ff1e7a36 | ok | Up the stairs, all the way. Put the light where the light goes. |
+| `pell/hb-06-relight.intro.1` | a45fcc9d | ok | And when it catches, don't look at the water. Not straight away. |
+| `pell/hb-06-relight.reminder` | 26cad868 | ok | I'll row you out to Gull Point when you're ready. Just say. |
+| `pell/hb-06-relight.outro.0` | a5bb3c78 | ok | There she is. Hearthbay's been holding its breath a long while. |
+| `pell/hb-06-relight.outro.1` | c22bd8db | ok | You saw it, didn't you. In the water. Two of them. |
+| `pell/hb-06-relight.outro.2` | c8c124f2 | ok | Good. Then you're the keeper now. Nobody chooses it. Take the skiff, it was hers. |
+| `pell/bark.0` | 5036d214 | ok | High water at a quarter past never. Low water just after you've forgotten. |
+| `pell/bark.1` | b2462cdc | ok | The lamp remembers. That's the trouble with lamps. |
+| `pell/bark.2` | 42f18078 | ok | Mind the second moon. It minds you. |
 
 ## Wick (Fish artist, age nine)
 
@@ -56,10 +56,10 @@ Voice: excited young child, quick and breathless.
 
 | Key | Hash | Status | Line |
 |---|---|---|---|
-| `wick/hb-04-drawing.intro.0` | 9d65f963 | missing | Look! I drew it before I saw it. That means it's real. That's how it works. |
-| `wick/hb-04-drawing.intro.1` | bf2079d0 | missing | It's pink and it bites sunsets. It lives near the cove or the Teeth. Catch it? Please? |
-| `wick/hb-04-drawing.reminder` | faa53ec9 | missing | The pink one! Near the cove or the Teeth. It likes sunsets best. |
-| `wick/hb-04-drawing.outro.0` | a134cc9c | missing | It looks EXACTLY like my drawing! Except it has fewer legs. I'll fix that. |
-| `wick/bark.0` | 851ec861 | missing | I'm drawing a fish with nine eyes. No, ten. It keeps changing. |
-| `wick/bark.1` | 6609766c | missing | Biscuit ate my blue crayon. Now everything's a bit green. |
-| `wick/bark.2` | ec89303e | missing | Did you know fish dream? I asked one. It said yes. |
+| `wick/hb-04-drawing.intro.0` | 9d65f963 | ok | Look! I drew it before I saw it. That means it's real. That's how it works. |
+| `wick/hb-04-drawing.intro.1` | bf2079d0 | ok | It's pink and it bites sunsets. It lives near the cove or the Teeth. Catch it? Please? |
+| `wick/hb-04-drawing.reminder` | faa53ec9 | ok | The pink one! Near the cove or the Teeth. It likes sunsets best. |
+| `wick/hb-04-drawing.outro.0` | a134cc9c | ok | It looks EXACTLY like my drawing! Except it has fewer legs. I'll fix that. |
+| `wick/bark.0` | 851ec861 | ok | I'm drawing a fish with nine eyes. No, ten. It keeps changing. |
+| `wick/bark.1` | 6609766c | ok | Biscuit ate my blue crayon. Now everything's a bit green. |
+| `wick/bark.2` | ec89303e | ok | Did you know fish dream? I asked one. It said yes. |
