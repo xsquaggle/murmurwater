@@ -1,0 +1,29 @@
+{
+  "regions": [
+    {
+      "id": "hearthbay",
+      "name": "Hearthbay",
+      "center": [0, 0],
+      "radius": 700,
+      "seaDepth": 24,
+      "grade": "amber",
+      "islands": [
+        { "id": "hearthbay", "name": "Hearthbay", "x": 0, "z": 0, "rx": 165, "rz": 135, "rot": 0.2, "height": 26, "seed": 1, "profile": "hill" },
+        { "id": "gull-point", "name": "Gull Point", "x": -150, "z": -125, "rx": 48, "rz": 36, "rot": -0.5, "height": 14, "seed": 2, "profile": "hill" },
+        { "id": "kettle-isle", "name": "Kettle Isle", "x": -360, "z": 70, "rx": 62, "rz": 46, "rot": 0.9, "height": 18, "seed": 3, "profile": "hill" },
+        { "id": "teeth-1", "name": "The Teeth", "x": -262, "z": 228, "rx": 11, "rz": 9, "rot": 0, "height": 22, "seed": 4, "profile": "stack" },
+        { "id": "teeth-2", "name": "The Teeth", "x": -288, "z": 252, "rx": 9, "rz": 8, "rot": 0.4, "height": 15, "seed": 5, "profile": "stack" },
+        { "id": "teeth-3", "name": "The Teeth", "x": -240, "z": 262, "rx": 8, "rz": 7, "rot": 0.8, "height": 11, "seed": 6, "profile": "stack" },
+        { "id": "pips-bar", "name": "Pip's Bar", "x": -150, "z": 190, "rx": 46, "rz": 13, "rot": -0.35, "height": 1.1, "seed": 7, "profile": "bar" }
+      ],
+      "carves": [
+        { "x": -128, "z": 18, "r": 62, "depth": 7 }
+      ],
+      "landmarks": {
+        "lighthouse": { "x": -162, "z": -132, "rot": 0 },
+        "dock": { "x": -92, "z": 22, "rot": -1.5708, "length": 34 },
+        "spawn": { "x": -118, "z": 22, "facing": -1.5708 }
+      }
+    }
+  ]
+}

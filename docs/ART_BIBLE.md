@@ -69,5 +69,6 @@ Splash on lure entry, ripples, bite plunge burst, line tension shimmer, reel-in 
 `docs/art/refs/` holds the locked style reference images (generated against this bible). Generated assets must be compared against them before they go in. Status: to be generated in pre-production.
 
 ## 10. Asset pipeline rules
+- **Fidelity bar (Lawson, 2026-11-12):** models should look as if they have had three fidelity passes. Cartoony is welcome; crude is not. Higgsfield credits already on the account may be spent freely; never buy credits or plans without asking.
 - Raw generations are source material: decimate, re-colour to palette vertex colours, flat-shade, check scale, then export GLB to `public/models/`.
 - Every third-party or generated asset is recorded in `docs/ASSETS.md` with source, tool, licence and date.

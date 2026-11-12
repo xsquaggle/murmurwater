@@ -149,6 +149,13 @@ The last keeper, **Isolde Fenn**, noticed the dream souring (the uncanny fish ar
 - Short lines. Never more than three dialogue boxes before control returns.
 - Warm voice first; the weird line arrives last and is never explained on the spot.
 - The player character is silent; choices are rare and small.
+- **Every NPC line is voiced** (Higgsfield TTS, one fixed voice per character). Each line has an id in the dialogue data; audio files are named by that id. Subtitles always show; a voice volume slider sits beside music and SFX.
+
+### 10.5 Audio plan
+- **Voice:** Higgsfield-generated per line (see above). Short barks for shop greetings and catch reactions too.
+- **Music:** one calm theme per region plus a night variant and a fight layer that fades in during a fight (generated, then trimmed into loops).
+- **SFX:** ForgeGUI sound-effect generation for one-shots (splash, bite, coin, chest, bell), procedural WebAudio for continuous sounds (reel ratchet pitch tied to reel speed, line hum tied to tension, wind, waves).
+- **Ambience:** per-region beds (gulls and lapping water, fen frogs and insects, storm wind, the Hush's near-silence).
 
 ## 11. Onboarding
 - First 5 minutes: Mara walks you through cast → hook → fight on the Hearthbay dock with one fish species and big, generous windows; no menus.
