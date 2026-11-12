@@ -15,13 +15,15 @@ export interface QualityProfile {
   bloom: boolean;
   smaa: boolean;
   viewDistance: number;
+  /** Terrain lattice spacing in metres (smaller = finer facets). */
+  terrainCell: number;
 }
 
 export const QUALITY: Record<Quality, QualityProfile> = {
-  low: { pixelRatio: 0.75, msaa: 0, shadows: false, shadowSize: 1024, waterSegments: 160, bloom: false, smaa: true, viewDistance: 1800 },
-  medium: { pixelRatio: 1, msaa: 0, shadows: true, shadowSize: 1024, waterSegments: 256, bloom: true, smaa: true, viewDistance: 3000 },
-  high: { pixelRatio: 1, msaa: 4, shadows: true, shadowSize: 2048, waterSegments: 384, bloom: true, smaa: false, viewDistance: 4500 },
-  ultra: { pixelRatio: 1.5, msaa: 4, shadows: true, shadowSize: 4096, waterSegments: 512, bloom: true, smaa: false, viewDistance: 6000 },
+  low: { pixelRatio: 0.75, msaa: 0, shadows: false, shadowSize: 1024, waterSegments: 160, bloom: false, smaa: true, viewDistance: 1800, terrainCell: 4 },
+  medium: { pixelRatio: 1, msaa: 0, shadows: true, shadowSize: 1024, waterSegments: 256, bloom: true, smaa: true, viewDistance: 3000, terrainCell: 3 },
+  high: { pixelRatio: 1, msaa: 4, shadows: true, shadowSize: 2048, waterSegments: 384, bloom: true, smaa: false, viewDistance: 4500, terrainCell: 3 },
+  ultra: { pixelRatio: 1.5, msaa: 4, shadows: true, shadowSize: 4096, waterSegments: 512, bloom: true, smaa: false, viewDistance: 6000, terrainCell: 2.5 },
 };
 
 /** Split-tone colour grade: warm highlights, cool violet shadows, gentle saturation lift. */

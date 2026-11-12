@@ -56,6 +56,9 @@ export function buildTerrain(hf: Heightfield, cell = 4): TerrainBuild {
   const rock = new Color(PALETTE.slate);
   const rockDark = new Color('#4A505E');
   const rockWarm = new Color('#7A7068');
+  const rockLight = new Color('#8E8A86');
+  const cobble = new Color('#A99E8C'), cobbleDark = new Color('#8C8272');
+  const dirt = new Color('#A88A66'), dirtLight = new Color('#BFA27A');
 
   const positions: number[] = [];
   const colors: number[] = [];
@@ -88,9 +91,13 @@ export function buildTerrain(hf: Heightfield, cell = 4): TerrainBuild {
       if (cy > 18) c.lerp(mossLight, Math.min(0.4, (cy - 18) / 12));
     }
     if (cy > 0.6 && ny < 0.74) {
-      c.copy(rock).lerp(rockWarm, Math.max(0, v + 0.2) * 0.6);
-      if (ny < 0.55) c.lerp(rockDark, 0.45);
+      // Rock with sedimentary bands so big cliff faces read as layered stone, not flat paint.
+      const band = Math.sin(cy * 1.7 + v * 2.2) * 0.5 + 0.5;
+      c.copy(rock).lerp(rockWarm, Math.max(0, v + 0.2) * 0.6).lerp(rockLight, band * 0.35);
+      if (ny < 0.55) c.lerp(rockDark, 0.4);
     }
+    const surf = hf.surfaceAt(cx, cz);
+    if (surf.kind && cy > -0.2) c.lerp(surf.kind === 'cobble' ? (hash2(cx * 3.1, cz * 1.7) > 0.5 ? cobble : cobbleDark) : (hash2(cx, cz * 2.3) > 0.6 ? dirtLight : dirt), surf.w * 0.92);
     c.multiplyScalar(jit);
     positions.push(ax, ay, az, bx, by, bz, dx, dy, dz);
     for (let t = 0; t < 3; t++) colors.push(c.r, c.g, c.b);

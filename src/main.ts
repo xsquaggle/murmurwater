@@ -2,6 +2,8 @@ import { Game } from './game/game';
 import type { Quality } from './render/renderer';
 import { loadGame, localStorageStore, type SaveStore } from './core/save';
 import { newGame } from './core/state';
+import { assets } from './render/assets';
+import { makeFish } from './render/fish-models';
 
 declare global {
   interface Window {
@@ -36,10 +38,22 @@ async function boot() {
     ui.innerHTML = `<div class="fatal">This save was made by a newer version of Murmurwater. Update the game to keep playing — your save has not been touched.<br><small>${(e as Error).message}</small></div>`;
     return;
   }
+  // Models load behind a small progress line; missing ones fall back to stand-ins.
+  const loading = document.createElement('div');
+  loading.className = 'loading';
+  loading.textContent = 'Listening for the tide… 0%';
+  ui.appendChild(loading);
+  await assets.loadAll((p) => { loading.textContent = `Listening for the tide… ${Math.round(p * 100)}%`; });
+  loading.remove();
   const state = params.has('fresh') ? newGame(1234) : loaded.state;
   if (params.has('hour')) state.hour = Number(params.get('hour'));
   const game = new Game(state, canvas, ui, quality, store);
   if (loaded.warning) game.hud.toast(loaded.warning, 'bad');
+  // Screenshot hooks: ?cam=x,y,z&look=x,y,z fixes the camera; ?at=x,z places the player.
+  const vec = (k: string) => params.get(k)?.split(',').map(Number);
+  const cam = vec('cam'), look = vec('look'), at = vec('at');
+  if (cam && look) game.debugCam = { pos: game.pos.clone().set(cam[0], cam[1], cam[2]), look: game.pos.clone().set(look[0], look[1], look[2]) };
+  if (at) { game.pos.set(at[0], game.groundAt(at[0], at[1]) ?? 1.4, at[1]); if (at[2] !== undefined) game.yaw = at[2]; }
 
   // Title card: a click starts audio (browser rule) and captures the mouse.
   const title = document.createElement('div');
@@ -64,6 +78,7 @@ async function boot() {
     get state() { return game.state; },
     get phase() { return game.session.phase; },
     renderer: game.renderer,
+    makeFish,
     buildMs: 0,
     frameStats() { return { p50: 0, p99: 0 }; },
   };

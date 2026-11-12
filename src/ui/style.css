@@ -101,3 +101,4 @@ body.titled .hud { opacity: 0; }
 .title-go { margin-top: 48px; font-weight: 800; font-size: 18px; letter-spacing: .2em; text-transform: uppercase; animation: breathe 2.4s ease-in-out infinite; }
 @keyframes breathe { 50% { opacity: .4 } }
 .fatal { position: absolute; inset: 30% 20%; background: var(--bone); border: 2px solid var(--ink); border-radius: 16px; padding: 24px; font-weight: 700; pointer-events: auto; }
+.loading { position: absolute; left: 50%; bottom: 9vh; transform: translateX(-50%); font: 500 15px/1 'Nunito Variable', sans-serif; letter-spacing: .08em; color: #F2E3C6; opacity: .8; z-index: 30; }

@@ -9,15 +9,13 @@ const mat = (hex: string, rough = 0.8) => new MeshStandardMaterial({ color: new 
 
 export type Pose = 'idle' | 'walk' | 'charge' | 'cast' | 'wait' | 'fight' | 'cheer';
 
-export class Avatar {
+export class Avatar implements PlayerAvatar {
   readonly root = new Group();
   private body = new Group();
   private legL: Object3D; private legR: Object3D;
   private armR = new Group();
   private armL: Object3D;
-  readonly rodPivot = new Group();
-  private segs: Group[] = [];
-  readonly tip = new Object3D();
+  readonly rod = new RodRig();
   private t = 0;
   // Animation targets (smoothed)
   private pitch = 0.6; private pitchV = 0;
@@ -60,24 +58,9 @@ export class Avatar {
     };
     const armL = new Group(); arm(armL, -0.3); this.armL = armL;
     arm(this.armR, 0.3);
-    // Rod: grip + three tapering segments that can bend, and a tip marker for the line.
-    this.rodPivot.position.set(0, -0.5, 0.05);
-    this.armR.add(this.rodPivot);
-    const cork = new Mesh(new CylinderGeometry(0.03, 0.035, 0.35, 6), mat('#B88B5A')); cork.position.y = 0.05; this.rodPivot.add(cork);
-    const reel = new Mesh(new CylinderGeometry(0.06, 0.06, 0.05, 8), mat('#5C6670', 0.4)); reel.rotation.z = Math.PI / 2; reel.position.set(0.06, 0.12, 0); this.rodPivot.add(reel);
-    let parent: Object3D = this.rodPivot;
-    const lens = [0.75, 0.75, 0.7];
-    const radii = [0.022, 0.016, 0.011, 0.006];
-    let y = 0.22;
-    lens.forEach((len, i) => {
-      const g = new Group(); g.position.y = y; parent.add(g);
-      const m = new Mesh(new CylinderGeometry(radii[i + 1], radii[i], len, 5), mat(i === 0 ? PALETTE.driftwood : '#9A7A5A', 0.5));
-      m.position.y = len / 2; g.add(m);
-      const ring = new Mesh(new SphereGeometry(0.014, 4, 3), mat('#D9D2C0', 0.3)); ring.position.y = len; g.add(ring);
-      this.segs.push(g); parent = g; y = len;
-    });
-    this.tip.position.y = lens[2];
-    parent.add(this.tip);
+    // Rod (shared rig): hangs off the right hand.
+    this.rod.pivot.position.set(0, -0.5, 0.05);
+    this.armR.add(this.rod.pivot);
     this.root.add(this.body);
     this.root.traverse((o) => { if ((o as Mesh).isMesh) { (o as Mesh).castShadow = true; } });
   }
@@ -110,7 +93,7 @@ export class Avatar {
     // Arm holds the rod out in front; pitch tilts the whole arm+rod.
     this.armR.rotation.set(-this.pitch - 0.2, this.yaw, -0.15);
     this.armL.rotation.x += (-armL - this.armL.rotation.x) * Math.min(1, dt * 8);
-    this.segs.forEach((s, i) => { s.rotation.x = this.bend * (0.5 + i * 0.5); s.rotation.z = -this.yaw * 0.15 * i; });
+    this.rod.setBend(this.bend, this.yaw);
     // Walk cycle
     this.walkPhase += dt * speed * 4.2;
     const sw = speed > 0.1 ? Math.sin(this.walkPhase) * 0.5 : 0;
@@ -119,7 +102,48 @@ export class Avatar {
     if (pose === 'cheer') this.body.position.y = Math.abs(Math.sin(this.t * 8)) * 0.15;
   }
 
-  tipWorld(out = new Vector3()): Vector3 { return this.tip.getWorldPosition(out); }
+  tipWorld(out = new Vector3()): Vector3 { return this.rod.tip.getWorldPosition(out); }
+  holdFish(_fish: Object3D | null) { /* the stand-in avatar doesn't present catches */ }
+}
+
+/** Grip, reel and three tapering segments that bend under load; `tip` is where the line leaves the rod. The rod points along +Y. */
+export class RodRig {
+  readonly pivot = new Group();
+  readonly tip = new Object3D();
+  /** Where the left hand cranks, in pivot space. */
+  readonly reelHandle = new Vector3(0.085, 0.12, 0);
+  private segs: Group[] = [];
+  constructor() {
+    const cork = new Mesh(new CylinderGeometry(0.03, 0.035, 0.35, 6), mat('#B88B5A')); cork.position.y = 0.05; this.pivot.add(cork);
+    const reel = new Mesh(new CylinderGeometry(0.06, 0.06, 0.05, 8), mat('#5C6670', 0.4)); reel.rotation.z = Math.PI / 2; reel.position.set(0.06, 0.12, 0); this.pivot.add(reel);
+    let parent: Object3D = this.pivot;
+    const lens = [0.75, 0.75, 0.7];
+    const radii = [0.022, 0.016, 0.011, 0.006];
+    let y = 0.22;
+    lens.forEach((len, i) => {
+      const g = new Group(); g.position.y = y; parent.add(g);
+      const m = new Mesh(new CylinderGeometry(radii[i + 1], radii[i], len, 5), mat(i === 0 ? PALETTE.driftwood : '#9A7A5A', 0.5));
+      m.position.y = len / 2; g.add(m);
+      const ring = new Mesh(new SphereGeometry(0.014, 4, 3), mat('#D9D2C0', 0.3)); ring.position.y = len; g.add(ring);
+      this.segs.push(g); parent = g; y = len;
+    });
+    this.tip.position.y = lens[2];
+    parent.add(this.tip);
+    this.pivot.traverse((o) => { if ((o as Mesh).isMesh) (o as Mesh).castShadow = true; });
+  }
+  /** bend: forward curl (positive = tip pulled toward the line); side: sideways curl from a running fish. */
+  setBend(bend: number, side: number) {
+    this.segs.forEach((s, i) => { s.rotation.x = bend * (0.5 + i * 0.5); s.rotation.z = -side * 0.15 * i; });
+  }
+}
+
+/** What the game needs from a player avatar (the generated model or the stand-in). */
+export interface PlayerAvatar {
+  readonly root: Group;
+  update(dt: number, pose: Pose, speed: number, opts?: { power?: number; tension?: number; lateral?: number; reeling?: boolean }): void;
+  tipWorld(out?: Vector3): Vector3;
+  /** Show a caught fish in the player's hands (null to put it away). */
+  holdFish(fish: Object3D | null): void;
 }
 
 /** TEMPORARY procedural fish used until the generated GLBs arrive. Built from a fish's palette colour. */

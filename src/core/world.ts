@@ -12,10 +12,14 @@ export interface IslandDef {
   height: number; seed: number; profile: IslandProfile;
 }
 export interface CarveDef { x: number; z: number; r: number; depth: number }
+/** Hand-placed terrain shaping: a level pad, or a graded path through [x, z, height] points. */
+export type ShapeDef =
+  | { type: 'flat'; x: number; z: number; r: number; h: number; soft: number; surface?: 'cobble' | 'dirt' }
+  | { type: 'path'; points: [number, number, number][]; width: number; soft: number; surface?: 'cobble' | 'dirt' };
 export interface LandmarkPose { x: number; z: number; rot?: number; facing?: number; length?: number }
 export interface RegionDef {
   id: string; name: string; center: [number, number]; radius: number; seaDepth: number; grade: string;
-  islands: IslandDef[]; carves: CarveDef[]; landmarks: Record<string, LandmarkPose>;
+  islands: IslandDef[]; carves: CarveDef[]; landmarks: Record<string, LandmarkPose>; shapes?: ShapeDef[];
 }
 
 const smooth = (e0: number, e1: number, x: number) => {
@@ -88,7 +92,42 @@ export class Heightfield {
         h = h * (1 - f) + Math.min(h, -c.depth) * f;
       }
     }
+    for (const s of r.shapes ?? []) {
+      const q = this.shapeAt(s, x, z);
+      if (q.w > 0) h = h * (1 - q.w) + q.h * q.w;
+    }
     return h;
+  }
+
+  /** Blend weight (0..1) and target height of a shape at (x, z). */
+  private shapeAt(s: ShapeDef, x: number, z: number): { w: number; h: number; core: number } {
+    if (s.type === 'flat') {
+      const d = Math.hypot(x - s.x, z - s.z);
+      return { w: smooth(s.r + s.soft, s.r, d), h: s.h, core: smooth(s.r, s.r - 1.5, d) };
+    }
+    let best = Infinity, bh = 0;
+    const p = s.points;
+    for (let i = 0; i < p.length - 1; i++) {
+      const [ax, az, ah] = p[i], [bx, bz, bh2] = p[i + 1];
+      const vx = bx - ax, vz = bz - az;
+      const L2 = vx * vx + vz * vz;
+      const u = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / L2));
+      const d = Math.hypot(x - (ax + vx * u), z - (az + vz * u));
+      if (d < best) { best = d; bh = ah + (bh2 - ah) * u; }
+    }
+    const hw = s.width / 2;
+    return { w: smooth(hw + s.soft, hw, best), h: bh, core: smooth(hw, hw - 0.8, best) };
+  }
+
+  /** The surface a hand-shaped area is paved with at (x, z), for terrain colouring. */
+  surfaceAt(x: number, z: number): { kind: 'cobble' | 'dirt' | null; w: number } {
+    let kind: 'cobble' | 'dirt' | null = null, w = 0;
+    for (const s of this.region.shapes ?? []) {
+      if (!s.surface) continue;
+      const q = this.shapeAt(s, x, z);
+      if (q.core > w) { w = q.core; kind = s.surface; }
+    }
+    return { kind, w };
   }
 
   /** Water depth at (x, z) (0 on land). */

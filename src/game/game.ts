@@ -2,7 +2,9 @@
 import { Color, PerspectiveCamera, Vector3 } from 'three';
 import { Renderer, QUALITY, type Quality } from '../render/renderer';
 import { WorldScene } from '../render/world-scene';
-import { Avatar, type Pose } from '../render/avatar';
+import { Avatar, type PlayerAvatar, type Pose } from '../render/avatar';
+import { ModelAvatar } from '../render/model-avatar';
+import { makeFish, type FishObject } from '../render/fish-models';
 import { FishingView } from '../render/fishing-view';
 import { Fx } from '../render/fx';
 import { DAY_LENGTH_S } from '../render/daycycle';
@@ -28,7 +30,10 @@ export class Game {
   readonly hud: Hud;
   readonly audio = new AudioEngine();
   readonly fx = new Fx();
-  readonly avatar = new Avatar();
+  readonly avatar: PlayerAvatar = ModelAvatar.available() ? new ModelAvatar() : new Avatar();
+  private shown: FishObject | null = null;
+  private showTimer = 0;
+  private faceYaw = 0;
   readonly view: FishingView;
   session: FishingSession;
   readonly pos = new Vector3();
@@ -46,6 +51,9 @@ export class Game {
   private idleSince = 0;
   frames = 0;
   paused = false;
+  /** Screenshot/debug hooks: force an avatar pose or a fixed camera. */
+  debugPose: { pose: Pose; speed?: number; power?: number; tension?: number; lateral?: number; reeling?: boolean } | null = null;
+  debugCam: { pos: Vector3; look: Vector3 } | null = null;
   /** When set (tests/bot), replaces player input to the fishing session. */
   botInput: FishingInput | null = null;
   readonly sellPoint: Vector3;
@@ -243,6 +251,10 @@ export class Game {
           const value = res.item?.value ?? 0;
           this.hud.showCatch(res.item, e.catch, res.firstCatch, res.newRecord, value, res.holdFull);
           this.fx.glow.burst(this.avatar.tipWorld().add(new Vector3(0, -0.5, 0)), 30 + r * 20, RARITY_GLOW[r], 2.5, 3, 1.4, 0.18, 1.5);
+          this.shown?.dispose();
+          this.shown = makeFish(e.catch.fishId, e.catch.weight);
+          this.avatar.holdFish(this.shown.obj);
+          this.showTimer = 2.4;
           this.session = this.newSession();
           this.session.phase = 'landed';
           (this.session as any).resultTimer = 1.0;
@@ -264,8 +276,8 @@ export class Game {
   /** Ground height for walking: dock deck or dry land; null where you can't walk. */
   groundAt(x: number, z: number): number | null {
     const deck = this.world.dockDeckAt(x, z);
-    if (deck !== null) return deck;
     const h = this.world.hf.height(x, z);
+    if (deck !== null) return Math.max(deck, h);
     if (h < 0.15) return null;
     if (this.world.hf.normal(x, z, 0.8)[1] < 0.62) return null;
     return h;
@@ -278,10 +290,21 @@ export class Game {
     const fs = this.session.fight;
     // Avatar
     this.avatar.root.position.copy(this.pos);
-    this.avatar.root.rotation.y = this.yaw;
+    // Showing off a catch: turn to face the camera; otherwise face where we're heading.
+    const wantYaw = this.shown ? Math.atan2(this.camera.position.x - this.pos.x, this.camera.position.z - this.pos.z) : this.yaw;
+    let dYaw = wantYaw - this.faceYaw; dYaw = Math.atan2(Math.sin(dYaw), Math.cos(dYaw));
+    this.faceYaw += dYaw * Math.min(1, dt * (this.shown ? 7 : 30));
+    this.avatar.root.rotation.y = this.faceYaw;
     const pose: Pose = ph === 'charging' ? 'charge' : ph === 'casting' ? 'cast' : ph === 'waiting' || ph === 'bite' ? 'wait' : ph === 'fighting' ? 'fight' : ph === 'landed' ? 'cheer' : this.speed > 0.2 ? 'walk' : 'idle';
-    this.avatar.update(dt, pose, this.speed, { power: this.session.power, tension: fs?.tension, lateral: fs ? (fs.run || 0) : 0, reeling: !!fs && this.input.held('cast') });
+    const dbg = this.debugPose;
+    if (dbg) this.avatar.update(dt, dbg.pose, dbg.speed ?? 0, dbg);
+    else this.avatar.update(dt, pose, this.speed, { power: this.session.power, tension: fs?.tension, lateral: fs ? (fs.run || 0) : 0, reeling: !!fs && this.input.held('cast') });
     this.avatar.root.updateMatrixWorld(true);
+    if (this.shown) {
+      this.shown.animate(this.time, 0.15);
+      this.showTimer -= dt;
+      if (this.showTimer <= 0 || ph === 'charging') { this.avatar.holdFish(null); this.shown.dispose(); this.shown = null; }
+    }
     const tip = this.avatar.tipWorld();
 
     // Camera: orbit behind the player; while fishing, frame the bobber/fish too.
@@ -306,6 +329,7 @@ export class Game {
     const tension = fs?.tension ?? 0;
     const sh = this.shake * 0.08 + Math.max(0, tension - 0.8) * 0.03;
     this.camera.lookAt(this.camTarget.x + (Math.random() - 0.5) * sh, this.camTarget.y + (Math.random() - 0.5) * sh, this.camTarget.z);
+    if (this.debugCam) { this.camera.position.copy(this.debugCam.pos); this.camera.lookAt(this.debugCam.look); }
     const fov = 55 + (ph === 'fighting' ? -4 * tension : 0) + (ph === 'charging' ? -3 * this.session.power : 0);
     if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov += (fov - this.camera.fov) * Math.min(1, dt * 4); this.camera.updateProjectionMatrix(); }
 

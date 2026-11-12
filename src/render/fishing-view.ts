@@ -5,14 +5,10 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import type { FishingSession } from '../core/fishing';
 import type { Fx } from './fx';
-import { placeholderFish } from './avatar';
+import { makeFish, type FishObject } from './fish-models';
 import { PALETTE } from './palette';
 
 const LINE_PTS = 24;
-const FISH_COLORS: Record<string, string> = {
-  butterperch: '#E8B24A', 'pebble-goby': '#8C8A86', 'kettle-carp': '#3FA7A0', 'coral-snapper': '#E86F6F', lampjaw: '#2F6E7A',
-  'moss-eel': '#6F8F4E', 'twofold-flounder': '#B9BFC6', 'hollow-lantern': '#E9DCC0', manyeye: '#6A4C8C',
-};
 
 export class FishingView {
   readonly group = new Group();
@@ -21,7 +17,7 @@ export class FishingView {
   private lineGeo = new LineGeometry();
   private lineMat: LineMaterial;
   private linePos = new Float32Array(LINE_PTS * 3);
-  private fishObj: Group | null = null;
+  private fishObj: FishObject | null = null;
   private fishId: string | null = null;
   private t = 0;
   private bobberY = 0; private bobberV = 0;
@@ -116,7 +112,8 @@ export class FishingView {
         }
         this.fishPos.y = fy;
         this.ensureFish(fs.fish.id);
-        const fo = this.fishObj!;
+        const fo = this.fishObj!.obj;
+        this.fishObj!.animate(this.t, Math.min(1, 0.35 + (fs.run !== 0 ? 0.5 : 0) + (this.jump >= 0 ? 0.4 : 0)));
         fo.position.copy(this.fishPos);
         fo.lookAt(this.fishPos.x - this.dir.x - this.side.x * this.lateral, fy + (this.jump >= 0 ? Math.cos(this.jump * Math.PI) * 0.8 : 0), this.fishPos.z - this.dir.z - this.side.z * this.lateral);
         fo.rotation.z += Math.sin(this.t * 14) * 0.25;
@@ -179,9 +176,10 @@ export class FishingView {
   private ensureFish(id: string) {
     if (this.fishId === id && this.fishObj) return;
     this.clearFish();
-    this.fishObj = placeholderFish(FISH_COLORS[id] ?? '#8C8A86', 0.9);
+    this.fishObj = makeFish(id);
+    this.fishObj.obj.scale.setScalar(1.6); // read clearly at casting distance
     this.fishId = id;
-    this.group.add(this.fishObj);
+    this.group.add(this.fishObj.obj);
   }
-  private clearFish() { if (this.fishObj) { this.group.remove(this.fishObj); this.fishObj = null; this.fishId = null; } }
+  private clearFish() { if (this.fishObj) { this.fishObj.dispose(); this.fishObj = null; this.fishId = null; } }
 }

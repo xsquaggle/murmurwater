@@ -221,6 +221,8 @@ export function buildRowboat(seed = 9): BufferGeometry {
 }
 
 export interface DockBuild { group: Group; lanternPositions: Vector3[]; endPoint: Vector3; deckY: number }
+/** The dock's first metres widen into a landing where the stall and notice board stand. */
+export const LANDING = 6.5, LANDING_HALF = 4.2;
 
 export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw: number, length: number): DockBuild {
   const b = new Builder(21, 0.07);
@@ -236,7 +238,7 @@ export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw:
     const col = rng.chance(0.15) ? woodDark : rng.chance(0.2) ? woodLight : wood;
     b.add(new BoxGeometry(w, 0.14, plankStep * 0.86), col, { pos: [p.x, deckY + rng.range(-0.025, 0.025), p.z], rot: [0, yaw, rng.range(-0.02, 0.02)] });
   };
-  for (let t = 0; t < length; t += plankStep) plankAt(t, width);
+  for (let t = -6; t < length; t += plankStep) plankAt(t, t >= 0 && t < LANDING ? LANDING_HALF * 2 : width);
   // T-shaped end platform
   for (let t = length; t < length + 5; t += plankStep) plankAt(t, width * 2.6);
   // Posts down to the seabed
@@ -247,7 +249,8 @@ export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw:
     const hgt = top - ground + 0.5;
     b.add(new CylinderGeometry(0.2, 0.24, hgt, 6), woodDark, { pos: [p.x, ground - 0.5 + hgt / 2, p.z] });
   };
-  for (let t = 0; t <= length; t += 4) { postAt(t, width / 2); postAt(t, -width / 2); }
+  for (let t = 8; t <= length; t += 4) { postAt(t, width / 2); postAt(t, -width / 2); }
+  for (const t of [0.2, 3.2, 6.3]) for (const s of [-LANDING_HALF + 0.2, -1.4, 1.4, LANDING_HALF - 0.2]) postAt(t, s);
   postAt(length + 4.8, width * 1.25); postAt(length + 4.8, -width * 1.25);
   postAt(length + 0.2, width * 1.25); postAt(length + 0.2, -width * 1.25);
   // Side rails (rope look)
@@ -260,11 +263,7 @@ export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw:
     const p = new Vector3(start.x, 0, start.z).addScaledVector(dir, t).addScaledVector(side, s);
     b.add(geo, col, { pos: [p.x, deckY + y, p.z], rot: [0, yaw + rot, 0] });
   };
-  prop(length - 1.5, 0.9, new BoxGeometry(0.8, 0.7, 0.8), C('#9C7A58'), 0.42, 0.3);
-  prop(length - 1.2, 1.0, new BoxGeometry(0.6, 0.5, 0.6), C('#B08B63'), 1.0, 0.8);
-  prop(length + 3.6, -3.0, new CylinderGeometry(0.4, 0.45, 0.95, 8), C('#7A5A44'), 0.55);
-  prop(length + 3.6, -3.0, new TorusGeometry(0.42, 0.04, 3, 10), C('#4A3A33'), 0.75, 0);
-  prop(4, -0.95, Builder.wobble(new IcosahedronGeometry(0.55, 0), 0.15, 3), C('#C9B48E'), 0.3);
+  prop(10, -0.95, Builder.wobble(new IcosahedronGeometry(0.55, 0), 0.15, 3), C('#C9B48E'), 0.3);
 
   const group = new Group();
   const mesh = new Mesh(b.build(), createPropMaterial());
@@ -274,7 +273,7 @@ export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw:
   const lanternGeo = buildLanternPost();
   const lanternPositions: Vector3[] = [];
   const lmat = createPropMaterial();
-  for (const [t, s] of [[0.4, 1.45], [length * 0.5, -1.45], [length + 4.6, 3.4]] as const) {
+  for (const [t, s] of [[6.6, 1.45], [length * 0.5, -1.45], [length + 4.6, 3.4]] as const) {
     const p = new Vector3(start.x, deckY + 0.07, start.z).addScaledVector(dir, t).addScaledVector(side, s);
     const lp = new Mesh(lanternGeo, lmat);
     lp.position.copy(p);
@@ -286,6 +285,55 @@ export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw:
   }
   const endPoint = new Vector3(start.x, deckY, start.z).addScaledVector(dir, length + 2.5);
   return { group, lanternPositions, endPoint, deckY };
+}
+
+// ---------------------------------------------------------------- harbour
+/** Mara's fish stall (TEMPORARY until the generated stall model lands). Front faces +Z, origin at the base centre. */
+export function buildStall(seed = 31): BufferGeometry {
+  const b = new Builder(seed, 0.05);
+  const wood = C(PALETTE.driftwood), dark = C('#6E5440');
+  b.add(new BoxGeometry(2.6, 0.95, 1.0), wood, { pos: [0, 0.48, 0.05] });
+  b.add(new BoxGeometry(2.75, 0.08, 1.15), C('#A08062'), { pos: [0, 0.99, 0.08] });
+  for (const x of [-1.25, 1.25]) for (const z of [-0.45, 0.55]) b.add(new BoxGeometry(0.12, 2.5, 0.12), dark, { pos: [x, 1.25, z] });
+  // Striped awning sloping toward the front.
+  const stripes = 9;
+  for (let i = 0; i < stripes; i++) {
+    const x = -1.4 + (2.8 / stripes) * (i + 0.5);
+    b.add(new BoxGeometry(2.8 / stripes, 0.05, 1.5), C(i % 2 ? PALETTE.bone : PALETTE.coral), { pos: [x, 2.45, 0.2], rot: [0.32, 0, 0] });
+    b.add(new BoxGeometry(2.8 / stripes, 0.22, 0.04), C(i % 2 ? PALETTE.bone : PALETTE.coral), { pos: [x, 2.12, 0.92] });
+  }
+  // Ice trays with fish.
+  for (const [x, col] of [[-0.75, '#E8B24A'], [0, '#E86F6F'], [0.75, '#3FA7A0']] as const) {
+    b.add(new BoxGeometry(0.62, 0.12, 0.62), C('#DCEFF0'), { pos: [x, 1.08, 0.12] });
+    for (let k = 0; k < 3; k++) b.add(new SphereGeometry(0.1, 6, 4), C(col), { pos: [x - 0.16 + k * 0.16, 1.17, 0.1 + (k % 2) * 0.12], scale: [0.6, 0.5, 1.6], rot: [0, 0.3 * k, 0] });
+  }
+  // Chalk price board and a hanging scale.
+  b.add(new BoxGeometry(0.7, 0.5, 0.05), C('#2F3A3A'), { pos: [0.9, 1.75, 0.6], rot: [0.1, 0, 0] });
+  b.add(new BoxGeometry(0.6, 0.04, 0.06), C('#E8E2D0'), { pos: [0.9, 1.85, 0.63], rot: [0.1, 0, 0] });
+  b.add(new BoxGeometry(0.45, 0.04, 0.06), C('#E8E2D0'), { pos: [0.85, 1.7, 0.64], rot: [0.1, 0, 0] });
+  b.add(new CylinderGeometry(0.012, 0.012, 0.5, 4), C('#3A3442'), { pos: [-0.9, 1.95, 0.6] });
+  b.add(new CylinderGeometry(0.16, 0.16, 0.06, 10), C(PALETTE.slate), { pos: [-0.9, 1.68, 0.6], rot: [Math.PI / 2, 0, 0] });
+  b.add(new CylinderGeometry(0.2, 0.14, 0.08, 8), C('#C9B48E'), { pos: [-0.9, 1.5, 0.6] });
+  // Crates stacked at the side.
+  b.add(new BoxGeometry(0.6, 0.5, 0.6), C('#9C7A58'), { pos: [-1.65, 0.25, 0.2], rot: [0, 0.2, 0] });
+  b.add(new BoxGeometry(0.5, 0.42, 0.5), C('#B08B63'), { pos: [-1.6, 0.71, 0.18], rot: [0, -0.3, 0] });
+  return b.build();
+}
+
+/** The village notice board (TEMPORARY until the generated model lands). Front faces +Z. */
+export function buildNoticeBoard(seed = 33): BufferGeometry {
+  const b = new Builder(seed, 0.05);
+  const dark = C('#6E5440');
+  for (const x of [-0.75, 0.75]) b.add(new BoxGeometry(0.13, 2.2, 0.13), dark, { pos: [x, 1.1, 0] });
+  b.add(new BoxGeometry(1.6, 1.0, 0.08), C(PALETTE.driftwood), { pos: [0, 1.35, 0.04] });
+  b.add(new BoxGeometry(1.8, 0.06, 0.6), C(PALETTE.heather), { pos: [0, 2.3, 0.05], rot: [0.35, 0, 0] });
+  b.add(new BoxGeometry(1.8, 0.06, 0.6), C(PALETTE.heather), { pos: [0, 2.3, -0.12], rot: [-0.35, 0, 0] });
+  const rnd = () => b.random();
+  for (let i = 0; i < 7; i++) {
+    b.add(new BoxGeometry(0.26 + rnd() * 0.12, 0.3 + rnd() * 0.12, 0.01), C(i % 3 ? PALETTE.bone : '#EAD6B4'), { pos: [-0.6 + (i % 4) * 0.38 + rnd() * 0.06, 1.12 + Math.floor(i / 4) * 0.42 + rnd() * 0.05, 0.095], rot: [0, 0, (rnd() - 0.5) * 0.25] });
+  }
+  b.add(new BoxGeometry(0.05, 0.05, 0.06), C(PALETTE.coral), { pos: [-0.5, 1.5, 0.11] });
+  return b.build();
 }
 
 // ---------------------------------------------------------------- scattering
@@ -308,7 +356,9 @@ export function scatterIsland(hf: Heightfield, opts: { villageCenter: Vector3; v
   const mat = createPropMaterial();
   const houses: Vector3[] = [];
   const blocked: { p: Vector3; r: number }[] = opts.avoid.map((p) => ({ p, r: 12 }));
-  const free = (p: Vector3, r: number) => blocked.every((b) => b.p.distanceTo(p) > b.r + r);
+  // Keep paths and paved yards clear of houses, trees and boulders.
+  const paved = (x: number, z: number, r: number) => [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]].some(([ox, oz]) => hf.surfaceAt(x + ox, z + oz).w > 0.01);
+  const free = (p: Vector3, r: number) => blocked.every((b) => b.p.distanceTo(p) > b.r + r) && !paved(p.x, p.z, r);
   const slopeOk = (x: number, z: number, minNy: number) => hf.normal(x, z, 1.5)[1] > minNy;
   const m = new Matrix4(), q = new Quaternion(), e = new Euler(), s = new Vector3();
   const place = (x: number, y: number, z: number, yaw: number, sc: number) => { e.set(0, yaw, 0); q.setFromEuler(e); s.setScalar(sc); return m.clone().compose(new Vector3(x, y, z), q, s); };

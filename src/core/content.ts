@@ -14,7 +14,7 @@ export type Rarity = (typeof RARITIES)[number];
 export interface FightStats { strength: number; stamina: number; temper: number; thrash: number }
 export interface FishDef {
   id: string; name: string; rarity: Rarity; region: string; zones: string[];
-  baseValue: number; weight: [number, number]; fight: FightStats; biteWindow: number;
+  baseValue: number; weight: [number, number]; /** typical nose-to-tail length in metres (models are scaled to it) */ length: number; fight: FightStats; biteWindow: number;
   hours?: [number, number]; requires?: string; lore: string;
 }
 export interface RodDef {
@@ -71,6 +71,7 @@ export function validateContent(): string[] {
     for (const z of f.zones) if (!zoneIds.has(z)) errs.push(`${f.id}: unknown zone ${z}`);
     if (!(f.weight[0] > 0 && f.weight[1] > f.weight[0])) errs.push(`${f.id}: bad weight range`);
     if (f.baseValue <= 0) errs.push(`${f.id}: baseValue must be > 0`);
+    if (!(f.length > 0.05 && f.length < 5)) errs.push(`${f.id}: length out of range`);
     if (f.biteWindow < 0.3 || f.biteWindow > 2) errs.push(`${f.id}: biteWindow out of range`);
     for (const k of ['strength', 'stamina', 'temper', 'thrash'] as const) if (typeof f.fight[k] !== 'number') errs.push(`${f.id}: fight.${k} missing`);
     if (f.hours && (f.hours[0] < 0 || f.hours[0] > 24 || f.hours[1] < 0 || f.hours[1] > 24)) errs.push(`${f.id}: bad hours`);
