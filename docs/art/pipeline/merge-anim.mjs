@@ -1,5 +1,6 @@
 // Merge single-clip rigged GLBs of the SAME mesh into one GLB with named clips.
-// node merge-anim.mjs out.glb [--tex 2048] [--name player] [--fps 30]  name=file.glb[:inplace] name2=file2.glb ...
+// node merge-anim.mjs out.glb [--tex 2048] [--name player] [--fps 30] [--emissive h0,h1,minV,minS --ebox ...]  name=file.glb[:inplace][:anchor][:trim=a-b] ...
+//   :inplace removes linear root drift, :anchor moves the clip so it starts over the model origin, :trim keeps seconds a to b.
 //
 // The first file supplies mesh, skin weights and skeleton. Every auto-rig job produces a slightly different
 // skeleton (joint positions and bone axes), so clips are not copied channel-for-channel. Instead each clip is
@@ -10,6 +11,7 @@ import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { prune, dedup, resample, textureCompress, unpartition } from '@gltf-transform/functions';
 import sharp from 'sharp';
+import { addEmissive } from './emissive.mjs';
 import { mat4, quat, vec3 } from 'gl-matrix';
 
 const args = process.argv.slice(2);
@@ -21,7 +23,7 @@ for (let i = 1; i < args.length; i++) {
   const eq = args[i].indexOf('='); const name = args[i].slice(0, eq), rest = args[i].slice(eq + 1);
   const [file, ...flags] = rest.split(':');
   const trim = flags.find(f => f.startsWith('trim='));
-  clips.push({ name, file, inplace: flags.includes('inplace'), trim: trim ? trim.slice(5).split('-').map(Number) : null });
+  clips.push({ name, file, inplace: flags.includes('inplace'), anchor: flags.includes('anchor'), trim: trim ? trim.slice(5).split('-').map(Number) : null });
 }
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 
@@ -123,6 +125,11 @@ for (const clip of clips) {
     for (let f = 0; f < n; f++) { hipsT[f * 3] += restT[hi][0] - mx; hipsT[f * 3 + 2] += restT[hi][2] - mz; }
     console.error(`${clip.name}: removed root drift x=${dx.toFixed(3)} z=${dz.toFixed(3)} (m)`);
   }
+  if (clip.anchor) { // start the clip over the model origin: shift the hips so the first frame sits at the rest position in x and z
+    const hi = B.order.find(i => B.parent[i] < 0); const dx = hipsT[0] - restT[hi][0], dz = hipsT[2] - restT[hi][2];
+    for (let f = 0; f < frames; f++) { hipsT[f * 3] -= dx; hipsT[f * 3 + 2] -= dz; }
+    console.error(`${clip.name}: anchored, shifted by x=${(-dx).toFixed(3)} z=${(-dz).toFixed(3)} (m)`);
+  }
   console.error(`${clip.name}: ${frames} frames, ${duration.toFixed(2)}s, joint-offset mismatch absorbed: up to ${(maxStretch * 100).toFixed(2)} cm`);
   const A = base.createAnimation(clip.name);
   const inAcc = base.createAccessor().setType('SCALAR').setArray(times).setBuffer(buffer);
@@ -142,6 +149,7 @@ const scene = root.listScenes()[0];
 for (const m of root.listMaterials()) { m.setNormalTexture(null); m.setMetallicRoughnessTexture(null); m.setOcclusionTexture(null); m.setMetallicFactor(0); m.setRoughnessFactor(Number(opt.rough)); m.setDoubleSided(false); m.setName(opt.name + '_mat'); }
 for (const mesh of root.listMeshes()) { mesh.setName(opt.name); for (const p of mesh.listPrimitives()) { if (p.getAttribute('TANGENT')) p.setAttribute('TANGENT', null); } }
 scene.setName(opt.name);
+if (opt.emissive) await addEmissive(base, { emissive: opt.emissive, ebox: opt.ebox || null, estrength: Number(opt.estrength || 1.5) });
 await base.transform(unpartition(), resample({ tolerance: 1e-5 }), prune(), dedup());
 await base.transform(textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [Number(opt.tex), Number(opt.tex)], quality: 92 }));
 root.getAsset().generator = 'Murmurwater asset pipeline (gltf-transform)';

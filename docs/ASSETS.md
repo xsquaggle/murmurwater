@@ -42,6 +42,11 @@ Clean single-subject concepts generated against the style references (the ref im
 | `barrel.webp` | Prop: barrel | 01 | `c493297a-47b5-48b1-a324-b59dae8130f1` |
 | `tackle-box.webp` | Prop: tackle box | 01 | `a18897ae-98ac-4da9-b2ac-ce749281efa2` |
 | `dock-lantern.webp` | Prop: hanging dock lantern | 01 | `ccc06ba8-8d67-4e6e-b121-f740d5dc1dc4` |
+| `wick-sheet.webp` | Wick turnaround, A-pose | 06 | `21c086b2-91fb-4f58-8cc6-70287c98fb9a` |
+| `fish-stall.webp` | Mara's fish stall | 01 | `2b9973b2-8198-478f-94c8-fc1a077e1aa2` |
+| `notice-board.webp` | Notice board with shingled roof | 01 | `5538ca1e-25a4-4a8c-9465-25a428cb47fc` |
+| `pebble-goby.webp` | Fish: pebble-goby | 05 | `abbb6a48-ece5-49d7-9055-899d67b569f7` |
+| `sketchbook.webp` | Prop: Wick's sketchbook | 06 | `4004874e-3736-42e7-8432-a3bca16cb077` |
 
 ## 3D models (`public/models/`)
 
@@ -50,6 +55,11 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | File | Tris | Size (x, y, z) m | Origin | Glow map | Concept | 3D job id |
 |---|---|---|---|---|---|---|
 | `characters/player.glb` | 14,078 | 1.11 x 1.70 x 0.56 (A-pose) | feet | no | `player-sheet` | `7dcfd897-9c3f-4b47-aeac-431ec680999f` |
+| `characters/mara.glb` | 14,269 | 1.12 x 1.60 x 0.59 (A-pose) | feet | no | `mara-sheet` | `91d1e727-3e75-47a4-af68-6f367a77fa9f` |
+| `characters/pell.glb` | 13,896 | 1.15 x 1.88 x 0.75 (A-pose) | feet | hand lantern | `pell-sheet` | `dfb779a3-05c1-4861-8ec2-d1458f8b9501` |
+| `characters/wick.glb` | 12,860 | 0.79 x 1.25 x 0.48 (A-pose) | feet | no | `wick-sheet` | `133831b3-7f36-42d3-97ad-25fa271a66a3` |
+| `characters/biscuit.glb` | 7,514 | 0.29 x 0.55 x 0.47 (standing, to the tail tip) | feet | no | `biscuit-stand-sheet` | `ff65ea63-ffb6-474d-9a32-49c25cf6f9d4` |
+| `characters/biscuit-sit.glb` | 5,749 | 0.33 x 0.45 x 0.31 (sitting) | base | no | `biscuit-sit-sheet` | `7df5fd5e-8374-44bd-b907-f3d047d7845b` |
 | `fish/butterperch.glb` | 2,958 | 0.54 x 0.79 x 1.00 | centre | no | `butterperch` | `fd9ea949-0241-4ba0-af03-fac94c86777a` |
 | `fish/kettle-carp.glb` | 2,894 | 0.51 x 0.80 x 1.00 | centre | no | `kettle-carp` | `6166d97e-52c7-4417-965a-d504673da398` |
 | `fish/lampjaw.glb` | 2,714 | 0.29 x 0.58 x 1.00 | centre | lure lantern, side lights | `lampjaw` | `3d6860a0-9b2a-4d88-b35e-5061b9babf09` |
@@ -58,24 +68,71 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `fish/twofold-flounder.glb` | 2,832 | 0.42 x 0.93 x 1.00 | centre | no | `twofold-flounder` | `002c7237-f2a2-4d5f-9548-4f322d4f6f3c` |
 | `fish/hollow-lantern.glb` | 2,847 | 0.33 x 0.77 x 1.00 | centre | lantern in the rib cage, eye | `hollow-lantern` | `521e59a9-5de6-4114-a776-086027764d40` |
 | `fish/manyeye.glb` | 2,940 | 0.69 x 0.87 x 1.00 | centre | eyes | `manyeye` | `8e8f2a8a-34e3-4eb9-9a3e-9349037fdac6` |
+| `fish/pebble-goby.glb` | 2,912 | 0.44 x 0.52 x 1.00 | centre | no | `pebble-goby` | `01c438b2-c45e-48cc-9a8f-93893900ae02` |
 | `boats/skiff.glb` | 5,728 | 2.33 x 2.16 x 4.00 | keel, centre | stern lantern | `skiff` | `be7b1c34-13e6-4d60-b9b6-e015989c1a9d` |
 | `props/crate.glb` | 1,856 | 0.59 x 0.60 x 0.79 | base | no | `crate` | `d8862a17-b399-468c-926e-7779d6c328de` |
 | `props/barrel.glb` | 1,886 | 0.82 x 0.90 x 0.83 | base | no | `barrel` | `622a5755-0592-42f7-a622-54827ad5f86a` |
 | `props/tackle-box.glb` | 1,931 | 0.36 x 0.34 x 0.45 | base | no | `tackle-box` | `07bcc043-3a0b-40f3-8dd3-ff5295fcb53c` |
 | `props/dock-lantern.glb` | 1,838 | 0.23 x 0.60 x 0.29 | top of the wall plate, back face | lantern glass | `dock-lantern` | `c4b6c49e-5d71-4cf9-9321-fe2931ba26b4` |
+| `props/fish-stall.glb` | 6,454 | 2.60 x 2.40 x 1.45 | base centre | no | `fish-stall` | `73c896bf-54f8-41a2-9d6f-8e50decd1f69` |
+| `props/notice-board.glb` | 2,817 | 1.75 x 2.20 x 0.98 | base centre | no | `notice-board` | `a22e9d6d-7ed3-4da4-a3cc-71f2fadc5c87` |
+| `props/sketchbook.glb` | 914 | 0.25 x 0.26 x 0.08 | centre | no | `sketchbook` | `3d645d40-ba8f-41e2-9531-2100077904f1` |
 
 Fish are normalized to 1 m nose to tail along +Z, so the game scales each to its species length. Glow maps are an `emissiveTexture` on the same material with `KHR_materials_emissive_strength` 1.5, derived from the warm bright texels of the base colour; `docs/art/sheets/emissive-dark.webp` shows them with the lights off.
 
+Notes: the fish stall is the second run of its job (the first, `c941c034-4adf-48ff-b2f8-9cec702029ba`, came back with a blank grey texture and was discarded); its bounds were fitted to 2.6 x 2.4 x 1.45 m with a mild non-uniform scale (`--fit`), about 15 % shallower than generated. The sketchbook has a 512 px texture. Biscuit is two sculpts, standing and sitting, because the two poses do not deform into each other cleanly; the game swaps models when the cat sits.
+
 ### Player rig and animation clips
 
-Rigged and animated with Higgsfield `generate_3d`, model `meshy_rigging` (height 1.7 m), one job per clip, 2026-11-12. Each job returns its own skeleton, so `merge-anim.mjs` retargets every clip onto the skeleton of the first job. 24 joints (Hips, Spine02, Spine01, Spine, neck, Head, head_end, headfront, Left/Right Shoulder, Arm, ForeArm, Hand, UpLeg, Leg, Foot, ToeBase), unit scale, rest pose is the A-pose. Clip frames are in `docs/art/sheets/player-clips.webp`.
+Rigged with Higgsfield `generate_3d`, model `meshy_rigging` (height 1.7 m), one job per library clip, 2026-11-12. Each job returns its own skeleton, so `merge-anim.mjs` retargets every clip onto the skeleton of the first job. `author-anim.mjs` then adds four finger joints and two sockets and bakes the hand-authored fishing clips defined in `player-clips.mjs` (analytic two-bone IK, 30 fps); those clips are original work with no generation job. Clip frames are in `docs/art/sheets/player-clips.webp`.
 
-| Clip | Length | Loops | Library action | Job id |
+Skeleton: 28 joints, unit scale, rest pose is the A-pose. Hips, Spine02, Spine01, Spine, neck, Head, head_end, headfront, Left/Right Shoulder, Arm, ForeArm, Hand, UpLeg, Leg, Foot, ToeBase, plus `RightFingers`, `RightFingerTips`, `LeftFingers`, `LeftFingerTips` (the four fused fingers of each hand; local +X is the curl axis, a positive rotation closes the hand; 70° + 65° is a fist around a 2.5 cm radius handle). Every clip keys the finger joints.
+
+Sockets (empty nodes, children of `RightHand`):
+
+- `RodSocket`: origin at the grip, +Y along the rod toward the tip, +X out of the palm (the character's left in a neutral hold; the reel goes on this side), +Z along the hand away from the wrist.
+- `CatchSocket`: where the catch sits in the hold of `show_catch`, between both palms. A fish parented with identity rotation has its nose (+Z) to the character's left and +Y up.
+
+| Clip | Length | Loops | Source | Job id |
 |---|---|---|---|---|
-| `idle` | 6.03 s | yes | Idle_12 (252) | `3d514e05-df87-4b90-a2fc-1da81dd54885` |
-| `idle_look` | 4.03 s | yes | Idle (0), looks around | `d8b9a10e-71af-47a8-b091-7cebfb1e8bc4` |
-| `walk` | 4.20 s | yes, in place | Casual_Walk_inplace (613) | `e1447a8d-2286-4d30-a596-4ce71f96e863` |
-| `run` | 0.83 s | yes, in place | Run_03 (15) | `7141b731-e678-4887-9df8-ea88fdbb9758` |
-| `cast` | 2.47 s | no | Over_Shoulder_Throw (421), trimmed to wind-up and throw | `65af2772-9f1e-4f4d-b968-6f77d1c2ac6f` |
-| `cheer` | 2.97 s | yes | Cheer_with_Both_Hands (303) | `5953ba38-30db-4099-9bae-1f30566c6fb4` |
+| `idle` | 6.03 s | yes | Library: Idle_12 (252) | `3d514e05-df87-4b90-a2fc-1da81dd54885` |
+| `idle_look` | 4.03 s | yes | Library: Idle (0), looks around | `d8b9a10e-71af-47a8-b091-7cebfb1e8bc4` |
+| `walk` | 4.20 s | yes, in place | Library: Casual_Walk_inplace (613) | `e1447a8d-2286-4d30-a596-4ce71f96e863` |
+| `run` | 0.83 s | yes, in place | Library: Run_03 (15) | `7141b731-e678-4887-9df8-ea88fdbb9758` |
+| `cheer` | 2.97 s | yes | Library: Cheer_with_Both_Hands (303) | `5953ba38-30db-4099-9bae-1f30566c6fb4` |
+| `rod_idle` | 6.03 s | yes | Authored on `idle`: rod held loosely upright | none |
+| `rod_wait` | 6.03 s | yes | Authored on `idle`: rod forward at 45°, breathing | none |
+| `rod_charge` | 1.00 s | scrubbed | Authored: rod forward at 30° to fully back over the right shoulder | none |
+| `rod_cast` | 0.45 s | no | Authored: forward whip, last frame equals `rod_wait` frame 0 | none |
+| `rod_reel` | 2.00 s | yes | Authored: rod raised 60°, left hand cranking, four cranks of 0.5 s | none |
+| `rod_lean_left`, `rod_lean_right` | 1.00 s | static pose | Authored: body leaning against a run | none |
+| `show_catch` | 1.20 s | no, holds the last frame | Authored: both hands lift the catch to chest height | none |
+| `rod_walk` | 4.20 s | yes, in place | Authored on `walk`: right arm carries the rod | none |
+| `rod_run` | 0.83 s | yes, in place | Authored on `run`: right arm carries the rod | none |
 
+The earlier library `cast` clip (Over_Shoulder_Throw, job `65af2772-9f1e-4f4d-b968-6f77d1c2ac6f`) was dropped on 2026-11-12; a ball throw did not read as a rod cast.
+
+### NPC rigs and clips
+
+Same route as the player: `meshy_rigging`, one job per clip, merged with `merge-anim.mjs`; 24 joints, unit scale, rest pose is the A-pose, no sockets. Clip frames are in `docs/art/sheets/<id>-clips.webp`. All clips stay over the model origin (`:anchor` removes the offset some library clips start with).
+
+| Model | Clip | Length | Library action | Job id |
+|---|---|---|---|---|
+| `mara.glb` (1.6 m) | `idle` | 10.00 s | Idle_3 (243) | `ce378154-45b8-4b48-afd5-c57be4c69549` |
+| | `talk` | 5.20 s | Talk_with_Left_Hand_on_Hip (309) | `38bd8d2f-a228-48ef-ab2b-1b33584c5e83` |
+| | `wave` | 5.37 s | Big_Wave_Hello (28) | `e8ac1bcc-10ae-4dfe-b73e-fb3c6a874a06` |
+| `pell.glb` (1.88 m) | `idle` | 2.03 s | Idle_9 (249) | `2028cb9c-bd49-4ee1-8302-91624a44ff5e` |
+| | `talk` | 3.77 s | Talk_with_Right_Hand_Open (314) | `ed84de4f-5b5c-4daf-8c3a-8c9de3a8dfe1` |
+| `wick.glb` (1.25 m) | `idle` | 6.03 s | Idle_12 (252) | `bc934eb3-1582-4380-8b89-85f3cbc995b0` |
+| | `idle_look` | 4.03 s | Idle (0), turns to look behind | `3c7f0e23-fd41-432b-9247-bb316acc3387` |
+| | `talk` | 4.00 s | Talk_with_Hands_Open (313) | `3cf8782b-7198-40ac-9535-5f7d6797b31c` |
+| | `sit` | 10.70 s | Chair_Sit_Idle_M (33); hips about 0.375 m up, for a seat about 0.3 m high | `4470a36a-66e1-4393-8201-107c33e9d3d4` |
+
+### Biscuit the cat
+
+The auto-rigger only handles bipeds, so `rig-cat.mjs` builds the cat's skeleton, skin weights and clips in code (original work, no generation job). Weights come from a geometric segmentation of the mesh smoothed by Laplacian diffusion.
+
+| Model | Joints | Clips |
+|---|---|---|
+| `biscuit.glb` | Root, Body, Hips, Chest, Head, Tail1 to Tail3, FrontLeftLeg, FrontRightLeg, HindLeftLeg, HindRightLeg | `walk` 0.72 s loop, in place, one stride covers about 0.17 m; `idle` 4.0 s loop |
+| `biscuit-sit.glb` | Root, Body, Chest, Head | `sit` 5.0 s loop, breathing and a slow head sway |
