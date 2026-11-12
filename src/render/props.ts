@@ -100,16 +100,26 @@ export function buildCottage(seed: number): BufferGeometry {
   // Gable roof as a 3-sided prism, with overhang
   const roofH = rng.range(1.8, 2.6);
   const prism = new CylinderGeometry(1, 1, 1, 3, 1);
-  b.add(prism, roof, { pos: [0, h + 0.3 + roofH * 0.32, 0], rot: [0, 0, Math.PI / 2], scale: [d * 0.62 + 0.2, w + 0.9, roofH * 1.05] });
+  // Prism axis along X, apex up: local X→depth, Y→length, Z→height (see builder notes).
+  const roofRot: [number, number, number] = [-Math.PI / 2, 0, -Math.PI / 2];
+  const sx = (d + 1.0) / 1.732, sz = roofH / 1.5;
+  b.add(prism, roof.clone().multiplyScalar(0.6), { pos: [0, h + 0.15 + 0.5 * sz, 0], rot: roofRot, scale: [sx * 1.04, w + 1.0, sz * 1.02] });
+  b.add(prism, roof, { pos: [0, h + 0.32 + 0.5 * sz, 0], rot: roofRot, scale: [sx, w + 0.9, sz] });
+  // Timber corner posts and a beam under the eaves
+  const timber = C('#6E5440');
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.add(new BoxGeometry(0.28, h, 0.28), timber, { pos: [sx * (w / 2 - 0.05), h / 2 + 0.3, sz * (d / 2 - 0.05)] });
+  b.add(new BoxGeometry(w + 0.2, 0.26, 0.3), timber, { pos: [0, h + 0.2, d / 2 + 0.02] });
   // Chimney
   const cx = rng.range(-w * 0.3, w * 0.3);
-  b.add(new BoxGeometry(0.7, 2.0, 0.7), C('#8A7F78'), { pos: [cx, h + roofH * 0.7, -d * 0.18] });
-  b.add(new BoxGeometry(0.85, 0.25, 0.85), C('#5C5560'), { pos: [cx, h + roofH * 0.7 + 1.05, -d * 0.18] });
+  b.add(new BoxGeometry(0.7, roofH + 0.6, 0.7), C('#8A7F78'), { pos: [cx, h + 0.3 + (roofH + 0.6) / 2, -d * 0.18] });
+  b.add(new BoxGeometry(0.85, 0.25, 0.85), C('#5C5560'), { pos: [cx, h + 0.95 + roofH, -d * 0.18] });
   // Door, windows (emissive), flower box
   b.add(new BoxGeometry(1.0, 1.8, 0.15), C(rng.pick(['#8A6A4F', '#5B4A7A', '#4C6B78', '#C25F55'])), { pos: [rng.range(-w * 0.25, w * 0.25), 1.2, d / 2 + 0.05] });
   const winCol = C(PALETTE.wick);
   for (const side of [-1, 1]) {
+    b.add(new BoxGeometry(1.05, 1.05, 0.1), C('#5A4636'), { pos: [side * w * 0.3, h * 0.62 + 0.3, d / 2 + 0.03] });
     b.add(new BoxGeometry(0.85, 0.85, 0.12), winCol, { pos: [side * w * 0.3, h * 0.62 + 0.3, d / 2 + 0.06] }, { emissive: 1 });
+    b.add(new BoxGeometry(0.08, 0.85, 0.14), C('#5A4636'), { pos: [side * w * 0.3, h * 0.62 + 0.3, d / 2 + 0.08] });
     b.add(new BoxGeometry(1.05, 0.14, 0.25), C('#6E5A48'), { pos: [side * w * 0.3, h * 0.62 - 0.2, d / 2 + 0.12] });
     b.add(new BoxGeometry(0.12, 0.85, 0.85), winCol, { pos: [side * (w / 2 + 0.06), h * 0.6 + 0.3, rng.range(-d * 0.2, d * 0.2)] }, { emissive: 1 });
   }
@@ -163,6 +173,29 @@ export function buildGrassTuft(seed: number): BufferGeometry {
     const a = rng.range(0, Math.PI * 2);
     b.add(new ConeGeometry(0.09, rng.range(0.5, 0.9), 3), C('#88A85A').lerp(C(PALETTE.moss), rng.next()), { pos: [Math.cos(a) * 0.18, 0.3, Math.sin(a) * 0.18], rot: [rng.range(-0.3, 0.3), 0, rng.range(-0.3, 0.3)] });
   }
+  return b.build();
+}
+
+export function buildHeather(seed: number): BufferGeometry {
+  const rng = new Rng(seed);
+  const b = new Builder(seed, 0.12);
+  b.add(Builder.wobble(new IcosahedronGeometry(0.55, 0), 0.12, seed), C('#55704A'), { pos: [0, 0.1, 0], scale: [1.3, 0.55, 1.3] });
+  const n = rng.int(7, 11);
+  for (let i = 0; i < n; i++) {
+    const a = rng.range(0, Math.PI * 2), r = rng.range(0, 0.6);
+    const col = C(PALETTE.heather).lerp(C('#B98AD6'), rng.next() * 0.7);
+    b.add(new ConeGeometry(0.12, rng.range(0.5, 0.95), 4), col, { pos: [Math.cos(a) * r, 0.45, Math.sin(a) * r], rot: [rng.range(-0.25, 0.25), 0, rng.range(-0.25, 0.25)] });
+  }
+  return b.build();
+}
+
+export function buildArch(seed = 4): BufferGeometry {
+  const b = new Builder(seed, 0.08);
+  const rockC = (c: Vector3) => C(PALETTE.slate).lerp(C('#8C7C74'), Math.max(0, Math.min(1, c.y / 22))).lerp(C('#3E4450'), c.y < 1 ? 0.5 : 0);
+  b.add(Builder.wobble(new TorusGeometry(10, 3.4, 6, 10, Math.PI), 1.1, seed), rockC, { pos: [0, 0, 0], scale: [1, 1.25, 1] });
+  b.add(Builder.wobble(new CylinderGeometry(4.2, 5.6, 8, 7), 1.0, seed + 1), rockC, { pos: [-10, -2, 0] });
+  b.add(Builder.wobble(new CylinderGeometry(3.8, 5.2, 8, 7), 1.0, seed + 2), rockC, { pos: [10, -2, 0] });
+  b.add(Builder.wobble(new IcosahedronGeometry(3.4, 0), 0.8, seed + 3), C('#4F7A45'), { pos: [-3, 13.2, 0], scale: [1.4, 0.45, 1.1] });
   return b.build();
 }
 
@@ -302,14 +335,22 @@ export function scatterIsland(hf: Heightfield, opts: { villageCenter: Vector3; v
   const pineGeos = [0, 1, 2].map((k) => buildPine(opts.seed * 3 + k));
   const roundGeos = [0, 1, 2].map((k) => buildRoundTree(opts.seed * 5 + k));
   const rockGeos = [0, 1, 2, 3].map((k) => buildRock(opts.seed * 11 + k));
-  const tuftGeos = [buildGrassTuft(opts.seed)];
-  const pineM: Matrix4[][] = [[], [], []], roundM: Matrix4[][] = [[], [], []], rockM: Matrix4[][] = [[], [], [], []], tuftM: Matrix4[][] = [[]];
+  const tuftGeos = [buildGrassTuft(opts.seed), buildHeather(opts.seed + 1), buildHeather(opts.seed + 2)];
+  const pineM: Matrix4[][] = [[], [], []], roundM: Matrix4[][] = [[], [], []], rockM: Matrix4[][] = [[], [], [], []], tuftM: Matrix4[][] = [[], [], []];
   const R = hf.region.radius;
   const cx = hf.region.center[0], cz = hf.region.center[1];
   for (let i = 0; i < 26000; i++) {
     const x = cx + rng.range(-R, R), z = cz + rng.range(-R, R);
     const y = hf.height(x, z);
-    if (y < 0.4) continue;
+    if (y < -3.5) continue;
+    if (y < 1.8) {
+      // Chunky shore boulders, some half-submerged and visible through the shallows.
+      if (rng.chance(y < 0 ? 0.01 : 0.03)) {
+        const p0 = new Vector3(x, y, z);
+        if (free(p0, 2)) { blocked.push({ p: p0, r: 2 }); rockM[rng.int(0, 3)].push(place(x, y - 0.4, z, rng.range(0, 6.3), rng.range(1.4, 3.8))); }
+      }
+      if (y < 0.4) continue;
+    }
     const ny = hf.normal(x, z, 1.2)[1];
     const p = new Vector3(x, y, z);
     const nearVillage = p.distanceTo(opts.villageCenter) < opts.villageRadius * 0.8;
@@ -322,6 +363,8 @@ export function scatterIsland(hf: Heightfield, opts: { villageCenter: Vector3; v
         continue;
       }
       if (rng.chance(0.05) && free(p, 0.5)) tuftM[0].push(place(x, y - 0.05, z, rng.range(0, 6.3), rng.range(0.8, 1.5)));
+      const heath = Math.sin(x * 0.05 + 1.3) * Math.cos(z * 0.043) + (ny < 0.9 ? 0.4 : 0);
+      if (heath > 0.55 && rng.chance(0.09) && free(p, 0.8)) tuftM[rng.int(1, 2)].push(place(x, y - 0.1, z, rng.range(0, 6.3), rng.range(0.8, 1.4)));
     }
     if ((ny < 0.78 && rng.chance(0.06)) || (y < 1.6 && rng.chance(0.012))) {
       if (free(p, 1)) rockM[rng.int(0, 3)].push(place(x, y - 0.3, z, rng.range(0, 6.3), rng.range(0.6, 2.4)));

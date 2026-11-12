@@ -62,17 +62,21 @@ export class Heightfield {
         const shelf = smooth(-1.0, 0.0, t);
         ih = -r.seaDepth * (1 - shelf) - 1.4 * shelf + smooth(0, 0.5, t) * (isl.height + 1.4);
       } else {
-        const shelf = smooth(-0.9, -0.02, t); // shallow underwater shelf
-        const beach = smooth(-0.04, 0.08, t);
-        const hill = Math.pow(smooth(0.04, 1.0, t), 1.25);
+        // Coast character varies along the shore: sandy coves vs. rocky cliffs.
+        const cliff = smooth(-0.15, 0.35, inoise.get(x * 0.007 + 13.1, z * 0.007 - 4.7));
+        const shelf = smooth(-0.9, -0.02, t);
+        const beachW = 0.12 * (1 - cliff) + 0.015;
+        const beach = smooth(-0.04, beachW, t);
+        const rise = Math.pow(smooth(beachW * 0.6, 1.0, t), 1.25 - 0.6 * cliff);
         const ridged = 1 - Math.abs(inoise.fbm(x * 0.009, z * 0.009, 4));
         const detail = 0.75 + 0.35 * ridged;
-        const terraces = hill * isl.height * detail;
-        // Soft terracing gives the low-poly plateaus their character.
-        const step = 3.2;
-        const terr = Math.floor(terraces / step) * step + smooth(0.55, 1, (terraces / step) % 1) * step;
-        const land = 0.6 * terraces + 0.4 * terr;
-        ih = -r.seaDepth * (1 - shelf) - 2.2 * shelf + beach * 2.6 + land;
+        const terraces = rise * isl.height * detail;
+        // Terracing gives the low-poly plateaus and rock steps their character.
+        const step = 3.4;
+        const fr = (terraces / step) % 1;
+        const terr = Math.floor(terraces / step) * step + smooth(0.6, 0.95, fr) * step;
+        const land = (0.45 - 0.15 * cliff) * terraces + (0.55 + 0.15 * cliff) * terr + cliff * smooth(0.0, 0.05, t) * 3.5;
+        ih = -r.seaDepth * (1 - shelf) - 2.2 * shelf + beach * (1.6 + 0.8 * (1 - cliff)) + land;
       }
       h = smax(h, ih, 2.5);
     }

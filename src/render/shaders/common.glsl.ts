@@ -32,27 +32,32 @@ uniform float uCloudCover;
 export const SKY_FN_GLSL = /* glsl */ `
 vec3 mw_clouds(vec3 d, vec3 col, float mirror) {
   if (d.y <= 0.01) return col;
-  vec2 uv = d.xz / (d.y + 0.12) * 1.4 + vec2(uTime * 0.004, uTime * 0.0015);
-  float n = mw_fbm(uv * 1.3);
-  float cover = mix(0.62, 0.38, uCloudCover);
-  float m = smoothstep(cover, cover + 0.12, n);
-  m *= smoothstep(0.02, 0.22, d.y);
+  vec2 uv = d.xz / (d.y + 0.2) * 0.8 + vec2(uTime * 0.003, uTime * 0.0012);
+  vec2 warp = vec2(mw_fbm(uv * 0.7 + 3.1), mw_fbm(uv * 0.7 - 7.7)) - 0.5;
+  vec2 p = uv * 1.2 + warp * 0.9;
+  float n = mw_fbm(p);
+  float cover = mix(0.64, 0.4, uCloudCover);
+  float m = smoothstep(cover, cover + 0.04, n);
+  m *= smoothstep(0.015, 0.14, d.y);
   if (m <= 0.0) return col;
-  // Stylized two-band lighting: lit tops facing the sun, violet undersides.
-  float sunFacing = clamp(dot(normalize(vec3(d.x, 0.0, d.z)), normalize(vec3(uSunDir.x, 0.0, uSunDir.z) + 1e-4)) * 0.5 + 0.5, 0.0, 1.0);
-  float band = smoothstep(0.62, 0.70, n + sunFacing * 0.08);
-  vec3 shade = mix(uZenith * 0.9, vec3(0.231, 0.165, 0.31), 0.45 + 0.25 * uNight);
-  vec3 lit = mix(uHorizon, uSunColor, 0.55) * (1.0 - 0.75 * uNight) + uZenith * 0.25;
-  vec3 c = mix(shade, lit, band * (0.55 + 0.45 * sunFacing));
-  float sd = max(dot(d, uSunDir), 0.0);
-  c += uSunColor * pow(sd, 6.0) * 0.6 * (1.0 - band) * (1.0 - uNight);
-  return mix(col, c, m * 0.92);
+  // Fake self-shadowing: compare density toward the sun to get lit rims and shaded cores.
+  vec2 sunH = normalize(uSunDir.xz + 1e-4);
+  float n2 = mw_fbm(p + sunH * 0.07);
+  float lightK = clamp((n - n2) * 9.0 + 0.5, 0.0, 1.0);
+  float lit = smoothstep(0.42, 0.58, lightK);
+  float low = 1.0 - smoothstep(-0.05, 0.45, uSunDir.y);
+  vec3 core = mix(uZenith * 1.35 + vec3(0.07, 0.05, 0.09), vec3(0.92, 0.94, 1.0), 0.55 * (1.0 - low));
+  vec3 rimC = mix(vec3(1.0, 0.98, 0.95), mix(uHorizon, uSunColor, 0.55) * 1.25, 0.25 + 0.75 * low);
+  float edge = 1.0 - smoothstep(cover + 0.02, cover + 0.12, n);
+  vec3 c = mix(core, rimC, max(lit * 0.85, edge * 0.55 * low));
+  c = mix(c, c * vec3(0.5, 0.55, 0.85), uNight * 0.85);
+  return mix(col, c, m * 0.96 * (1.0 - 0.45 * mirror));
 }
 
 vec3 skyColor(vec3 d, float mirror) {
   d = normalize(d);
   float h = clamp(d.y, 0.0, 1.0);
-  vec3 col = mix(uHorizon, uZenith, pow(h, 0.5));
+  vec3 col = mix(uHorizon, uZenith, smoothstep(0.0, 0.62, pow(h, 0.62)));
   if (d.y < 0.0) col = mix(uHorizon, uHorizon * 0.55, clamp(-d.y * 5.0, 0.0, 1.0));
   float sd = max(dot(d, uSunDir), 0.0);
   float day = 1.0 - uNight;
@@ -62,10 +67,11 @@ vec3 skyColor(vec3 d, float mirror) {
     vec3 p = floor(d * 220.0);
     float s = mw_hash3(p);
     float tw = 0.6 + 0.4 * sin(uTime * 2.0 + s * 40.0);
-    col += vec3(0.85, 0.9, 1.0) * step(0.9965, s) * tw * uNight * smoothstep(0.0, 0.25, d.y);
+    col += vec3(0.85, 0.9, 1.0) * step(0.9965, s) * tw * smoothstep(0.55, 0.95, uNight) * smoothstep(0.0, 0.25, d.y);
   }
   col = mw_clouds(d, col, mirror);
-  col += uSunColor * smoothstep(0.99935, 0.99975, sd) * 6.0 * day;
+  float disc = smoothstep(0.9984, 0.99875, sd);
+  col = mix(col, mix(uSunColor * 2.2, vec3(1.0, 0.95, 0.75) * 3.0, smoothstep(0.9988, 0.9998, sd)), disc * day);
   float md = dot(d, uMoonDir);
   float moon = smoothstep(0.99955, 0.9998, md);
   col = mix(col, vec3(0.95, 0.93, 0.85) * 2.2, moon * uNight);

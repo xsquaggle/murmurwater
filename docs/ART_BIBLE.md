@@ -66,7 +66,20 @@ Splash on lure entry, ripples, bite plunge burst, line tension shimmer, reel-in 
 - The HUD stays minimal while fishing; menus slide in like a ledger.
 
 ## 9. Style references
-`docs/art/refs/` holds the locked style reference images (generated against this bible). Generated assets must be compared against them before they go in. Status: to be generated in pre-production.
+`docs/art/refs/` holds the locked style reference images (generated 2026-11-12 against this bible; see docs/ASSETS.md). They are **canon**: generated assets are compared against them before they go in.
+
+| Ref | Locks |
+|---|---|
+| 01-keyart-hearthbay | The target screenshot: saturated violet-to-orange golden-hour sky, rocky cliffs with stone walls and heather, glowing lighthouse, dock lanterns, clear teal water with rocks visible below, sea stacks and an arch, second moon only in the reflection |
+| 02-mossglass-fen | Region 2 mood: fog layers, cyan-tipped reeds, stilt houses |
+| 03-saltbone-reach | Region 3: whale-bone isles, storm slate, shaft of gold light |
+| 04-the-hush | Region 4: aurora, glass-still pale sea, the Choir |
+| 05-fish-sheet | Fish style and the eight Hearthbay species (butterperch, kettle carp, lampjaw, coral snapper, moss eel, twofold flounder, hollow lantern, manyeye) |
+| 06-characters | Player (mustard raincoat, teal beanie), Mara, Pell, Wick, Dr. Calloway, Biscuit |
+| 07-boats | Boat line-up: skiff, sloop, cutter, trawler, lantern boat, ferry |
+| 08-ui-mood | Paper-and-brass UI panels, catch card |
+
+**Lessons from comparing the first engine renders to ref 01 (2026-11-12):** our sky was too washed out (needs violet zenith, orange horizon), islands too soft and sandy (need cliffs, big chunky shore rocks, stone walls, heather, paths and fences), crest foam read as blobs, and close-up detail (foam rings at posts, hanging lanterns, smoke) carries the cozy feeling.
 
 ## 10. Asset pipeline rules
 - **Fidelity bar (Lawson, 2026-11-12):** models should look as if they have had three fidelity passes. Cartoony is welcome; crude is not. Higgsfield credits already on the account may be spent freely; never buy credits or plans without asking.

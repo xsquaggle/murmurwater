@@ -58,7 +58,7 @@ export class Water {
       uniforms: {
         ...opts.sky,
         uWaves: { value: waves },
-        uSeaState: { value: 0.75 },
+        uSeaState: { value: 0.6 },
         uHeightTex: { value: opts.heightTex },
         uHeightBounds: { value: opts.heightBounds },
         uCamPos: { value: new Vector3() },
@@ -164,12 +164,15 @@ export class Water {
           float depth = max(0.0, -seabedF(vWorld.xz) + vWorld.y * 0.3);
           float detailFade = (1.0 - smoothstep(40.0, 420.0, dist)) * uDetail;
           vec3 dn = detailNormal(vWorld.xz);
-          vec3 N = normalize(vNormal + vec3(dn.x, 0.0, dn.z) * detailFade * 0.55);
+          vec3 N = normalize(vNormal + vec3(dn.x, 0.0, dn.z) * detailFade * 0.3);
+          // High-frequency glitter normal, used only for sparkles.
+          vec2 gp = vWorld.xz * 3.1 + vec2(uTime * 0.6, -uTime * 0.45);
+          vec3 Ng = normalize(N + vec3(mw_vnoise(gp) - 0.5, 0.0, mw_vnoise(gp + 7.3) - 0.5) * 0.9 * detailFade);
 
           // Body colour by depth (banded slightly for the stylized look).
           float dq = depth;
-          vec3 body = mix(uShallow, uMid, smoothstep(0.6, 7.0, dq));
-          body = mix(body, uDeep, smoothstep(6.0, 26.0, dq));
+          vec3 body = mix(uShallow, uMid, smoothstep(0.5, 4.5, dq));
+          body = mix(body, uDeep, smoothstep(4.0, 16.0, dq));
 
           // Lighting: wrap diffuse + ambient, subsurface glow on crests facing the light.
           float ndl = dot(N, uKeyDir);
@@ -179,17 +182,19 @@ export class Water {
           lit += uShallow * uKeyColor * sss * 0.35 * uKeyIntensity * (1.0 - uNight * 0.7);
 
           // Sky reflection with fresnel.
-          vec3 R = reflect(-V, N);
+          vec3 Nr = normalize(mix(vec3(0.0, 1.0, 0.0), N, 0.7));
+          vec3 R = reflect(-V, Nr);
           R.y = abs(R.y);
           vec3 refl = skyColor(R, 1.0);
-          float fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 5.0);
-          fres = clamp(fres * 1.05, 0.0, 0.92);
+          vec3 Nf = normalize(mix(vec3(0.0, 1.0, 0.0), N, 0.45));
+          float fres = 0.03 + 0.97 * pow(1.0 - clamp(dot(Nf, V), 0.0, 1.0), 5.0);
+          fres = clamp(fres, 0.0, 0.85);
           vec3 col = mix(lit, refl, fres);
 
           // Stylized glint: sharp sparkles where ripple normals align with the key light.
           vec3 H = normalize(uKeyDir + V);
-          float spec = pow(max(dot(N, H), 0.0), 900.0);
-          float sparkle = smoothstep(0.25, 0.6, spec);
+          float spec = pow(max(dot(Ng, H), 0.0), 1400.0);
+          float sparkle = smoothstep(0.3, 0.7, spec);
           col += uKeyColor * sparkle * (3.5 * (1.0 - uNight) + 1.2 * uNight) * uKeyIntensity * 0.5;
           float sheen = pow(max(dot(R, uKeyDir), 0.0), 60.0);
           col += uKeyColor * sheen * 0.35 * uKeyIntensity;
@@ -201,8 +206,9 @@ export class Water {
           float edge = 1.0 - smoothstep(0.05, 0.45 + 0.25 * n, depth);
           float foam = max(bands * 0.85, edge);
           // Crest foam on the tallest waves.
-          float crest = smoothstep(0.42, 0.75, vCrest + (n - 0.5) * 0.35) * (1.0 - smoothstep(60.0, 300.0, dist));
-          foam = max(foam, crest * 0.75);
+          float streak = smoothstep(0.62, 0.8, mw_vnoise(vWorld.xz * vec2(0.9, 0.35) + uTime * 0.3));
+          float crest = smoothstep(0.55, 0.8, vCrest) * streak * (1.0 - smoothstep(30.0, 90.0, dist));
+          foam = max(foam, crest * 0.6);
           vec3 foamCol = uFoam * (uAmbient * 0.9 + uKeyColor * uKeyIntensity * 0.4 * wrap + 0.15);
           col = mix(col, foamCol, clamp(foam, 0.0, 1.0));
 
