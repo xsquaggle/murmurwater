@@ -6,6 +6,7 @@ import { Avatar, type PlayerAvatar, type Pose } from '../render/avatar';
 import { ModelAvatar } from '../render/model-avatar';
 import { makeFish, type FishObject } from '../render/fish-models';
 import { FishingView } from '../render/fishing-view';
+import { FishShadows } from '../render/fish-shadows';
 import { Fx } from '../render/fx';
 import { DAY_LENGTH_S } from '../render/daycycle';
 import { Hud } from '../ui/hud';
@@ -16,7 +17,7 @@ import { relicBonus } from '../core/quests';
 import { AudioEngine } from '../audio/audio';
 import { Input } from './input';
 import { Rng } from '../core/rng';
-import { FishingSession, FEEL, type FishingInput, type SpotInfo } from '../core/fishing';
+import { FishingSession, type FishingInput, type SpotInfo } from '../core/fishing';
 import { REGIONS_BY_ID, bait, rod, zoneAt } from '../core/content';
 import { addCatch, breakRhythm, rarityIndex, RHYTHM } from '../core/economy';
 import { type GameState } from '../core/state';
@@ -39,11 +40,14 @@ export class Game {
   private showTimer = 0;
   private faceYaw = 0;
   readonly view: FishingView;
+  readonly shadows: FishShadows;
   session: FishingSession;
   readonly pos = new Vector3();
   yaw = 0;
   private camYaw = 0; private camPitch = 0.28; private camDist = 5.2;
   private camTarget = new Vector3();
+  /** Where the camera looks: the player's head, or out over the water toward the lure or fish while fishing. */
+  private camAim = new Vector3();
   private acc = 0;
   private time = 0;
   private speed = 0;
@@ -52,6 +56,14 @@ export class Game {
   private castYaw = 0;
   private lastTension = 0;
   private shake = 0;
+  /** Cast feedback: a field-of-view punch and a forward lunge of the camera on release, both decaying fast. */
+  private fovBase = 55; private fovKick = 0; private camKick = 0;
+  private lastCast = { power: 0, clean: false };
+  private wasSweet = false;
+  private aimV = new Vector3();
+  private wakeT = 0;
+  /** Bots: step and update everything but skip drawing (for frames between screenshots). */
+  skipRender = false;
   private idleSince = 0;
   frames = 0;
   perf: PerfOverlay | null = null;
@@ -79,8 +91,9 @@ export class Game {
     });
     this.world.hour = state.hour;
     this.world.scene.add(this.avatar.root, this.fx.group);
-    this.view = new FishingView(this.fx, (x, z) => this.waveY(x, z));
+    this.view = new FishingView(this.fx, (x, z) => this.waveY(x, z), (x, z) => Math.max(this.world.hf.height(x, z), this.world.dockDeckAt(x, z) ?? -99, this.waveY(x, z)));
     this.world.scene.add(this.view.group);
+    this.shadows = new FishShadows((x, z) => this.world.hf.depth(x, z), state.seed);
     this.pos.set(...state.world.pos);
     this.yaw = state.world.yaw;
     this.camYaw = this.yaw;
@@ -127,6 +140,7 @@ export class Game {
   snapCamera() {
     this.camYaw = this.yaw; this.faceYaw = this.yaw;
     this.camTarget.copy(this.pos).add(new Vector3(0, 1.6, 0));
+    this.camAim.copy(this.camTarget);
     const cx = this.pos.x - Math.sin(this.yaw) * this.camDist, cz = this.pos.z - Math.cos(this.yaw) * this.camDist;
     this.camera.position.set(cx, Math.max(this.pos.y + 2.2, this.world.hf.height(cx, cz) + 1.2, 1), cz);
   }
@@ -244,6 +258,10 @@ export class Game {
     if (ph === 'charging') this.castYaw = this.yaw;
     this.session.update(dt, fi);
     this.handleEvents();
+    // A tick as the charge enters the sweet spot, so it can be timed by ear.
+    const sweet = this.session.inSweetSpot;
+    if (sweet && !this.wasSweet) this.audio.sweetTick();
+    this.wasSweet = sweet;
 
     // People, places, menus.
     this.town.step(dt);
@@ -262,14 +280,19 @@ export class Game {
     for (const e of this.session.events.splice(0)) {
       switch (e.type) {
         case 'cast': {
-          this.audio.whoosh(e.power);
-          const tip = this.avatar.tipWorld();
-          this.view.beginCast(tip, this.pos, this.castYaw, e.distance, FEEL.flightBase + e.distance * FEEL.flightPerMetre);
+          this.audio.cast(e.power, e.flight, e.clean);
+          this.view.beginCast(this.pos, this.castYaw, e.distance, e.flight, e.power, e.clean);
+          this.lastCast = { power: e.power, clean: e.clean };
+          this.fovKick = 3.5 + 5 * e.power; this.camKick = 0.25 + 0.5 * e.power;
+          this.shake = Math.max(this.shake, 0.1 + 0.25 * e.power);
           if (e.clean) this.hud.toast('Clean cast!', 'good');
           break;
         }
-        case 'splash': this.audio.plop(); break;
-        case 'nibble': this.audio.nibble(); this.view.nibble(); break;
+        case 'splash':
+          this.audio.plop(this.lastCast.power); this.shake = Math.max(this.shake, 0.08 + 0.2 * this.lastCast.power);
+          this.shadows.scatter(this.view.target.x, this.view.target.z, 3 + 3 * this.lastCast.power);
+          break;
+        case 'nibble': this.audio.nibble(); this.view.nibble(); this.shadows.nibble(); break;
         case 'bite': this.audio.bite(); this.shake = 0.25; break;
         case 'hook': {
           const b = s.gear.bait;
@@ -279,11 +302,11 @@ export class Game {
           }
         }
           this.audio.hook(e.grade === 'perfect'); this.hud.toast(e.grade === 'perfect' ? 'Perfect hook!' : 'Hooked!', e.grade === 'perfect' ? 'gold' : 'good'); this.shake = 0.35; break;
-        case 'tooEarly': this.hud.toast(e.spooked ? 'Too early — you spooked it' : 'Wait for the bobber to go under', 'bad'); break;
-        case 'missed': this.audio.lose(); this.hud.toast('It got away… keep watching', 'bad'); break;
+        case 'tooEarly': this.shadows.spook(); this.hud.toast(e.spooked ? 'Too early — you spooked it' : 'Wait for the bobber to go under', 'bad'); break;
+        case 'missed': this.shadows.spook(); this.audio.lose(); this.hud.toast('It got away… keep watching', 'bad'); break;
         case 'runWarn': this.audio.warn(); break;
         case 'run': this.shake = 0.2; break;
-        case 'thrash': this.shake = 0.6; this.audio.splash(1.2); break;
+        case 'thrash': this.shake = 0.6; this.audio.splash(1.2); if (this.view.hooked) this.shadows.scatter(this.view.hooked.x, this.view.hooked.z, 5); break;
         case 'landed': {
           const res = addCatch(s, e.catch);
           this.town.questEvent({ type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook });
@@ -347,33 +370,70 @@ export class Game {
     }
     const tip = this.avatar.tipWorld();
 
-    // Camera: orbit behind the player; while fishing, frame the bobber/fish too.
+    // Camera: orbits behind the player. While fishing it stays over the shoulder and looks out over the
+    // water, half-way to the lure or the fish, so the angler, the line and the float share the frame; it
+    // chases the lure through its flight.
     const head = this.pos.clone().add(new Vector3(0, 1.6, 0));
-    let look = head.clone();
-    if (ph !== 'idle' && ph !== 'charging' && ph !== 'landed' && ph !== 'lost') look.lerp(this.view.bobberPos.y > -5 ? this.view.bobberPos : head, ph === 'fighting' ? 0.4 : 0.3);
-    this.camTarget.lerp(look, Math.min(1, dt * 5));
     const fishingView = ph === 'fighting' || ph === 'waiting' || ph === 'bite' || ph === 'casting';
+    const aim = head.clone();
+    if (fishingView) aim.lerp(this.view.bobberPos, ph === 'fighting' ? 0.45 : ph === 'casting' ? 0.5 : 0.56);
+    this.camTarget.lerp(head, Math.min(1, dt * 5));
+    this.camAim.lerp(aim, Math.min(1, dt * (ph === 'casting' ? 10 : 4)));
     const camYaw = fishingView ? this.castYaw : this.camYaw;
-    const dist = this.camDist + (ph === 'fighting' ? 2.2 : fishingView ? 1.6 : 0);
-    const pitch = fishingView ? Math.max(this.camPitch, 0.38) : this.camPitch;
+    const dist = this.camDist + (ph === 'fighting' ? 2.2 : ph === 'waiting' || ph === 'bite' ? 2.4 : fishingView ? 1.6 : 0);
+    // Low behind the angler for the throw, so the lure climbs against the sky; then it cranes up to look down
+    // on the float, where the fish shadows are.
+    const watching = ph === 'waiting' || ph === 'bite';
+    const pitch = watching ? Math.max(0.46, Math.min(0.75, this.camPitch + 0.12)) : fishingView ? Math.max(0.16, Math.min(0.6, this.camPitch)) : this.camPitch;
     const shoulder = fishingView ? 1.5 : 0.9;
     const want = new Vector3(
       this.camTarget.x - Math.sin(camYaw) * Math.cos(pitch) * dist + Math.cos(camYaw) * shoulder,
       this.camTarget.y + Math.sin(pitch) * dist + 0.3,
       this.camTarget.z - Math.cos(camYaw) * Math.cos(pitch) * dist - Math.sin(camYaw) * shoulder,
     );
+    this.camKick *= Math.exp(-dt * 5); this.fovKick *= Math.exp(-dt * 4);
+    want.x += Math.sin(this.castYaw) * this.camKick * this.shakeScale; want.z += Math.cos(this.castYaw) * this.camKick * this.shakeScale;
     const ground = this.world.hf.height(want.x, want.z);
     want.y = Math.max(want.y, Math.max(ground, this.waveY(want.x, want.z)) + 0.6);
     this.camera.position.lerp(want, Math.min(1, dt * 6));
     this.shake = Math.max(0, this.shake - dt * 1.5);
     const tension = fs?.tension ?? 0;
-    const sh = (this.shake * 0.08 + Math.max(0, tension - 0.8) * 0.03) * this.shakeScale;
-    this.camera.lookAt(this.camTarget.x + (Math.random() - 0.5) * sh, this.camTarget.y + (Math.random() - 0.5) * sh, this.camTarget.z);
+    const sh = (this.shake * 0.08 + Math.max(0, tension - 0.8) * 0.03 + (ph === 'charging' ? Math.max(0, this.session.power - 0.75) * 0.05 : 0)) * this.shakeScale;
+    this.camera.lookAt(this.camAim.x + (Math.random() - 0.5) * sh, this.camAim.y + (Math.random() - 0.5) * sh, this.camAim.z);
     if (this.debugCam) { this.camera.position.copy(this.debugCam.pos); this.camera.lookAt(this.debugCam.look); }
-    const fov = 55 + (ph === 'fighting' ? -4 * tension : 0) + (ph === 'charging' ? -3 * this.session.power : 0);
-    if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov += (fov - this.camera.fov) * Math.min(1, dt * 4); this.camera.updateProjectionMatrix(); }
+    // Field of view: closes in as the cast winds up, punches wide on release, tightens with line tension.
+    const fovWant = 55 + (ph === 'fighting' ? -4 * tension : 0) + (ph === 'charging' ? -5 * this.session.power : 0) + (ph === 'waiting' || ph === 'bite' ? -7 : 0);
+    this.fovBase += (fovWant - this.fovBase) * Math.min(1, dt * (ph === 'charging' ? 9 : 4));
+    const fov = this.fovBase + this.fovKick * this.shakeScale;
+    if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
 
+    // Where the cast being charged would land.
+    if (ph === 'charging') {
+      const reach = this.session.reachAt(this.session.power);
+      const dist = this.session.ctx.spot(reach).distance ?? reach;
+      if (dist > 0) {
+        this.aimV.set(this.pos.x + Math.sin(this.castYaw) * dist, 0, this.pos.z + Math.cos(this.castYaw) * dist);
+        this.view.aim({ target: this.aimV, power: this.session.power, sweet: this.session.inSweetSpot }, this.pos);
+      }
+    }
+    this.view.lureHidden = !this.avatar.rodOut;
     this.view.update(dt, this.session, tip, this.pos);
+    // Fish shadows: roaming around the player, and one closing on the float before each nibble and bite.
+    const hooked = this.view.hooked;
+    this.shadows.update(dt, {
+      cx: this.pos.x, cz: this.pos.z,
+      lure: ph === 'waiting' || ph === 'bite' ? this.view.target : null,
+      nextTug: this.session.nextTug, biting: ph === 'bite',
+      fish: fs && hooked ? { x: hooked.x, z: hooked.z, len: Math.max(1.2, Math.min(3.2, fs.fish.length * 3.6)) } : null,
+    }, this.world.water.fishA, this.world.water.fishB, this.world.water.fishField);
+    // The biter stirs the surface as it comes: slow rings while it circles, a quick wake when it darts.
+    const bt = this.shadows.biter;
+    this.wakeT -= dt;
+    if (bt.mode === 'stalk' && bt.alpha > 0.5 && this.wakeT <= 0) {
+      const near = Math.hypot(bt.x - this.view.target.x, bt.z - this.view.target.z) < 3.2;
+      this.wakeT = bt.speed > 3 ? 0.07 : near ? 0.5 : 1.1;
+      this.fx.ripples.spawn(this.aimV.set(bt.x, 0, bt.z), Math.min(1.3, 0.55 + 0.14 * bt.speed), bt.speed > 3 ? 0.5 : 0.9);
+    }
     this.fx.update(dt, (x, z) => this.waveY(x, z));
     this.world.update(dt, this.camera, this.pos);
 
@@ -390,11 +450,11 @@ export class Game {
     const fp = this.town.focusPrompt;
     this.hud.setPrompt(fp && !this.town.blocking ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '');
 
-    this.audio.update(dt, { reeling: !!fs && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3, tension, fighting: !!fs, sea: 0.5 });
+    this.audio.update(dt, { reeling: !!fs && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3, tension, fighting: !!fs, sea: 0.5, charge: ph === 'charging' ? this.session.power : -1 });
     if (fs && tension > 0.9 && this.lastTension <= 0.9) this.audio.warn();
     this.lastTension = tension;
 
-    this.renderer.render(dt);
+    if (!this.skipRender) this.renderer.render(dt);
   }
 
   private hint(): string {

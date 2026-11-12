@@ -72,7 +72,11 @@ class SpringV3 {
   }
 }
 
-interface PoseTarget { grip: Vector3; lean: number; yaw: number; bend: number; spineTwist: number; spineLean: number; leftOnReel: number }
+/** leftOnReel / leftOnButt: how much the left hand is on the reel crank or on the rod's butt (two-handed cast). */
+interface PoseTarget { grip: Vector3; lean: number; yaw: number; roll: number; bend: number; spineTwist: number; spineLean: number; leftOnReel: number; leftOnButt: number }
+
+/** How long the forward whip lasts before the body relaxes into the waiting stance. */
+const FOLLOW_THROUGH = 0.24;
 
 export class ModelAvatar implements PlayerAvatar {
   readonly root = new Group();
@@ -87,6 +91,10 @@ export class ModelAvatar implements PlayerAvatar {
   private yaw = 0; private bend = 0;
   private twist = 0; private spineLean = 0; private side = 0;
   private leftW = 0; private rightW = 1;
+  private buttW = 0; private roll = 0;
+  /** Rod flex: a lightly damped spring dragged by the rod's swing, so the tip lags a whip and recoils after it. */
+  private flex = 0; private flexV = 0;
+  private castT = 99; private lastPose: Pose = 'idle';
   private crank = 0;
   private held: Object3D | null = null;
   private holdT = 0;
@@ -97,7 +105,7 @@ export class ModelAvatar implements PlayerAvatar {
   private rodSocket: Object3D | null = null;
   private catchSocket: Object3D | null = null;
   /** Clip names for each role, preferring the authored rod clips when the model has them. */
-  private clip: { idle: string; walk: string; run: string; wait: string; leanL?: string; leanR?: string; show?: string };
+  private clip: { idle: string; walk: string; run: string; wait: string; leanL?: string; leanR?: string; show?: string; charge?: string; cast?: string };
   /**
    * The mixer's output for the bones edited procedurally. three's mixer only writes a bone when its
    * animated value changes, so without restoring this each frame the IK and spine edits would pile up
@@ -122,13 +130,16 @@ export class ModelAvatar implements PlayerAvatar {
     this.clip = {
       idle, walk: has('rod_walk') ?? 'walk', run: has('rod_run') ?? 'run', wait: has('rod_wait') ?? idle,
       leanL: has('rod_lean_left'), leanR: has('rod_lean_right'), show: has('show_catch'),
+      charge: has('rod_charge'), cast: has('rod_cast'),
     };
-    if (this.clip.show) { const a = this.actions[this.clip.show]; a.setLoop(LoopOnce, 1); a.clampWhenFinished = true; }
+    // One-shots hold their last frame; the charge clip is scrubbed by cast power, never played.
+    for (const n of [this.clip.show, this.clip.cast, this.clip.charge]) if (n) { const a = this.actions[n]; a.setLoop(LoopOnce, 1); a.clampWhenFinished = true; }
     for (const n of new Set(Object.values(this.clip))) {
       const a = n ? this.actions[n] : undefined;
       if (a && n !== this.clip.show) { a.play(); a.setEffectiveWeight(n === idle ? 1 : 0); }
       if (n) this.w[n] = n === idle ? 1 : 0;
     }
+    if (this.clip.charge) this.actions[this.clip.charge].setEffectiveTimeScale(0);
     for (const n of ['Spine01', 'Spine', 'RightArm', 'RightForeArm', 'RightHand', 'LeftArm', 'LeftForeArm', 'LeftHand']) {
       const b = this.bones[n]; if (b) this.animQ.set(b, b.quaternion.clone());
     }
@@ -140,23 +151,42 @@ export class ModelAvatar implements PlayerAvatar {
 
   private target(pose: Pose, o: { power?: number; tension?: number; lateral?: number; reeling?: boolean }): PoseTarget {
     const p = o.power ?? 0, ten = o.tension ?? 0, lat = o.lateral ?? 0;
+    const wait: PoseTarget = { grip: new Vector3(-0.15, 1.0, 0.3), lean: 0.92 + Math.sin(this.t * 1.3) * 0.03, yaw: 0, roll: 0, bend: 0.08, spineTwist: 0.05, spineLean: 0.04, leftOnReel: 0.6, leftOnButt: 0 };
     switch (pose) {
-      case 'charge': return { grip: _t.set(-0.19, 1.0 + 0.3 * p, 0.24 - 0.2 * p).clone(), lean: 0.55 - 1.65 * p, yaw: 0, bend: -0.12 * p, spineTwist: -0.45 * p, spineLean: -0.12 * p, leftOnReel: 0 };
-      case 'cast': return { grip: new Vector3(-0.16, 1.02, 0.34), lean: 1.2, yaw: 0, bend: 0.25, spineTwist: 0.2, spineLean: 0.16, leftOnReel: 0 };
-      case 'wait': return { grip: new Vector3(-0.15, 1.0, 0.3), lean: 0.92 + Math.sin(this.t * 1.3) * 0.03, yaw: 0, bend: 0.08, spineTwist: 0.05, spineLean: 0.04, leftOnReel: 0.6 };
+      case 'charge': {
+        // Wind-up for a two-handed overhead cast: hands rise in front of the right shoulder, the rod tips
+        // back past vertical and out to the side, the shoulders coil; it trembles as it nears full power.
+        const e = p * p * (3 - 2 * p);
+        const tremble = Math.sin(this.t * 43) * 0.012 * p * p;
+        return {
+          grip: new Vector3(-0.2 - 0.02 * e, 1.02 + 0.3 * e, 0.22 - 0.12 * e), lean: 0.5 - 1.75 * e + tremble, yaw: 0, roll: 0.3 * e,
+          bend: -0.1 * e, spineTwist: -0.55 * e, spineLean: -0.16 * e, leftOnReel: 0, leftOnButt: Math.min(1, p * 4),
+        };
+      }
+      case 'cast':
+        // The throw: punch the grip forward and down while the left hand pulls the butt in, then relax.
+        if (this.castT < FOLLOW_THROUGH) return { grip: new Vector3(-0.12, 1.13, 0.47), lean: 1.14, yaw: 0, roll: 0.04, bend: 0.1, spineTwist: 0.38, spineLean: 0.32, leftOnReel: 0, leftOnButt: 1 };
+        return { ...wait, leftOnReel: 0.6 * Math.min(1, (this.castT - FOLLOW_THROUGH) * 4), leftOnButt: Math.max(0, 1 - (this.castT - FOLLOW_THROUGH) * 5) };
+      case 'wait': return wait;
       case 'fight': return {
         grip: new Vector3(-0.08 + lat * 0.06, 1.04 + ten * 0.06, 0.27), lean: 0.6 - 0.25 * ten + (o.reeling ? Math.sin(this.t * 22) * 0.02 : 0),
-        yaw: lat * 0.45, bend: 0.15 + 0.6 * ten, spineTwist: lat * 0.18, spineLean: -0.1 - 0.12 * ten, leftOnReel: 1,
+        yaw: lat * 0.45, roll: 0, bend: 0.15 + 0.6 * ten, spineTwist: lat * 0.18, spineLean: -0.1 - 0.12 * ten, leftOnReel: 1, leftOnButt: 0,
       };
-      case 'cheer': return { grip: new Vector3(-0.24, 0.86, 0.02), lean: 0.2, yaw: 0, bend: 0, spineTwist: 0, spineLean: -0.05, leftOnReel: 0 };
-      default: return { grip: new Vector3(-0.22, 0.87, 0.07), lean: 0.32, yaw: 0, bend: 0.04, spineTwist: 0, spineLean: 0, leftOnReel: 0 };
+      case 'cheer': return { grip: new Vector3(-0.24, 0.86, 0.02), lean: 0.2, yaw: 0, roll: 0, bend: 0, spineTwist: 0, spineLean: -0.05, leftOnReel: 0, leftOnButt: 0 };
+      default: return { grip: new Vector3(-0.22, 0.87, 0.07), lean: 0.32, yaw: 0, roll: 0, bend: 0.04, spineTwist: 0, spineLean: 0, leftOnReel: 0, leftOnButt: 0 };
     }
   }
 
   update(dt: number, pose: Pose, speed: number, opts: { power?: number; tension?: number; lateral?: number; reeling?: boolean } = {}) {
     this.t += dt;
+    if (pose === 'cast' && this.lastPose !== 'cast') {
+      this.castT = 0;
+      if (this.clip.cast) this.actions[this.clip.cast].reset().play();
+    }
+    this.castT += dt;
+    this.lastPose = pose;
     // ---- body clips: locomotion by ground speed; the fishing stance (and lean against a run) while fishing;
-    // show_catch while holding a fish up.
+    // the wind-up scrubbed by cast power and the throw played once; show_catch while holding a fish up.
     const fishing = pose === 'charge' || pose === 'cast' || pose === 'wait' || pose === 'fight';
     const C = this.clip;
     const want: Record<string, number> = {};
@@ -168,7 +198,12 @@ export class ModelAvatar implements PlayerAvatar {
       const lean = Math.abs(lat) * 0.75;
       // Lean away from the fish: a run to the left (+lateral) is fought by leaning right.
       const leanClip = lat > 0 ? C.leanR : C.leanL;
-      if (leanClip && lean > 0) { want[leanClip] = lean; want[C.wait] = (want[C.wait] ?? 0) + 1 - lean; }
+      if (pose === 'charge' && C.charge) {
+        const a = this.actions[C.charge];
+        a.time = Math.max(0, Math.min(0.999, opts.power ?? 0)) * a.getClip().duration;
+        want[C.charge] = 1;
+      } else if (pose === 'cast' && C.cast && this.castT < this.actions[C.cast].getClip().duration - 0.08) want[C.cast] = 1;
+      else if (leanClip && lean > 0) { want[leanClip] = lean; want[C.wait] = (want[C.wait] ?? 0) + 1 - lean; }
       else want[C.wait] = 1;
     } else {
       const s = speed;
@@ -179,7 +214,7 @@ export class ModelAvatar implements PlayerAvatar {
       this.actions[C.walk]?.setEffectiveTimeScale(Math.max(0.6, Math.min(3.2, s / 0.6)));
       this.actions[C.run]?.setEffectiveTimeScale(Math.max(0.6, Math.min(1.6, s / 3.1)));
     }
-    const rate = Math.min(1, dt * (showing ? 12 : 8));
+    const rate = Math.min(1, dt * (showing ? 12 : pose === 'cast' ? 22 : pose === 'charge' ? 12 : 8));
     for (const n of Object.keys(this.w)) {
       this.w[n] += (want[n] - this.w[n]) * rate;
       this.actions[n]?.setEffectiveWeight(this.w[n]);
@@ -190,18 +225,31 @@ export class ModelAvatar implements PlayerAvatar {
     for (const [b, q] of this.animQ) q.copy(b.quaternion);
     this.model.updateMatrixWorld(true);
 
-    // ---- rod pose: sprung grip position and rod lean (the cast whips faster than it winds back).
+    // ---- rod pose: sprung grip position and rod lean. The throw is a much stiffer spring than the
+    // wind-up, so the rod whips forward, overshoots a little and settles. Stepped at ≥120 Hz so the stiff
+    // springs stay stable at low frame rates.
     const tg = this.target(pose, opts);
-    const fast = pose === 'cast';
-    this.grip.step(tg.grip, dt, fast ? 420 : 120, fast ? 26 : 20);
-    const k = fast ? 380 : 90, damp = fast ? 20 : 16;
-    this.leanV += ((tg.lean - this.lean) * k - this.leanV * damp) * dt; this.lean += this.leanV * dt;
+    const whip = pose === 'cast' && this.castT < FOLLOW_THROUGH + 0.1;
+    const steps = Math.max(1, Math.ceil(dt * 120));
+    const h = dt / steps;
+    for (let i = 0; i < steps; i++) {
+      this.grip.step(tg.grip, h, whip ? 460 : 120, whip ? 28 : 20);
+      const k = whip ? 480 : 90, damp = whip ? 25 : 16;
+      this.leanV += ((tg.lean - this.lean) * k - this.leanV * damp) * h; this.lean += this.leanV * h;
+      // The tip lags the swing (flex opposes the rod's angular velocity) and rings once the swing stops.
+      this.flexV += ((-this.leanV * 0.017 - this.flex) * 260 - this.flexV * 9) * h; this.flex += this.flexV * h;
+    }
+    this.flex = Math.max(-0.5, Math.min(0.5, this.flex));
+    const quick = pose === 'cast' ? 20 : 8;
     this.yaw += (tg.yaw - this.yaw) * Math.min(1, dt * 8);
+    this.roll += (tg.roll - this.roll) * Math.min(1, dt * quick);
     this.bend += (tg.bend - this.bend) * Math.min(1, dt * 10);
     this.side += ((opts.lateral ?? 0) * (pose === 'fight' ? 1 : 0) - this.side) * Math.min(1, dt * 6);
-    this.twist += (tg.spineTwist - this.twist) * Math.min(1, dt * 7);
-    this.spineLean += (tg.spineLean - this.spineLean) * Math.min(1, dt * 7);
-    this.leftW += (tg.leftOnReel - this.leftW) * Math.min(1, dt * 6);
+    this.twist += (tg.spineTwist - this.twist) * Math.min(1, dt * (pose === 'cast' ? 18 : 7));
+    this.spineLean += (tg.spineLean - this.spineLean) * Math.min(1, dt * (pose === 'cast' ? 16 : 7));
+    const leftWant = Math.max(tg.leftOnReel, tg.leftOnButt);
+    this.leftW += (leftWant - this.leftW) * Math.min(1, dt * (pose === 'charge' || pose === 'cast' ? 12 : 6));
+    this.buttW += ((leftWant > 0 ? tg.leftOnButt / leftWant : 0) - this.buttW) * Math.min(1, dt * 8);
     this.rightW += ((this.held ? 0 : 1) - this.rightW) * Math.min(1, dt * 8);
 
     // ---- spine: twist about the vertical, lean forward/back about the body's right axis.
@@ -216,7 +264,7 @@ export class ModelAvatar implements PlayerAvatar {
 
     // ---- rod placement in body space: the hand's socket when walking about, the sprung target when fishing.
     this.rod.pivot.visible = !this.held;
-    _eu.set(this.lean, this.yaw, 0);
+    _eu.set(this.lean, this.yaw, this.roll);
     const procQ = _q.setFromEuler(_eu).clone();
     const fw = this.rodSocket ? this.fishW : 1;
     if (this.rodSocket && fw < 0.999) {
@@ -228,7 +276,7 @@ export class ModelAvatar implements PlayerAvatar {
       this.rod.pivot.position.copy(this.grip.v);
       this.rod.pivot.quaternion.copy(procQ);
     }
-    this.rod.setBend(this.bend * fw, this.side * fw);
+    this.rod.setBend((this.bend + this.flex) * fw, this.side * fw);
     this.root.updateMatrixWorld(true);
     const B = this.bones;
     if (this.held) this.placeHeld(dt);
@@ -251,8 +299,9 @@ export class ModelAvatar implements PlayerAvatar {
     }
     if (!this.held && this.leftW * fw > 0.01 && B.LeftArm && B.LeftForeArm && B.LeftHand) {
       if (opts.reeling && pose === 'fight') this.crank += dt * 13;
-      const h = this.rod.reelHandle;
-      const local = _d.set(h.x + 0.02, h.y + Math.sin(this.crank) * 0.035, Math.cos(this.crank) * 0.035);
+      // The left hand: on the reel crank, or gripping the rod's butt for a two-handed cast.
+      const rh = this.rod.reelHandle;
+      const local = _d.set(rh.x + 0.02, rh.y + Math.sin(this.crank) * 0.035, Math.cos(this.crank) * 0.035).lerp(this.rod.butt, this.buttW);
       const target = this.rod.pivot.localToWorld(local.clone());
       twoBoneIK(B.LeftArm, B.LeftForeArm, B.LeftHand, target, this.rootDir(1, -0.8, -0.3), this.leftW * fw);
     }
@@ -283,6 +332,7 @@ export class ModelAvatar implements PlayerAvatar {
   }
 
   tipWorld(out = new Vector3()): Vector3 { return this.rod.tip.getWorldPosition(out); }
+  get rodOut(): boolean { return !this.held; }
 
   holdFish(fish: Object3D | null) {
     if (this.held && this.held !== fish) {

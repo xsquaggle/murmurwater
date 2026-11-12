@@ -4,7 +4,7 @@
  */
 import {
   AdditiveBlending, BufferAttribute, BufferGeometry, Color, DynamicDrawUsage, NormalBlending, Points, RingGeometry,
-  ShaderMaterial, Vector3, InstancedMesh, Object3D, MeshBasicMaterial, DoubleSide, Group,
+  ShaderMaterial, Vector3, InstancedMesh, InstancedBufferAttribute, Object3D, MeshBasicMaterial, DoubleSide, Group,
 } from 'three';
 
 const MAX_P = 1500;
@@ -97,6 +97,7 @@ export class Ripples {
   private dur = new Float32Array(MAX_R);
   private scale = new Float32Array(MAX_R);
   private p: Vector3[] = Array.from({ length: MAX_R }, () => new Vector3());
+  private col: Color[] = Array.from({ length: MAX_R }, () => new Color(1, 1, 1));
   private next = 0;
   private dummy = new Object3D();
   private c = new Color();
@@ -111,11 +112,12 @@ export class Ripples {
     this.mesh.renderOrder = 6;
     this.mesh.count = MAX_R;
     for (let i = 0; i < MAX_R; i++) { this.dummy.scale.setScalar(0.0001); this.dummy.updateMatrix(); this.mesh.setMatrixAt(i, this.dummy.matrix); }
-    this.mesh.instanceColor = new BufferAttribute(new Float32Array(MAX_R * 3).fill(1), 3) as any;
+    this.mesh.instanceColor = new InstancedBufferAttribute(new Float32Array(MAX_R * 3).fill(1), 3);
   }
-  spawn(at: Vector3, size = 1.5, duration = 1.2) {
+  spawn(at: Vector3, size = 1.5, duration = 1.2, color?: Color) {
     const i = this.next; this.next = (this.next + 1) % MAX_R;
     this.p[i].copy(at); this.t[i] = 0; this.dur[i] = duration; this.scale[i] = size;
+    if (color) this.col[i].copy(color); else this.col[i].setRGB(1, 1, 1);
   }
   update(dt: number, waterY: (x: number, z: number) => number) {
     for (let i = 0; i < MAX_R; i++) {
@@ -128,7 +130,7 @@ export class Ripples {
         this.dummy.position.set(this.p[i].x, waterY(this.p[i].x, this.p[i].z) + 0.04, this.p[i].z);
         this.dummy.scale.set(s, 1, s);
         const fade = 1 - k;
-        this.mesh.setColorAt(i, this.c.setRGB(fade, fade, fade));
+        this.mesh.setColorAt(i, this.c.copy(this.col[i]).multiplyScalar(fade));
       }
       this.dummy.updateMatrix();
       this.mesh.setMatrixAt(i, this.dummy.matrix);

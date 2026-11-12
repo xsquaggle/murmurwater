@@ -103,6 +103,7 @@ export class Avatar implements PlayerAvatar {
   }
 
   tipWorld(out = new Vector3()): Vector3 { return this.rod.tip.getWorldPosition(out); }
+  readonly rodOut = true;
   holdFish(_fish: Object3D | null) { /* the stand-in avatar doesn't present catches */ }
 }
 
@@ -112,9 +113,13 @@ export class RodRig {
   readonly tip = new Object3D();
   /** Where the left hand cranks, in pivot space. */
   readonly reelHandle = new Vector3(0.085, 0.12, 0);
+  /** Where the left hand holds the butt for a two-handed cast, in pivot space. */
+  readonly butt = new Vector3(0.015, -0.17, 0.01);
   private segs: Group[] = [];
   constructor() {
-    const cork = new Mesh(new CylinderGeometry(0.03, 0.035, 0.35, 6), mat('#B88B5A')); cork.position.y = 0.05; this.pivot.add(cork);
+    // Cork handle with a long butt below the grip (room for the second hand) and a butt cap.
+    const cork = new Mesh(new CylinderGeometry(0.03, 0.034, 0.5, 6), mat('#B88B5A')); cork.position.y = -0.02; this.pivot.add(cork);
+    const cap = new Mesh(new CylinderGeometry(0.04, 0.036, 0.04, 6), mat('#5C6670', 0.4)); cap.position.y = -0.285; this.pivot.add(cap);
     const reel = new Mesh(new CylinderGeometry(0.06, 0.06, 0.05, 8), mat('#5C6670', 0.4)); reel.rotation.z = Math.PI / 2; reel.position.set(0.06, 0.12, 0); this.pivot.add(reel);
     let parent: Object3D = this.pivot;
     const lens = [0.75, 0.75, 0.7];
@@ -142,6 +147,8 @@ export interface PlayerAvatar {
   readonly root: Group;
   update(dt: number, pose: Pose, speed: number, opts?: { power?: number; tension?: number; lateral?: number; reeling?: boolean }): void;
   tipWorld(out?: Vector3): Vector3;
+  /** False while the rod is put away (a catch is being shown). */
+  readonly rodOut: boolean;
   /** Show a caught fish in the player's hands (null to put it away). */
   holdFish(fish: Object3D | null): void;
 }

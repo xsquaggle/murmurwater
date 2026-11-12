@@ -13,6 +13,7 @@ export class AudioEngine {
   private reelGain!: GainNode; private reelTimer = 0; private reelRate = 0;
   private humOsc!: OscillatorNode; private humGain!: GainNode;
   private seaGain!: GainNode; private seaFilter!: BiquadFilterNode;
+  private chargeGain!: GainNode; private chargeFilter!: BiquadFilterNode; private chargeOsc!: OscillatorNode; private chargeTone!: GainNode;
   volumes = { master: 0.8, music: 0.6, sfx: 0.8, voice: 0.9, ambience: 0.6 };
   private files = new Map<string, AudioBuffer>();
 
@@ -41,6 +42,14 @@ export class AudioEngine {
     this.humGain = ctx.createGain(); this.humGain.gain.value = 0;
     this.humOsc.connect(humF).connect(this.humGain).connect(this.buses.sfx); this.humOsc.start();
     this.reelGain = ctx.createGain(); this.reelGain.gain.value = 0.5; this.reelGain.connect(this.buses.sfx);
+    // Rod loading up as a cast is charged: a tightening creak that rises with power.
+    const creak = ctx.createBufferSource(); creak.buffer = this.noiseBuf; creak.loop = true;
+    this.chargeFilter = ctx.createBiquadFilter(); this.chargeFilter.type = 'bandpass'; this.chargeFilter.frequency.value = 260; this.chargeFilter.Q.value = 7;
+    this.chargeGain = ctx.createGain(); this.chargeGain.gain.value = 0;
+    creak.connect(this.chargeFilter).connect(this.chargeGain).connect(this.buses.sfx); creak.start();
+    this.chargeOsc = ctx.createOscillator(); this.chargeOsc.type = 'triangle'; this.chargeOsc.frequency.value = 150;
+    this.chargeTone = ctx.createGain(); this.chargeTone.gain.value = 0;
+    this.chargeOsc.connect(this.chargeTone).connect(this.buses.sfx); this.chargeOsc.start();
   }
 
   applyVolumes() {
@@ -74,9 +83,28 @@ export class AudioEngine {
   }
 
   // ---- one-shots (TEMPORARY synth) ----
-  whoosh(power: number) { this.noise(0.35 + power * 0.2, 600, 0.8, 0.25 + power * 0.2, 'bandpass', 2400); }
+  /** The throw: the rod's swish, the line snapping off the tip, then the reel paying out for the length of the flight. */
+  cast(power: number, flight: number, clean: boolean) {
+    this.noise(0.16 + power * 0.1, 700, 0.9, 0.3 + power * 0.3, 'bandpass', 5200);
+    this.noise(0.09, 2600, 0.7, 0.1 + power * 0.14, 'highpass', undefined, 0.07);
+    this.noise(flight, 2400 + power * 1200, 2.5, 0.04 + power * 0.05, 'bandpass', 1300, 0.08);
+    // Free-spooling reel: ticks that thin out as the lure runs out of speed.
+    const n = Math.round(flight * 26);
+    for (let i = 0; i < n; i++) {
+      const k = i / n;
+      this.noise(0.012, 3300 + Math.random() * 500, 6, 0.1 * (1 - 0.6 * k) * (0.5 + 0.5 * power), 'bandpass', undefined, 0.08 + flight * (1 - Math.pow(1 - k, 1 / 1.3)));
+    }
+    if (clean) { this.tone(988, 0.1, 0.1, 'sine', 0.02); this.tone(1480, 0.22, 0.09, 'sine', 0.09); }
+  }
+  /** The charge entering the sweet spot. */
+  sweetTick() { this.tone(1760, 0.05, 0.08, 'sine'); }
   splash(size = 1) { this.noise(0.5 * size + 0.2, 1400, 0.7, 0.35 * size, 'lowpass', 300); this.noise(0.15, 3000, 1.5, 0.15 * size, 'highpass'); }
-  plop() { this.tone(520, 0.12, 0.25, 'sine', 0, 180); this.noise(0.2, 900, 1, 0.12, 'lowpass', 300); }
+  /** The lure hitting the water; `size` 0..1 is how hard it was thrown. */
+  plop(size = 0.5) {
+    this.tone(560 - 160 * size, 0.12 + 0.05 * size, 0.2 + 0.12 * size, 'sine', 0, 170 - 40 * size);
+    this.noise(0.2 + 0.25 * size, 1000 + 500 * size, 0.8, 0.1 + 0.2 * size, 'lowpass', 280);
+    this.noise(0.1, 3200, 1.2, 0.05 + 0.1 * size, 'highpass');
+  }
   nibble() { this.tone(300 + Math.random() * 80, 0.06, 0.12, 'sine', 0, 200); }
   bite() { this.noise(0.4, 1800, 0.8, 0.45, 'lowpass', 250); this.tone(180, 0.25, 0.3, 'triangle', 0, 70); }
   hook(perfect: boolean) { this.tone(perfect ? 880 : 660, 0.12, 0.3, 'triangle'); if (perfect) this.tone(1320, 0.18, 0.2, 'sine', 0.06); this.noise(0.08, 2500, 2, 0.2); }
@@ -93,8 +121,14 @@ export class AudioEngine {
   click() { this.tone(1200, 0.03, 0.08, 'square'); }
 
   // ---- continuous ----
-  update(dt: number, s: { reeling: boolean; reelSpeed: number; tension: number; fighting: boolean; sea: number }) {
+  update(dt: number, s: { reeling: boolean; reelSpeed: number; tension: number; fighting: boolean; sea: number; charge?: number }) {
     const ctx = this.ctx; if (!ctx) return;
+    // Cast charge (−1 or absent = not charging).
+    const c = s.charge ?? -1, now = ctx.currentTime;
+    this.chargeGain.gain.setTargetAtTime(c >= 0 ? 0.04 + 0.2 * c : 0, now, c >= 0 ? 0.03 : 0.015);
+    this.chargeFilter.frequency.setTargetAtTime(260 + 1500 * Math.max(0, c) ** 2, now, 0.03);
+    this.chargeTone.gain.setTargetAtTime(c >= 0 ? 0.015 + 0.06 * c : 0, now, c >= 0 ? 0.03 : 0.015);
+    this.chargeOsc.frequency.setTargetAtTime(150 + 290 * Math.max(0, c), now, 0.03);
     // Reel ratchet: clicks at a rate tied to reel speed.
     this.reelRate = s.reeling ? 10 + s.reelSpeed * 9 : 0;
     if (this.reelRate > 0) {

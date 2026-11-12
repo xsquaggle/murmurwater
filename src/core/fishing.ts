@@ -10,7 +10,7 @@ export const FEEL = {
   chargeTime: 0.95,          // s to go from 0 to full power
   sweetSpot: [0.8, 0.96] as [number, number],
   minCastPower: 0.12,
-  flightBase: 0.45, flightPerMetre: 0.022,
+  flightBase: 0.52, flightPerMetre: 0.026, // includes the rod's forward whip before the lure leaves the tip
   waitMin: 4.5, waitMax: 11,
   cleanCastWait: 0.75, hotspotWait: 0.6,
   nibbleSpookWindow: 0.45,   // pressing within this after a nibble spooks the fish
@@ -39,7 +39,7 @@ export type Phase = 'idle' | 'charging' | 'casting' | 'waiting' | 'bite' | 'figh
 export type LostReason = 'snap' | 'slack' | 'missed' | 'cancel';
 
 export type FishingEvent =
-  | { type: 'cast'; power: number; clean: boolean; distance: number }
+  | { type: 'cast'; power: number; clean: boolean; distance: number; flight: number }
   | { type: 'splash' }
   | { type: 'nibble'; strength: number }
   | { type: 'bite'; fishId: string; window: number }
@@ -165,13 +165,26 @@ export class FishingSession {
     if (input.primaryReleased || !input.primary) this.release();
   }
 
+  /** How far a cast released at `power` flies, before the shoreline is taken into account. */
+  reachAt(power: number): number { return Math.max(3, this.ctx.rod.reach * (0.25 + 0.75 * power)); }
+
+  /** Seconds until the float is next touched (a nibble or the bite) while waiting; Infinity otherwise. */
+  get nextTug(): number {
+    if (this.phase !== 'waiting') return Infinity;
+    const at = this.nibbles.length ? Math.min(this.nibbles[0], this.wait) : this.wait;
+    return Math.max(0, at - this.waitElapsed);
+  }
+
+  /** True while the charge sits in the sweet spot. */
+  get inSweetSpot(): boolean { return this.phase === 'charging' && this.power >= FEEL.sweetSpot[0] && this.power <= FEEL.sweetSpot[1]; }
+
   private release() {
     const p = this.power;
     if (p < FEEL.minCastPower) { this.phase = 'idle'; return; }
     const [lo, hi] = FEEL.sweetSpot;
     this.cleanCast = p >= lo && p <= hi;
     // Overcharged casts (falling back from max) lose a bit of distance.
-    this.castDistance = Math.max(3, this.ctx.rod.reach * (0.25 + 0.75 * p));
+    this.castDistance = this.reachAt(p);
     this.spot = this.ctx.spot(this.castDistance);
     if (this.spot.distance !== undefined) {
       if (this.spot.distance <= 0) { this.phase = 'idle'; return; } // nowhere wet to land
@@ -179,7 +192,7 @@ export class FishingSession {
     }
     this.flight = FEEL.flightBase + this.castDistance * FEEL.flightPerMetre;
     this.phase = 'casting';
-    this.events.push({ type: 'cast', power: p, clean: this.cleanCast, distance: this.castDistance });
+    this.events.push({ type: 'cast', power: p, clean: this.cleanCast, distance: this.castDistance, flight: this.flight });
   }
 
   private startWait(afterMiss: boolean) {

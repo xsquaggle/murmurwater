@@ -9,6 +9,7 @@ import { NOISE_GLSL, SKY_FN_GLSL, SKY_UNIFORMS_GLSL } from './shaders/common.gls
 import type { SkyUniforms } from './sky';
 import { CALM_WAVES, packWaves, type Wave } from '../core/waves';
 import { PALETTE } from './palette';
+import { SHADOW_N } from './fish-shadows';
 
 export interface WaterOptions {
   heightTex: DataTexture | Texture;
@@ -48,6 +49,10 @@ export class Water {
   readonly mesh: Mesh;
   readonly material: ShaderMaterial;
   private snap = 2;
+  /** Fish shadows (written by FishShadows): xz + heading, then length, tail phase, strength, softness; and the field they live in. */
+  readonly fishA = Array.from({ length: SHADOW_N }, () => new Vector4());
+  readonly fishB = Array.from({ length: SHADOW_N }, () => new Vector4(1, 0, 0, 0.05));
+  readonly fishField = new Vector4(0, 0, 0, 0);
 
   constructor(opts: WaterOptions) {
     const waves = packWaves(opts.waves ?? CALM_WAVES).map((w) => new Vector4(...w));
@@ -74,7 +79,11 @@ export class Water {
         uFoam: { value: c(PALETTE.seafoam) },
         uDetail: { value: 1 },
         uWindOffset: { value: new Vector2() },
+        uFish: { value: this.fishA },
+        uFishB: { value: this.fishB },
+        uFishField: { value: this.fishField },
       },
+      defines: { FISH_N: SHADOW_N },
       vertexShader: /* glsl */ `
         uniform float uTime;
         uniform vec4 uWaves[6];
@@ -137,6 +146,9 @@ export class Water {
         uniform vec3 uAmbient;
         uniform vec3 uDeep, uMid, uShallow, uFoam;
         uniform float uDetail;
+        uniform vec4 uFish[FISH_N];
+        uniform vec4 uFishB[FISH_N];
+        uniform vec4 uFishField;
         varying vec3 vWorld;
         varying vec3 vNormal;
         varying float vCrest;
@@ -146,6 +158,22 @@ export class Water {
           vec2 uv = (xz - uHeightBounds.xy) / uHeightBounds.zw;
           if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return -40.0;
           return texture2D(uHeightTex, uv).r;
+        }
+        // A fish seen from above as a soft dark shape: a (xz, heading), b (length, tail phase, strength, softness).
+        float fishShade(vec2 xz, vec4 a, vec4 b) {
+          vec2 d = xz - a.xy;
+          float L = b.x;
+          if (b.z < 0.004 || dot(d, d) > L * L * 0.4) return 0.0;
+          float u = dot(d, a.zw) / L;                 // +0.5 nose, -0.5 tail tip
+          float v = (d.x * a.w - d.y * a.z) / L;      // across the body
+          v += sin(u * 6.5 + b.y) * 0.085 * pow(clamp(0.5 - u, 0.0, 1.0), 1.6);
+          float s = clamp((0.5 - u) / 0.8, 0.0, 1.0);
+          float body = 0.17 * sin(3.14159 * pow(s, 0.75));
+          float tail = max(0.0, -0.24 - u) * 0.62;
+          float w = max(max(body, tail), 0.024);
+          float notch = 0.09 * clamp(1.0 - abs(v) / 0.15, 0.0, 1.0);
+          float ends = smoothstep(-0.5 + notch - 0.02, -0.5 + notch + 0.03, u) * (1.0 - smoothstep(0.47, 0.5, u));
+          return b.z * (1.0 - smoothstep(w - b.w, w + b.w, abs(v))) * ends;
         }
         // Cheap animated ripple normal from two scrolling noise layers.
         vec3 detailNormal(vec2 xz) {
@@ -174,6 +202,15 @@ export class Water {
           vec3 body = mix(uShallow, uMid, smoothstep(0.5, 4.5, dq));
           body = mix(body, uDeep, smoothstep(4.0, 16.0, dq));
 
+          // Fish shadows under the surface, wobbling with the ripples as if seen through them.
+          float shade = 0.0;
+          vec2 fd = vWorld.xz - uFishField.xy;
+          if (uFishField.w > 0.5 && dot(fd, fd) < uFishField.z) {
+            vec2 sxz = vWorld.xz + vec2(dn.x, dn.z) * 0.7 * detailFade;
+            for (int i = 0; i < FISH_N; i++) shade = max(shade, fishShade(sxz, uFish[i], uFishB[i]));
+          }
+          body = mix(body, uDeep * 0.22, shade);
+
           // Lighting: wrap diffuse + ambient, subsurface glow on crests facing the light.
           float ndl = dot(N, uKeyDir);
           float wrap = clamp((ndl + 0.4) / 1.4, 0.0, 1.0);
@@ -188,7 +225,7 @@ export class Water {
           vec3 refl = skyColor(R, 1.0);
           vec3 Nf = normalize(mix(vec3(0.0, 1.0, 0.0), N, 0.45));
           float fres = 0.03 + 0.97 * pow(1.0 - clamp(dot(Nf, V), 0.0, 1.0), 5.0);
-          fres = clamp(fres, 0.0, 0.85);
+          fres = clamp(fres, 0.0, 0.85) * (1.0 - 0.6 * shade);
           vec3 col = mix(lit, refl, fres);
 
           // Stylized glint: sharp sparkles where ripple normals align with the key light.
@@ -214,7 +251,7 @@ export class Water {
 
           // Transparency in the shallows lets the seabed (with caustics) show through.
           float alpha = clamp(1.0 - exp(-depth * 0.45), 0.25, 1.0);
-          alpha = max(alpha, foam);
+          alpha = max(max(alpha, foam), shade);
           alpha = mix(alpha, 1.0, smoothstep(30.0, 140.0, dist) * 0.8 + fres * 0.5);
 
           // Distance fog matched to scene fog.
