@@ -41,7 +41,9 @@ const { chromium } = require('playwright');
         g.debugCam = null;
         g.camera.position.copy(keepP); g.camera.quaternion.copy(keepQ);
       }, cam);
-      await page.screenshot({ path: `${outDir}/${tag}-${cam}.png`, timeout: 180000 });
+      // Screenshots are evidence, not the test: on a slow software renderer a timeout is only a warning.
+      try { await page.screenshot({ path: `${outDir}/${tag}-${cam}.png`, timeout: 120000 }); }
+      catch (e) { console.warn(`shot ${tag}-${cam} skipped: ${e.message.split('\n')[0]}`); }
     }
   };
   const until = async (label, cond, input = 'NO', max = 3000) => {

@@ -42,10 +42,25 @@ function createWindow() {
 
 ipcMain.handle('save:read', () => ({ main: readText(savePath()), backup: readText(backupPath()) }));
 ipcMain.handle('save:write', (_e, text) => {
+  // The previous save becomes the backup, unless it is unreadable: then the backup is the good copy.
   const prev = readText(savePath());
-  if (prev) writeAtomic(backupPath(), prev);
+  let ok = false;
+  try { ok = !!prev && JSON.parse(prev).format === 'murmurwater-save'; } catch { ok = false; }
+  if (ok) writeAtomic(backupPath(), prev);
   writeAtomic(savePath(), text);
   return true;
+});
+// When neither the save nor its backup could be read, the game starts fresh; keep the unreadable files
+// aside first so the new game's autosave can't destroy what might still be recoverable.
+ipcMain.handle('save:quarantine', () => {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const kept = [];
+  for (const [p, name] of [[savePath(), 'save'], [backupPath(), 'save.bak']]) {
+    if (!fs.existsSync(p)) continue;
+    const to = path.join(app.getPath('userData'), `${name}.corrupt-${stamp}.json`);
+    try { fs.renameSync(p, to); kept.push(to); } catch { /* leave it where it is */ }
+  }
+  return kept;
 });
 ipcMain.handle('settings:read', () => readText(settingsPath()));
 ipcMain.handle('settings:write', (_e, text) => { writeAtomic(settingsPath(), text); return true; });
@@ -60,5 +75,10 @@ ipcMain.handle('app:quit', () => app.quit());
 
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
-app.whenReady().then(createWindow);
-app.on('window-all-closed', () => app.quit());
+// One copy at a time: two would take turns overwriting the same save.
+if (!app.requestSingleInstanceLock()) app.quit();
+else {
+  app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
+  app.whenReady().then(createWindow);
+  app.on('window-all-closed', () => app.quit());
+}

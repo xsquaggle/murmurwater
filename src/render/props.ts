@@ -256,8 +256,10 @@ export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw:
   postAt(length + 0.2, width * 1.25); postAt(length + 0.2, -width * 1.25);
   // Side rails (rope look)
   for (const s of [-1, 1]) {
-    const p = new Vector3(start.x, 0, start.z).addScaledVector(dir, length / 2).addScaledVector(side, (s * width) / 2);
-    b.add(new BoxGeometry(0.08, 0.08, length), C('#C9B48E'), { pos: [p.x, deckY + 0.75, p.z], rot: [0, yaw, 0] });
+    // Along the walkway only: the landing is wider and stays open.
+    const from = LANDING + 0.6;
+    const p = new Vector3(start.x, 0, start.z).addScaledVector(dir, (from + length) / 2).addScaledVector(side, (s * width) / 2);
+    b.add(new BoxGeometry(0.08, 0.08, length - from), C('#C9B48E'), { pos: [p.x, deckY + 0.75, p.z], rot: [0, yaw, 0] });
   }
   // Crates, barrel, net pile near the end
   const prop = (t: number, s: number, geo: BufferGeometry, col: Color, y = 0.35, rot = 0) => {

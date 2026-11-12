@@ -134,6 +134,7 @@ export interface UiHost {
   buyBait(id: string, n: number): void;
   equipBait(id: string): void;
   acceptBoard(id: string): void;
+  abandonBoard(id: string): void;
   applySettings(changed: (keyof Settings)[]): void;
   quit(): void;
   close(): void;
@@ -157,14 +158,15 @@ export class Screens {
     parent.appendChild(this.root);
     window.addEventListener('keydown', (e) => {
       if (!this.rebinding) return;
-      e.preventDefault(); e.stopPropagation();
+      // Nothing else may see this key: not the screen shortcuts (Esc, J, Tab), not gameplay.
+      e.preventDefault(); e.stopImmediatePropagation();
       if (e.code !== 'Escape') this.bind(e.code);
       else { this.rebinding = null; this.render(); }
     }, true);
     window.addEventListener('mousedown', (e) => {
       if (!this.rebinding || !(e.target as HTMLElement).closest('.screen')) return;
       if ((e.target as HTMLElement).closest('.rebind')) return;
-      e.preventDefault(); this.bind('Mouse' + e.button);
+      e.preventDefault(); e.stopImmediatePropagation(); this.bind('Mouse' + e.button);
     }, true);
   }
 
@@ -239,7 +241,8 @@ export class Screens {
         q.accepted ? el('div', { class: 'bar' }, el('i', { style: `width:${(q.progress / t) * 100}%` })) : null,
         el('div', { class: 'note-reward' }, 'Pays: ' + describeRewards(q.reward).join(', ')),
         q.done ? el('div', { class: 'stamp' }, 'Paid') : q.accepted ? el('div', { class: 'note-state' }, `${q.progress}/${t}`)
-          : el('button', { class: 'btn gold', onclick: () => { this.host.acceptBoard(q.id); this.render(); } }, 'Take this job'));
+          : el('button', { class: 'btn gold', onclick: () => { this.host.acceptBoard(q.id); this.render(); } }, 'Take this job'),
+        q.accepted && !q.done ? el('button', { class: 'btn ghost', onclick: () => { this.host.abandonBoard(q.id); this.render(); } }, 'Give it up') : null);
     })));
     void BOARD;
   }

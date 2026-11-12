@@ -65,6 +65,8 @@ function fillDefaults(s: any): GameState {
 export interface SaveStore {
   read(): Promise<{ main: string | null; backup: string | null }>;
   write(text: string): Promise<void>;
+  /** Moves unreadable save files aside so a new game's autosave can't overwrite them. */
+  quarantine?(): Promise<void>;
 }
 
 export interface LoadResult { state: GameState; source: 'main' | 'backup' | 'new'; warning?: string }
@@ -83,13 +85,26 @@ export async function loadGame(store: SaveStore): Promise<LoadResult> {
     try { return { state: deserialize(backup), source: 'backup', warning }; }
     catch (e) { if (e instanceof SaveError && e.kind === 'future') throw e; }
   }
-  return { state: newGame(), source: 'new', warning: main ? 'Saves were unreadable; started a new game.' : undefined };
+  if (!main && !backup) return { state: newGame(), source: 'new' };
+  // Neither file could be read. Keep them aside before the new game starts saving over them.
+  let kept = false;
+  try { await store.quarantine?.(); kept = !!store.quarantine; } catch { /* nothing more we can do */ }
+  return { state: newGame(), source: 'new', warning: kept ? 'Your save could not be read. It has been kept aside (save.corrupt-…) and a new game started.' : 'Saves were unreadable; started a new game.' };
+}
+
+/** True when a save file parses; an unreadable main save must never be rotated over a good backup. */
+export function looksReadable(text: string): boolean {
+  try { const d = JSON.parse(text); return !!d && d.format === SAVE_FORMAT; } catch { return false; }
 }
 
 /** Browser fallback store (dev builds). Electron uses window.mwNative (atomic file + .bak). */
 export function localStorageStore(key = 'murmurwater.save'): SaveStore {
   return {
     async read() { return { main: localStorage.getItem(key), backup: localStorage.getItem(key + '.bak') }; },
-    async write(text) { const prev = localStorage.getItem(key); if (prev) localStorage.setItem(key + '.bak', prev); localStorage.setItem(key, text); },
+    async write(text) { const prev = localStorage.getItem(key); if (prev && looksReadable(prev)) localStorage.setItem(key + '.bak', prev); localStorage.setItem(key, text); },
+    async quarantine() {
+      const stamp = Date.now();
+      for (const k of [key, key + '.bak']) { const v = localStorage.getItem(k); if (v !== null) { localStorage.setItem(`${k}.corrupt-${stamp}`, v); localStorage.removeItem(k); } }
+    },
   };
 }

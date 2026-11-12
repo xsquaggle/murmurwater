@@ -79,6 +79,7 @@
       "rarity": "uncommon",
       "region": "hearthbay",
       "zones": [
+        "hb-dock",
         "hb-bay",
         "hb-teeth"
       ],
@@ -103,6 +104,8 @@
       "rarity": "uncommon",
       "region": "hearthbay",
       "zones": [
+        "hb-dock",
+        "hb-bay",
         "hb-open",
         "hb-teeth"
       ],
@@ -217,7 +220,7 @@
         0,
         3
       ],
-      "requires": "story:hb-lighthouse-lit",
+      "requires": "hb-lighthouse-lit",
       "fight": {
         "strength": 2.4,
         "stamina": 3.0,

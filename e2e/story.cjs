@@ -1,7 +1,7 @@
 // Story bot: plays the whole Hearthbay chain through the real game (talking, fishing, selling, the shop UI,
 // the ferry, lighting the lamp), saves, reloads, and checks the story survived. Exits 1 on any failure.
-// A few catches of specific species are injected as quest events (marked SHORTCUT) to keep the run short;
-// everything else goes through the same code paths a player uses.
+// Every quest fish is really caught off the end of the dock, so a fish nobody can reach fails the run.
+// The one shortcut is the clock: the bot sets the hour instead of waiting for night.
 const { chromium } = require('playwright');
 (async () => {
   const port = process.env.MW_PORT || 4173;
@@ -73,6 +73,19 @@ const { chromium } = require('playwright');
         return landed;
       },
       fishFromDock(n) { this.goTo(g.world.dockEnd.x, g.world.dockEnd.z, -Math.PI / 2); return this.fish(n); },
+      /** Fish off the dock until `fishId` is landed; `hour` pins the clock (night fish). Returns casts used, or -1. */
+      fishFor(fishId, maxCatches, hour) {
+        this.goTo(g.world.dockEnd.x, g.world.dockEnd.z, -Math.PI / 2);
+        const before = g.state.journal[fishId]?.caught ?? 0;
+        for (let i = 1; i <= maxCatches; i++) {
+          if (hour !== undefined) g.state.hour = hour;
+          // Keep the hold from filling: only the quest catch matters here.
+          if (g.state.hold.length >= g.state.holdCapacity - 1) g.state.hold.length = 0;
+          this.fish(1);
+          if ((g.state.journal[fishId]?.caught ?? 0) > before) return i;
+        }
+        return -1;
+      },
       status(id) { return window.__MW__.quests.questStatus(g.state, id); },
     };
   });
@@ -140,23 +153,29 @@ const { chromium } = require('playwright');
   await expectStatus('hb-03-proper-rod', 'done');
   await ev(() => { if (window.__MW__.game.town.dialogue.isOpen) window.bot.choose('Bye'); });
 
-  // 6. Wick's drawing (SHORTCUT: the snapper catch is injected).
+  // 6. Wick's drawing: a Coral Snapper, caught off the dock.
   await ev(() => window.bot.goNpc('wick'));
   await ev(() => window.bot.interact());
   await shot('07-wick');
   await ev(() => { window.bot.readAll(); window.bot.choose('do it'); });
   await expectStatus('hb-04-drawing', 'active');
-  await ev(() => window.__MW__.game.town.questEvent({ type: 'catch', fishId: 'coral-snapper', weight: 1.2, trait: null, perfect: false }));
-  await ev(() => { window.bot.interact(); window.bot.readAll(); });
+  const snapperCasts = await ev(() => window.bot.fishFor('coral-snapper', 60));
+  if (snapperCasts < 0) await fail('no Coral Snapper in 60 catches off the dock');
+  console.log('coral snapper after', snapperCasts, 'catches');
+  await expectStatus('hb-04-drawing', 'ready');
+  await ev(() => { window.bot.goNpc('wick'); window.bot.interact(); window.bot.readAll(); });
   await expectStatus('hb-04-drawing', 'done');
   await ev(() => { if (window.__MW__.game.town.dialogue.isOpen) window.bot.choose('Bye'); });
 
-  // 7. Pell: the dark lamp (SHORTCUT lampjaw), then the relight and the ferry.
+  // 7. Pell: the dark lamp (a Lampjaw, caught off the dock after dark), then the relight and the ferry.
   await ev(() => window.bot.goNpc('pell'));
   await ev(() => { window.bot.interact(); window.bot.readAll(); window.bot.choose('do it'); });
   await expectStatus('hb-05-dark-lamp', 'active');
-  await ev(() => window.__MW__.game.town.questEvent({ type: 'catch', fishId: 'lampjaw', weight: 2, trait: null, perfect: true }));
-  await ev(() => { window.bot.interact(); window.bot.readAll(); });
+  const lampjawCasts = await ev(() => window.bot.fishFor('lampjaw', 60, 21));
+  if (lampjawCasts < 0) await fail('no Lampjaw in 60 night catches off the dock');
+  console.log('lampjaw after', lampjawCasts, 'catches');
+  await expectStatus('hb-05-dark-lamp', 'ready');
+  await ev(() => { window.bot.goNpc('pell'); window.bot.interact(); window.bot.readAll(); });
   await expectStatus('hb-05-dark-lamp', 'done');
   choices = await ev(() => window.bot.readAll());
   await ev(() => window.bot.choose('do it'));

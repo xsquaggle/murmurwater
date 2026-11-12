@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { deserialize, loadGame, serialize, SaveError, type SaveStore } from '../src/core/save';
+import { deserialize, loadGame, looksReadable, serialize, SaveError, type SaveStore } from '../src/core/save';
 import { newGame, SAVE_VERSION } from '../src/core/state';
 
 const mem = (main: string | null, backup: string | null): SaveStore & { written?: string } => ({
@@ -53,5 +53,28 @@ describe('saves', () => {
       expect(st.version, f).toBe(SAVE_VERSION);
       expect(st.gear.rod, f).toBeTruthy();
     }
+  });
+});
+
+describe('unreadable saves', () => {
+  it('are moved aside before a new game can save over them', async () => {
+    let quarantined = 0;
+    const store: SaveStore = { async read() { return { main: '{broken', backup: 'also broken' }; }, async write() {}, async quarantine() { quarantined++; } };
+    const r = await loadGame(store);
+    expect(r.source).toBe('new');
+    expect(quarantined).toBe(1);
+    expect(r.warning).toMatch(/kept aside/);
+  });
+  it('are not quarantined when there was simply no save', async () => {
+    let quarantined = 0;
+    const r = await loadGame({ async read() { return { main: null, backup: null }; }, async write() {}, async quarantine() { quarantined++; } });
+    expect(r.source).toBe('new');
+    expect(quarantined).toBe(0);
+    expect(r.warning).toBeUndefined();
+  });
+  it('looksReadable tells a save from junk', () => {
+    expect(looksReadable(serialize(newGame(1)))).toBe(true);
+    expect(looksReadable('{broken')).toBe(false);
+    expect(looksReadable('{"format":"something-else"}')).toBe(false);
   });
 });

@@ -27,6 +27,14 @@ jobs:
         run: node e2e/story.cjs shots/story
         env:
           MW_QUALITY: low
+      - name: Walk bot (solid props and people, everyone reachable on foot)
+        run: node e2e/walk.cjs shots/walk
+        env:
+          MW_QUALITY: low
+      - name: Fish shadows bot (a shadow reaches the float before the bite)
+        run: node e2e/shadows.cjs shots/shadows
+        env:
+          MW_QUALITY: low
       - name: Electron smoke test (models, voices load from the packaged entry)
         run: xvfb-run -a node e2e/electron-smoke.cjs
       - uses: actions/upload-artifact@v4

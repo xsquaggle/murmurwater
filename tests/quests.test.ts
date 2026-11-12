@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { newGame } from '../src/core/state';
 import {
-  QUESTS, accept, acceptBoard, currentGoal, generateBoardQuest, npcOffer, onQuestEvent, questStatus, refreshBoard,
+  QUESTS, abandonBoard, accept, acceptBoard, currentGoal, generateBoardQuest, npcOffer, onQuestEvent, questStatus, refreshBoard,
   relicBonus, tickBoard, turnIn, validateQuests, BOARD,
 } from '../src/core/quests';
-import { REGIONS } from '../src/core/content';
+import { FISH, REGIONS, inHours } from '../src/core/content';
 import { Rng } from '../src/core/rng';
 
 const places = new Set(REGIONS.flatMap((r) => (r.places ?? []).map((p) => p.id)));
@@ -156,5 +156,42 @@ describe('notice board', () => {
       expect(q.objective.fish).not.toBe('manyeye'); // needs the lighthouse lit
       expect(q.objective.fish).not.toBe('hollow-lantern'); // epic: not a board job
     }
+  });
+});
+
+describe('quest fish can be reached', () => {
+  const flagsGranted = new Set(QUESTS.flatMap((q) => q.rewards.flags ?? []));
+  it('every gated fish waits on a flag some quest actually grants', () => {
+    for (const f of FISH) if (f.requires) expect(flagsGranted.has(f.requires), `${f.id} requires "${f.requires}"`).toBe(true);
+  });
+  it('every fish a story quest asks for bites off the Hearthbay dock', () => {
+    for (const q of QUESTS) for (const o of q.objectives) {
+      if (o.type !== 'catch' || !o.fish) continue;
+      const f = FISH.find((x) => x.id === o.fish)!;
+      expect(f.zones, `${q.id} wants ${f.id}`).toContain('hb-dock');
+    }
+  });
+  it('the Lampjaw is a night fish', () => {
+    const f = FISH.find((x) => x.id === 'lampjaw')!;
+    expect(inHours(21, f.hours)).toBe(true);
+    expect(inHours(12, f.hours)).toBe(false);
+  });
+});
+
+describe('giving up a board job', () => {
+  it('returns it to the board with its progress cleared', () => {
+    const s = newGame(3);
+    s.flags.push('board-open');
+    refreshBoard(s);
+    const job = s.quests.board.quests[0];
+    expect(abandonBoard(s, job.id)).toBe(false); // not taken yet
+    acceptBoard(s, job.id);
+    job.progress = 1;
+    expect(abandonBoard(s, job.id)).toBe(true);
+    expect(job.accepted).toBe(false);
+    expect(job.progress).toBe(0);
+    // An abandoned job no longer survives a refresh.
+    refreshBoard(s);
+    expect(s.quests.board.quests.some((q) => q.id === job.id)).toBe(false);
   });
 });

@@ -170,7 +170,9 @@ body.titled .hud { opacity: 0; }
 .note-title { font: 800 18px var(--serif); }
 .note-obj { font-weight: 700; }
 .note-reward { font-size: 13px; color: #A86F14; font-weight: 800; }
+.note .bar { flex: none; }
 .note .btn { margin-top: auto; }
+.note .btn.ghost { margin-top: 4px; padding: 4px 10px; font-size: 12px; align-self: flex-start; }
 .note.taken { border-color: var(--lagoon); }
 .note.done { opacity: .75; }
 .note-state { margin-top: auto; font-weight: 900; color: var(--lagoon); }

@@ -1,6 +1,6 @@
 /** Assembles a region's 3D scene: sky, water, terrain, landmarks, scatter, lighting, time of day. */
 import {
-  BufferGeometry, Object3D, Color, DirectionalLight, FogExp2, HemisphereLight, Mesh, MeshStandardMaterial, PerspectiveCamera, PointLight, Scene, Vector3,
+  AdditiveBlending, BufferGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, FogExp2, Group, HemisphereLight, Mesh, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Scene, ShaderMaterial, Vector3,
 } from 'three';
 import { Heightfield, type RegionDef } from '../core/world';
 import { createSky, createSkyUniforms, type SkyUniforms } from './sky';
@@ -61,6 +61,37 @@ export class WorldScene {
     lh.group.position.set(L.lighthouse.x, lhY - 0.6, L.lighthouse.z);
     s.add(lh.group);
     this.lighthouseGlass = lh.glassMat;
+    this.blockers.push([L.lighthouse.x, L.lighthouse.z, 5.6]);
+    // Once lit: light spilling over the point, and a slow double beam.
+    this.lampLight = new PointLight(new Color('#FFD08A'), 0, 160, 1.4);
+    this.lampLight.position.set(0, lh.lampY, 0);
+    lh.group.add(this.lampLight);
+    const beamGeo = new CylinderGeometry(7, 0.9, 90, 14, 1, true);
+    beamGeo.translate(0, 45, 0); beamGeo.rotateX(Math.PI / 2);
+    // Soft-edged and fading with distance, so it reads as light in haze rather than a solid cone.
+    this.beamMat = new ShaderMaterial({
+      transparent: true, depthWrite: false, blending: AdditiveBlending, side: DoubleSide, fog: false,
+      uniforms: { uColor: { value: new Color('#FFD9A0') }, uOpacity: { value: 0 } },
+      vertexShader: /* glsl */ `
+        varying float vAlong; varying vec3 vN; varying vec3 vV;
+        void main() {
+          vAlong = uv.y;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vN = normalMatrix * normal; vV = -mv.xyz;
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform vec3 uColor; uniform float uOpacity;
+        varying float vAlong; varying vec3 vN; varying vec3 vV;
+        void main() {
+          float rim = pow(abs(dot(normalize(vN), normalize(vV))), 1.8);
+          float along = pow(1.0 - vAlong, 1.5) * smoothstep(0.0, 0.03, vAlong);
+          gl_FragColor = vec4(uColor, uOpacity * rim * along);
+        }`,
+    });
+    for (const a of [0, Math.PI]) { const m = new Mesh(beamGeo, this.beamMat); m.rotation.y = a; m.renderOrder = 8; this.beams.add(m); }
+    this.beams.position.set(0, lh.lampY, 0); this.beams.visible = false;
+    lh.group.add(this.beams);
     this.propMats.push(lh.body.material as MeshStandardMaterial);
 
     const dock = buildDock(this.hf, { x: L.dock.x, z: L.dock.z }, L.dock.rot ?? 0, L.dock.length ?? 30);
@@ -88,10 +119,12 @@ export class WorldScene {
     stall.position.copy(at(3.2, 3.2)); stall.rotation.y = facing(side.clone().negate());
     const board = prop('noticeBoard', buildNoticeBoard);
     board.position.copy(at(3.0, -3.75)); board.rotation.y = facing(side);
+    this.blockers.push([stall.position.x, stall.position.z, 1.5], [board.position.x, board.position.z, 0.7]);
     for (const m of [stall, board]) { m.traverse((o) => { if ((o as Mesh).isMesh) { o.castShadow = true; o.receiveShadow = true; } }); s.add(m); }
     const place = (key: string, p: Vector3, rot: number, scale = 1) => {
       const o = assets.instance(key); if (!o) return;
       o.position.copy(p); o.rotation.y = rot; o.scale.setScalar(scale); s.add(o);
+      if (p.y < this.deckY + 0.3) this.blockers.push([p.x, p.z, key === 'tackleBox' ? 0.4 : 0.55 * scale]);
     };
     place('crate', at(this.dockLength - 1.5, 0.95), this.dockYaw + 0.3);
     place('crate', at(this.dockLength - 1.2, 0.95).add(new Vector3(0, 0.6, 0)), this.dockYaw + 0.9, 0.8);
@@ -112,6 +145,7 @@ export class WorldScene {
     const village = new Vector3(L.dock.x + 40, 0, L.dock.z);
     const scatter = scatterIsland(this.hf, { villageCenter: village, villageRadius: 55, avoid: [new Vector3(L.lighthouse.x, 0, L.lighthouse.z), new Vector3(L.dock.x, 0, L.dock.z)], seed: 5 });
     s.add(scatter.group);
+    for (const h of scatter.houses) this.blockers.push([h.x, h.z, 3.4]);
     scatter.group.traverse((o) => { if ((o as Mesh).isMesh) this.propMats.push((o as Mesh).material as MeshStandardMaterial); });
 
     const arch = new Mesh(buildArch(), createPropMaterial());
@@ -134,8 +168,15 @@ export class WorldScene {
     this.key.shadow.normalBias = 0.6;
     s.add(this.key);
     s.add(this.key.target);
+    // A pocket lantern: warm light around the player once the sun is down, so the ground never goes black.
+    this.pocket = new PointLight(new Color('#FFC98A'), 0, 16, 1.5);
+    s.add(this.pocket);
   }
   private boat: Object3D;
+  private pocket: PointLight;
+  private lampLight: PointLight;
+  private beams = new Group();
+  private beamMat: ShaderMaterial;
   private boatBase = new Vector3();
   private boatYaw = 0;
 
@@ -194,6 +235,13 @@ export class WorldScene {
       l.intensity = (1.5 + 9 * glow) * flick;
     });
     this.lighthouseGlass.emissiveIntensity = this.lighthouseLit ? 4 : 0.06 + 0.04 * Math.sin(this.time * 0.7);
+    const dark = Math.min(1, Math.max(0, lt.night * 1.4 + (lt.hour > 18.2 || lt.hour < 6 ? 0.25 : 0)));
+    this.lampLight.intensity = this.lighthouseLit ? 60 + 240 * dark : 0;
+    this.beams.visible = this.lighthouseLit && dark > 0.02;
+    this.beams.rotation.y = this.time * 0.35;
+    this.beamMat.uniforms.uOpacity.value = 0.08 + 0.34 * dark;
+    this.pocket.position.set(focus.x, focus.y + 2.3, focus.z);
+    this.pocket.intensity = 22 * dark;
 
     const b = this.boatBase;
     const isModel = !(this.boat as Mesh).isMesh;

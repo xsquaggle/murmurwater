@@ -68,6 +68,8 @@ export class Renderer {
     this.gl.outputColorSpace = SRGBColorSpace;
     this.gl.toneMapping = NoToneMapping;
     this.gl.shadowMap.type = PCFShadowMap;
+    // Counted across every pass of a frame (reset in render), so F3 shows the real totals.
+    this.gl.info.autoReset = false;
     this.setQuality(quality);
   }
 
@@ -103,5 +105,12 @@ export class Renderer {
     this.camera.updateProjectionMatrix();
   }
 
-  render(dt: number) { this.composer.render(dt); }
+  /** Draw calls and triangles of the last whole frame. */
+  readonly frameInfo = { calls: 0, triangles: 0 };
+
+  render(dt: number) {
+    this.gl.info.reset();
+    this.composer.render(dt);
+    this.frameInfo.calls = this.gl.info.render.calls; this.frameInfo.triangles = this.gl.info.render.triangles;
+  }
 }

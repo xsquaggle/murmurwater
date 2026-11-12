@@ -64,6 +64,8 @@ export class Game {
   private wakeT = 0;
   /** Bots: step and update everything but skip drawing (for frames between screenshots). */
   skipRender = false;
+  private talkSwing = 0;
+  private talkSwingWant: number | null = null;
   private idleSince = 0;
   frames = 0;
   perf: PerfOverlay | null = null;
@@ -85,7 +87,7 @@ export class Game {
     this.renderer = new Renderer(canvas, quality, this.world.scene, this.camera);
     this.input = new Input(canvas);
     this.hud = new Hud(uiRoot);
-    this.perf = new PerfOverlay(uiRoot, this.renderer.gl, () => {
+    this.perf = new PerfOverlay(uiRoot, this.renderer.frameInfo, () => {
       const c = this.renderer.gl.domElement;
       return `${this.town.settings.quality} quality · ${c.width}×${c.height}`;
     });
@@ -227,7 +229,12 @@ export class Game {
       const a = this.camYaw + Math.atan2(mx, mz);
       let dy = a - this.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       this.yaw += dy * Math.min(1, dt * 12);
-      const nx = this.pos.x + Math.sin(a) * this.speed * dt, nz = this.pos.z + Math.cos(a) * this.speed * dt;
+      let nx = this.pos.x + Math.sin(a) * this.speed * dt, nz = this.pos.z + Math.cos(a) * this.speed * dt;
+      // Slide around houses, the stall, crates and people instead of walking through them.
+      for (const [bx, bz, br] of this.blockers()) {
+        const dx = nx - bx, dz = nz - bz, d = Math.hypot(dx, dz), min = br + 0.35;
+        if (d < min && d > 1e-4) { nx = bx + (dx / d) * min; nz = bz + (dz / d) * min; }
+      }
       const gy = this.groundAt(nx, nz);
       if (gy !== null && Math.abs(gy - this.pos.y) < 1.2) { this.pos.x = nx; this.pos.z = nz; }
     } else if (ph === 'idle' || ph === 'charging') {
@@ -336,6 +343,34 @@ export class Game {
     }
   }
 
+  /**
+   * Conversation camera: a two-shot from one side of the line between the speakers, so the player never
+   * stands in front of who they are talking to. Returns the extra yaw; picks the side with a clear view,
+   * then the smaller swing.
+   */
+  private pickTalkSwing(mid: Vector3, npc: Vector3): number {
+    const axis = Math.atan2(npc.x - this.pos.x, npc.z - this.pos.z);
+    let best = 0, bestCost = Infinity;
+    for (const side of [1, -1]) {
+      const yaw = axis + side * 0.95;
+      let swing = yaw - this.camYaw; swing = Math.atan2(Math.sin(swing), Math.cos(swing));
+      let cost = Math.abs(swing);
+      for (const d of [1.4, 2.3, 3.3, 4.2]) {
+        const x = mid.x - Math.sin(yaw) * d, z = mid.z - Math.cos(yaw) * d;
+        for (const [bx, bz, br] of this.world.blockers) if (Math.hypot(x - bx, z - bz) < br + 0.3) cost += 10;
+        if (this.world.hf.height(x, z) > mid.y - 0.4) cost += 10;
+      }
+      if (cost < bestCost) { bestCost = cost; best = swing; }
+    }
+    return best;
+  }
+
+  /** Solid things near the player: the world's fixed props plus whoever is standing about. */
+  private *blockers(): Iterable<readonly [number, number, number]> {
+    yield* this.world.blockers;
+    yield* this.town.bodies();
+  }
+
   /** Ground height for walking: dock deck or dry land; null where you can't walk. */
   groundAt(x: number, z: number): number | null {
     const deck = this.world.dockDeckAt(x, z);
@@ -375,17 +410,25 @@ export class Game {
     // chases the lure through its flight.
     const head = this.pos.clone().add(new Vector3(0, 1.6, 0));
     const fishingView = ph === 'fighting' || ph === 'waiting' || ph === 'bite' || ph === 'casting';
-    const aim = head.clone();
+    const aim = head.clone(), pivot = head.clone();
     if (fishingView) aim.lerp(this.view.bobberPos, ph === 'fighting' ? 0.45 : ph === 'casting' ? 0.5 : 0.56);
-    this.camTarget.lerp(head, Math.min(1, dt * 5));
+    // In conversation: closer and lower, centred between the two and aimed below their heads, so both
+    // stand clear above the dialogue box.
+    const talk = fishingView ? null : this.town.talkingTo;
+    if (talk) {
+      pivot.lerp(_talk.set(talk.x, talk.y + 1.5, talk.z), 0.5); aim.copy(pivot); aim.y -= 0.6;
+      if (this.talkSwingWant === null) this.talkSwingWant = this.pickTalkSwing(pivot, talk);
+    } else this.talkSwingWant = null;
+    this.talkSwing += ((this.talkSwingWant ?? 0) - this.talkSwing) * Math.min(1, dt * 4);
+    this.camTarget.lerp(pivot, Math.min(1, dt * 5));
     this.camAim.lerp(aim, Math.min(1, dt * (ph === 'casting' ? 10 : 4)));
-    const camYaw = fishingView ? this.castYaw : this.camYaw;
-    const dist = this.camDist + (ph === 'fighting' ? 2.2 : ph === 'waiting' || ph === 'bite' ? 2.4 : fishingView ? 1.6 : 0);
+    const camYaw = fishingView ? this.castYaw : this.camYaw + this.talkSwing;
+    const dist = talk ? Math.min(this.camDist, 4.6) : this.camDist + (ph === 'fighting' ? 2.2 : ph === 'waiting' || ph === 'bite' ? 2.4 : fishingView ? 1.6 : 0);
     // Low behind the angler for the throw, so the lure climbs against the sky; then it cranes up to look down
     // on the float, where the fish shadows are.
     const watching = ph === 'waiting' || ph === 'bite';
-    const pitch = watching ? Math.max(0.46, Math.min(0.75, this.camPitch + 0.12)) : fishingView ? Math.max(0.16, Math.min(0.6, this.camPitch)) : this.camPitch;
-    const shoulder = fishingView ? 1.5 : 0.9;
+    const pitch = talk ? Math.max(0.1, Math.min(this.camPitch, 0.2)) : watching ? Math.max(0.46, Math.min(0.75, this.camPitch + 0.12)) : fishingView ? Math.max(0.16, Math.min(0.6, this.camPitch)) : this.camPitch;
+    const shoulder = fishingView ? 1.5 : talk ? 0 : 0.9;
     const want = new Vector3(
       this.camTarget.x - Math.sin(camYaw) * Math.cos(pitch) * dist + Math.cos(camYaw) * shoulder,
       this.camTarget.y + Math.sin(pitch) * dist + 0.3,
@@ -460,12 +503,17 @@ export class Game {
   private hint(): string {
     const ph = this.session.phase;
     if (!this.input.locked && !this.botInput) return 'Click to look around';
+    // Named from the current bindings, so rebinding a key changes the hint too.
+    const b = this.input.bindings;
+    const k = (a: keyof typeof b) => `<kbd>${shortKey(b[a][0])}</kbd>`;
+    const moves = [b.forward[0], b.left[0], b.back[0], b.right[0]];
+    const walk = moves.join() === 'KeyW,KeyA,KeyS,KeyD' ? '<kbd>WASD</kbd>' : moves.map((c) => `<kbd>${shortKey(c)}</kbd>`).join('');
     switch (ph) {
-      case 'idle': return '<kbd>LMB</kbd> hold to cast · <kbd>WASD</kbd> walk · <kbd>Shift</kbd> run';
+      case 'idle': return `${k('cast')} hold to cast · ${walk} walk · ${k('sprint')} run`;
       case 'charging': return 'Release in the bright band for a clean cast';
-      case 'waiting': return 'Watch the bobber… click when it goes under · <kbd>RMB</kbd> reel in';
-      case 'bite': return '<kbd>LMB</kbd> Hook it!';
-      case 'fighting': return '<kbd>LMB</kbd> hold to reel · <kbd>A</kbd>/<kbd>D</kbd> steer against runs · let go when tension peaks';
+      case 'waiting': return `Watch the water… hook it when the float goes under · ${k('cancel')} reel in`;
+      case 'bite': return `${k('cast')} Hook it!`;
+      case 'fighting': return `${k('cast')} hold to reel · ${k('steerLeft')}/${k('steerRight')} steer against runs · let go when tension peaks`;
       default: return '';
     }
   }
@@ -478,5 +526,8 @@ export class Game {
   }
 }
 
+const _talk = new Vector3();
 const keyName = (code: string) => (code ? keyLabel(code) : '?');
+/** Compact key names for the hint line. */
+const shortKey = (code: string) => ({ Mouse0: 'LMB', Mouse1: 'MMB', Mouse2: 'RMB', ShiftLeft: 'Shift', ShiftRight: 'Shift', ControlLeft: 'Ctrl' } as Record<string, string>)[code] ?? keyName(code);
 const RARITY_GLOW = ['#D8D2C4', '#9BD06F', '#6FB7FF', '#C98CFF', '#FFC05C', '#7CFFD4'].map((c) => new Color(c));

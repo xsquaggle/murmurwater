@@ -260,6 +260,14 @@ export function acceptBoard(s: GameState, id: string): boolean {
   return true;
 }
 
+/** Gives a taken job back to the board: progress is lost and the slot is refilled at the next refresh. */
+export function abandonBoard(s: GameState, id: string): boolean {
+  const q = s.quests.board.quests.find((x) => x.id === id);
+  if (!q || !q.accepted || q.done) return false;
+  q.accepted = false; q.progress = 0;
+  return true;
+}
+
 /** Fish the player could plausibly catch now: this region, unlocked, with a reachable zone. */
 function catchable(s: GameState) {
   return FISH.filter((f) => f.region === s.world.region && (!f.requires || s.flags.includes(f.requires)) && RARITIES.indexOf(f.rarity) <= 2);

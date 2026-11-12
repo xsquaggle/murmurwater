@@ -12,6 +12,7 @@ declare global {
     mwNative?: {
       readSave(): Promise<{ main: string | null; backup: string | null }>;
       writeSave(text: string): Promise<boolean>;
+      quarantineSave?(): Promise<string[]>;
       readSettings(): Promise<string | null>;
       writeSettings(text: string): Promise<boolean>;
       setWindowMode(mode: string): Promise<void>;
@@ -27,6 +28,7 @@ const params = new URLSearchParams(location.search);
 const nativeStore = (): SaveStore => ({
   read: () => window.mwNative!.readSave(),
   write: async (t) => { await window.mwNative!.writeSave(t); },
+  quarantine: async () => { await window.mwNative!.quarantineSave?.(); },
 });
 // ?fresh starts a new test game in a separate slot; ?keepfresh reloads that test slot (for the story bot).
 const testSlot = params.has('fresh') || params.has('keepfresh');
@@ -74,7 +76,8 @@ async function boot() {
     game.input.requestLock();
   };
   if (params.has('notitle')) { title.remove(); document.body.classList.remove('titled'); } else title.addEventListener('click', begin, { once: true });
-  canvas.addEventListener('click', () => { game.audio.start(); game.input.requestLock(); });
+  // Clicking the view captures the mouse, but not from under a conversation or a menu.
+  canvas.addEventListener('click', () => { game.audio.start(); if (!game.town.blocking) game.input.requestLock(); });
 
   game.start();
   window.__MW__ = {

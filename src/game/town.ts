@@ -10,7 +10,7 @@ import { hashString } from '../core/rng';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
 import { converse, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
-  QUESTS_BY_ID, accept, acceptBoard, boardOpen, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
+  QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
   readySet, newlyReady, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
 } from '../core/quests';
 import { BAITS_BY_ID, RODS_BY_ID, type FerryPoint, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
@@ -62,6 +62,7 @@ export class Town {
       buyRod: (id) => this.buyRod(id), equipRod: (id) => { g.state.gear.rod = id; g.refreshSession(); },
       buyBait: (id, n) => this.buyBait(id, n), equipBait: (id) => { g.state.gear.bait = id; g.refreshSession(); },
       acceptBoard: (id) => { acceptBoard(g.state, id); g.audio.click(); },
+      abandonBoard: (id) => { abandonBoard(g.state, id); g.audio.click(); },
       applySettings: (k) => this.applySettings(k),
       quit: () => { void g.save().then(() => window.mwNative?.quit()); },
       close: () => this.closeScreens(),
@@ -165,6 +166,13 @@ export class Town {
     return true;
   }
   get focusPrompt() { return this.focus?.prompt ?? null; }
+
+  /** People standing on this island, as [x, z, radius] circles the player walks around. */
+  *bodies(): Iterable<readonly [number, number, number]> {
+    for (const [, e] of this.npcs) if (e.fig.root.visible) yield [e.fig.root.position.x, e.fig.root.position.z, 0.45];
+  }
+  /** Who the player is talking to, if anyone (for the camera). */
+  get talkingTo(): Vector3 | null { return this.talking && this.dialogue.isOpen ? this.npcs.get(this.talking)?.fig.root.position ?? null : null; }
 
   // ------------------------------------------------------------------ talking
   talkTo(npcId: string) {
@@ -290,6 +298,10 @@ export class Town {
   goal(): string {
     const s = this.g.state;
     if (s.hold.length >= s.holdCapacity) return 'Your hold is full: sell your catch to Mara at the stall';
+    // The lamp is on Gull Point, and the only way over is Pell's boat.
+    if (questStatus(s, 'hb-06-relight') === 'active' && !this.lampLit) {
+      return this.island === 'gull-point' ? 'Relight: climb the lighthouse stair and light the lamp' : 'Relight: ask Pell at the dock to row you out to Gull Point';
+    }
     return currentGoal(s).text;
   }
 

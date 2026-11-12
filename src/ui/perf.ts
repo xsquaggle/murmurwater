@@ -2,7 +2,6 @@
  * F3 performance overlay: frame rate, frame-time percentiles over the last 2 seconds, CPU time spent in
  * the game's own frame, draw calls and triangles. Lets a player report real numbers from their machine.
  */
-import type { WebGLRenderer } from 'three';
 
 export class PerfOverlay {
   private el: HTMLElement;
@@ -11,7 +10,7 @@ export class PerfOverlay {
   private shown = false;
   private refresh = 0;
 
-  constructor(parent: HTMLElement, private gl: WebGLRenderer, private describe: () => string) {
+  constructor(parent: HTMLElement, private info: { calls: number; triangles: number }, private describe: () => string) {
     this.el = document.createElement('div');
     this.el.className = 'perf';
     parent.appendChild(this.el);
@@ -27,7 +26,7 @@ export class PerfOverlay {
     if (!this.shown || (this.refresh -= dt) > 0) return;
     this.refresh = 0.25;
     const s = this.stats();
-    const info = this.gl.info.render;
+    const info = this.info;
     this.el.textContent = `${s.fps.toFixed(0)} fps · frame p50 ${s.p50.toFixed(1)} ms · p99 ${s.p99.toFixed(1)} ms · cpu ${s.cpu.toFixed(1)} ms\n` +
       `${info.calls} draws · ${(info.triangles / 1000).toFixed(0)}k tris · ${this.describe()}`;
   }

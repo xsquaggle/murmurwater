@@ -29,6 +29,8 @@ export class Input {
   sensitivity = 1;
   invertY = false;
   locked = false;
+  /** Mouse buttons act only while the pointer is captured (off for environments without pointer lock). */
+  needsLock = typeof document !== 'undefined' && 'pointerLockElement' in document;
   enabled = true;
 
   constructor(private el: HTMLElement) {
@@ -38,7 +40,8 @@ export class Input {
       this.press(e.code);
     });
     window.addEventListener('keyup', (e) => this.release(e.code));
-    el.addEventListener('mousedown', (e) => { this.press('Mouse' + e.button); });
+    // A click on the view while the mouse is free only captures it; it is not a cast.
+    el.addEventListener('mousedown', (e) => { if (this.locked || !this.needsLock) this.press('Mouse' + e.button); });
     window.addEventListener('mouseup', (e) => this.release('Mouse' + e.button));
     el.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('mousemove', (e) => { if (this.locked) { this.mouseDX += e.movementX; this.mouseDY += e.movementY; } });
