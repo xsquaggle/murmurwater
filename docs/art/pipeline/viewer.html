@@ -41,8 +41,9 @@ if (q.get('dark') === '1') { scene.children.forEach(l => { if (l.isLight) l.inte
 const cam = new THREE.PerspectiveCamera(28, 1, 0.01, 500);
 
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
-loader.load(url, (gltf) => {
+Promise.all([loader.loadAsync(url), q.get('attach') ? loader.loadAsync(q.get('attach')) : null]).then(([gltf, extra]) => {
   const root = gltf.scene; scene.add(root);
+  if (extra) { const sk = root.getObjectByName(q.get('socket') || 'BookSocket'); if (sk) sk.add(extra.scene); }
   let tris = 0, verts = 0, mats = new Set(), texs = new Set(), skinned = 0;
   root.traverse(o => {
     if (o.isMesh) {
@@ -100,5 +101,5 @@ loader.load(url, (gltf) => {
     clips: gltf.animations.map(a => `${a.name}:${a.duration.toFixed(2)}s`),
   };
   window.__done = true;
-}, undefined, (e) => { window.__info = { error: String(e) }; window.__done = true; });
+}).catch((e) => { window.__info = { error: String(e) }; window.__done = true; });
 </script></body></html>

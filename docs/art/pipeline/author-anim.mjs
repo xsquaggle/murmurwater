@@ -1,5 +1,6 @@
 // Hand-authored clips for the 24-joint biped rig that merge-anim.mjs writes (unit scale, rest pose = bind pose, facing +Z).
-// node author-anim.mjs in.glb out.glb clips.mjs [--fps 30] [--drop cast,other]
+// node author-anim.mjs in.glb out.glb clips.mjs [--fps 30] [--drop cast,other] [--fingers 0]
+//   --fingers 0 leaves the hands as they are (no finger joints); the clips module may return rodSocket: false.
 //
 // A clip is a function of time that returns a pose spec; every frame is solved with FK for the body and analytic
 // two-bone IK for arms and legs, then written as joint rotations plus Hips translation (same channel layout as the
@@ -15,7 +16,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const [inp, out, clipsFile, ...rest] = process.argv.slice(2);
-const opt = { fps: 30, drop: '' };
+const opt = { fps: 30, drop: '', fingers: '1' };
 for (let i = 0; i < rest.length; i++) if (rest[i].startsWith('--')) opt[rest[i].slice(2)] = rest[++i];
 opt.fps = Number(opt.fps);
 
@@ -66,7 +67,7 @@ const handInfo = {};
     const at = (a0, n1) => vec3.add(vec3.create(), vec3.add(vec3.create(), Ph, vec3.scale(vec3.create(), f0, a0)), vec3.scale(vec3.create(), n0, n1));
     const K1 = at(FINGER.knuckle, midN(FINGER.knuckle)), K2 = at(FINGER.mid, midN(FINGER.mid));
     handInfo[side] = { f0, n0, t0, curl, surf, Ph };
-    if (nm.includes(side + 'Fingers')) continue;                                               // already rigged on an earlier run
+    if (nm.includes(side + 'Fingers') || opt.fingers === '0') continue;                                               // already rigged on an earlier run
     const rotM = mat3.fromValues(curl[0], curl[1], curl[2], f0[0], f0[1], f0[2], n0[0], n0[1], n0[2]); const Rw = quat.normalize(quat.create(), quat.fromMat3(quat.create(), rotM));
     const Wh = Wj(hi); const mk = (name, K, parentNode, Wp) => {
       const W = mat4.fromRotationTranslation(mat4.create(), Rw, K); const L = mat4.multiply(mat4.create(), mat4.invert(mat4.create(), Wp), W);
@@ -131,7 +132,7 @@ const frameQ = (p0, s0, p1, s1) => {
 const twistAbout = (q, axis) => { const d = q[0] * axis[0] + q[1] * axis[1] + q[2] * axis[2]; const t = quat.fromValues(axis[0] * d, axis[1] * d, axis[2] * d, q[3]); if (quat.length(t) < 1e-6) return quat.create(); return quat.normalize(t, t); };
 
 // ---------- hands ----------
-const HAND = {}; for (const side of ['Right', 'Left']) HAND[side] = { ...handInfo[side], hi: J(side + 'Hand'), fa: J(side + 'Fingers'), fb: J(side + 'FingerTips') };
+const HAND = {}; for (const side of ['Right', 'Left']) HAND[side] = { ...handInfo[side], hi: J(side + 'Hand'), fa: index.has(side + 'Fingers') ? J(side + 'Fingers') : -1, fb: index.has(side + 'FingerTips') ? J(side + 'FingerTips') : -1 };
 const GRIP = { radius: 0.025, a: 0.059, curlA: 70, curlB: 65 };   // handle radius the closed hand is shaped for, where it sits along the palm, and the closed curl angles
 
 // ---------- existing clips (for spec.base) ----------
@@ -206,7 +207,8 @@ function solve(spec = {}, tag = '') {
   };
   const arm = (side) => {
     const sh = J(side + 'Shoulder'), up = J(side + 'Arm'), fo = J(side + 'ForeArm'), ha = J(side + 'Hand'); const key = side === 'Right' ? 'r' : 'l'; const sgn = side === 'Right' ? -1 : 1;
-    fk(sh, spec[key + 'Shoulder']);
+    if (spec.lockShoulders) { place(sh); D[sh] = qmul(D[parent[sh]], eulerQ(spec[key + 'Shoulder'])); }   // collarbones keep their rest relation to the chest
+    else fk(sh, spec[key + 'Shoulder']);
     const hs = spec[key + 'Hand'];
     if (!hs || !hs.pos) { fk(up, hs && hs.armRot); fk(fo, hs && hs.foreRot); fk(ha, hs && hs.rot); }
     else {
@@ -224,7 +226,7 @@ function solve(spec = {}, tag = '') {
       const relq = qmul(Dh, conj(D[fo])); const tw = twistAbout(relq, f); const part = quat.slerp(quat.create(), quat.create(), tw, hs.twistShare === undefined ? 0.5 : hs.twistShare);
       D[fo] = qmul(part, D[fo]); D[ha] = Dh;
     }
-    { const H = HAND[side]; const g = spec[key + 'Grip'] === undefined ? 0 : spec[key + 'Grip'];
+    if (HAND[side].fa >= 0) { const H = HAND[side]; const g = spec[key + 'Grip'] === undefined ? 0 : spec[key + 'Grip'];
       place(H.fa); D[H.fa] = qmul(D[ha], quat.setAxisAngle(quat.create(), H.curl, GRIP.curlA * g * rad));
       place(H.fb); D[H.fb] = qmul(D[H.fa], quat.setAxisAngle(quat.create(), H.curl, GRIP.curlB * g * rad)); }
     if (side === 'Right') sock = { o: add(X[ha], rotv(D[ha], sub(sockO0, P[ha]))), r: qmul(D[ha], sockR0) };
@@ -274,7 +276,7 @@ const keys = (list, t) => { // list: [{t, spec, ease}] sorted; ease applies to t
 const chestSpace = (spec, jointName) => { const r = solve(spec, 'probe'); const ch = J('Spine'); return Array.from(add(P[ch], rotv(conj(r.D[ch]), sub(r.X[J(jointName)], r.X[ch])))); };
 const palmCentre = (pose, side) => { const H = HAND[side]; return add(pose.X[H.hi], rotv(pose.D[H.hi], add(mul(H.f0, 0.07), mul(H.n0, H.surf + 0.01)))); };
 const blend = (A, B, k) => ({ blend: [A, B, k] });
-const ctx = { blend, palmCentre, solve, lerp, ease, keys, names, P, Rb, HAND, GRIP, existing, evalClip, J, sockO0, sockR0, rod0, chestSpace };
+const ctx = { blend, palmCentre, solve, lerp, ease, keys, names, P, Rb, HAND, GRIP, existing, evalClip, J, sockO0, sockR0, rod0, chestSpace, eulerQ, math: { vec3, quat, mat4 } };
 
 const mod = await import(pathToFileURL(path.resolve(clipsFile)).href);
 const def = mod.default(ctx);
@@ -286,7 +288,7 @@ const addSocket = (name, parentJoint, worldO, worldR, parentWorld) => {
   const t = vec3.create(), r = quat.create(); mat4.getTranslation(t, L); mat4.getRotation(r, L); quat.normalize(r, r);
   const node = doc.createNode(name).setTranslation(Array.from(t)).setRotation(Array.from(r)); joints[parentJoint].addChild(node); return node;
 };
-addSocket('RodSocket', RH.hi, sockO0, sockR0, Wb[RH.hi]);
+if (def.rodSocket !== false) addSocket('RodSocket', RH.hi, sockO0, sockR0, Wb[RH.hi]);
 for (const s of def.sockets || []) { const pose = solve(s.spec, s.name); const pj = J(s.joint); const Wp = mat4.fromRotationTranslation(mat4.create(), qmul(pose.D[pj], Rb[pj]), pose.X[pj]); addSocket(s.name, pj, s.origin(pose), s.rot, Wp); }
 
 // ---------- write clips ----------
@@ -294,7 +296,7 @@ const drop = new Set(String(opt.drop).split(',').filter(Boolean)); for (const c 
 for (const a of root.listAnimations()) if (drop.has(a.getName())) { for (const c of a.listChannels()) c.dispose(); for (const s of a.listSamplers()) s.dispose(); a.dispose(); }
 const buffer = root.listBuffers()[0];
 // library clips get constant open-hand channels for the finger joints, so every clip drives the same joints
-const fingerJoints = ['RightFingers', 'RightFingerTips', 'LeftFingers', 'LeftFingerTips'].map(J);
+const fingerJoints = ['RightFingers', 'RightFingerTips', 'LeftFingers', 'LeftFingerTips'].filter(n => index.has(n)).map(J);
 for (const a of root.listAnimations()) {
   const have = new Set(a.listChannels().map(ch => ch.getTargetNode())); let dur = 0; for (const sm of a.listSamplers()) { const arr = sm.getInput().getArray(); dur = Math.max(dur, arr[arr.length - 1]); }
   let inAcc = null;

@@ -76,11 +76,11 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `props/dock-lantern.glb` | 1,838 | 0.23 x 0.60 x 0.29 | top of the wall plate, back face | lantern glass | `dock-lantern` | `c4b6c49e-5d71-4cf9-9321-fe2931ba26b4` |
 | `props/fish-stall.glb` | 6,454 | 2.60 x 2.40 x 1.45 | base centre | no | `fish-stall` | `73c896bf-54f8-41a2-9d6f-8e50decd1f69` |
 | `props/notice-board.glb` | 2,817 | 1.75 x 2.20 x 0.98 | base centre | no | `notice-board` | `a22e9d6d-7ed3-4da4-a3cc-71f2fadc5c87` |
-| `props/sketchbook.glb` | 914 | 0.25 x 0.26 x 0.08 | centre | no | `sketchbook` | `3d645d40-ba8f-41e2-9531-2100077904f1` |
+| `props/sketchbook.glb` | 914 | 0.24 x 0.25 x 0.055 | centre, cover on +Z | no | `sketchbook` | `3d645d40-ba8f-41e2-9531-2100077904f1` |
 
 Fish are normalized to 1 m nose to tail along +Z, so the game scales each to its species length. Glow maps are an `emissiveTexture` on the same material with `KHR_materials_emissive_strength` 1.5, derived from the warm bright texels of the base colour; `docs/art/sheets/emissive-dark.webp` shows them with the lights off.
 
-Notes: the fish stall is the second run of its job (the first, `c941c034-4adf-48ff-b2f8-9cec702029ba`, came back with a blank grey texture and was discarded); its bounds were fitted to 2.6 x 2.4 x 1.45 m with a mild non-uniform scale (`--fit`), about 15 % shallower than generated. The sketchbook has a 512 px texture. Biscuit is two sculpts, standing and sitting, because the two poses do not deform into each other cleanly; the game swaps models when the cat sits.
+Notes: the fish stall is the second run of its job (the first, `c941c034-4adf-48ff-b2f8-9cec702029ba`, came back with a blank grey texture and was discarded); its bounds were fitted to 2.6 x 2.4 x 1.45 m with a mild non-uniform scale (`--fit`), about 15 % shallower than generated. The sketchbook has a 512 px texture and was fitted to 0.24 x 0.25 x 0.055 m (thinner than generated) so it sits between Wick's hands. Biscuit is two sculpts, standing and sitting, because the two poses do not deform into each other cleanly; the game swaps models when the cat sits.
 
 ### Player rig and animation clips
 
@@ -114,7 +114,7 @@ The earlier library `cast` clip (Over_Shoulder_Throw, job `65af2772-9f1e-4f4d-b9
 
 ### NPC rigs and clips
 
-Same route as the player: `meshy_rigging`, one job per clip, merged with `merge-anim.mjs`; 24 joints, unit scale, rest pose is the A-pose, no sockets. Clip frames are in `docs/art/sheets/<id>-clips.webp`. All clips stay over the model origin (`:anchor` removes the offset some library clips start with).
+Same route as the player: `meshy_rigging`, one job per clip, merged with `merge-anim.mjs`; 24 joints, unit scale, rest pose is the A-pose. Clip frames are in `docs/art/sheets/<id>-clips.webp`. All clips stay over the model origin (`:anchor` removes the offset some library clips start with).
 
 | Model | Clip | Length | Library action | Job id |
 |---|---|---|---|---|
@@ -127,6 +127,9 @@ Same route as the player: `meshy_rigging`, one job per clip, merged with `merge-
 | | `idle_look` | 4.03 s | Idle (0), turns to look behind | `3c7f0e23-fd41-432b-9247-bb316acc3387` |
 | | `talk` | 4.00 s | Talk_with_Hands_Open (313) | `3cf8782b-7198-40ac-9535-5f7d6797b31c` |
 | | `sit` | 10.70 s | Chair_Sit_Idle_M (33); hips about 0.375 m up, for a seat about 0.3 m high | `4470a36a-66e1-4393-8201-107c33e9d3d4` |
+| | `book_idle`, `book_idle_look`, `book_talk` | 6.03 s, 4.03 s, 4.00 s | Authored on `idle`, `idle_look` and `talk` with `author-anim.mjs` + `wick-clips.mjs`: both hands hold the sketchbook by its side edges; he glances down at it once per idle loop and lifts and shakes it while talking | none |
+
+Wick has one socket: `BookSocket`, an empty child of `LeftHand` at the sketchbook's centre in the `book_*` clips. Parent `props/sketchbook.glb` to it with identity transform (the cover faces the socket's +Z). The other clips are empty-handed, so detach or hide the book for them.
 
 ### Biscuit the cat
 
