@@ -3,6 +3,15 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to create (e.g. v0.1.0). Leave empty to only build.'
+        required: false
+        default: ''
+      prerelease:
+        description: 'Mark as pre-release'
+        type: boolean
+        default: true
 permissions:
   contents: write
 jobs:
@@ -27,13 +36,17 @@ jobs:
             release/*.exe
             release/*.yml
       - name: Attach to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${{ inputs.tag }}"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_REF_NAME}"; fi
           NOTES_FILE=docs/release-notes/${TAG}.md
           if [ -f "$NOTES_FILE" ]; then NOTES="--notes-file $NOTES_FILE"; else NOTES="--notes Windows build of $TAG"; fi
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "Murmurwater $TAG" $NOTES --prerelease
+          PRE=""
+          if [ "${{ inputs.prerelease }}" != "false" ]; then PRE="--prerelease"; fi
+          # Creating the release also creates the tag at this commit.
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --target "$GITHUB_SHA" --title "Murmurwater $TAG" $NOTES $PRE
           gh release upload "$TAG" release/*.exe --clobber
