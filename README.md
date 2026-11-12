@@ -24,6 +24,7 @@ Your save lives in `%APPDATA%\Murmurwater\save.json` (with a `save.bak.json` bac
 | Talk / interact | E |
 | Satchel (catch, gear, journal, quests) | Tab or I; J opens the journal |
 | Pause and settings | Esc |
+| Performance overlay (fps, frame times) | F3 |
 
 ## Develop
 ```

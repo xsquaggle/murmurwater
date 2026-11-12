@@ -313,7 +313,7 @@ export class Screens {
       el('button', { class: 'btn big', onclick: () => this.open('quests') }, 'Satchel & journal'),
       el('button', { class: 'btn big', onclick: () => this.open('settings') }, 'Settings'),
       this.host.canQuit ? el('button', { class: 'btn big ghost', onclick: () => this.host.quit() }, 'Save and quit to desktop') : el('div', { class: 'muted center' }, 'Progress saves automatically.'));
-    this.card.append(col);
+    this.card.append(col, el('div', { class: 'muted center small' }, `v${__APP_VERSION__} · F3 shows performance`));
   }
 
   private renderSettings() {

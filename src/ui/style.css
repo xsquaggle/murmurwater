@@ -210,3 +210,9 @@ body.titled .hud { opacity: 0; }
 .fade.on { opacity: 1; }
 .fade-text { font: italic 600 22px var(--serif); color: var(--bone); opacity: .85; }
 .subtitle-off .dlg-text { visibility: hidden; }
+
+/* F3 performance overlay */
+.perf { position: fixed; left: 12px; bottom: 12px; z-index: 60; display: none; white-space: pre; font: 12px/1.45 ui-monospace, Consolas, monospace;
+  color: #F2E3C6; background: rgba(28, 22, 40, 0.78); padding: 6px 10px; border-radius: 6px; pointer-events: none; }
+.perf.on { display: block; }
+.muted.small { font-size: 12px; margin-top: 12px; opacity: 0.8; }

@@ -9,6 +9,7 @@ import { FishingView } from '../render/fishing-view';
 import { Fx } from '../render/fx';
 import { DAY_LENGTH_S } from '../render/daycycle';
 import { Hud } from '../ui/hud';
+import { PerfOverlay } from '../ui/perf';
 import { Town } from './town';
 import { defaultSettings, keyLabel, type Settings } from './settings';
 import { relicBonus } from '../core/quests';
@@ -53,6 +54,7 @@ export class Game {
   private shake = 0;
   private idleSince = 0;
   frames = 0;
+  perf: PerfOverlay | null = null;
   paused = false;
   /** Bots/screenshots: stop the real-time loop entirely (they drive frames themselves). */
   halted = false;
@@ -71,6 +73,10 @@ export class Game {
     this.renderer = new Renderer(canvas, quality, this.world.scene, this.camera);
     this.input = new Input(canvas);
     this.hud = new Hud(uiRoot);
+    this.perf = new PerfOverlay(uiRoot, this.renderer.gl, () => {
+      const c = this.renderer.gl.domElement;
+      return `${this.town.settings.quality} quality · ${c.width}×${c.height}`;
+    });
     this.world.hour = state.hour;
     this.world.scene.add(this.avatar.root, this.fx.group);
     this.view = new FishingView(this.fx, (x, z) => this.waveY(x, z));
@@ -142,9 +148,14 @@ export class Game {
   start() {
     let last = performance.now();
     const loop = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000);
+      const real = (now - last) / 1000;
+      const dt = Math.min(0.1, real);
       last = now;
-      if (!this.halted) this.frame(dt);
+      if (!this.halted) {
+        const t0 = performance.now();
+        this.frame(dt);
+        this.perf?.record(real, performance.now() - t0);
+      }
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);

@@ -16,17 +16,17 @@ interface Key {
 
 // Hand-tuned against the art bible: warm key / cool fill at every hour.
 const KEYS: Key[] = [
-  { h: 0, sun: '#8FA6D9', sunI: 0.5, zenith: '#060A1E', horizon: '#1E2552', fog: '#182048', hemiSky: '#2E3570', hemiGround: '#0B2E36', hemiI: 0.6, fogDensity: 0.0010, exposure: 1.1 },
-  { h: 4.6, sun: '#8FA6D9', sunI: 0.4, zenith: '#0C1232', horizon: '#3A3466', fog: '#2A2752', hemiSky: '#3A3A74', hemiGround: '#0B2E36', hemiI: 0.55, fogDensity: 0.0011, exposure: 1.1 },
+  { h: 0, sun: '#8FA6D9', sunI: 0.7, zenith: '#060A1E', horizon: '#1E2552', fog: '#182048', hemiSky: '#3A4282', hemiGround: '#16343E', hemiI: 0.8, fogDensity: 0.0010, exposure: 1.1 },
+  { h: 4.6, sun: '#8FA6D9', sunI: 0.6, zenith: '#0C1232', horizon: '#3A3466', fog: '#2A2752', hemiSky: '#46468A', hemiGround: '#16343E', hemiI: 0.75, fogDensity: 0.0011, exposure: 1.1 },
   { h: 5.8, sun: '#FF9A6B', sunI: 1.4, zenith: '#3A3E84', horizon: '#F69A7A', fog: '#C98A92', hemiSky: '#8078B8', hemiGround: '#3B4A52', hemiI: 0.7, fogDensity: 0.0010, exposure: 1.0 },
   { h: 7.5, sun: '#FFE0B8', sunI: 2.4, zenith: '#3F7CC4', horizon: '#C4DDE6', fog: '#AFCBD6', hemiSky: '#A6CBEA', hemiGround: '#4E6A5A', hemiI: 1.05, fogDensity: 0.0006, exposure: 0.95 },
   { h: 13, sun: '#FFF2DA', sunI: 2.8, zenith: '#2C74C0', horizon: '#C2E2EC', fog: '#B0D6E0', hemiSky: '#B4DAF2', hemiGround: '#5A7460', hemiI: 1.1, fogDensity: 0.0005, exposure: 0.9 },
   { h: 16.2, sun: '#FFC888', sunI: 2.7, zenith: '#4F65AE', horizon: '#F6C796', fog: '#DDB794', hemiSky: '#A8BCE4', hemiGround: '#6A6656', hemiI: 1.1, fogDensity: 0.0006, exposure: 0.95 },
   { h: 17.5, sun: '#FFA552', sunI: 2.7, zenith: '#4A3C86', horizon: '#FF9A60', fog: '#D88A74', hemiSky: '#A08CC8', hemiGround: '#5A4858', hemiI: 1.15, fogDensity: 0.0008, exposure: 1.0 },
-  { h: 18.6, sun: '#FF7446', sunI: 1.7, zenith: '#2F255C', horizon: '#F2765C', fog: '#9A5C78', hemiSky: '#7E6CB0', hemiGround: '#3E3854', hemiI: 0.95, fogDensity: 0.0010, exposure: 1.05 },
-  { h: 19.5, sun: '#C8607A', sunI: 0.8, zenith: '#1C1946', horizon: '#844C78', fog: '#4C3460', hemiSky: '#4C4488', hemiGround: '#1E2238', hemiI: 0.6, fogDensity: 0.0011, exposure: 1.1 },
-  { h: 20.6, sun: '#8FA6D9', sunI: 0.5, zenith: '#0E1338', horizon: '#3E3468', fog: '#2E2852', hemiSky: '#383A78', hemiGround: '#0F2A38', hemiI: 0.6, fogDensity: 0.0011, exposure: 1.1 },
-  { h: 24, sun: '#8FA6D9', sunI: 0.5, zenith: '#060A1E', horizon: '#1E2552', fog: '#182048', hemiSky: '#2E3570', hemiGround: '#0B2E36', hemiI: 0.6, fogDensity: 0.0010, exposure: 1.1 },
+  { h: 18.6, sun: '#FF7446', sunI: 1.7, zenith: '#2F255C', horizon: '#F2765C', fog: '#9A5C78', hemiSky: '#7E6CB0', hemiGround: '#4A4262', hemiI: 1.05, fogDensity: 0.0010, exposure: 1.05 },
+  { h: 19.5, sun: '#C8607A', sunI: 0.8, zenith: '#1C1946', horizon: '#844C78', fog: '#4C3460', hemiSky: '#56509A', hemiGround: '#2E2C4C', hemiI: 0.95, fogDensity: 0.0011, exposure: 1.1 },
+  { h: 20.6, sun: '#8FA6D9', sunI: 0.7, zenith: '#0E1338', horizon: '#3E3468', fog: '#2E2852', hemiSky: '#424690', hemiGround: '#1A3242', hemiI: 0.8, fogDensity: 0.0011, exposure: 1.1 },
+  { h: 24, sun: '#8FA6D9', sunI: 0.7, zenith: '#060A1E', horizon: '#1E2552', fog: '#182048', hemiSky: '#3A4282', hemiGround: '#16343E', hemiI: 0.8, fogDensity: 0.0010, exposure: 1.1 },
 ];
 
 export interface Lighting {

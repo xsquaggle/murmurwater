@@ -86,7 +86,7 @@ async function boot() {
     makeFish,
     quests,
     buildMs: 0,
-    frameStats() { return { p50: 0, p99: 0 }; },
+    frameStats() { return game.perf?.stats() ?? { fps: 0, p50: 0, p99: 0, cpu: 0 }; },
   };
 }
 void boot();

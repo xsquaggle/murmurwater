@@ -15,6 +15,9 @@ const { chromium } = require('playwright');
   const fail = async (msg) => { console.error('STORY FAILED:', msg, errors); await page.screenshot({ path: `${outDir}/failure.png` }); await browser.close(); process.exit(1); };
   const shot = async (name) => {
     await page.evaluate(() => { const g = window.__MW__.game; for (let i = 0; i < 24; i++) g.presentOnce(1 / 30); });
+    // The bot runs game time far faster than real time; let CSS fades (dialogue, screen fade) finish so
+    // the shot shows what a player would see.
+    await page.waitForTimeout(900);
     await page.screenshot({ path: `${outDir}/${name}.png`, timeout: 120000 });
   };
   await page.goto(`http://localhost:${port}/?fresh&notitle&hour=16.5&quality=medium`);
