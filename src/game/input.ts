@@ -50,12 +50,18 @@ export class Input {
   private press(code: string) { if (!this.down.has(code)) { this.down.add(code); this.pressed.add(code); } }
   private release(code: string) { if (this.down.has(code)) { this.down.delete(code); this.released.add(code); } }
 
-  requestLock() { if (!this.locked) this.el.requestPointerLock?.(); }
+  requestLock() {
+    if (this.locked) return;
+    try { const r = this.el.requestPointerLock?.() as unknown as Promise<void> | undefined; r?.catch?.(() => {}); } catch { /* needs a user gesture; the next click will lock */ }
+  }
   exitLock() { if (this.locked) document.exitPointerLock?.(); }
 
   held(a: Action): boolean { return this.enabled && this.bindings[a].some((c) => this.down.has(c)); }
   wasPressed(a: Action): boolean { return this.enabled && this.bindings[a].some((c) => this.pressed.has(c)); }
   wasReleased(a: Action): boolean { return this.bindings[a].some((c) => this.released.has(c)); }
+
+  /** Raw key edge (for menus: number keys, Enter). */
+  codePressed(code: string): boolean { return this.pressed.has(code); }
 
   /** Call once per fixed step after reading edges. */
   consumeEdges() { this.pressed.clear(); this.released.clear(); }

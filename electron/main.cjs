@@ -17,8 +17,13 @@ function writeAtomic(p, text) {
 
 let win;
 function createWindow() {
+  // Start in the window mode and size the player chose last time.
+  let saved = {};
+  try { saved = JSON.parse(readText(settingsPath()) || '{}'); } catch { saved = {}; }
+  const [w, h] = Array.isArray(saved.resolution) ? saved.resolution : [1600, 900];
   win = new BrowserWindow({
-    width: 1600, height: 900, minWidth: 1024, minHeight: 600,
+    width: Math.max(1024, w | 0), height: Math.max(600, h | 0), minWidth: 1024, minHeight: 600,
+    fullscreen: saved.windowMode === 'fullscreen',
     backgroundColor: '#0B2E36',
     title: 'Murmurwater',
     autoHideMenuBar: true,
@@ -46,8 +51,8 @@ ipcMain.handle('settings:read', () => readText(settingsPath()));
 ipcMain.handle('settings:write', (_e, text) => { writeAtomic(settingsPath(), text); return true; });
 ipcMain.handle('window:mode', (_e, mode) => {
   if (!win) return;
-  if (mode === 'fullscreen') { win.setFullScreen(true); }
-  else if (mode === 'borderless') { win.setFullScreen(false); win.setSimpleFullScreen?.(false); win.maximize(); win.setFullScreen(true); }
+  // On Windows Electron's fullscreen is borderless (no exclusive mode switch), which alt-tabs cleanly.
+  if (mode === 'fullscreen') win.setFullScreen(true);
   else { win.setFullScreen(false); win.unmaximize(); }
 });
 ipcMain.handle('window:resolution', (_e, w, h) => { if (win && !win.isFullScreen()) win.setContentSize(w, h); });

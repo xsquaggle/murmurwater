@@ -6,8 +6,9 @@ import { Heightfield, type RegionDef } from '../core/world';
 import { createSky, createSkyUniforms, type SkyUniforms } from './sky';
 import { Water } from './water';
 import { buildTerrain } from './terrain';
-import { addLanternLight, buildArch, buildDock, buildLighthouse, buildNoticeBoard, buildRowboat, buildStall, createPropMaterial, scatterIsland, LANDING, LANDING_HALF } from './props';
+import { addLanternLight, buildArch, buildDock, buildLighthouse, buildNoticeBoard, buildRowboat, buildStall, createPropMaterial, scatterIsland } from './props';
 import { assets } from './assets';
+import { dockDeckAt } from '../core/dock';
 import { waveHeight, CALM_WAVES } from '../core/waves';
 import type { RegionContent } from '../core/content';
 import { sample, type Lighting } from './daycycle';
@@ -196,15 +197,7 @@ export class WorldScene {
   }
 
   /** Deck height if (x, z) is on the dock, else null. */
-  dockDeckAt(x: number, z: number): number | null {
-    const dx = x - this.dockStart.x, dz = z - this.dockStart.z;
-    const fx = Math.sin(this.dockYaw), fz = Math.cos(this.dockYaw);
-    const along = dx * fx + dz * fz;
-    const side = Math.abs(dx * fz - dz * fx);
-    if (along < -6 || along > this.dockLength + 5) return null;
-    const half = along > this.dockLength ? 3.5 : along >= 0 && along < LANDING ? LANDING_HALF : 1.35;
-    return side <= half ? this.deckY + 0.07 : null;
-  }
+  dockDeckAt(x: number, z: number): number | null { return dockDeckAt(this.region.landmarks.dock, x, z); }
 
   get light(): Lighting { return this.lighting; }
 }

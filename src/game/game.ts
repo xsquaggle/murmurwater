@@ -9,12 +9,15 @@ import { FishingView } from '../render/fishing-view';
 import { Fx } from '../render/fx';
 import { DAY_LENGTH_S } from '../render/daycycle';
 import { Hud } from '../ui/hud';
+import { Town } from './town';
+import { defaultSettings, keyLabel, type Settings } from './settings';
+import { relicBonus } from '../core/quests';
 import { AudioEngine } from '../audio/audio';
 import { Input } from './input';
 import { Rng } from '../core/rng';
 import { FishingSession, FEEL, type FishingInput, type SpotInfo } from '../core/fishing';
 import { REGIONS_BY_ID, bait, rod, zoneAt } from '../core/content';
-import { addCatch, breakRhythm, fmt, rarityIndex, sellAll, RHYTHM } from '../core/economy';
+import { addCatch, breakRhythm, rarityIndex, RHYTHM } from '../core/economy';
 import { type GameState } from '../core/state';
 import { serialize, type SaveStore } from '../core/save';
 import { waveHeight, CALM_WAVES } from '../core/waves';
@@ -51,14 +54,18 @@ export class Game {
   private idleSince = 0;
   frames = 0;
   paused = false;
+  /** Bots/screenshots: stop the real-time loop entirely (they drive frames themselves). */
+  halted = false;
   /** Screenshot/debug hooks: force an avatar pose or a fixed camera. */
   debugPose: { pose: Pose; speed?: number; power?: number; tension?: number; lateral?: number; reeling?: boolean } | null = null;
   debugCam: { pos: Vector3; look: Vector3 } | null = null;
   /** When set (tests/bot), replaces player input to the fishing session. */
   botInput: FishingInput | null = null;
-  readonly sellPoint: Vector3;
+  readonly town: Town;
+  /** Camera shake multiplier from settings (0 = off). */
+  shakeScale = 1;
 
-  constructor(public state: GameState, canvas: HTMLCanvasElement, uiRoot: HTMLElement, quality: Quality, private store: SaveStore) {
+  constructor(public state: GameState, canvas: HTMLCanvasElement, uiRoot: HTMLElement, quality: Quality, private store: SaveStore, settings: Settings = defaultSettings()) {
     const region = REGIONS_BY_ID.get(state.world.region)!;
     this.world = new WorldScene(region, QUALITY[quality]);
     this.renderer = new Renderer(canvas, quality, this.world.scene, this.camera);
@@ -73,7 +80,9 @@ export class Game {
     this.camYaw = this.yaw;
     this.rngSeed = state.seed;
     this.session = this.newSession();
-    this.sellPoint = this.world.dockStart.clone();
+    this.faceYaw = this.yaw;
+    this.town = new Town(this, uiRoot, settings);
+    this.town.applySettings(['volumes', 'sensitivity', 'invertY', 'bindings', 'uiScale', 'subtitles']);
     this.onResize();
     window.addEventListener('resize', () => this.onResize());
     window.addEventListener('beforeunload', () => { void this.save(); });
@@ -90,7 +99,7 @@ export class Game {
     const s = this.state;
     const region = REGIONS_BY_ID.get(s.world.region)!;
     return new FishingSession({
-      rod: rod(s.gear.rod), bait: bait(s.gear.bait), hour: this.world.hour, luck: 0, biteWindowMult: 1, strangeChance: 0.03,
+      rod: rod(s.gear.rod), bait: bait(s.gear.bait), hour: this.world.hour, luck: relicBonus(s, 'luck'), biteWindowMult: 1, strangeChance: 0.03,
       flags: new Set(s.flags), region: s.world.region,
       spot: (dist: number): SpotInfo => {
         // Walk back along the aim line until the lure lands in water at least 0.6 m deep.
@@ -105,6 +114,24 @@ export class Game {
     }, new Rng(this.rngSeed++));
   }
 
+  /** Rebuild the fishing session after gear changes (only between casts). */
+  refreshSession() { if (this.session.phase === 'idle') this.session = this.newSession(); }
+
+  /** Put the camera straight behind the player (after a teleport). */
+  snapCamera() {
+    this.camYaw = this.yaw; this.faceYaw = this.yaw;
+    this.camTarget.copy(this.pos).add(new Vector3(0, 1.6, 0));
+    const cx = this.pos.x - Math.sin(this.yaw) * this.camDist, cz = this.pos.z - Math.cos(this.yaw) * this.camDist;
+    this.camera.position.set(cx, Math.max(this.pos.y + 2.2, this.world.hf.height(cx, cz) + 1.2, 1), cz);
+  }
+
+  /** Swing the view up to the lighthouse lamp (after lighting it). */
+  lookAtLamp() {
+    const L = this.world.region.landmarks.lighthouse;
+    this.camYaw = Math.atan2(L.x - this.pos.x, L.z - this.pos.z);
+    this.camPitch = -0.12;
+  }
+
   /** Is there castable water ahead of the player? */
   private waterAhead(): boolean {
     const dir = new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw));
@@ -117,14 +144,14 @@ export class Game {
     const loop = (now: number) => {
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
-      this.frame(dt);
+      if (!this.halted) this.frame(dt);
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
   }
 
   frame(dt: number) {
-    if (!this.paused) {
+    if (!this.paused && !this.town.pausesWorld) {
       this.acc += dt;
       while (this.acc >= STEP) { this.step(STEP); this.acc -= STEP; }
     }
@@ -153,7 +180,8 @@ export class Game {
     // Mouse look / aim.
     const [mdx, mdy] = inp.consumeMouse();
     const fighting = this.session.phase === 'fighting';
-    if (!fighting) {
+    const ui = this.town.blocking;
+    if (!fighting && !ui) {
       this.camYaw -= mdx * 0.0026;
       this.camPitch = Math.max(-0.15, Math.min(1.1, this.camPitch + mdy * 0.002));
     }
@@ -161,7 +189,7 @@ export class Game {
 
     // Movement (only when not fishing).
     const ph = this.session.phase;
-    const canMove = ph === 'idle' || ph === 'landed' || ph === 'lost';
+    const canMove = (ph === 'idle' || ph === 'landed' || ph === 'lost') && !ui;
     let mx = 0, mz = 0;
     if (canMove) {
       if (inp.held('forward')) mz += 1; if (inp.held('back')) mz -= 1;
@@ -188,6 +216,7 @@ export class Game {
     // Fishing input.
     let fi: FishingInput;
     if (this.botInput) fi = this.botInput;
+    else if (ui) fi = { primary: false, primaryPressed: false, primaryReleased: false, steer: 0, cancel: false };
     else {
       // Steer in the fish's lateral space (+1 = screen-left): A pulls left, D pulls right, mouse too.
       const steerKeys = (inp.held('steerLeft') ? 1 : 0) - (inp.held('steerRight') ? 1 : 0);
@@ -205,14 +234,8 @@ export class Game {
     this.session.update(dt, fi);
     this.handleEvents();
 
-    // Interact: sell at the stall.
-    if (inp.wasPressed('interact') && this.nearSell() && s.hold.length) {
-      const n = s.hold.length;
-      const total = sellAll(s);
-      this.audio.coin(n);
-      this.hud.toast(`Sold ${n} fish for ◉ ${fmt(total)}`, 'gold');
-      void this.save();
-    }
+    // People, places, menus.
+    this.town.step(dt);
 
     // Rhythm decays if you stop fishing for a while.
     if (this.session.phase === 'idle') { this.idleSince += dt; if (this.idleSince > RHYTHM.decayAfter && s.rhythm > 0) { s.rhythm = 0; this.hud.toast('Your rhythm fades'); } }
@@ -237,7 +260,14 @@ export class Game {
         case 'splash': this.audio.plop(); break;
         case 'nibble': this.audio.nibble(); this.view.nibble(); break;
         case 'bite': this.audio.bite(); this.shake = 0.25; break;
-        case 'hook': this.audio.hook(e.grade === 'perfect'); this.hud.toast(e.grade === 'perfect' ? 'Perfect hook!' : 'Hooked!', e.grade === 'perfect' ? 'gold' : 'good'); this.shake = 0.35; break;
+        case 'hook': {
+          const b = s.gear.bait;
+          if (b !== 'breadcrumb' && isFinite(s.gear.baits[b] ?? 0)) {
+            s.gear.baits[b] = Math.max(0, (s.gear.baits[b] ?? 0) - 1);
+            if (s.gear.baits[b] === 0) { s.gear.bait = 'breadcrumb'; this.hud.toast(`Out of ${bait(b).name}: back to breadcrumbs`); }
+          }
+        }
+          this.audio.hook(e.grade === 'perfect'); this.hud.toast(e.grade === 'perfect' ? 'Perfect hook!' : 'Hooked!', e.grade === 'perfect' ? 'gold' : 'good'); this.shake = 0.35; break;
         case 'tooEarly': this.hud.toast(e.spooked ? 'Too early — you spooked it' : 'Wait for the bobber to go under', 'bad'); break;
         case 'missed': this.audio.lose(); this.hud.toast('It got away… keep watching', 'bad'); break;
         case 'runWarn': this.audio.warn(); break;
@@ -245,6 +275,7 @@ export class Game {
         case 'thrash': this.shake = 0.6; this.audio.splash(1.2); break;
         case 'landed': {
           const res = addCatch(s, e.catch);
+          this.town.questEvent({ type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook });
           const r = rarityIndex(e.catch.fishId);
           this.audio.catchFanfare(r);
           this.audio.splash(0.8);
@@ -270,8 +301,6 @@ export class Game {
       }
     }
   }
-
-  private nearSell() { return this.pos.distanceTo(this.sellPoint) < 4.5; }
 
   /** Ground height for walking: dock deck or dry land; null where you can't walk. */
   groundAt(x: number, z: number): number | null {
@@ -327,7 +356,7 @@ export class Game {
     this.camera.position.lerp(want, Math.min(1, dt * 6));
     this.shake = Math.max(0, this.shake - dt * 1.5);
     const tension = fs?.tension ?? 0;
-    const sh = this.shake * 0.08 + Math.max(0, tension - 0.8) * 0.03;
+    const sh = (this.shake * 0.08 + Math.max(0, tension - 0.8) * 0.03) * this.shakeScale;
     this.camera.lookAt(this.camTarget.x + (Math.random() - 0.5) * sh, this.camTarget.y + (Math.random() - 0.5) * sh, this.camTarget.z);
     if (this.debugCam) { this.camera.position.copy(this.debugCam.pos); this.camera.lookAt(this.debugCam.look); }
     const fov = 55 + (ph === 'fighting' ? -4 * tension : 0) + (ph === 'charging' ? -3 * this.session.power : 0);
@@ -344,9 +373,11 @@ export class Game {
       bitePos = { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (-v.y * 0.5 + 0.5) * window.innerHeight };
     }
     this.hud.update(dt, s, this.session, bitePos);
-    this.hud.setGoal(this.nextGoal());
-    this.hud.setHint(this.hint());
-    this.hud.setPrompt(this.nearSell() && s.hold.length && ph === 'idle' ? `<kbd>E</kbd> Sell ${s.hold.length} fish to Mara` : '');
+    this.town.present(dt);
+    this.hud.setGoal(this.town.goal());
+    this.hud.setHint(this.town.blocking ? '' : this.hint());
+    const fp = this.town.focusPrompt;
+    this.hud.setPrompt(fp && !this.town.blocking ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '');
 
     this.audio.update(dt, { reeling: !!fs && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3, tension, fighting: !!fs, sea: 0.5 });
     if (fs && tension > 0.9 && this.lastTension <= 0.9) this.audio.warn();
@@ -368,19 +399,6 @@ export class Game {
     }
   }
 
-  /** Onboarding goals until the quest system takes over. */
-  nextGoal(): string {
-    const s = this.state;
-    const caught = s.lifetime.catches;
-    if (caught === 0) return 'Catch your first fish off the end of the dock';
-    if (caught < 5) return `Catch ${5 - caught} more fish`;
-    if (s.hold.length && s.coins === 0) return 'Sell your catch at Mara’s stall at the foot of the dock';
-    const next = rod('harbour-rod');
-    if (!s.gear.rods.includes(next.id)) return `Save ◉ ${fmt(next.price)} for the ${next.name} (◉ ${fmt(s.coins)})`;
-    const species = Object.keys(s.journal).length;
-    return `Find all Hearthbay fish (${species} found)`;
-  }
-
   async save() {
     const s = this.state;
     s.world.pos = [this.pos.x, this.pos.y, this.pos.z];
@@ -389,4 +407,5 @@ export class Game {
   }
 }
 
+const keyName = (code: string) => (code ? keyLabel(code) : '?');
 const RARITY_GLOW = ['#D8D2C4', '#9BD06F', '#6FB7FF', '#C98CFF', '#FFC05C', '#7CFFD4'].map((c) => new Color(c));

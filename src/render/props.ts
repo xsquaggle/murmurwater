@@ -11,6 +11,7 @@ import { Builder } from './builder';
 import { PALETTE } from './palette';
 import type { Heightfield } from '../core/world';
 import { Rng } from '../core/rng';
+import { DOCK } from '../core/dock';
 
 const C = (h: string) => new Color(h);
 
@@ -222,14 +223,14 @@ export function buildRowboat(seed = 9): BufferGeometry {
 
 export interface DockBuild { group: Group; lanternPositions: Vector3[]; endPoint: Vector3; deckY: number }
 /** The dock's first metres widen into a landing where the stall and notice board stand. */
-export const LANDING = 6.5, LANDING_HALF = 4.2;
+export const LANDING = DOCK.landing, LANDING_HALF = DOCK.landingHalf;
 
 export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw: number, length: number): DockBuild {
   const b = new Builder(21, 0.07);
   const dir = new Vector3(Math.sin(yaw), 0, Math.cos(yaw));
   const side = new Vector3(dir.z, 0, -dir.x);
-  const deckY = 1.35;
-  const width = 2.8;
+  const deckY = DOCK.deckY;
+  const width = DOCK.width;
   const wood = C(PALETTE.driftwood), woodDark = C('#6E5440'), woodLight = C('#A08062');
   const plankStep = 0.5;
   const rng = new Rng(77);

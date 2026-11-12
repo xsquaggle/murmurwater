@@ -31,6 +31,9 @@ export class Hud {
   private prompt: HTMLElement;
   private shownCoins = 0;
   private cardTimer = 0;
+  private markers: HTMLElement;
+  private markerEls: HTMLElement[] = [];
+  private fadeEl: HTMLElement;
 
   constructor(parent: HTMLElement) {
     this.root = h('div', 'hud', parent);
@@ -57,6 +60,31 @@ export class Hud {
     this.toasts = h('div', 'toasts', this.root);
     this.hint = h('div', 'hint', this.root);
     this.prompt = h('div', 'prompt', this.root);
+    this.markers = h('div', 'markers', parent);
+    this.fadeEl = h('div', 'fade', parent, '<div class="fade-text"></div>');
+  }
+
+  /** Floating markers over NPCs and places: '!' new quest, '?' ready to hand in, names when close. */
+  setMarkers(items: { x: number; y: number; kind: 'offer' | 'turnIn' | 'place' | null; glyph?: string; label: string | null; alpha: number }[]) {
+    while (this.markerEls.length < items.length) this.markerEls.push(h('div', 'marker', this.markers, '<div class="mk"></div><div class="nm"></div>'));
+    this.markerEls.forEach((e, i) => {
+      const it = items[i];
+      if (!it) { e.style.display = 'none'; return; }
+      e.style.display = '';
+      e.style.left = `${it.x}px`; e.style.top = `${it.y}px`; e.style.opacity = String(it.alpha);
+      const mk = e.firstElementChild as HTMLElement, nm = e.lastElementChild as HTMLElement;
+      mk.style.display = it.kind ? '' : 'none';
+      mk.className = 'mk ' + (it.kind ?? '');
+      mk.textContent = it.glyph ?? (it.kind === 'turnIn' ? '?' : it.kind === 'offer' ? '!' : '•');
+      nm.style.display = it.label ? '' : 'none';
+      nm.textContent = it.label ?? '';
+    });
+  }
+
+  /** Fade the screen to the sea colour (with an optional line of text) or back. */
+  fade(on: boolean, text = '') {
+    this.fadeEl.classList.toggle('on', on);
+    if (on) (this.fadeEl.firstElementChild as HTMLElement).textContent = text;
   }
 
   setGoal(text: string) { if (this.goalText.textContent !== text) { this.goalText.textContent = text; this.goal.classList.remove('flash'); void this.goal.offsetWidth; this.goal.classList.add('flash'); } }

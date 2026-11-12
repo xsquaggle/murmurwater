@@ -14,6 +14,8 @@ export const MODEL_PATHS = {
   tackleBox: 'models/props/tackle-box.glb',
   dockLantern: 'models/props/dock-lantern.glb',
 } as const;
+/** Optional NPC models; each falls back to a procedural stand-in until its file exists. */
+export const NPC_MODEL_IDS = ['mara', 'pell', 'wick'];
 export const FISH_MODEL_IDS = ['butterperch', 'pebble-goby', 'kettle-carp', 'coral-snapper', 'lampjaw', 'moss-eel', 'twofold-flounder', 'hollow-lantern', 'manyeye'];
 
 interface Entry { scene: Group; clips: AnimationClip[] }
@@ -28,6 +30,7 @@ export class Assets {
     const jobs: [string, string][] = [
       ...Object.entries(MODEL_PATHS),
       ...FISH_MODEL_IDS.map((id) => [`fish:${id}`, `models/fish/${id}.glb`] as [string, string]),
+      ...NPC_MODEL_IDS.map((id) => [`npc:${id}`, `models/characters/${id}.glb`] as [string, string]),
     ];
     let done = 0;
     await Promise.all(jobs.map(async ([key, url]) => {

@@ -4,6 +4,8 @@ import { loadGame, localStorageStore, type SaveStore } from './core/save';
 import { newGame } from './core/state';
 import { assets } from './render/assets';
 import { makeFish } from './render/fish-models';
+import { loadSettings } from './game/settings';
+import * as quests from './core/quests';
 
 declare global {
   interface Window {
@@ -21,13 +23,14 @@ declare global {
 }
 
 const params = new URLSearchParams(location.search);
-const quality = (params.get('quality') as Quality) ?? 'high';
 
 const nativeStore = (): SaveStore => ({
   read: () => window.mwNative!.readSave(),
   write: async (t) => { await window.mwNative!.writeSave(t); },
 });
-const store: SaveStore = window.mwNative ? nativeStore() : localStorageStore(params.has('fresh') ? 'murmurwater.test' : 'murmurwater.save');
+// ?fresh starts a new test game in a separate slot; ?keepfresh reloads that test slot (for the story bot).
+const testSlot = params.has('fresh') || params.has('keepfresh');
+const store: SaveStore = window.mwNative ? nativeStore() : localStorageStore(testSlot ? 'murmurwater.test' : 'murmurwater.save');
 
 async function boot() {
   const ui = document.getElementById('ui')!;
@@ -47,7 +50,9 @@ async function boot() {
   loading.remove();
   const state = params.has('fresh') ? newGame(1234) : loaded.state;
   if (params.has('hour')) state.hour = Number(params.get('hour'));
-  const game = new Game(state, canvas, ui, quality, store);
+  const settings = await loadSettings();
+  if (params.get('quality')) settings.quality = params.get('quality') as Quality;
+  const game = new Game(state, canvas, ui, settings.quality, store, settings);
   if (loaded.warning) game.hud.toast(loaded.warning, 'bad');
   // Screenshot hooks: ?cam=x,y,z&look=x,y,z fixes the camera; ?at=x,z places the player.
   const vec = (k: string) => params.get(k)?.split(',').map(Number);
@@ -79,6 +84,7 @@ async function boot() {
     get phase() { return game.session.phase; },
     renderer: game.renderer,
     makeFish,
+    quests,
     buildMs: 0,
     frameStats() { return { p50: 0, p99: 0 }; },
   };
