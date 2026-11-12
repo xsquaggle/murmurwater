@@ -27,6 +27,8 @@ export class Town {
   readonly dialogue: Dialogue;
   readonly screens: Screens;
   island = 'hearthbay';
+  private catGreeted = false;
+  private meowRest = 0;
   private region: RegionContent;
   private places = new Map<string, PlaceDef>();
   private talking: string | null = null;
@@ -61,14 +63,20 @@ export class Town {
       state: g.state, settings,
       buyRod: (id) => this.buyRod(id), equipRod: (id) => { g.state.gear.rod = id; g.refreshSession(); },
       buyBait: (id, n) => this.buyBait(id, n), equipBait: (id) => { g.state.gear.bait = id; g.refreshSession(); },
-      acceptBoard: (id) => { acceptBoard(g.state, id); g.audio.click(); },
-      abandonBoard: (id) => { abandonBoard(g.state, id); g.audio.click(); },
+      acceptBoard: (id) => { acceptBoard(g.state, id); },
+      abandonBoard: (id) => { abandonBoard(g.state, id); },
       applySettings: (k) => this.applySettings(k),
       quit: () => { void g.save().then(() => window.mwNative?.quit()); },
       close: () => this.closeScreens(),
       canQuit: !!window.mwNative,
     };
     this.screens = new Screens(uiRoot, host);
+    // Every button in the interface clicks; tabs turn a page.
+    uiRoot.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      if (t.closest('.sc-tab')) g.audio.pageTurn();
+      else if (t.closest('button, .btn, .dlg-choice')) g.audio.click();
+    }, true);
 
     // Keys while a conversation or screen is open are handled here, before gameplay input sees them.
     window.addEventListener('keydown', (e) => this.onUiKey(e), true);
@@ -172,6 +180,13 @@ export class Town {
     for (const [, e] of this.npcs) if (e.fig.root.visible) yield [e.fig.root.position.x, e.fig.root.position.z, 0.45];
   }
   /** Who the player is talking to, if anyone (for the camera). */
+  /** 0..1: how close the player stands to a cat (it purrs). */
+  catCloseness(): number {
+    let best = 0;
+    for (const c of this.critters) if (c.cat.root.visible) best = Math.max(best, 1 - (c.cat.root.position.distanceTo(this.g.pos) - 1) / 2.5);
+    return Math.min(1, Math.max(0, best));
+  }
+
   get talkingTo(): Vector3 | null { return this.talking && this.dialogue.isOpen ? this.npcs.get(this.talking)?.fig.root.position ?? null : null; }
 
   // ------------------------------------------------------------------ talking
@@ -194,7 +209,7 @@ export class Town {
     const s = this.g.state, q = QUESTS_BY_ID.get(id)!;
     const r = turnIn(s, id);
     if (!r) return;
-    this.g.audio.catchFanfare(2);
+    this.g.audio.questDone();
     this.g.hud.toast(`Quest complete: ${q.title}`, 'gold');
     const got = describeRewards(r);
     if (got.length) setTimeout(() => this.g.hud.toast(got.join(' · '), 'good'), 450);
@@ -210,7 +225,7 @@ export class Town {
     switch (a.type) {
       case 'accept': {
         if (accept(s, a.quest)) {
-          g.audio.hook(true);
+          g.audio.questAccept();
           g.hud.toast(`New quest: ${QUESTS_BY_ID.get(a.quest)!.title}`, 'gold');
           // Some objectives may already be met (e.g. you already own the rod).
           if (questStatus(s, a.quest) === 'ready') setTimeout(() => g.hud.toast(`Already done! Talk to ${npc(QUESTS_BY_ID.get(a.quest)!.giver).name}`, 'good'), 500);
@@ -257,7 +272,7 @@ export class Town {
     const u = onQuestEvent(s, ev);
     for (const id of u.ready) {
       const q = QUESTS_BY_ID.get(id)!;
-      g.audio.hook(true);
+      g.audio.questReady();
       g.hud.toast(`${q.title}: done! Return to ${npc(q.giver).name}`, 'gold');
     }
     for (const id of u.advanced) {
@@ -309,9 +324,11 @@ export class Town {
   openScreen(kind: ScreenKind) {
     if (this.dialogue.isOpen) return;
     this.releaseMouse();
+    if (!this.screens.isOpen) this.g.audio.uiOpen();
     this.screens.open(kind);
   }
   closeScreens() {
+    if (this.screens.isOpen) this.g.audio.uiClose();
     this.screens.close();
     this.g.input.requestLock();
   }
@@ -367,7 +384,7 @@ export class Town {
     if (!dest) return;
     const text = to === 'gull-point' ? 'Pell rows you out across the still water…' : 'Pell rows you home. He hums something old.';
     this.run([
-      { at: 0, run: () => { g.hud.fade(true, text); g.audio.splash(0.4); } },
+      { at: 0, run: () => { g.hud.fade(true, text); g.audio.oars(); } },
       { at: 1.6, run: () => {
         g.pos.set(dest.x, g.groundAt(dest.x, dest.z) ?? 1, dest.z);
         g.yaw = dest.yaw; g.snapCamera();
@@ -385,6 +402,7 @@ export class Town {
       { at: 3.2, run: () => {
         if (!s.flags.includes('lamp-lit')) s.flags.push('lamp-lit');
         g.world.lighthouseLit = true;
+        g.audio.lampIgnite();
         this.questEvent({ type: 'visit', place: 'lighthouse-lamp' });
         g.lookAtLamp();
       } },
@@ -400,7 +418,13 @@ export class Town {
     const items: Parameters<typeof g.hud.setMarkers>[0] = [];
     for (const c of this.critters) {
       c.cat.root.visible = c.island === this.island;
-      if (c.cat.root.visible) c.cat.update(dt, g.pos);
+      if (!c.cat.root.visible) continue;
+      c.cat.update(dt, g.pos);
+      // The cat says hello when you walk up to it.
+      const near = c.cat.root.position.distanceTo(g.pos) < 3.2;
+      this.meowRest -= dt;
+      if (near && !this.catGreeted && this.meowRest <= 0) { g.audio.meow(); this.meowRest = 25; }
+      this.catGreeted = near;
     }
     for (const [id, e] of this.npcs) {
       const f = e.fig;

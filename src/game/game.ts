@@ -14,7 +14,7 @@ import { PerfOverlay } from '../ui/perf';
 import { Town } from './town';
 import { defaultSettings, keyLabel, type Settings } from './settings';
 import { relicBonus } from '../core/quests';
-import { AudioEngine } from '../audio/audio';
+import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
 import { Rng } from '../core/rng';
 import { FishingSession, type FishingInput, type SpotInfo } from '../core/fishing';
@@ -65,6 +65,7 @@ export class Game {
   /** Bots: step and update everything but skip drawing (for frames between screenshots). */
   skipRender = false;
   private talkSwing = 0;
+  private stride = 0.5;
   private talkSwingWant: number | null = null;
   private idleSince = 0;
   frames = 0;
@@ -236,7 +237,13 @@ export class Game {
         if (d < min && d > 1e-4) { nx = bx + (dx / d) * min; nz = bz + (dz / d) * min; }
       }
       const gy = this.groundAt(nx, nz);
-      if (gy !== null && Math.abs(gy - this.pos.y) < 1.2) { this.pos.x = nx; this.pos.z = nz; }
+      if (gy !== null && Math.abs(gy - this.pos.y) < 1.2) {
+        this.stride += Math.hypot(nx - this.pos.x, nz - this.pos.z);
+        this.pos.x = nx; this.pos.z = nz;
+        // A footfall every stride, on whatever is underfoot.
+        const running = this.speed > 4.6;
+        if (this.stride > (running ? 1.15 : 0.8)) { this.stride = 0; this.audio.step(this.groundUnder(), running); }
+      }
     } else if (ph === 'idle' || ph === 'charging') {
       // Standing still: the player turns to face where the camera looks (aiming).
       let dy = this.camYaw - this.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
@@ -319,7 +326,7 @@ export class Game {
           this.town.questEvent({ type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook });
           const r = rarityIndex(e.catch.fishId);
           this.audio.catchFanfare(r);
-          this.audio.splash(0.8);
+          this.audio.landSplash();
           const value = res.item?.value ?? 0;
           this.hud.showCatch(res.item, e.catch, res.firstCatch, res.newRecord, value, res.holdFull);
           this.fx.glow.burst(this.avatar.tipWorld().add(new Vector3(0, -0.5, 0)), 30 + r * 20, RARITY_GLOW[r], 2.5, 3, 1.4, 0.18, 1.5);
@@ -363,6 +370,16 @@ export class Game {
       if (cost < bestCost) { bestCost = cost; best = swing; }
     }
     return best;
+  }
+
+  /** What the player is walking on, for footsteps. */
+  private groundUnder(): Ground {
+    const { x, z } = this.pos;
+    if (this.world.dockDeckAt(x, z) !== null) return 'wood';
+    const surf = this.world.hf.surfaceAt(x, z);
+    if (surf.kind === 'cobble' && surf.w > 0.4) return 'cobble';
+    if (surf.kind === 'dirt' && surf.w > 0.4) return 'sand';
+    return this.world.hf.height(x, z) < 1.2 ? 'sand' : 'grass';
   }
 
   /** Solid things near the player: the world's fixed props plus whoever is standing about. */
@@ -493,8 +510,15 @@ export class Game {
     const fp = this.town.focusPrompt;
     this.hud.setPrompt(fp && !this.town.blocking ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '');
 
-    this.audio.update(dt, { reeling: !!fs && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3, tension, fighting: !!fs, sea: 0.5, charge: ph === 'charging' ? this.session.power : -1 });
-    if (fs && tension > 0.9 && this.lastTension <= 0.9) this.audio.warn();
+    const night = this.world.light.night;
+    this.audio.update(dt, {
+      reeling: !!fs && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3, tension, fighting: !!fs, sea: 0.5,
+      charge: ph === 'charging' ? this.session.power : -1,
+      // The night theme comes in once the sky is properly dark and leaves at first light.
+      music: this.town.island === 'gull-point' ? 'gull-point' : night > 0.6 ? 'hearthbay-night' : night < 0.4 ? 'hearthbay-day' : undefined,
+      day: 1 - night, onDock: this.world.dockDeckAt(this.pos.x, this.pos.z) !== null, purr: this.town.catCloseness(),
+    });
+    if (fs && tension > 0.9 && this.lastTension <= 0.9) this.audio.strain();
     this.lastTension = tension;
 
     if (!this.skipRender) this.renderer.render(dt);

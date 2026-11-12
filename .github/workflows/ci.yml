@@ -35,6 +35,8 @@ jobs:
         run: node e2e/shadows.cjs shots/shadows
         env:
           MW_QUALITY: low
+      - name: Audio bot (every sound loads, the game triggers the recordings, the mix does not clip)
+        run: node e2e/audio.cjs
       - name: Electron smoke test (models, voices load from the packaged entry)
         run: xvfb-run -a node e2e/electron-smoke.cjs
       - uses: actions/upload-artifact@v4
