@@ -1,0 +1,33 @@
+# Decision log
+
+Newest first. Each entry: date, decision, why.
+
+## 2026-11-12 — Subagent model policy (Lawson's standing rule)
+Every subagent runs on Opus 5.5 at extra-high (xhigh) effort by default. Fable 5.2 is used for a subagent only where the work needs it (3D modelling, the hardest coding). Why: Lawson's instruction in the project thread.
+
+## 2026-11-12 — Procedural fish models from parameters
+Fish are built in code from a per-species shape description (body profile, fins, eyes, colours) rather than one generated mesh each. Why: ~60+ species must look like one game and stay in palette; code guarantees consistency, costs no credits, makes Strange traits (extra eyes, inverted colours) trivial, and keeps the roster fully data-driven. Generators are reserved for hero assets (player, NPCs, boats, landmarks) where hand-modelling in code would look worse.
+
+## 2026-11-12 — Prestige keeps story, gear ownership and the map
+The Drowned Bell resets coins and upgrade *levels* but keeps owned gear, boats, relics, story and discovered regions. Why: rebirth should feel like a fast, powerful rerun, not a punishment; resetting story or the chart would create the dead stretches the directive forbids.
+
+## 2026-11-12 — No offline earnings; automation only while open
+Directive fixed point. Load ignores elapsed real time.
+
+## 2026-11-12 — Working title "Murmurwater"
+Evokes the humming sea at the centre of the mystery, cozy and slightly wrong. "Lanternwake" was considered and dropped: the name is already used by games on itch.io.
+
+## 2026-11-12 — Engine: three.js + TypeScript + Vite, packaged with Electron
+Considered Godot 4, three.js/Electron, Babylon.js/Electron, Tauri.
+- **Testability:** my session can run headless Chromium with WebGL2 (SwiftShader verified) and take real screenshots of the actual renderer; logic runs in Node under vitest with no engine. Godot headless cannot render without a GPU here, so visual verification would be weaker.
+- **Visual ceiling:** custom GLSL water/sky/toon shaders and a postprocessing chain reach the target stylized look; on an RTX 3060 WebGL2 is far from the bottleneck for low-poly scenes.
+- **Build reliability:** electron-builder on GitHub's windows-latest runner is a well-trodden path to an installer and portable exe.
+- **Tauri** rejected: WebView2 rendering/perf varies by machine; Electron ships a known Chromium.
+- **Babylon.js** is equally capable; three.js chosen for its smaller core, shader control and ecosystem.
+Trade-off accepted: larger download (~100 MB) than a Godot export.
+
+## 2026-11-12 — Repo setup
+The session cannot create repositories, so Lawson created `xsquaggle/murmurwater` (public, empty) on request.
+
+## 2026-11-12 — 3D-Assets repo checked
+`xsquaggle/3D-Assets` holds one model (`crate_input.glb`). Will evaluate it for the crate loot prop against the art bible.
