@@ -34,3 +34,27 @@ The scripts that turn generated speech into the files in `public/audio/voice/`. 
 | `browser-check.cjs` | Decodes every file listed in `voiced.json` in headless Chromium, the game's runtime, and reports silence at both ends and peaks. |
 
 To redo a line after its text changes: generate it with the same voice id and a direction in the style of `takes.json`, `add.py` the result, set the take in `takes.json`, run `process.py <key>`, run the checks, copy `final/<key>.mp3` to `public/audio/voice/` and put the new hash in `voiced.json`.
+
+## Music and sound effects (`audio/`)
+
+The scripts behind `public/audio/music/` and `public/audio/sfx/`. Setup: Python 3 with `numpy scipy soundfile librosa torch transformers py7zr`, ffmpeg with libvorbis, and Playwright for the browser check. Downloads and raw generations are not kept in the repo. To rerun, copy this folder to `<work>/tools/` and put the sources beside it: `<work>/oga/<pack>/` (written by `oga_page.py --get`), the two Kenney packs unzipped to `<work>/cc0/kenney-interface/` and `<work>/cc0/kenney-rpg/`, generated clips in `<work>/sfx/raw/` and `<work>/music/raw/` (written by `get.py`). Archives inside a pack are unpacked next to themselves into `<name>.x/`.
+
+| File | What it does |
+|---|---|
+| `generated.json` | Every generated clip: name, job id, model, prompt and length asked for (music and sound effects). |
+| `get.py` | `get.py <music|sfx> <name>=<result url> ...` downloads a generation to `<kind>/raw/<name>.mp3` and notes its job id. |
+| `oga_search.py`, `oga_page.py` | Search OpenGameArt for CC0 sound effects; print a page's author, licences and files, and with `--get` download them to `oga/<slug>/` with a `SOURCE.json`. |
+| `ears.py` | The "ears": AudioSet tags (AST) and CLAP audio-to-text matching for any clip. |
+| `survey.py`, `events.py`, `ev.py` | One line per file in a folder (length, peak, tags); the separate sound events inside a clip and their times. |
+| `audition.py` | Try a candidate cut or layering before it goes in the manifest: its CLAP rank among the 28 sound descriptions and its tags. |
+| `listen_music.py` | Tempo, key, tags and level of a music track, window by window. |
+| `loop.py` | Cut a seamless music loop: candidate start and end points on phrase boundaries, crossfade into the audio before the loop start, seam report. |
+| `master_music.py` | Loops and stings to -18 LUFS OGG Vorbis, checking that the decoded length is the length written. |
+| `sfx_manifest.py` | What every sound effect is made from: source file, cut, speed, layers, level. Also the pack list and the synthesised chime. |
+| `sfx_build.py` | Builds every effect in the manifest: cut, layer, trim to the sound, level, encode, and write `index.json`. Output is byte-identical from run to run. |
+| `sfx_check.py`, `sfx-check.json` | CLAP rank and AudioSet tags of every finished effect. |
+| `loop_check.py` | Whether a loop's wrap point stands out from the rest of the loop. |
+| `browser-check.cjs` | Decodes every music and effect file in headless Chromium and prints channels, sample rate and exact length. |
+| `assets_md.py`, `sfx-index.json` | The per-file source tables in `docs/ASSETS.md`, written from the build's index. |
+
+Two things learned the hard way. Chromium's Vorbis decoder can return a short file up to 128 samples short at the end, so one-shots carry 4 ms of trailing silence and loops are rotated until they decode to exactly their length (a loop sounds the same from any starting point). And generation is hit and miss for mechanical sounds: short caption-like prompts work for common sounds (a cat, coins, water, rowing, creaking wood, steps on grass) and fail for a reel, a whoosh or a plop, which is why those come from CC0 recordings.

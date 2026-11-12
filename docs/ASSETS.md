@@ -198,3 +198,168 @@ Checks on the 40 finished files (`check.py`, `second.py`, `spk.py`, `browser-che
 | `pell/bark.0` | 2 of 2 | `306dc972-23d4-4499-bc13-b7f1640779d6` |
 | `pell/bark.1` | 1 of 1 | `b4b663f4-6b42-4a17-a0f8-50e25e72b63c` |
 | `pell/bark.2` | 1 of 1 | `d3b30d5f-7df2-4cbf-8da2-6175a768e122` |
+
+## Music (`public/audio/music/`)
+
+Three seamless loops and two stings, OGG Vorbis (quality 6), 44.1 kHz stereo, levelled to about -18 LUFS with a plain gain. All: Higgsfield `generate_audio`, model `elevenlabs_music_v2_5` (ElevenLabs Music), instrumental, 2026-11-12, generated for this project. The exact prompts are in `docs/art/pipeline/audio/generated.json`.
+
+| File | Length | Loudness, peak | Made from | Job id |
+|---|---|---|---|---|
+| `hearthbay-day.ogg` | 139.98 s loop | -17.9 LUFS, -2.9 dBFS | 165 s generation, cut from 13.33 s to 153.32 s (fourteen 10 s phrases at 96 BPM in 6/8), 0.15 s crossfade | `e6dcbcf2-9be1-41b2-8395-9fb72b304c4b` |
+| `hearthbay-night.ogg` | 103.98 s loop | -17.9 LUFS, -7.7 dBFS | 150 s generation, cut from 38.04 s to 142.04 s (thirteen 8 s phrases), 2 s crossfade | `902cb5bf-cbaa-422b-b7f3-115d9f18eb85` |
+| `gull-point.ogg` | 128.99 s loop | -18.0 LUFS, -3.9 dBFS | 150 s generation, cut from 12 s to 141 s, 8 s crossfade | `748e8e91-f358-4b1f-8255-1731191aed48` |
+| `sting-quest.ogg` | 3.60 s | -18.0 LUFS, -2.5 dBFS | first 3.6 s of a 4 s generation, 0.6 s fade out | `24856db4-a821-4e32-891e-aecbfc20e2fe` |
+| `sting-rare.ogg` | 4.00 s | -18.0 LUFS, -6.0 dBFS | first 4 s of a 6 s generation, 1.6 s fade out | `1c9215c3-ab7b-497b-914d-43ffab7f3abd` |
+
+How the loops are cut (`loop.py`): the loop is a stretch of the recording whose last moments are cross-faded into the audio that came just before the loop start, so the wrap point is the recording's own continuity. Start and end are chosen on phrase boundaries by matching harmony, timbre and onsets, then aligned to the waveform. Every file decodes in Chromium to exactly the sample count that was written, and the change in spectrum across each wrap is within the range of ordinary note onsets in the same track (`loop_check.py`).
+
+Notes. The day and night themes are two generations from sibling prompts (same key centre, same described melody shape, day at 96 BPM and night much slower and sparser); the generator takes no reference audio, so the night theme is a relative of the day theme, not the same melody note for note. Automatic listening (key and tempo detection, AudioSet tags) hears the day theme in D major with plucked strings and a music box, and does not confirm the concertina; the night theme reads as D minor, celesta-like and lullaby; Gull Point as foghorn and singing bowl. Claude cannot hear, so these want a human ear. One generation was discarded: job `45f9a0ef-0b85-451a-99f1-53c1051e7de4` asked for both themes in one 340 s piece and came back 49 s long.
+
+## Sound effects (`public/audio/sfx/`)
+
+28 sounds in 2 to 4 variations each, 95 files named `<name>_<n>.ogg`, mono 44.1 kHz OGG Vorbis (quality 5), 126 s and 1.6 MB in total. Most are CC0 recordings from OpenGameArt, cut and levelled; thirteen clips were generated; the quest chime is synthesised. Built by `docs/art/pipeline/audio/sfx_build.py` from `sfx_manifest.py`, which holds every cut.
+
+Levels: within one sound, every variation has the same loudness. One-shots aim at -17 dBFS RMS over their loudest 100 ms (footsteps and interface sounds 4 dB lower, the nibble 6 dB lower, the chime and page turn 3 dB lower) and never peak above -1 dBFS, so sounds with sharp transients (splashes, coins, page turns, clicks) sit a few dB under that; `sfx-index.json` lists each file's level. Loops: `waves-lap` and `cat-purr` at -22 LUFS, `reel-click` at -20 LUFS.
+
+Loops: `waves-lap_1/2` are exactly 20 s, `reel-click_1/2` exactly 1 s, `cat-purr_1/2` are the recordist's own loops. All six decode in Chromium to exactly their own length. One-shots end with 4 ms of silence because Chromium can return a short Vorbis file up to 128 samples short at the end.
+
+| File | Length | Made from |
+|---|---|---|
+| `cast-swish_1.ogg` | 0.54 s | `qubodup-swosh` `swosh-40.flac` |
+| `cast-swish_2.ogg` | 0.41 s | `qubodup-swosh` `swosh-42.flac` |
+| `cast-swish_3.ogg` | 0.72 s | `qubodup-swosh` `swosh-29.flac` |
+| `cast-swish_4.ogg` | 0.44 s | `qubodup-swosh` `swosh-43.flac` |
+| `reel-spin_1.ogg` | 1.12 s | `fisheefects` `reel.wav` 1 to 2.9 s, played at 1.7x (played 1.35 to 1.7 times faster, so the reel whirrs, and faded out) |
+| `reel-spin_2.ogg` | 1.00 s | `fisheefects` `reel.wav` 3.6 to 5.1 s, played at 1.5x (played 1.35 to 1.7 times faster, so the reel whirrs, and faded out) |
+| `reel-spin_3.ogg` | 1.41 s | `fisheefects` `reel.wav` 6 to 7.9 s, played at 1.35x (played 1.35 to 1.7 times faster, so the reel whirrs, and faded out) |
+| `bobber-plop_1.ogg` | 0.49 s | `fisheefects` `bloop.wav` |
+| `bobber-plop_2.ogg` | 0.39 s | `skippy` `water.wav` |
+| `bobber-plop_3.ogg` | 0.32 s | `skippy` `waterReentry.wav` |
+| `nibble_1.ogg` | 0.34 s | `angeloyazar-drops` `water_drops_1.ogg` 0.28 to 0.62 s |
+| `nibble_2.ogg` | 0.31 s | `angeloyazar-drops` `water_drops_1.ogg` 1.99 to 2.3 s |
+| `nibble_3.ogg` | 0.31 s | `angeloyazar-drops` `water_drops_1.ogg` 3.66 to 3.97 s |
+| `nibble_4.ogg` | 0.33 s | `angeloyazar-drops` `water_drops_1.ogg` 6.53 to 6.86 s |
+| `bite-dunk_1.ogg` | 0.69 s | `fisheefects` `bloop.wav`, played at 0.7x + `peludo` `splash2_0.wav` 0.64 to 1.15 s (a plop slowed down for depth, with a small splash on top) |
+| `bite-dunk_2.ogg` | 0.72 s | `skippy` `waterReentry.wav`, played at 0.6x + `ezwa` `water_splash-03.flac` (a plop slowed down for depth, with a small splash on top) |
+| `bite-dunk_3.ogg` | 0.59 s | `skippy` `water.wav`, played at 0.65x + `peludo` `splash1_0.wav` 0.52 to 1.06 s (a plop slowed down for depth, with a small splash on top) |
+| `hook-set_1.ogg` | 0.30 s | `qubodup-swosh` `swosh-17.flac`, played at 1.25x + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` (a rod swish played a little faster, with four quick clicks of the reel behind it) |
+| `hook-set_2.ogg` | 0.46 s | `qubodup-swosh` `swosh-03.flac`, played at 1.25x + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` (a rod swish played a little faster, with four quick clicks of the reel behind it) |
+| `hook-set_3.ogg` | 0.34 s | `qubodup-swosh` `swosh-15.flac`, played at 1.25x + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` + `kenney-ui` `tick_002.ogg` (a rod swish played a little faster, with four quick clicks of the reel behind it) |
+| `line-creak_1.ogg` | 0.61 s | `kenney-rpg` `creak1.ogg` |
+| `line-creak_2.ogg` | 0.78 s | `kenney-rpg` `creak2.ogg` |
+| `line-creak_3.ogg` | 0.31 s | `kenney-rpg` `creak3.ogg` |
+| `fish-splash_1.ogg` | 1.09 s | `ezwa` `water_splash-01.flac` |
+| `fish-splash_2.ogg` | 1.75 s | `transitking` `wave_04_cc0-11505__transitking__wavesound.flac` |
+| `fish-splash_3.ogg` | 1.03 s | `peludo` `splash2_0.wav` |
+| `fish-splash_4.ogg` | 0.72 s | `ezwa` `water_splash-03.flac` |
+| `land-splash_1.ogg` | 1.50 s | generated `fish-splash.b` 0 to 1.5 s |
+| `land-splash_2.ogg` | 1.95 s | generated `fish-splash.a` 0.45 to 2.4 s |
+| `land-splash_3.ogg` | 1.75 s | `transitking` `wave_01_cc0-11505__transitking__wavesound.flac` |
+| `coins_1.ogg` | 0.73 s | `kenney-rpg` `handleCoins.ogg` |
+| `coins_2.ogg` | 0.32 s | `kenney-rpg` `handleCoins2.ogg` |
+| `coins_3.ogg` | 0.89 s | generated `coins.p` 0 to 0.9 s |
+| `coins_4.ogg` | 0.71 s | generated `coins.a` 0.15 to 0.95 s |
+| `line-snap_1.ogg` | 0.26 s | `kenney-rpg` `beltHandle1.ogg` + `qubodup-swosh` `swosh-17.flac`, played at 1.8x (a sharp snap with a fast whip of air right behind it) |
+| `line-snap_2.ogg` | 0.33 s | `kenney-rpg` `bookClose.ogg` + `qubodup-swosh` `swosh-03.flac`, played at 1.8x (a sharp snap with a fast whip of air right behind it) |
+| `line-snap_3.ogg` | 0.30 s | `kenney-rpg` `clothBelt2.ogg` 0 to 0.3 s + `qubodup-swosh` `swosh-01.flac`, played at 1.8x (a sharp snap with a fast whip of air right behind it) |
+| `reel-click_1.ogg` | 1.00 s loop | `kenney-ui` `click_004.ogg` + `kenney-ui` `tick_002.ogg` + `fisheefects` `reel.wav` 2 to 3 s (12 evenly spaced clicks a second over a quiet bed of the recorded reel; exactly 1 s) |
+| `reel-click_2.ogg` | 1.00 s loop | `kenney-ui` `tick_002.ogg` + `kenney-ui` `click_004.ogg` + `kenney-ui` `tick_001.ogg` + `fisheefects` `reel.wav` 5 to 6 s (16 evenly spaced clicks a second over a quiet bed of the recorded reel; exactly 1 s) |
+| `quest-accept_1.ogg` | 1.25 s | synthesised: three rising notes of a D major chord on a soft mallet tone (synthesised in sfx_manifest.py, in the key of the Hearthbay theme) |
+| `quest-accept_2.ogg` | 1.25 s | synthesised: three rising notes of a D major chord on a soft mallet tone (synthesised in sfx_manifest.py, in the key of the Hearthbay theme) |
+| `quest-accept_3.ogg` | 1.25 s | synthesised: three rising notes of a D major chord on a soft mallet tone (synthesised in sfx_manifest.py, in the key of the Hearthbay theme) |
+| `step-wood_1.ogg` | 0.23 s | `kenney-rpg` `footstep02.ogg` |
+| `step-wood_2.ogg` | 0.26 s | `kenney-rpg` `footstep03.ogg` |
+| `step-wood_3.ogg` | 0.32 s | `tinyworlds` `wood03.ogg` |
+| `step-wood_4.ogg` | 0.24 s | `tinyworlds` `wood02.ogg` |
+| `step-cobble_1.ogg` | 0.28 s | `kenney-rpg` `footstep04.ogg` |
+| `step-cobble_2.ogg` | 0.24 s | `kenney-rpg` `footstep06.ogg` |
+| `step-cobble_3.ogg` | 0.23 s | `kenney-rpg` `footstep07.ogg` |
+| `step-cobble_4.ogg` | 0.26 s | `kenney-rpg` `footstep05.ogg` |
+| `step-grass_1.ogg` | 0.36 s | generated `step-grass.a` 1.33 to 1.69 s |
+| `step-grass_2.ogg` | 0.52 s | generated `step-grass.a` 1.7 to 2.22 s |
+| `step-grass_3.ogg` | 0.37 s | generated `step-grass.a` 2.84 to 3.21 s |
+| `step-grass_4.ogg` | 0.41 s | generated `step-grass.a` 3.19 to 3.6 s |
+| `step-sand_1.ogg` | 0.54 s | `peludo` `sand_footsteps_0.mp3` 2 to 2.54 s |
+| `step-sand_2.ogg` | 0.52 s | `peludo` `sand_footsteps_0.mp3` 2.62 to 3.14 s |
+| `step-sand_3.ogg` | 0.52 s | `peludo` `sand_footsteps_0.mp3` 3.22 to 3.74 s |
+| `step-sand_4.ogg` | 0.52 s | `peludo` `sand_footsteps_0.mp3` 3.84 to 4.36 s |
+| `ui-open_1.ogg` | 0.15 s | `kenney-ui` `open_001.ogg` |
+| `ui-open_2.ogg` | 0.32 s | `kenney-ui` `open_002.ogg` |
+| `ui-open_3.ogg` | 0.32 s | `kenney-ui` `open_003.ogg` |
+| `ui-open_4.ogg` | 0.33 s | `kenney-ui` `open_004.ogg` |
+| `ui-close_1.ogg` | 0.15 s | `kenney-ui` `close_001.ogg` |
+| `ui-close_2.ogg` | 0.32 s | `kenney-ui` `close_002.ogg` |
+| `ui-close_3.ogg` | 0.32 s | `kenney-ui` `close_003.ogg` |
+| `ui-close_4.ogg` | 0.33 s | `kenney-ui` `close_004.ogg` |
+| `ui-click_1.ogg` | 0.10 s | `kenney-ui` `click_001.ogg` |
+| `ui-click_2.ogg` | 0.02 s | `kenney-ui` `click_002.ogg` |
+| `ui-click_3.ogg` | 0.01 s | `kenney-ui` `click_003.ogg` |
+| `ui-click_4.ogg` | 0.03 s | `kenney-ui` `click_004.ogg` |
+| `page-turn_1.ogg` | 0.66 s | `kenney-rpg` `bookFlip1.ogg` |
+| `page-turn_2.ogg` | 0.42 s | `kenney-rpg` `bookFlip2.ogg` |
+| `page-turn_3.ogg` | 0.21 s | `kenney-rpg` `bookFlip3.ogg` |
+| `lamp-ignite_1.ogg` | 0.53 s | `themightyglider` `flame_0.ogg`, played at 0.85x |
+| `lamp-ignite_2.ogg` | 1.16 s | `qubodup-flare` `ignition.flac` |
+| `lamp-ignite_3.ogg` | 1.22 s | `themightyglider` `flame_0.ogg`, played at 0.7x + `qubodup-flare` `ignition.flac` |
+| `oars_1.ogg` | 1.15 s | generated `oars.b` 0.05 to 1.2 s |
+| `oars_2.ogg` | 1.30 s | generated `oars.b` 1.8 to 3.1 s |
+| `oars_3.ogg` | 1.30 s | generated `oars.c` 1 to 2.3 s |
+| `oars_4.ogg` | 1.60 s | generated `oars.c` 3.2 to 4.8 s |
+| `gulls_1.ogg` | 4.77 s | `rangomango` `Seagull Big Ambient 2.wav` |
+| `gulls_2.ogg` | 1.46 s | `rangomango` `Seagull Ambient 5.wav` |
+| `gulls_3.ogg` | 3.90 s | `rangomango` `Seagull Ambient 1.wav` |
+| `gulls_4.ogg` | 0.89 s | `rangomango` `Seagull Ambient 7.wav` |
+| `dock-creak_1.ogg` | 2.68 s | `antumdeluge` `tree_creak.flac` 0.05 to 1.95 s, played at 0.7x |
+| `dock-creak_2.ogg` | 1.50 s | generated `dock-creak.a` 0.85 to 2.4 s |
+| `dock-creak_3.ogg` | 1.75 s | generated `dock-creak.b` 1.75 to 3.55 s |
+| `dock-creak_4.ogg` | 1.38 s | generated `dock-creak.c` 1.95 to 3.4 s |
+| `cat-meow_1.ogg` | 0.92 s | generated `cat-meow.b` 0.2 to 1.12 s |
+| `cat-meow_2.ogg` | 1.60 s | generated `cat-meow.p` 0.36 to 1.96 s |
+| `cat-meow_3.ogg` | 1.15 s | generated `cat-meow.a` |
+| `waves-lap_1.ogg` | 20.00 s loop | `randommind` `VistulaShort_0.mp3` 234 to 254 s (20 s cut with a 2 s crossfade into the audio before the loop start) |
+| `waves-lap_2.ogg` | 20.00 s loop | `randommind` `VistulaShort_0.mp3` 150 to 170 s (20 s cut with a 2 s crossfade into the audio before the loop start) |
+| `cat-purr_1.ogg` | 5.65 s loop | `kerzoven` `cat_purrsleepy_loop.wav` (the author's loop with rumble below 35 Hz removed) |
+| `cat-purr_2.ogg` | 8.31 s loop | `kerzoven` `cat_purractive_loop.wav` (the author's loop with rumble below 35 Hz removed) |
+
+CC0 packs, all from OpenGameArt (licence on each page: CC0 1.0; Fisheefects is offered under CC0, CC-BY 4.0 and OGA-BY 3.0, used here under CC0), downloaded 2026-11-12:
+
+| Short name | Pack | Author | Page | Files used |
+|---|---|---|---|---|
+| `angeloyazar-drops` | Object Dropping into Water | angeloyazar | https://opengameart.org/content/object-dropping-into-water-0 | `water_drops_1.ogg` |
+| `antumdeluge` | Tree Creaking | AntumDeluge | https://opengameart.org/content/tree-creaking | `tree_creak.flac` |
+| `ezwa` | 6 Short water splashes | ezwa | https://opengameart.org/content/6-short-water-splashes | `water_splash-01.flac`, `water_splash-03.flac` |
+| `fisheefects` | Fisheefects | You're Perfect Studio (sounds by Memoraphile) | https://opengameart.org/content/fisheefects | `bloop.wav`, `reel.wav` |
+| `kenney-rpg` | 50 RPG sound effects | Kenney | https://opengameart.org/content/50-rpg-sound-effects | `beltHandle1.ogg`, `bookClose.ogg`, `bookFlip1.ogg`, `bookFlip2.ogg`, `bookFlip3.ogg`, `clothBelt2.ogg`, `creak1.ogg`, `creak2.ogg`, `creak3.ogg`, `footstep02.ogg`, `footstep03.ogg`, `footstep04.ogg`, `footstep05.ogg`, `footstep06.ogg`, `footstep07.ogg`, `handleCoins.ogg`, `handleCoins2.ogg` |
+| `kenney-ui` | Interface Sounds | Kenney | https://opengameart.org/content/interface-sounds | `click_001.ogg`, `click_002.ogg`, `click_003.ogg`, `click_004.ogg`, `close_001.ogg`, `close_002.ogg`, `close_003.ogg`, `close_004.ogg`, `open_001.ogg`, `open_002.ogg`, `open_003.ogg`, `open_004.ogg`, `tick_001.ogg`, `tick_002.ogg` |
+| `kerzoven` | Cat Purr & Meow | Kerzoven | https://opengameart.org/content/cat-purr-meow | `cat_purractive_loop.wav`, `cat_purrsleepy_loop.wav` |
+| `peludo` | Water Splash and sand footsteps | Peludo | https://opengameart.org/content/water-splash-and-sand-footsteps | `sand_footsteps_0.mp3`, `splash1_0.wav`, `splash2_0.wav` |
+| `qubodup-flare` | Flare ignition | qubodup | https://opengameart.org/content/flare-ignition | `ignition.flac` |
+| `qubodup-swosh` | Swish - bamboo stick weapon swhoshes | qubodup | https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | `swosh-01.flac`, `swosh-03.flac`, `swosh-15.flac`, `swosh-17.flac`, `swosh-29.flac`, `swosh-40.flac`, `swosh-42.flac`, `swosh-43.flac` |
+| `randommind` | Sea and river wave sounds | RandomMind | https://opengameart.org/content/sea-and-river-wave-sounds | `VistulaShort_0.mp3` |
+| `rangomango` | Solo Seagull Sound Effects | Rango Mango | https://opengameart.org/content/solo-seagull-sound-effects | `Seagull Ambient 1.wav`, `Seagull Ambient 5.wav`, `Seagull Ambient 7.wav`, `Seagull Big Ambient 2.wav` |
+| `skippy` | Skippy Fish Water Sound Collection | jcpmcdonald | https://opengameart.org/content/skippy-fish-water-sound-collection | `water.wav`, `waterReentry.wav` |
+| `themightyglider` | Catching fire | themightyglider | https://opengameart.org/content/catching-fire | `flame_0.ogg` |
+| `tinyworlds` | Different steps on wood, stone, leaves, gravel and mud | TinyWorlds | https://opengameart.org/content/different-steps-on-wood-stone-leaves-gravel-and-mud | `wood02.ogg`, `wood03.ogg` |
+| `transitking` | Water Waves | transitking | https://opengameart.org/content/water-waves | `wave_01_cc0-11505__transitking__wavesound.flac`, `wave_04_cc0-11505__transitking__wavesound.flac` |
+
+The gull recordings are the least direct source: the pack's page says they were cut from a video "with full permission to share, commercial free use, no attribution required" and publishes them as CC0. Swap them if a recording with a firmer origin is wanted.
+
+Generated clips (Higgsfield `generate_audio`, model `mirelo_text_to_audio`, 2026-11-12, generated for this project):
+
+| Clip | Prompt | Seconds | Job id |
+|---|---|---|---|
+| `cat-meow.a` | Cat meowing | 2 | `857c5e4f-ae6c-4420-a566-1e961158eda3` |
+| `cat-meow.b` | Kitten meow | 2 | `3f4685ab-edf7-4e85-b2ab-8ccf2a20e86b` |
+| `cat-meow.p` | Cat meowing | 2 | `26e620ba-b2bd-43ad-b370-15a7b07c66b9` |
+| `coins.a` | Coins clinking | 2 | `8455807b-6efb-4b89-abd5-76ebe4a9d32b` |
+| `coins.p` | Coins clinking | 2 | `e037b6f6-4293-4f97-870a-2bfb0f5badd1` |
+| `dock-creak.a` | Wood creaking | 4 | `4a3aba0f-2182-4106-beb6-51a4ac076238` |
+| `dock-creak.b` | Old wooden boat creaking | 4 | `b182b2c7-5bc2-4f22-b1f8-9051f359bcdb` |
+| `dock-creak.c` | Wood creaking | 4 | `874e39b9-857f-4700-9699-dd73d86017cb` |
+| `fish-splash.a` | Fish splashing in water | 3 | `c1b915a7-b293-43c5-af7f-d6a94f950c45` |
+| `fish-splash.b` | Fish splashing in water | 3 | `ba8fa6b0-f661-4afa-bbd3-f5e7a527c6ec` |
+| `oars.b` | Rowing a boat, oars splashing | 5 | `13029ce9-f776-483d-ad5b-db55cbe5180f` |
+| `oars.c` | Rowing a boat, oars splashing | 5 | `a1d235f0-d6b9-4302-b630-5a3ee4131769` |
+| `step-grass.a` | Footsteps on grass | 4 | `84505621-1f49-46e3-bae0-5bd648c96ae3` |
+
+Checks (`sfx_check.py`, results in `sfx-check.json`): two listeners that are not people. CLAP is asked which of the 28 sounds' descriptions each file fits best: 56 of 95 files put their own description first and 83 put it in the top three; the rest are neighbours of something similar (a wood step next to a knock, `bite-dunk` next to `bobber-plop`). AudioSet tags agree for the animal, water, coin, creak, swish and reel sounds (for example Meow 0.87 to 0.94, Purr 0.85 and 0.92, Squawk 0.74 to 0.93 for three of the four gulls, Whoosh 0.27 to 0.48, Rattle 0.24 to 0.48 for `reel-spin`, Ocean and Waves for `waves-lap`). `line-snap` is the one neither listener recognises as a snapping line (it reads as a crack and a whip); it and the layered sounds (`bite-dunk`, `hook-set`) are the first to check by ear.

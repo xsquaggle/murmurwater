@@ -1,0 +1,2092 @@
+{
+ "bite-dunk_1.ogg": {
+  "rank": 6,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Drip",
+    0.17
+   ],
+   [
+    "Plop",
+    0.09
+   ],
+   [
+    "Sound effect",
+    0.08
+   ],
+   [
+    "Liquid",
+    0.06
+   ]
+  ]
+ },
+ "bite-dunk_2.ogg": {
+  "rank": 4,
+  "top": "nibble",
+  "tags": [
+   [
+    "Drip",
+    0.29
+   ],
+   [
+    "Water",
+    0.1
+   ],
+   [
+    "Plop",
+    0.07
+   ],
+   [
+    "Sound effect",
+    0.06
+   ]
+  ]
+ },
+ "bite-dunk_3.ogg": {
+  "rank": 1,
+  "top": "bite-dunk",
+  "tags": [
+   [
+    "Water",
+    0.16
+   ],
+   [
+    "Liquid",
+    0.15
+   ],
+   [
+    "Gurgling",
+    0.13
+   ],
+   [
+    "Drip",
+    0.08
+   ]
+  ]
+ },
+ "bobber-plop_1.ogg": {
+  "rank": 1,
+  "top": "bobber-plop",
+  "tags": [
+   [
+    "Plop",
+    0.38
+   ],
+   [
+    "Drip",
+    0.27
+   ],
+   [
+    "Sound effect",
+    0.08
+   ],
+   [
+    "Liquid",
+    0.07
+   ]
+  ]
+ },
+ "bobber-plop_2.ogg": {
+  "rank": 2,
+  "top": "nibble",
+  "tags": [
+   [
+    "Plop",
+    0.12
+   ],
+   [
+    "Drip",
+    0.11
+   ],
+   [
+    "Water",
+    0.09
+   ],
+   [
+    "Liquid",
+    0.08
+   ]
+  ]
+ },
+ "bobber-plop_3.ogg": {
+  "rank": 2,
+  "top": "nibble",
+  "tags": [
+   [
+    "Plop",
+    0.53
+   ],
+   [
+    "Drip",
+    0.2
+   ],
+   [
+    "Sound effect",
+    0.07
+   ],
+   [
+    "Speech",
+    0.04
+   ]
+  ]
+ },
+ "cast-swish_1.ogg": {
+  "rank": 1,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Whoosh, swoosh, swish",
+    0.48
+   ],
+   [
+    "Sound effect",
+    0.07
+   ],
+   [
+    "Zipper (clothing)",
+    0.02
+   ],
+   [
+    "Plop",
+    0.02
+   ]
+  ]
+ },
+ "cast-swish_2.ogg": {
+  "rank": 1,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Whoosh, swoosh, swish",
+    0.36
+   ],
+   [
+    "Sound effect",
+    0.09
+   ],
+   [
+    "Zipper (clothing)",
+    0.05
+   ],
+   [
+    "Plop",
+    0.02
+   ]
+  ]
+ },
+ "cast-swish_3.ogg": {
+  "rank": 1,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Whoosh, swoosh, swish",
+    0.38
+   ],
+   [
+    "Sound effect",
+    0.08
+   ],
+   [
+    "Zipper (clothing)",
+    0.07
+   ],
+   [
+    "Scratch",
+    0.02
+   ]
+  ]
+ },
+ "cast-swish_4.ogg": {
+  "rank": 1,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Whoosh, swoosh, swish",
+    0.27
+   ],
+   [
+    "Sound effect",
+    0.06
+   ],
+   [
+    "Plop",
+    0.05
+   ],
+   [
+    "Zipper (clothing)",
+    0.03
+   ]
+  ]
+ },
+ "cat-meow_1.ogg": {
+  "rank": 1,
+  "top": "cat-meow",
+  "tags": [
+   [
+    "Meow",
+    0.94
+   ],
+   [
+    "Cat",
+    0.78
+   ],
+   [
+    "Domestic animals, pets",
+    0.67
+   ],
+   [
+    "Animal",
+    0.52
+   ]
+  ]
+ },
+ "cat-meow_2.ogg": {
+  "rank": 1,
+  "top": "cat-meow",
+  "tags": [
+   [
+    "Meow",
+    0.87
+   ],
+   [
+    "Cat",
+    0.83
+   ],
+   [
+    "Domestic animals, pets",
+    0.68
+   ],
+   [
+    "Animal",
+    0.57
+   ]
+  ]
+ },
+ "cat-meow_3.ogg": {
+  "rank": 1,
+  "top": "cat-meow",
+  "tags": [
+   [
+    "Meow",
+    0.91
+   ],
+   [
+    "Cat",
+    0.88
+   ],
+   [
+    "Domestic animals, pets",
+    0.81
+   ],
+   [
+    "Animal",
+    0.72
+   ]
+  ]
+ },
+ "cat-purr_1.ogg": {
+  "rank": 1,
+  "top": "cat-purr",
+  "tags": [
+   [
+    "Purr",
+    0.85
+   ],
+   [
+    "Cat",
+    0.38
+   ],
+   [
+    "Animal",
+    0.35
+   ],
+   [
+    "Domestic animals, pets",
+    0.18
+   ]
+  ]
+ },
+ "cat-purr_2.ogg": {
+  "rank": 1,
+  "top": "cat-purr",
+  "tags": [
+   [
+    "Purr",
+    0.92
+   ],
+   [
+    "Cat",
+    0.63
+   ],
+   [
+    "Animal",
+    0.53
+   ],
+   [
+    "Domestic animals, pets",
+    0.16
+   ]
+  ]
+ },
+ "coins_1.ogg": {
+  "rank": 1,
+  "top": "coins",
+  "tags": [
+   [
+    "Crunch",
+    0.15
+   ],
+   [
+    "Coin (dropping)",
+    0.09
+   ],
+   [
+    "Sound effect",
+    0.05
+   ],
+   [
+    "Biting",
+    0.02
+   ]
+  ]
+ },
+ "coins_2.ogg": {
+  "rank": 1,
+  "top": "coins",
+  "tags": [
+   [
+    "Single-lens reflex camera",
+    0.35
+   ],
+   [
+    "Sound effect",
+    0.09
+   ],
+   [
+    "Coin (dropping)",
+    0.04
+   ],
+   [
+    "Camera",
+    0.02
+   ]
+  ]
+ },
+ "coins_3.ogg": {
+  "rank": 1,
+  "top": "coins",
+  "tags": [
+   [
+    "Coin (dropping)",
+    0.85
+   ],
+   [
+    "Rattle (instrument)",
+    0.1
+   ],
+   [
+    "Rattle",
+    0.05
+   ],
+   [
+    "Music",
+    0.03
+   ]
+  ]
+ },
+ "coins_4.ogg": {
+  "rank": 1,
+  "top": "coins",
+  "tags": [
+   [
+    "Coin (dropping)",
+    0.49
+   ],
+   [
+    "Rattle (instrument)",
+    0.2
+   ],
+   [
+    "Rattle",
+    0.07
+   ],
+   [
+    "Music",
+    0.07
+   ]
+  ]
+ },
+ "dock-creak_1.ogg": {
+  "rank": 1,
+  "top": "dock-creak",
+  "tags": [
+   [
+    "Creak",
+    0.07
+   ],
+   [
+    "Typewriter",
+    0.04
+   ],
+   [
+    "Mechanisms",
+    0.03
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "dock-creak_2.ogg": {
+  "rank": 1,
+  "top": "dock-creak",
+  "tags": [
+   [
+    "Knock",
+    0.42
+   ],
+   [
+    "Door",
+    0.22
+   ],
+   [
+    "Tap",
+    0.12
+   ],
+   [
+    "Slam",
+    0.03
+   ]
+  ]
+ },
+ "dock-creak_3.ogg": {
+  "rank": 1,
+  "top": "dock-creak",
+  "tags": [
+   [
+    "Knock",
+    0.42
+   ],
+   [
+    "Door",
+    0.36
+   ],
+   [
+    "Sliding door",
+    0.05
+   ],
+   [
+    "Thunk",
+    0.04
+   ]
+  ]
+ },
+ "dock-creak_4.ogg": {
+  "rank": 1,
+  "top": "dock-creak",
+  "tags": [
+   [
+    "Door",
+    0.13
+   ],
+   [
+    "Sliding door",
+    0.12
+   ],
+   [
+    "Slam",
+    0.05
+   ],
+   [
+    "Sound effect",
+    0.04
+   ]
+  ]
+ },
+ "fish-splash_1.ogg": {
+  "rank": 1,
+  "top": "fish-splash",
+  "tags": [
+   [
+    "Water",
+    0.19
+   ],
+   [
+    "Slosh",
+    0.07
+   ],
+   [
+    "Liquid",
+    0.07
+   ],
+   [
+    "Drip",
+    0.05
+   ]
+  ]
+ },
+ "fish-splash_2.ogg": {
+  "rank": 2,
+  "top": "oars",
+  "tags": [
+   [
+    "Slosh",
+    0.38
+   ],
+   [
+    "Water",
+    0.31
+   ],
+   [
+    "Liquid",
+    0.17
+   ],
+   [
+    "Gurgling",
+    0.12
+   ]
+  ]
+ },
+ "fish-splash_3.ogg": {
+  "rank": 3,
+  "top": "bobber-plop",
+  "tags": [
+   [
+    "Water",
+    0.24
+   ],
+   [
+    "Drip",
+    0.19
+   ],
+   [
+    "Bathtub (filling or washing)",
+    0.1
+   ],
+   [
+    "Water tap, faucet",
+    0.06
+   ]
+  ]
+ },
+ "fish-splash_4.ogg": {
+  "rank": 3,
+  "top": "nibble",
+  "tags": [
+   [
+    "Water",
+    0.49
+   ],
+   [
+    "Water tap, faucet",
+    0.19
+   ],
+   [
+    "Liquid",
+    0.17
+   ],
+   [
+    "Sink (filling or washing)",
+    0.16
+   ]
+  ]
+ },
+ "gulls_1.ogg": {
+  "rank": 1,
+  "top": "gulls",
+  "tags": [
+   [
+    "Squawk",
+    0.93
+   ],
+   [
+    "Bird",
+    0.13
+   ],
+   [
+    "Squeak",
+    0.06
+   ],
+   [
+    "Chirp, tweet",
+    0.03
+   ]
+  ]
+ },
+ "gulls_2.ogg": {
+  "rank": 1,
+  "top": "gulls",
+  "tags": [
+   [
+    "Squawk",
+    0.74
+   ],
+   [
+    "Bird",
+    0.11
+   ],
+   [
+    "Squeak",
+    0.08
+   ],
+   [
+    "Owl",
+    0.04
+   ]
+  ]
+ },
+ "gulls_3.ogg": {
+  "rank": 1,
+  "top": "gulls",
+  "tags": [
+   [
+    "Fowl",
+    0.81
+   ],
+   [
+    "Honk",
+    0.78
+   ],
+   [
+    "Goose",
+    0.64
+   ],
+   [
+    "Bird",
+    0.05
+   ]
+  ]
+ },
+ "gulls_4.ogg": {
+  "rank": 3,
+  "top": "line-creak",
+  "tags": [
+   [
+    "Squawk",
+    0.76
+   ],
+   [
+    "Bird",
+    0.1
+   ],
+   [
+    "Mouse",
+    0.07
+   ],
+   [
+    "Animal",
+    0.06
+   ]
+  ]
+ },
+ "hook-set_1.ogg": {
+  "rank": 2,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Creak",
+    0.8
+   ],
+   [
+    "Mechanisms",
+    0.07
+   ],
+   [
+    "Single-lens reflex camera",
+    0.03
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "hook-set_2.ogg": {
+  "rank": 2,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Creak",
+    0.11
+   ],
+   [
+    "Plop",
+    0.07
+   ],
+   [
+    "Sliding door",
+    0.04
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "hook-set_3.ogg": {
+  "rank": 2,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Creak",
+    0.7
+   ],
+   [
+    "Mechanisms",
+    0.08
+   ],
+   [
+    "Scrape",
+    0.04
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "lamp-ignite_1.ogg": {
+  "rank": 1,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Explosion",
+    0.56
+   ],
+   [
+    "Burst, pop",
+    0.18
+   ],
+   [
+    "Eruption",
+    0.17
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "lamp-ignite_2.ogg": {
+  "rank": 1,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Zipper (clothing)",
+    0.06
+   ],
+   [
+    "Slosh",
+    0.04
+   ],
+   [
+    "Static",
+    0.04
+   ],
+   [
+    "Scrape",
+    0.03
+   ]
+  ]
+ },
+ "lamp-ignite_3.ogg": {
+  "rank": 1,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Whoosh, swoosh, swish",
+    0.08
+   ],
+   [
+    "Zipper (clothing)",
+    0.05
+   ],
+   [
+    "Explosion",
+    0.05
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "land-splash_1.ogg": {
+  "rank": 1,
+  "top": "land-splash",
+  "tags": [
+   [
+    "Slosh",
+    0.5
+   ],
+   [
+    "Water",
+    0.3
+   ],
+   [
+    "Gurgling",
+    0.14
+   ],
+   [
+    "Liquid",
+    0.12
+   ]
+  ]
+ },
+ "land-splash_2.ogg": {
+  "rank": 2,
+  "top": "oars",
+  "tags": [
+   [
+    "Slosh",
+    0.44
+   ],
+   [
+    "Water",
+    0.31
+   ],
+   [
+    "Gurgling",
+    0.09
+   ],
+   [
+    "Liquid",
+    0.08
+   ]
+  ]
+ },
+ "land-splash_3.ogg": {
+  "rank": 1,
+  "top": "land-splash",
+  "tags": [
+   [
+    "Slosh",
+    0.45
+   ],
+   [
+    "Liquid",
+    0.21
+   ],
+   [
+    "Water",
+    0.19
+   ],
+   [
+    "Gurgling",
+    0.17
+   ]
+  ]
+ },
+ "line-creak_1.ogg": {
+  "rank": 3,
+  "top": "dock-creak",
+  "tags": [
+   [
+    "Sound effect",
+    0.21
+   ],
+   [
+    "Squeak",
+    0.18
+   ],
+   [
+    "Vehicle horn, car horn, honking",
+    0.11
+   ],
+   [
+    "Beep, bleep",
+    0.04
+   ]
+  ]
+ },
+ "line-creak_2.ogg": {
+  "rank": 2,
+  "top": "dock-creak",
+  "tags": [
+   [
+    "Sound effect",
+    0.31
+   ],
+   [
+    "Music",
+    0.05
+   ],
+   [
+    "Whistle",
+    0.03
+   ],
+   [
+    "Beep, bleep",
+    0.03
+   ]
+  ]
+ },
+ "line-creak_3.ogg": {
+  "rank": 1,
+  "top": "line-creak",
+  "tags": [
+   [
+    "Sound effect",
+    0.24
+   ],
+   [
+    "Coin (dropping)",
+    0.07
+   ],
+   [
+    "Beep, bleep",
+    0.07
+   ],
+   [
+    "Cash register",
+    0.05
+   ]
+  ]
+ },
+ "line-snap_1.ogg": {
+  "rank": 9,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Single-lens reflex camera",
+    0.09
+   ],
+   [
+    "Sound effect",
+    0.06
+   ],
+   [
+    "Coin (dropping)",
+    0.03
+   ],
+   [
+    "Grunt",
+    0.03
+   ]
+  ]
+ },
+ "line-snap_2.ogg": {
+  "rank": 17,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Sound effect",
+    0.07
+   ],
+   [
+    "Knock",
+    0.06
+   ],
+   [
+    "Whack, thwack",
+    0.04
+   ],
+   [
+    "Slap, smack",
+    0.03
+   ]
+  ]
+ },
+ "line-snap_3.ogg": {
+  "rank": 18,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Crack",
+    0.09
+   ],
+   [
+    "Breaking",
+    0.05
+   ],
+   [
+    "Animal",
+    0.04
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "nibble_1.ogg": {
+  "rank": 2,
+  "top": "bobber-plop",
+  "tags": [
+   [
+    "Plop",
+    0.46
+   ],
+   [
+    "Drip",
+    0.18
+   ],
+   [
+    "Sound effect",
+    0.11
+   ],
+   [
+    "Speech",
+    0.06
+   ]
+  ]
+ },
+ "nibble_2.ogg": {
+  "rank": 4,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Plop",
+    0.26
+   ],
+   [
+    "Sound effect",
+    0.13
+   ],
+   [
+    "Computer keyboard",
+    0.06
+   ],
+   [
+    "Typing",
+    0.04
+   ]
+  ]
+ },
+ "nibble_3.ogg": {
+  "rank": 1,
+  "top": "nibble",
+  "tags": [
+   [
+    "Plop",
+    0.78
+   ],
+   [
+    "Drip",
+    0.11
+   ],
+   [
+    "Sound effect",
+    0.1
+   ],
+   [
+    "Speech",
+    0.03
+   ]
+  ]
+ },
+ "nibble_4.ogg": {
+  "rank": 1,
+  "top": "nibble",
+  "tags": [
+   [
+    "Plop",
+    0.75
+   ],
+   [
+    "Drip",
+    0.46
+   ],
+   [
+    "Liquid",
+    0.08
+   ],
+   [
+    "Sound effect",
+    0.07
+   ]
+  ]
+ },
+ "oars_1.ogg": {
+  "rank": 1,
+  "top": "oars",
+  "tags": [
+   [
+    "Slosh",
+    0.49
+   ],
+   [
+    "Water",
+    0.34
+   ],
+   [
+    "Gurgling",
+    0.19
+   ],
+   [
+    "Sound effect",
+    0.09
+   ]
+  ]
+ },
+ "oars_2.ogg": {
+  "rank": 1,
+  "top": "oars",
+  "tags": [
+   [
+    "Sound effect",
+    0.11
+   ],
+   [
+    "Slosh",
+    0.04
+   ],
+   [
+    "Smash, crash",
+    0.04
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.04
+   ]
+  ]
+ },
+ "oars_3.ogg": {
+  "rank": 1,
+  "top": "oars",
+  "tags": [
+   [
+    "Heart sounds, heartbeat",
+    0.09
+   ],
+   [
+    "Heart murmur",
+    0.04
+   ],
+   [
+    "Slosh",
+    0.04
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "oars_4.ogg": {
+  "rank": 1,
+  "top": "oars",
+  "tags": [
+   [
+    "Slosh",
+    0.31
+   ],
+   [
+    "Water",
+    0.15
+   ],
+   [
+    "Gurgling",
+    0.12
+   ],
+   [
+    "Liquid",
+    0.08
+   ]
+  ]
+ },
+ "page-turn_1.ogg": {
+  "rank": 1,
+  "top": "page-turn",
+  "tags": [
+   [
+    "Scissors",
+    0.09
+   ],
+   [
+    "Tearing",
+    0.07
+   ],
+   [
+    "Finger snapping",
+    0.06
+   ],
+   [
+    "Crunch",
+    0.04
+   ]
+  ]
+ },
+ "page-turn_2.ogg": {
+  "rank": 1,
+  "top": "page-turn",
+  "tags": [
+   [
+    "Scrape",
+    0.09
+   ],
+   [
+    "Spray",
+    0.07
+   ],
+   [
+    "Single-lens reflex camera",
+    0.05
+   ],
+   [
+    "Tearing",
+    0.04
+   ]
+  ]
+ },
+ "page-turn_3.ogg": {
+  "rank": 1,
+  "top": "page-turn",
+  "tags": [
+   [
+    "Music",
+    0.11
+   ],
+   [
+    "Speech",
+    0.06
+   ],
+   [
+    "Sound effect",
+    0.04
+   ],
+   [
+    "Single-lens reflex camera",
+    0.03
+   ]
+  ]
+ },
+ "quest-accept_1.ogg": {
+  "rank": 1,
+  "top": "quest-accept",
+  "tags": [
+   [
+    "Music",
+    0.2
+   ],
+   [
+    "Ding-dong",
+    0.15
+   ],
+   [
+    "Ding",
+    0.14
+   ],
+   [
+    "Ringtone",
+    0.12
+   ]
+  ]
+ },
+ "quest-accept_2.ogg": {
+  "rank": 2,
+  "top": "ui-close",
+  "tags": [
+   [
+    "Doorbell",
+    0.31
+   ],
+   [
+    "Ding-dong",
+    0.28
+   ],
+   [
+    "Music",
+    0.18
+   ],
+   [
+    "Ringtone",
+    0.1
+   ]
+  ]
+ },
+ "quest-accept_3.ogg": {
+  "rank": 1,
+  "top": "quest-accept",
+  "tags": [
+   [
+    "Ding-dong",
+    0.29
+   ],
+   [
+    "Music",
+    0.19
+   ],
+   [
+    "Ding",
+    0.16
+   ],
+   [
+    "Doorbell",
+    0.15
+   ]
+  ]
+ },
+ "reel-click_1.ogg": {
+  "rank": 1,
+  "top": "reel-click",
+  "tags": [
+   [
+    "Tools",
+    0.1
+   ],
+   [
+    "Power tool",
+    0.06
+   ],
+   [
+    "Speech",
+    0.06
+   ],
+   [
+    "Chainsaw",
+    0.05
+   ]
+  ]
+ },
+ "reel-click_2.ogg": {
+  "rank": 2,
+  "top": "reel-spin",
+  "tags": [
+   [
+    "Engine",
+    0.08
+   ],
+   [
+    "Pump (liquid)",
+    0.08
+   ],
+   [
+    "Vehicle",
+    0.06
+   ],
+   [
+    "Idling",
+    0.05
+   ]
+  ]
+ },
+ "reel-spin_1.ogg": {
+  "rank": 1,
+  "top": "reel-spin",
+  "tags": [
+   [
+    "Rattle",
+    0.24
+   ],
+   [
+    "Music",
+    0.14
+   ],
+   [
+    "Rattle (instrument)",
+    0.08
+   ],
+   [
+    "Maraca",
+    0.08
+   ]
+  ]
+ },
+ "reel-spin_2.ogg": {
+  "rank": 1,
+  "top": "reel-spin",
+  "tags": [
+   [
+    "Rattle",
+    0.46
+   ],
+   [
+    "Rattle (instrument)",
+    0.18
+   ],
+   [
+    "Maraca",
+    0.15
+   ],
+   [
+    "Music",
+    0.11
+   ]
+  ]
+ },
+ "reel-spin_3.ogg": {
+  "rank": 1,
+  "top": "reel-spin",
+  "tags": [
+   [
+    "Rattle",
+    0.48
+   ],
+   [
+    "Rattle (instrument)",
+    0.2
+   ],
+   [
+    "Sound effect",
+    0.09
+   ],
+   [
+    "Maraca",
+    0.04
+   ]
+  ]
+ },
+ "step-cobble_1.ogg": {
+  "rank": 2,
+  "top": "step-wood",
+  "tags": [
+   [
+    "Chopping (food)",
+    0.36
+   ],
+   [
+    "Knock",
+    0.14
+   ],
+   [
+    "Speech",
+    0.02
+   ],
+   [
+    "Sound effect",
+    0.01
+   ]
+  ]
+ },
+ "step-cobble_2.ogg": {
+  "rank": 1,
+  "top": "step-cobble",
+  "tags": [
+   [
+    "Chopping (food)",
+    0.21
+   ],
+   [
+    "Knock",
+    0.06
+   ],
+   [
+    "Chop",
+    0.02
+   ],
+   [
+    "Sound effect",
+    0.02
+   ]
+  ]
+ },
+ "step-cobble_3.ogg": {
+  "rank": 2,
+  "top": "ui-click",
+  "tags": [
+   [
+    "Door",
+    0.05
+   ],
+   [
+    "Sound effect",
+    0.04
+   ],
+   [
+    "Chopping (food)",
+    0.02
+   ],
+   [
+    "Crack",
+    0.02
+   ]
+  ]
+ },
+ "step-cobble_4.ogg": {
+  "rank": 3,
+  "top": "ui-close",
+  "tags": [
+   [
+    "Speech",
+    0.06
+   ],
+   [
+    "Scrape",
+    0.05
+   ],
+   [
+    "Sound effect",
+    0.05
+   ],
+   [
+    "Crunch",
+    0.05
+   ]
+  ]
+ },
+ "step-grass_1.ogg": {
+  "rank": 1,
+  "top": "step-grass",
+  "tags": [
+   [
+    "Zipper (clothing)",
+    0.09
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.07
+   ],
+   [
+    "Sound effect",
+    0.06
+   ],
+   [
+    "Scrape",
+    0.05
+   ]
+  ]
+ },
+ "step-grass_2.ogg": {
+  "rank": 1,
+  "top": "step-grass",
+  "tags": [
+   [
+    "Zipper (clothing)",
+    0.08
+   ],
+   [
+    "Sound effect",
+    0.05
+   ],
+   [
+    "Scrape",
+    0.05
+   ],
+   [
+    "Static",
+    0.04
+   ]
+  ]
+ },
+ "step-grass_3.ogg": {
+  "rank": 2,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Scrape",
+    0.06
+   ],
+   [
+    "Music",
+    0.05
+   ],
+   [
+    "Bang",
+    0.04
+   ],
+   [
+    "Static",
+    0.04
+   ]
+  ]
+ },
+ "step-grass_4.ogg": {
+  "rank": 1,
+  "top": "step-grass",
+  "tags": [
+   [
+    "Whip",
+    0.1
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.06
+   ],
+   [
+    "Static",
+    0.05
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "step-sand_1.ogg": {
+  "rank": 2,
+  "top": "step-grass",
+  "tags": [
+   [
+    "Zipper (clothing)",
+    0.24
+   ],
+   [
+    "Scrape",
+    0.16
+   ],
+   [
+    "Snort",
+    0.04
+   ],
+   [
+    "Sound effect",
+    0.03
+   ]
+  ]
+ },
+ "step-sand_2.ogg": {
+  "rank": 1,
+  "top": "step-sand",
+  "tags": [
+   [
+    "Zipper (clothing)",
+    0.16
+   ],
+   [
+    "Scrape",
+    0.1
+   ],
+   [
+    "Sound effect",
+    0.03
+   ],
+   [
+    "Rustle",
+    0.03
+   ]
+  ]
+ },
+ "step-sand_3.ogg": {
+  "rank": 1,
+  "top": "step-sand",
+  "tags": [
+   [
+    "Scrape",
+    0.1
+   ],
+   [
+    "Zipper (clothing)",
+    0.09
+   ],
+   [
+    "Snort",
+    0.04
+   ],
+   [
+    "Sound effect",
+    0.04
+   ]
+  ]
+ },
+ "step-sand_4.ogg": {
+  "rank": 3,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Scrape",
+    0.19
+   ],
+   [
+    "Crackle",
+    0.06
+   ],
+   [
+    "Walk, footsteps",
+    0.04
+   ],
+   [
+    "Biting",
+    0.04
+   ]
+  ]
+ },
+ "step-wood_1.ogg": {
+  "rank": 2,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Knock",
+    0.09
+   ],
+   [
+    "Sound effect",
+    0.04
+   ],
+   [
+    "Whack, thwack",
+    0.02
+   ],
+   [
+    "Bang",
+    0.02
+   ]
+  ]
+ },
+ "step-wood_2.ogg": {
+  "rank": 4,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Knock",
+    0.11
+   ],
+   [
+    "Chopping (food)",
+    0.09
+   ],
+   [
+    "Sound effect",
+    0.04
+   ],
+   [
+    "Tap",
+    0.01
+   ]
+  ]
+ },
+ "step-wood_3.ogg": {
+  "rank": 4,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Knock",
+    0.39
+   ],
+   [
+    "Door",
+    0.12
+   ],
+   [
+    "Slam",
+    0.08
+   ],
+   [
+    "Sound effect",
+    0.05
+   ]
+  ]
+ },
+ "step-wood_4.ogg": {
+  "rank": 4,
+  "top": "ui-click",
+  "tags": [
+   [
+    "Door",
+    0.14
+   ],
+   [
+    "Knock",
+    0.07
+   ],
+   [
+    "Slam",
+    0.05
+   ],
+   [
+    "Sliding door",
+    0.03
+   ]
+  ]
+ },
+ "ui-click_1.ogg": {
+  "rank": 3,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Silence",
+    0.13
+   ],
+   [
+    "Sound effect",
+    0.07
+   ],
+   [
+    "Music",
+    0.06
+   ],
+   [
+    "Speech",
+    0.03
+   ]
+  ]
+ },
+ "ui-click_2.ogg": {
+  "rank": 4,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Silence",
+    0.17
+   ],
+   [
+    "Music",
+    0.08
+   ],
+   [
+    "Sound effect",
+    0.06
+   ],
+   [
+    "Speech",
+    0.03
+   ]
+  ]
+ },
+ "ui-click_3.ogg": {
+  "rank": 2,
+  "top": "nibble",
+  "tags": [
+   [
+    "Silence",
+    0.17
+   ],
+   [
+    "Music",
+    0.08
+   ],
+   [
+    "Sound effect",
+    0.06
+   ],
+   [
+    "Speech",
+    0.03
+   ]
+  ]
+ },
+ "ui-click_4.ogg": {
+  "rank": 1,
+  "top": "ui-click",
+  "tags": [
+   [
+    "Silence",
+    0.17
+   ],
+   [
+    "Music",
+    0.08
+   ],
+   [
+    "Sound effect",
+    0.06
+   ],
+   [
+    "Speech",
+    0.03
+   ]
+  ]
+ },
+ "ui-close_1.ogg": {
+  "rank": 2,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Static",
+    0.09
+   ],
+   [
+    "Sound effect",
+    0.07
+   ],
+   [
+    "Scratch",
+    0.04
+   ],
+   [
+    "Squeak",
+    0.03
+   ]
+  ]
+ },
+ "ui-close_2.ogg": {
+  "rank": 4,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.38
+   ],
+   [
+    "Boing",
+    0.11
+   ],
+   [
+    "Music",
+    0.07
+   ],
+   [
+    "Speech",
+    0.01
+   ]
+  ]
+ },
+ "ui-close_3.ogg": {
+  "rank": 3,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.16
+   ],
+   [
+    "Music",
+    0.12
+   ],
+   [
+    "Single-lens reflex camera",
+    0.05
+   ],
+   [
+    "Boing",
+    0.02
+   ]
+  ]
+ },
+ "ui-close_4.ogg": {
+  "rank": 4,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.13
+   ],
+   [
+    "Music",
+    0.12
+   ],
+   [
+    "Static",
+    0.04
+   ],
+   [
+    "Bang",
+    0.02
+   ]
+  ]
+ },
+ "ui-open_1.ogg": {
+  "rank": 1,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.14
+   ],
+   [
+    "Scratch",
+    0.05
+   ],
+   [
+    "Static",
+    0.04
+   ],
+   [
+    "Music",
+    0.03
+   ]
+  ]
+ },
+ "ui-open_2.ogg": {
+  "rank": 2,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Sound effect",
+    0.5
+   ],
+   [
+    "Boing",
+    0.25
+   ],
+   [
+    "Plop",
+    0.06
+   ],
+   [
+    "Music",
+    0.03
+   ]
+  ]
+ },
+ "ui-open_3.ogg": {
+  "rank": 1,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.45
+   ],
+   [
+    "Boing",
+    0.16
+   ],
+   [
+    "Music",
+    0.03
+   ],
+   [
+    "Plop",
+    0.02
+   ]
+  ]
+ },
+ "ui-open_4.ogg": {
+  "rank": 1,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.37
+   ],
+   [
+    "Boing",
+    0.05
+   ],
+   [
+    "Music",
+    0.04
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.02
+   ]
+  ]
+ },
+ "waves-lap_1.ogg": {
+  "rank": 1,
+  "top": "waves-lap",
+  "tags": [
+   [
+    "Ocean",
+    0.63
+   ],
+   [
+    "Waves, surf",
+    0.47
+   ],
+   [
+    "Boat, Water vehicle",
+    0.22
+   ],
+   [
+    "Wind",
+    0.19
+   ]
+  ]
+ },
+ "waves-lap_2.ogg": {
+  "rank": 1,
+  "top": "waves-lap",
+  "tags": [
+   [
+    "Ocean",
+    0.56
+   ],
+   [
+    "Waves, surf",
+    0.47
+   ],
+   [
+    "Boat, Water vehicle",
+    0.22
+   ],
+   [
+    "Stream",
+    0.22
+   ]
+  ]
+ }
+}

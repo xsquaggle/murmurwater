@@ -1,0 +1,272 @@
+{
+ "pilot-cast-swish": {
+  "job": "d5fed4b5-4e9a-42b5-9fda-05c2f14a258a",
+  "model": "mirelo_text_to_audio",
+  "prompt": "A fishing rod whipped through the air for a cast: one fast, close whoosh, dry studio recording, no background noise, no music",
+  "duration": 3
+ },
+ "pilot-step-wood": {
+  "job": "94d6d961-8d27-491a-830d-90671d38266a",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Slow footsteps on old wooden dock planks, one step at a time with a pause between steps, close and dry, no background noise, no music",
+  "duration": 4
+ },
+ "pilot-cat-meow": {
+  "job": "bb7383ed-10a6-467a-9e05-fcf1f6d48b99",
+  "model": "mirelo_text_to_audio",
+  "prompt": "A cat meows once, a short friendly meow, close, quiet room, no music",
+  "duration": 3
+ },
+ "pilot-reel-click": {
+  "job": "08da2956-36e7-46ff-9079-482a2c477e2e",
+  "model": "mirelo_text_to_audio",
+  "prompt": "A fishing reel being cranked steadily: even, rhythmic ratchet clicking at constant speed, close, no background noise, no music",
+  "duration": 4
+ },
+ "pilot2-cat-meow": {
+  "job": "26e620ba-b2bd-43ad-b370-15a7b07c66b9",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Cat meowing",
+  "duration": 2
+ },
+ "pilot2-whoosh": {
+  "job": "28532ec9-b922-4529-8ba5-6c4b88a57baf",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Whoosh of a stick swung through the air",
+  "duration": 1
+ },
+ "pilot2-reel": {
+  "job": "dd8166fe-37c4-4d00-aa80-6184a819c3f0",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Fishing reel ratchet clicking",
+  "duration": 3
+ },
+ "pilot2-plop": {
+  "job": "6150473b-31c8-4278-9459-5e838b16caff",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Small object dropping into water, plop",
+  "duration": 2
+ },
+ "pilot2-gulls": {
+  "job": "d4fdabc1-5154-4332-8526-19a9948746d9",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Seagulls calling",
+  "duration": 4
+ },
+ "pilot2-coins": {
+  "job": "e037b6f6-4293-4f97-870a-2bfb0f5badd1",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Coins clinking",
+  "duration": 2
+ },
+ "cat-meow.a": {
+  "job": "857c5e4f-ae6c-4420-a566-1e961158eda3",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Cat meowing",
+  "duration": 2
+ },
+ "cat-meow.b": {
+  "job": "3f4685ab-edf7-4e85-b2ab-8ccf2a20e86b",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Kitten meow",
+  "duration": 2
+ },
+ "coins.a": {
+  "job": "8455807b-6efb-4b89-abd5-76ebe4a9d32b",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Coins clinking",
+  "duration": 2
+ },
+ "fish-splash.a": {
+  "job": "c1b915a7-b293-43c5-af7f-d6a94f950c45",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Fish splashing in water",
+  "duration": 3
+ },
+ "fish-splash.b": {
+  "job": "ba8fa6b0-f661-4afa-bbd3-f5e7a527c6ec",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Fish splashing in water",
+  "duration": 3
+ },
+ "land-splash.a": {
+  "job": "8fdb1d49-8e23-4ec9-a40b-3a362b42e07c",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Big splash in water",
+  "duration": 3
+ },
+ "land-splash.b": {
+  "job": "616aa32c-048a-4b41-aeab-ab3b9885afd8",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Something pulled out of water, splash and dripping",
+  "duration": 3
+ },
+ "gulls.b": {
+  "job": "4a905481-f6fd-48e8-88e1-58ee92f81d48",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Seagulls crying over the sea",
+  "duration": 4
+ },
+ "step-wood.a": {
+  "job": "15b4a1b4-e0f0-472d-bc59-50db5013d20b",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Footsteps on wooden floor",
+  "duration": 4
+ },
+ "step-cobble.a": {
+  "job": "eb5ff274-315d-47bf-8f88-86cccdbad3c6",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Footsteps on stone pavement",
+  "duration": 4
+ },
+ "cat-purr.a": {
+  "job": "34295fe0-b7fd-40ce-9d1d-378f02c9de1e",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Cat purring",
+  "duration": 6
+ },
+ "gulls.a": {
+  "job": "98ddb236-3ee7-44a9-a683-91d010646d9e",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Seagull squawking",
+  "duration": 4
+ },
+ "step-grass.a": {
+  "job": "84505621-1f49-46e3-bae0-5bd648c96ae3",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Footsteps on grass",
+  "duration": 4
+ },
+ "step-sand.a": {
+  "job": "e06cb1f3-3803-4e10-8a40-e6f71e9bed1a",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Footsteps on sand",
+  "duration": 4
+ },
+ "page-turn.a": {
+  "job": "2e5e0a40-0b98-4660-91d4-4965b27f6043",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Turning a page of a book",
+  "duration": 3
+ },
+ "dock-creak.a": {
+  "job": "4a3aba0f-2182-4106-beb6-51a4ac076238",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Wood creaking",
+  "duration": 4
+ },
+ "oars.a": {
+  "job": "ee6da486-949d-4c83-afb9-c7c1864ab31f",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Rowing a boat, oars splashing",
+  "duration": 5
+ },
+ "lamp-ignite.a": {
+  "job": "1ad0dbdc-c318-49b7-b71a-b80b72535cc9",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Match striking and igniting",
+  "duration": 3
+ },
+ "bobber-plop.a": {
+  "job": "3e2b96bb-ee7c-4b6a-b528-f6e9188e0987",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Water drop plop",
+  "duration": 2
+ },
+ "bite-dunk.a": {
+  "job": "d993df5b-2c8a-48fa-a562-bbce4057b47f",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Stone thrown into water, splash",
+  "duration": 2
+ },
+ "oars.b": {
+  "job": "13029ce9-f776-483d-ad5b-db55cbe5180f",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Rowing a boat, oars splashing",
+  "duration": 5
+ },
+ "oars.c": {
+  "job": "a1d235f0-d6b9-4302-b630-5a3ee4131769",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Rowing a boat, oars splashing",
+  "duration": 5
+ },
+ "oars.d": {
+  "job": "f8bd08b2-0b41-48e9-947a-e83a78420486",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Oar dipping into water, one rowing stroke",
+  "duration": 3
+ },
+ "coins.p": {
+  "job": "e037b6f6-4293-4f97-870a-2bfb0f5badd1",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Coins clinking",
+  "duration": 2
+ },
+ "cat-meow.p": {
+  "job": "26e620ba-b2bd-43ad-b370-15a7b07c66b9",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Cat meowing",
+  "duration": 2
+ },
+ "step-wood.p": {
+  "job": "94d6d961-8d27-491a-830d-90671d38266a",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Slow footsteps on old wooden dock planks, one step at a time with a pause between steps, close and dry, no background noise, no music",
+  "duration": 4
+ },
+ "dock-creak.b": {
+  "job": "b182b2c7-5bc2-4f22-b1f8-9051f359bcdb",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Old wooden boat creaking",
+  "duration": 4
+ },
+ "dock-creak.c": {
+  "job": "874e39b9-857f-4700-9699-dd73d86017cb",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Wood creaking",
+  "duration": 4
+ },
+ "dock-creak.d": {
+  "job": "9351bb30-67e9-46be-a94d-442c362388b8",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Wooden floorboard creaking under a step",
+  "duration": 3
+ },
+ "hearthbay-two-movements.a": {
+  "job": "45f9a0ef-0b85-451a-99f1-53c1051e7de4",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "Instrumental soundtrack for a cozy fishing-village video game, in two movements that share one melody. No vocals anywhere.\n\nMovement 1, Hearthbay by day (first half, 0:00 to 2:50): a warm, lilting folk tune in D major at a steady 96 BPM in 6/8. Fingerpicked nylon-string guitar plays a simple, hummable eight-bar melody; a concertina answers with soft swells and takes the melody on repeats; soft upright bass on the downbeats; no drums. Every few bars a slightly detuned music box doubles a phrase of the melody and lands on one subtly wrong note, a small uncanny touch under the coziness. Steady and unhurried, like a loop, no build-up.\n\nMovement 2, Hearthbay by night (second half, 2:50 to 5:40): the same eight-bar melody at a much slower pace, about 60 BPM, sparse and hushed. A celesta plays the melody alone over a low sustained drone from bowed bass and harmonium; long pauses between phrases; a few distant guitar harmonics; the detuned music box returns once or twice with its wrong note. Calm, lonely, slightly mysterious. Ends quietly without a big finish.",
+  "duration": 340
+ },
+ "gull-point.a": {
+  "job": "748e8e91-f358-4b1f-8255-1731191aed48",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "Instrumental ambient mystery cue for a lighthouse on a foggy headland at night, for a video game. Very sparse and slow, no steady beat. Deep foghorn-like low brass and bowed-bass swells rise and fade every ten seconds or so; between them, glassy bell tones and bowed crystal-bowl notes ring out and decay into long reverb; a faint cold airy pad underneath; an occasional single low piano note. Eerie but beautiful, patient, lots of space. No vocals, no drums, no resolving melody. The same even texture from start to finish so it can loop.",
+  "duration": 150
+ },
+ "sting-quest.a": {
+  "job": "24856db4-a821-4e32-891e-aecbfc20e2fe",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "A three-second musical sting for completing a quest in a cozy fishing game: nylon-string guitar and concertina play one bright rising four-note flourish in D major, a soft glockenspiel sparkle lands on the last note, which rings out warmly. Starts immediately, ends resolved. No vocals, no drums.",
+  "duration": 4
+ },
+ "sting-rare.a": {
+  "job": "1c9215c3-ab7b-497b-914d-43ffab7f3abd",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "A three-second eerie shimmer sting for catching a rare, strange fish in a cozy mystery game: a glassy bowed-crystal swell with shimmering detuned chimes and a high celesta figure that hangs unresolved, then fades. Mysterious, magical, slightly unsettling. Starts immediately. No vocals, no drums.",
+  "duration": 4
+ },
+ "hearthbay-day.a": {
+  "job": "e6dcbcf2-9be1-41b2-8395-9fb72b304c4b",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "Instrumental theme for a cozy fishing village in a video game, daytime. A warm, lilting folk tune in D major, steady 96 BPM in 6/8. Fingerpicked nylon-string guitar plays a simple, hummable melody built on a rising three-note figure answered by a gentle falling phrase; a concertina answers with soft swells and takes the melody on repeats; soft upright bass on the downbeats; no drums. Every few bars a slightly detuned music box doubles a phrase of the melody and lands on one subtly wrong note, a small uncanny touch under the coziness. No vocals. The same steady tempo, instrumentation and energy from the very first second to the last: no intro, no build-up, no ritardando, no final chord, because it plays as a seamless loop.",
+  "duration": 165
+ },
+ "hearthbay-night.a": {
+  "job": "902cb5bf-cbaa-422b-b7f3-115d9f18eb85",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "Instrumental night-time version of a cozy fishing village theme for a video game. D major, very slow, about 60 BPM in 6/8, sparse and hushed. A celesta alone plays a simple, hummable lullaby-like melody built on a rising three-note figure answered by a gentle falling phrase, with long pauses between phrases, over a low sustained drone from bowed double bass and harmonium. A few distant nylon-guitar harmonics. Once or twice a slightly detuned music box echoes a phrase and lands on one subtly wrong note. Calm, lonely, slightly mysterious. No vocals, no drums. The same sparse texture from the first second to the last: no intro, no build-up, no final chord, because it plays as a seamless loop.",
+  "duration": 150
+ }
+}

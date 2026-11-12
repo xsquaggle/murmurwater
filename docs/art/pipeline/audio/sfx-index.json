@@ -1,0 +1,2089 @@
+[
+ {
+  "name": "cast-swish_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-40.flac"
+   }
+  ],
+  "how": "",
+  "file": "cast-swish_1.ogg",
+  "seconds": 0.537,
+  "samples": 23674,
+  "decoded": 23546,
+  "peak_db": -4.3,
+  "loud100_db": -16.9,
+  "bytes": 9085
+ },
+ {
+  "name": "cast-swish_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-42.flac"
+   }
+  ],
+  "how": "",
+  "file": "cast-swish_2.ogg",
+  "seconds": 0.409,
+  "samples": 18029,
+  "decoded": 19008,
+  "peak_db": -4.8,
+  "loud100_db": -17.1,
+  "bytes": 7892
+ },
+ {
+  "name": "cast-swish_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-29.flac"
+   }
+  ],
+  "how": "",
+  "file": "cast-swish_3.ogg",
+  "seconds": 0.72,
+  "samples": 31745,
+  "decoded": 31617,
+  "peak_db": -7.3,
+  "loud100_db": -17.0,
+  "bytes": 10584
+ },
+ {
+  "name": "cast-swish_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-43.flac"
+   }
+  ],
+  "how": "",
+  "file": "cast-swish_4.ogg",
+  "seconds": 0.441,
+  "samples": 19440,
+  "decoded": 19312,
+  "peak_db": -5.8,
+  "loud100_db": -17.0,
+  "bytes": 8191
+ },
+ {
+  "name": "reel-spin_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "fisheefects",
+    "file": "reel.wav",
+    "cut": [
+     1.0,
+     2.9
+    ],
+    "speed": 1.7
+   }
+  ],
+  "how": "played 1.35 to 1.7 times faster, so the reel whirrs, and faded out",
+  "file": "reel-spin_1.ogg",
+  "seconds": 1.122,
+  "samples": 49464,
+  "decoded": 49464,
+  "peak_db": -2.4,
+  "loud100_db": -17.4,
+  "bytes": 16638
+ },
+ {
+  "name": "reel-spin_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "fisheefects",
+    "file": "reel.wav",
+    "cut": [
+     3.6,
+     5.1
+    ],
+    "speed": 1.5
+   }
+  ],
+  "how": "played 1.35 to 1.7 times faster, so the reel whirrs, and faded out",
+  "file": "reel-spin_2.ogg",
+  "seconds": 1.004,
+  "samples": 44275,
+  "decoded": 44147,
+  "peak_db": -1.6,
+  "loud100_db": -17.4,
+  "bytes": 15428
+ },
+ {
+  "name": "reel-spin_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "fisheefects",
+    "file": "reel.wav",
+    "cut": [
+     6.0,
+     7.9
+    ],
+    "speed": 1.35
+   }
+  ],
+  "how": "played 1.35 to 1.7 times faster, so the reel whirrs, and faded out",
+  "file": "reel-spin_3.ogg",
+  "seconds": 1.411,
+  "samples": 62243,
+  "decoded": 62243,
+  "peak_db": -1.9,
+  "loud100_db": -17.3,
+  "bytes": 19336
+ },
+ {
+  "name": "bobber-plop_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "fisheefects",
+    "file": "bloop.wav"
+   }
+  ],
+  "how": "",
+  "file": "bobber-plop_1.ogg",
+  "seconds": 0.491,
+  "samples": 21650,
+  "decoded": 21522,
+  "peak_db": -6.2,
+  "loud100_db": -18.0,
+  "bytes": 9019
+ },
+ {
+  "name": "bobber-plop_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "water.wav"
+   }
+  ],
+  "how": "",
+  "file": "bobber-plop_2.ogg",
+  "seconds": 0.387,
+  "samples": 17086,
+  "decoded": 16958,
+  "peak_db": -3.3,
+  "loud100_db": -18.1,
+  "bytes": 8765
+ },
+ {
+  "name": "bobber-plop_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "waterReentry.wav"
+   }
+  ],
+  "how": "",
+  "file": "bobber-plop_3.ogg",
+  "seconds": 0.317,
+  "samples": 14000,
+  "decoded": 13872,
+  "peak_db": -1.1,
+  "loud100_db": -18.0,
+  "bytes": 8395
+ },
+ {
+  "name": "nibble_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     0.28,
+     0.62
+    ]
+   }
+  ],
+  "how": "",
+  "file": "nibble_1.ogg",
+  "seconds": 0.344,
+  "samples": 15170,
+  "decoded": 15042,
+  "peak_db": -9.3,
+  "loud100_db": -23.0,
+  "bytes": 7932
+ },
+ {
+  "name": "nibble_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     1.99,
+     2.3
+    ]
+   }
+  ],
+  "how": "",
+  "file": "nibble_2.ogg",
+  "seconds": 0.314,
+  "samples": 13846,
+  "decoded": 13718,
+  "peak_db": -8.3,
+  "loud100_db": -23.0,
+  "bytes": 7269
+ },
+ {
+  "name": "nibble_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     3.66,
+     3.97
+    ]
+   }
+  ],
+  "how": "",
+  "file": "nibble_3.ogg",
+  "seconds": 0.314,
+  "samples": 13847,
+  "decoded": 13719,
+  "peak_db": -10.0,
+  "loud100_db": -23.0,
+  "bytes": 7648
+ },
+ {
+  "name": "nibble_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     6.53,
+     6.86
+    ]
+   }
+  ],
+  "how": "",
+  "file": "nibble_4.ogg",
+  "seconds": 0.334,
+  "samples": 14729,
+  "decoded": 14601,
+  "peak_db": -14.0,
+  "loud100_db": -23.0,
+  "bytes": 8019
+ },
+ {
+  "name": "bite-dunk_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "fisheefects",
+    "file": "bloop.wav",
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "splash2_0.wav",
+    "cut": [
+     0.64,
+     1.15
+    ]
+   }
+  ],
+  "how": "a plop slowed down for depth, with a small splash on top",
+  "file": "bite-dunk_1.ogg",
+  "seconds": 0.69,
+  "samples": 30450,
+  "decoded": 30322,
+  "peak_db": -6.0,
+  "loud100_db": -17.0,
+  "bytes": 11134
+ },
+ {
+  "name": "bite-dunk_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "waterReentry.wav",
+    "speed": 0.6
+   },
+   {
+    "kind": "cc0",
+    "pack": "ezwa",
+    "file": "water_splash-03.flac"
+   }
+  ],
+  "how": "a plop slowed down for depth, with a small splash on top",
+  "file": "bite-dunk_2.ogg",
+  "seconds": 0.716,
+  "samples": 31594,
+  "decoded": 31466,
+  "peak_db": -1.6,
+  "loud100_db": -17.0,
+  "bytes": 13607
+ },
+ {
+  "name": "bite-dunk_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "water.wav",
+    "speed": 0.65
+   },
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "splash1_0.wav",
+    "cut": [
+     0.52,
+     1.06
+    ]
+   }
+  ],
+  "how": "a plop slowed down for depth, with a small splash on top",
+  "file": "bite-dunk_3.ogg",
+  "seconds": 0.594,
+  "samples": 26191,
+  "decoded": 26063,
+  "peak_db": -4.0,
+  "loud100_db": -17.0,
+  "bytes": 10707
+ },
+ {
+  "name": "hook-set_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-17.flac",
+    "speed": 1.25
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   }
+  ],
+  "how": "a rod swish played a little faster, with four quick clicks of the reel behind it",
+  "file": "hook-set_1.ogg",
+  "seconds": 0.304,
+  "samples": 13398,
+  "decoded": 14400,
+  "peak_db": -0.9,
+  "loud100_db": -17.1,
+  "bytes": 7522
+ },
+ {
+  "name": "hook-set_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-03.flac",
+    "speed": 1.25
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   }
+  ],
+  "how": "a rod swish played a little faster, with four quick clicks of the reel behind it",
+  "file": "hook-set_2.ogg",
+  "seconds": 0.464,
+  "samples": 20480,
+  "decoded": 20352,
+  "peak_db": -4.0,
+  "loud100_db": -17.1,
+  "bytes": 9031
+ },
+ {
+  "name": "hook-set_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-15.flac",
+    "speed": 1.25
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   }
+  ],
+  "how": "a rod swish played a little faster, with four quick clicks of the reel behind it",
+  "file": "hook-set_3.ogg",
+  "seconds": 0.335,
+  "samples": 14791,
+  "decoded": 14663,
+  "peak_db": -4.4,
+  "loud100_db": -17.2,
+  "bytes": 7868
+ },
+ {
+  "name": "line-creak_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak1.ogg"
+   }
+  ],
+  "how": "",
+  "file": "line-creak_1.ogg",
+  "seconds": 0.608,
+  "samples": 26820,
+  "decoded": 26692,
+  "peak_db": -6.4,
+  "loud100_db": -17.0,
+  "bytes": 9832
+ },
+ {
+  "name": "line-creak_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak2.ogg"
+   }
+  ],
+  "how": "",
+  "file": "line-creak_2.ogg",
+  "seconds": 0.782,
+  "samples": 34498,
+  "decoded": 34370,
+  "peak_db": -5.9,
+  "loud100_db": -17.0,
+  "bytes": 11417
+ },
+ {
+  "name": "line-creak_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak3.ogg"
+   }
+  ],
+  "how": "",
+  "file": "line-creak_3.ogg",
+  "seconds": 0.31,
+  "samples": 13686,
+  "decoded": 13558,
+  "peak_db": -8.3,
+  "loud100_db": -17.0,
+  "bytes": 6739
+ },
+ {
+  "name": "fish-splash_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "ezwa",
+    "file": "water_splash-01.flac"
+   }
+  ],
+  "how": "",
+  "file": "fish-splash_1.ogg",
+  "seconds": 1.093,
+  "samples": 48182,
+  "decoded": 48182,
+  "peak_db": -1.7,
+  "loud100_db": -22.3,
+  "bytes": 20519
+ },
+ {
+  "name": "fish-splash_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "transitking",
+    "file": "wave_04_cc0-11505__transitking__wavesound.flac"
+   }
+  ],
+  "how": "",
+  "file": "fish-splash_2.ogg",
+  "seconds": 1.753,
+  "samples": 77310,
+  "decoded": 77310,
+  "peak_db": -7.6,
+  "loud100_db": -22.1,
+  "bytes": 24244
+ },
+ {
+  "name": "fish-splash_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "splash2_0.wav"
+   }
+  ],
+  "how": "",
+  "file": "fish-splash_3.ogg",
+  "seconds": 1.027,
+  "samples": 45278,
+  "decoded": 45278,
+  "peak_db": -1.0,
+  "loud100_db": -22.1,
+  "bytes": 16613
+ },
+ {
+  "name": "fish-splash_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "ezwa",
+    "file": "water_splash-03.flac"
+   }
+  ],
+  "how": "",
+  "file": "fish-splash_4.ogg",
+  "seconds": 0.719,
+  "samples": 31714,
+  "decoded": 31586,
+  "peak_db": -2.8,
+  "loud100_db": -22.1,
+  "bytes": 15159
+ },
+ {
+  "name": "land-splash_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "fish-splash.b",
+    "job": "ba8fa6b0-f661-4afa-bbd3-f5e7a527c6ec",
+    "cut": [
+     0,
+     1.5
+    ]
+   }
+  ],
+  "how": "",
+  "file": "land-splash_1.ogg",
+  "seconds": 1.504,
+  "samples": 66326,
+  "decoded": 66326,
+  "peak_db": -3.1,
+  "loud100_db": -17.3,
+  "bytes": 17766
+ },
+ {
+  "name": "land-splash_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "fish-splash.a",
+    "job": "c1b915a7-b293-43c5-af7f-d6a94f950c45",
+    "cut": [
+     0.45,
+     2.4
+    ]
+   }
+  ],
+  "how": "",
+  "file": "land-splash_2.ogg",
+  "seconds": 1.954,
+  "samples": 86171,
+  "decoded": 86171,
+  "peak_db": -4.4,
+  "loud100_db": -17.1,
+  "bytes": 22639
+ },
+ {
+  "name": "land-splash_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "transitking",
+    "file": "wave_01_cc0-11505__transitking__wavesound.flac"
+   }
+  ],
+  "how": "",
+  "file": "land-splash_3.ogg",
+  "seconds": 1.754,
+  "samples": 77351,
+  "decoded": 77351,
+  "peak_db": -3.0,
+  "loud100_db": -16.9,
+  "bytes": 19859
+ },
+ {
+  "name": "coins_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "handleCoins.ogg"
+   }
+  ],
+  "how": "",
+  "file": "coins_1.ogg",
+  "seconds": 0.731,
+  "samples": 32254,
+  "decoded": 32126,
+  "peak_db": -1.0,
+  "loud100_db": -22.2,
+  "bytes": 13599
+ },
+ {
+  "name": "coins_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "handleCoins2.ogg"
+   }
+  ],
+  "how": "",
+  "file": "coins_2.ogg",
+  "seconds": 0.324,
+  "samples": 14302,
+  "decoded": 14174,
+  "peak_db": -3.7,
+  "loud100_db": -22.3,
+  "bytes": 8627
+ },
+ {
+  "name": "coins_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "coins.p",
+    "job": "e037b6f6-4293-4f97-870a-2bfb0f5badd1",
+    "cut": [
+     0,
+     0.9
+    ]
+   }
+  ],
+  "how": "",
+  "file": "coins_3.ogg",
+  "seconds": 0.894,
+  "samples": 39426,
+  "decoded": 39298,
+  "peak_db": -2.0,
+  "loud100_db": -22.2,
+  "bytes": 14942
+ },
+ {
+  "name": "coins_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "coins.a",
+    "job": "8455807b-6efb-4b89-abd5-76ebe4a9d32b",
+    "cut": [
+     0.15,
+     0.95
+    ]
+   }
+  ],
+  "how": "",
+  "file": "coins_4.ogg",
+  "seconds": 0.713,
+  "samples": 31462,
+  "decoded": 32448,
+  "peak_db": -1.4,
+  "loud100_db": -22.3,
+  "bytes": 12439
+ },
+ {
+  "name": "line-snap_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "beltHandle1.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-17.flac",
+    "speed": 1.8
+   }
+  ],
+  "how": "a sharp snap with a fast whip of air right behind it",
+  "file": "line-snap_1.ogg",
+  "seconds": 0.256,
+  "samples": 11310,
+  "decoded": 11182,
+  "peak_db": -1.0,
+  "loud100_db": -17.0,
+  "bytes": 6908
+ },
+ {
+  "name": "line-snap_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "bookClose.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-03.flac",
+    "speed": 1.8
+   }
+  ],
+  "how": "a sharp snap with a fast whip of air right behind it",
+  "file": "line-snap_2.ogg",
+  "seconds": 0.331,
+  "samples": 14585,
+  "decoded": 14457,
+  "peak_db": -2.8,
+  "loud100_db": -17.0,
+  "bytes": 7363
+ },
+ {
+  "name": "line-snap_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "clothBelt2.ogg",
+    "cut": [
+     0,
+     0.3
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "qubodup-swosh",
+    "file": "swosh-01.flac",
+    "speed": 1.8
+   }
+  ],
+  "how": "a sharp snap with a fast whip of air right behind it",
+  "file": "line-snap_3.ogg",
+  "seconds": 0.299,
+  "samples": 13186,
+  "decoded": 13058,
+  "peak_db": -2.2,
+  "loud100_db": -17.0,
+  "bytes": 7966
+ },
+ {
+  "name": "reel-click_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "click_004.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "fisheefects",
+    "file": "reel.wav",
+    "cut": [
+     2.0,
+     3.0
+    ]
+   }
+  ],
+  "how": "12 evenly spaced clicks a second over a quiet bed of the recorded reel; exactly 1 s",
+  "file": "reel-click_1.ogg",
+  "seconds": 1.0,
+  "samples": 44100,
+  "decoded": 44100,
+  "peak_db": -3.7,
+  "loud100_db": -24.3,
+  "bytes": 17027,
+  "rotated": 573
+ },
+ {
+  "name": "reel-click_2",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "click_004.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_001.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "fisheefects",
+    "file": "reel.wav",
+    "cut": [
+     5.0,
+     6.0
+    ]
+   }
+  ],
+  "how": "16 evenly spaced clicks a second over a quiet bed of the recorded reel; exactly 1 s",
+  "file": "reel-click_2.ogg",
+  "seconds": 1.0,
+  "samples": 44100,
+  "decoded": 44100,
+  "peak_db": -3.2,
+  "loud100_db": -24.7,
+  "bytes": 17723,
+  "rotated": 0
+ },
+ {
+  "name": "quest-accept_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "three rising notes of a D major chord on a soft mallet tone"
+   }
+  ],
+  "how": "synthesised in sfx_manifest.py, in the key of the Hearthbay theme",
+  "file": "quest-accept_1.ogg",
+  "seconds": 1.254,
+  "samples": 55301,
+  "decoded": 55301,
+  "peak_db": -11.3,
+  "loud100_db": -20.0,
+  "bytes": 8663
+ },
+ {
+  "name": "quest-accept_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "three rising notes of a D major chord on a soft mallet tone"
+   }
+  ],
+  "how": "synthesised in sfx_manifest.py, in the key of the Hearthbay theme",
+  "file": "quest-accept_2.ogg",
+  "seconds": 1.254,
+  "samples": 55301,
+  "decoded": 55301,
+  "peak_db": -11.3,
+  "loud100_db": -20.0,
+  "bytes": 8394
+ },
+ {
+  "name": "quest-accept_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "three rising notes of a D major chord on a soft mallet tone"
+   }
+  ],
+  "how": "synthesised in sfx_manifest.py, in the key of the Hearthbay theme",
+  "file": "quest-accept_3.ogg",
+  "seconds": 1.254,
+  "samples": 55301,
+  "decoded": 55301,
+  "peak_db": -11.6,
+  "loud100_db": -20.0,
+  "bytes": 8842
+ },
+ {
+  "name": "step-wood_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep02.ogg"
+   }
+  ],
+  "how": "",
+  "file": "step-wood_1.ogg",
+  "seconds": 0.235,
+  "samples": 10342,
+  "decoded": 10214,
+  "peak_db": -4.2,
+  "loud100_db": -21.1,
+  "bytes": 6313
+ },
+ {
+  "name": "step-wood_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep03.ogg"
+   }
+  ],
+  "how": "",
+  "file": "step-wood_2.ogg",
+  "seconds": 0.258,
+  "samples": 11398,
+  "decoded": 11270,
+  "peak_db": -4.5,
+  "loud100_db": -21.1,
+  "bytes": 6722
+ },
+ {
+  "name": "step-wood_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "tinyworlds",
+    "file": "wood03.ogg"
+   }
+  ],
+  "how": "",
+  "file": "step-wood_3.ogg",
+  "seconds": 0.322,
+  "samples": 14196,
+  "decoded": 14068,
+  "peak_db": -6.2,
+  "loud100_db": -20.9,
+  "bytes": 7191
+ },
+ {
+  "name": "step-wood_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "tinyworlds",
+    "file": "wood02.ogg"
+   }
+  ],
+  "how": "",
+  "file": "step-wood_4.ogg",
+  "seconds": 0.241,
+  "samples": 10613,
+  "decoded": 10485,
+  "peak_db": -10.3,
+  "loud100_db": -21.0,
+  "bytes": 6464
+ },
+ {
+  "name": "step-cobble_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep04.ogg"
+   }
+  ],
+  "how": "",
+  "file": "step-cobble_1.ogg",
+  "seconds": 0.282,
+  "samples": 12454,
+  "decoded": 12326,
+  "peak_db": -5.4,
+  "loud100_db": -21.0,
+  "bytes": 7129
+ },
+ {
+  "name": "step-cobble_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep06.ogg"
+   }
+  ],
+  "how": "",
+  "file": "step-cobble_2.ogg",
+  "seconds": 0.238,
+  "samples": 10474,
+  "decoded": 10346,
+  "peak_db": -5.3,
+  "loud100_db": -21.0,
+  "bytes": 6999
+ },
+ {
+  "name": "step-cobble_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep07.ogg"
+   }
+  ],
+  "how": "",
+  "file": "step-cobble_3.ogg",
+  "seconds": 0.227,
+  "samples": 9990,
+  "decoded": 9862,
+  "peak_db": -3.1,
+  "loud100_db": -21.0,
+  "bytes": 6620
+ },
+ {
+  "name": "step-cobble_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep05.ogg"
+   }
+  ],
+  "how": "",
+  "file": "step-cobble_4.ogg",
+  "seconds": 0.256,
+  "samples": 11310,
+  "decoded": 11182,
+  "peak_db": -3.9,
+  "loud100_db": -21.0,
+  "bytes": 7043
+ },
+ {
+  "name": "step-grass_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "step-grass.a",
+    "job": "84505621-1f49-46e3-bae0-5bd648c96ae3",
+    "cut": [
+     1.33,
+     1.69
+    ]
+   }
+  ],
+  "how": "",
+  "file": "step-grass_1.ogg",
+  "seconds": 0.364,
+  "samples": 16052,
+  "decoded": 15924,
+  "peak_db": -8.1,
+  "loud100_db": -21.2,
+  "bytes": 7590
+ },
+ {
+  "name": "step-grass_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "step-grass.a",
+    "job": "84505621-1f49-46e3-bae0-5bd648c96ae3",
+    "cut": [
+     1.7,
+     2.22
+    ]
+   }
+  ],
+  "how": "",
+  "file": "step-grass_2.ogg",
+  "seconds": 0.524,
+  "samples": 23108,
+  "decoded": 22980,
+  "peak_db": -6.8,
+  "loud100_db": -21.3,
+  "bytes": 9185
+ },
+ {
+  "name": "step-grass_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "step-grass.a",
+    "job": "84505621-1f49-46e3-bae0-5bd648c96ae3",
+    "cut": [
+     2.84,
+     3.21
+    ]
+   }
+  ],
+  "how": "",
+  "file": "step-grass_3.ogg",
+  "seconds": 0.374,
+  "samples": 16493,
+  "decoded": 16365,
+  "peak_db": -3.0,
+  "loud100_db": -21.2,
+  "bytes": 7782
+ },
+ {
+  "name": "step-grass_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "step-grass.a",
+    "job": "84505621-1f49-46e3-bae0-5bd648c96ae3",
+    "cut": [
+     3.19,
+     3.6
+    ]
+   }
+  ],
+  "how": "",
+  "file": "step-grass_4.ogg",
+  "seconds": 0.414,
+  "samples": 18257,
+  "decoded": 18129,
+  "peak_db": -7.2,
+  "loud100_db": -21.1,
+  "bytes": 8176
+ },
+ {
+  "name": "step-sand_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "sand_footsteps_0.mp3",
+    "cut": [
+     2.0,
+     2.54
+    ]
+   }
+  ],
+  "how": "",
+  "file": "step-sand_1.ogg",
+  "seconds": 0.544,
+  "samples": 23990,
+  "decoded": 23862,
+  "peak_db": -7.4,
+  "loud100_db": -21.2,
+  "bytes": 9514
+ },
+ {
+  "name": "step-sand_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "sand_footsteps_0.mp3",
+    "cut": [
+     2.62,
+     3.14
+    ]
+   }
+  ],
+  "how": "",
+  "file": "step-sand_2.ogg",
+  "seconds": 0.524,
+  "samples": 23108,
+  "decoded": 22980,
+  "peak_db": -8.9,
+  "loud100_db": -21.3,
+  "bytes": 9179
+ },
+ {
+  "name": "step-sand_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "sand_footsteps_0.mp3",
+    "cut": [
+     3.22,
+     3.74
+    ]
+   }
+  ],
+  "how": "",
+  "file": "step-sand_3.ogg",
+  "seconds": 0.524,
+  "samples": 23108,
+  "decoded": 22980,
+  "peak_db": -8.0,
+  "loud100_db": -21.2,
+  "bytes": 9334
+ },
+ {
+  "name": "step-sand_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "sand_footsteps_0.mp3",
+    "cut": [
+     3.84,
+     4.36
+    ]
+   }
+  ],
+  "how": "",
+  "file": "step-sand_4.ogg",
+  "seconds": 0.524,
+  "samples": 23108,
+  "decoded": 22980,
+  "peak_db": -8.1,
+  "loud100_db": -21.2,
+  "bytes": 9416
+ },
+ {
+  "name": "ui-open_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "open_001.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-open_1.ogg",
+  "seconds": 0.152,
+  "samples": 6693,
+  "decoded": 6565,
+  "peak_db": -9.6,
+  "loud100_db": -21.5,
+  "bytes": 6079
+ },
+ {
+  "name": "ui-open_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "open_002.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-open_2.ogg",
+  "seconds": 0.318,
+  "samples": 14014,
+  "decoded": 14912,
+  "peak_db": -11.2,
+  "loud100_db": -21.4,
+  "bytes": 7555
+ },
+ {
+  "name": "ui-open_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "open_003.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-open_3.ogg",
+  "seconds": 0.318,
+  "samples": 14014,
+  "decoded": 13886,
+  "peak_db": -12.3,
+  "loud100_db": -21.4,
+  "bytes": 7889
+ },
+ {
+  "name": "ui-open_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "open_004.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-open_4.ogg",
+  "seconds": 0.326,
+  "samples": 14371,
+  "decoded": 14243,
+  "peak_db": -7.8,
+  "loud100_db": -21.2,
+  "bytes": 8150
+ },
+ {
+  "name": "ui-close_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "close_001.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-close_1.ogg",
+  "seconds": 0.152,
+  "samples": 6693,
+  "decoded": 6565,
+  "peak_db": -8.2,
+  "loud100_db": -21.3,
+  "bytes": 6086
+ },
+ {
+  "name": "ui-close_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "close_002.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-close_2.ogg",
+  "seconds": 0.318,
+  "samples": 14014,
+  "decoded": 13886,
+  "peak_db": -9.9,
+  "loud100_db": -21.5,
+  "bytes": 7603
+ },
+ {
+  "name": "ui-close_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "close_003.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-close_3.ogg",
+  "seconds": 0.318,
+  "samples": 14014,
+  "decoded": 14912,
+  "peak_db": -10.0,
+  "loud100_db": -21.4,
+  "bytes": 7749
+ },
+ {
+  "name": "ui-close_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "close_004.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-close_4.ogg",
+  "seconds": 0.327,
+  "samples": 14415,
+  "decoded": 14287,
+  "peak_db": -8.4,
+  "loud100_db": -21.4,
+  "bytes": 8269
+ },
+ {
+  "name": "ui-click_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "click_001.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-click_1.ogg",
+  "seconds": 0.101,
+  "samples": 4459,
+  "decoded": 4331,
+  "peak_db": -1.0,
+  "loud100_db": -23.8,
+  "bytes": 4535
+ },
+ {
+  "name": "ui-click_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "click_002.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-click_2.ogg",
+  "seconds": 0.016,
+  "samples": 688,
+  "decoded": 560,
+  "peak_db": -11.5,
+  "loud100_db": -24.8,
+  "bytes": 4215
+ },
+ {
+  "name": "ui-click_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "click_003.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-click_3.ogg",
+  "seconds": 0.011,
+  "samples": 490,
+  "decoded": 362,
+  "peak_db": -11.9,
+  "loud100_db": -26.3,
+  "bytes": 4153
+ },
+ {
+  "name": "ui-click_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "click_004.ogg"
+   }
+  ],
+  "how": "",
+  "file": "ui-click_4.ogg",
+  "seconds": 0.026,
+  "samples": 1136,
+  "decoded": 1008,
+  "peak_db": -7.0,
+  "loud100_db": -24.8,
+  "bytes": 4381
+ },
+ {
+  "name": "page-turn_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "bookFlip1.ogg"
+   }
+  ],
+  "how": "",
+  "file": "page-turn_1.ogg",
+  "seconds": 0.662,
+  "samples": 29174,
+  "decoded": 29046,
+  "peak_db": -3.2,
+  "loud100_db": -25.3,
+  "bytes": 10945
+ },
+ {
+  "name": "page-turn_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "bookFlip2.ogg"
+   }
+  ],
+  "how": "",
+  "file": "page-turn_2.ogg",
+  "seconds": 0.417,
+  "samples": 18394,
+  "decoded": 18266,
+  "peak_db": -1.1,
+  "loud100_db": -25.4,
+  "bytes": 8784
+ },
+ {
+  "name": "page-turn_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "bookFlip3.ogg"
+   }
+  ],
+  "how": "",
+  "file": "page-turn_3.ogg",
+  "seconds": 0.208,
+  "samples": 9158,
+  "decoded": 9030,
+  "peak_db": -2.1,
+  "loud100_db": -25.5,
+  "bytes": 6543
+ },
+ {
+  "name": "lamp-ignite_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "themightyglider",
+    "file": "flame_0.ogg",
+    "speed": 0.85
+   }
+  ],
+  "how": "",
+  "file": "lamp-ignite_1.ogg",
+  "seconds": 0.534,
+  "samples": 23545,
+  "decoded": 23417,
+  "peak_db": -8.1,
+  "loud100_db": -17.0,
+  "bytes": 8208
+ },
+ {
+  "name": "lamp-ignite_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-flare",
+    "file": "ignition.flac"
+   }
+  ],
+  "how": "",
+  "file": "lamp-ignite_2.ogg",
+  "seconds": 1.163,
+  "samples": 51306,
+  "decoded": 51306,
+  "peak_db": -2.6,
+  "loud100_db": -17.2,
+  "bytes": 16163
+ },
+ {
+  "name": "lamp-ignite_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "themightyglider",
+    "file": "flame_0.ogg",
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "qubodup-flare",
+    "file": "ignition.flac"
+   }
+  ],
+  "how": "",
+  "file": "lamp-ignite_3.ogg",
+  "seconds": 1.221,
+  "samples": 53858,
+  "decoded": 53858,
+  "peak_db": -7.5,
+  "loud100_db": -17.0,
+  "bytes": 16243
+ },
+ {
+  "name": "oars_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "oars.b",
+    "job": "13029ce9-f776-483d-ad5b-db55cbe5180f",
+    "cut": [
+     0.05,
+     1.2
+    ]
+   }
+  ],
+  "how": "",
+  "file": "oars_1.ogg",
+  "seconds": 1.154,
+  "samples": 50891,
+  "decoded": 50891,
+  "peak_db": -3.0,
+  "loud100_db": -17.2,
+  "bytes": 14672
+ },
+ {
+  "name": "oars_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "oars.b",
+    "job": "13029ce9-f776-483d-ad5b-db55cbe5180f",
+    "cut": [
+     1.8,
+     3.1
+    ]
+   }
+  ],
+  "how": "",
+  "file": "oars_2.ogg",
+  "seconds": 1.304,
+  "samples": 57506,
+  "decoded": 57506,
+  "peak_db": -2.4,
+  "loud100_db": -17.1,
+  "bytes": 16205
+ },
+ {
+  "name": "oars_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "oars.c",
+    "job": "a1d235f0-d6b9-4302-b630-5a3ee4131769",
+    "cut": [
+     1.0,
+     2.3
+    ]
+   }
+  ],
+  "how": "",
+  "file": "oars_3.ogg",
+  "seconds": 1.304,
+  "samples": 57505,
+  "decoded": 57505,
+  "peak_db": -5.2,
+  "loud100_db": -17.1,
+  "bytes": 15256
+ },
+ {
+  "name": "oars_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "oars.c",
+    "job": "a1d235f0-d6b9-4302-b630-5a3ee4131769",
+    "cut": [
+     3.2,
+     4.8
+    ]
+   }
+  ],
+  "how": "",
+  "file": "oars_4.ogg",
+  "seconds": 1.604,
+  "samples": 70736,
+  "decoded": 70736,
+  "peak_db": -4.2,
+  "loud100_db": -17.2,
+  "bytes": 18165
+ },
+ {
+  "name": "gulls_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rangomango",
+    "file": "Seagull Big Ambient 2.wav"
+   }
+  ],
+  "how": "",
+  "file": "gulls_1.ogg",
+  "seconds": 4.77,
+  "samples": 210366,
+  "decoded": 210366,
+  "peak_db": -9.8,
+  "loud100_db": -17.0,
+  "bytes": 49506
+ },
+ {
+  "name": "gulls_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rangomango",
+    "file": "Seagull Ambient 5.wav"
+   }
+  ],
+  "how": "",
+  "file": "gulls_2.ogg",
+  "seconds": 1.455,
+  "samples": 64176,
+  "decoded": 64176,
+  "peak_db": -6.6,
+  "loud100_db": -17.0,
+  "bytes": 18179
+ },
+ {
+  "name": "gulls_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rangomango",
+    "file": "Seagull Ambient 1.wav"
+   }
+  ],
+  "how": "",
+  "file": "gulls_3.ogg",
+  "seconds": 3.896,
+  "samples": 171824,
+  "decoded": 171824,
+  "peak_db": -11.1,
+  "loud100_db": -16.9,
+  "bytes": 38658
+ },
+ {
+  "name": "gulls_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rangomango",
+    "file": "Seagull Ambient 7.wav"
+   }
+  ],
+  "how": "",
+  "file": "gulls_4.ogg",
+  "seconds": 0.886,
+  "samples": 39056,
+  "decoded": 38928,
+  "peak_db": -7.5,
+  "loud100_db": -17.0,
+  "bytes": 12957
+ },
+ {
+  "name": "dock-creak_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     0.05,
+     1.95
+    ],
+    "speed": 0.7
+   }
+  ],
+  "how": "",
+  "file": "dock-creak_1.ogg",
+  "seconds": 2.678,
+  "samples": 118098,
+  "decoded": 118098,
+  "peak_db": -1.0,
+  "loud100_db": -20.6,
+  "bytes": 33262
+ },
+ {
+  "name": "dock-creak_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "dock-creak.a",
+    "job": "4a3aba0f-2182-4106-beb6-51a4ac076238",
+    "cut": [
+     0.85,
+     2.4
+    ]
+   }
+  ],
+  "how": "",
+  "file": "dock-creak_2.ogg",
+  "seconds": 1.504,
+  "samples": 66310,
+  "decoded": 66310,
+  "peak_db": -1.3,
+  "loud100_db": -20.6,
+  "bytes": 19471
+ },
+ {
+  "name": "dock-creak_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "dock-creak.b",
+    "job": "b182b2c7-5bc2-4f22-b1f8-9051f359bcdb",
+    "cut": [
+     1.75,
+     3.55
+    ]
+   }
+  ],
+  "how": "",
+  "file": "dock-creak_3.ogg",
+  "seconds": 1.755,
+  "samples": 77398,
+  "decoded": 77398,
+  "peak_db": -5.5,
+  "loud100_db": -20.5,
+  "bytes": 20998
+ },
+ {
+  "name": "dock-creak_4",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "dock-creak.c",
+    "job": "874e39b9-857f-4700-9699-dd73d86017cb",
+    "cut": [
+     1.95,
+     3.4
+    ]
+   }
+  ],
+  "how": "",
+  "file": "dock-creak_4.ogg",
+  "seconds": 1.376,
+  "samples": 60678,
+  "decoded": 60678,
+  "peak_db": -4.2,
+  "loud100_db": -20.5,
+  "bytes": 16131
+ },
+ {
+  "name": "cat-meow_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "cat-meow.b",
+    "job": "3f4685ab-edf7-4e85-b2ab-8ccf2a20e86b",
+    "cut": [
+     0.2,
+     1.12
+    ]
+   }
+  ],
+  "how": "",
+  "file": "cat-meow_1.ogg",
+  "seconds": 0.924,
+  "samples": 40748,
+  "decoded": 40620,
+  "peak_db": -10.3,
+  "loud100_db": -17.0,
+  "bytes": 12993
+ },
+ {
+  "name": "cat-meow_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "cat-meow.p",
+    "job": "26e620ba-b2bd-43ad-b370-15a7b07c66b9",
+    "cut": [
+     0.36,
+     1.96
+    ]
+   }
+  ],
+  "how": "",
+  "file": "cat-meow_2.ogg",
+  "seconds": 1.598,
+  "samples": 70490,
+  "decoded": 70490,
+  "peak_db": -11.6,
+  "loud100_db": -17.1,
+  "bytes": 18456
+ },
+ {
+  "name": "cat-meow_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "cat-meow.a",
+    "job": "857c5e4f-ae6c-4420-a566-1e961158eda3"
+   }
+  ],
+  "how": "",
+  "file": "cat-meow_3.ogg",
+  "seconds": 1.15,
+  "samples": 50734,
+  "decoded": 50734,
+  "peak_db": -9.2,
+  "loud100_db": -17.0,
+  "bytes": 14905
+ },
+ {
+  "name": "waves-lap_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "randommind",
+    "file": "VistulaShort_0.mp3",
+    "cut": [
+     234.0,
+     254.0
+    ]
+   }
+  ],
+  "how": "20 s cut with a 2 s crossfade into the audio before the loop start",
+  "file": "waves-lap_1.ogg",
+  "seconds": 20.0,
+  "samples": 882000,
+  "decoded": 882000,
+  "peak_db": -7.5,
+  "loud100_db": -17.4,
+  "bytes": 167864,
+  "rotated": 0
+ },
+ {
+  "name": "waves-lap_2",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "randommind",
+    "file": "VistulaShort_0.mp3",
+    "cut": [
+     150.0,
+     170.0
+    ]
+   }
+  ],
+  "how": "20 s cut with a 2 s crossfade into the audio before the loop start",
+  "file": "waves-lap_2.ogg",
+  "seconds": 20.0,
+  "samples": 882000,
+  "decoded": 882000,
+  "peak_db": -8.8,
+  "loud100_db": -18.5,
+  "bytes": 166346,
+  "rotated": 0
+ },
+ {
+  "name": "cat-purr_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kerzoven",
+    "file": "cat_purrsleepy_loop.wav"
+   }
+  ],
+  "how": "the author's loop with rumble below 35 Hz removed",
+  "file": "cat-purr_1.ogg",
+  "seconds": 5.654,
+  "samples": 249325,
+  "decoded": 249325,
+  "peak_db": -3.9,
+  "loud100_db": -14.1,
+  "bytes": 58610,
+  "rotated": 0
+ },
+ {
+  "name": "cat-purr_2",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kerzoven",
+    "file": "cat_purractive_loop.wav"
+   }
+  ],
+  "how": "the author's loop with rumble below 35 Hz removed",
+  "file": "cat-purr_2.ogg",
+  "seconds": 8.313,
+  "samples": 366587,
+  "decoded": 366587,
+  "peak_db": -6.2,
+  "loud100_db": -15.1,
+  "bytes": 102996,
+  "rotated": 0
+ }
+]
