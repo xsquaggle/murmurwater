@@ -35,20 +35,23 @@ export default function (c) {
   const CATCH_HOLD = { ...body0, ...cup(1.04, 0.21), spine: [-5, 0, 0], hips: { pos: [0, 0, -0.01], rot: [0, 0, 0] }, look: [-6, 0, 0] };
   const carry = (clip, rod, pos) => (t) => ({ base: { clip, t }, rHand: { pos, rod, rodSpace: 'world', pole: [-0.5, -0.5, -0.7] }, rGrip: 1 });
 
-  // ---- boat_sit: seated on a thwart 0.35 m above the origin, right hand back on the tiller ----
-  // Built on the bind pose. The tiller hand and both feet stay put (they are on the boat); the body sways over them.
-  const SEAT = { hips: [0, -0.30, -0.02], foot: 0.37, tiller: [-0.31, 0.58, -0.26] };
+  // ---- boat_sit: perched on the front of a thwart 0.465 m above the origin, feet flat on the boards (the origin
+  // is on the floor), right hand back on the tiller ----
+  // Built on the bind pose. The knee of a flat foot reaches only 0.465 m, so the thighs slope down from the seat.
+  // The tiller hand and both feet stay put (they are on the boat); the body sways over them.
+  const SEAT = { hips: [0.03, -0.175, 0.16], turn: 14, lean: 8, yaw: -40, roll: 4, tiller: [-0.302, 0.703, -0.095], lap: [0.20, 0.688, 0.27],
+    rFoot: [0.15, 0, 0.49], lFoot: [0.12, 0, 0.46] };
   const boatSit = (t) => {
     const a = TAU * t / 4.0, s = Math.sin(a), s2 = Math.sin(2 * a + 0.6), sl = Math.sin(a - 0.9);
     return {
       lockShoulders: true,
-      hips: { pos: [SEAT.hips[0] + 0.006 * s, SEAT.hips[1] + 0.003 * s2, SEAT.hips[2]], rot: [-3, -4, 1.3 * s] },
-      spine: [20 + 1.2 * s2, -10 + 1.0 * sl, -2.4 * sl],
+      hips: { pos: [SEAT.hips[0] + 0.006 * s, SEAT.hips[1] + 0.003 * s2, SEAT.hips[2]], rot: [-3, SEAT.turn, 1.3 * s] },
+      spine: [SEAT.lean + 1.2 * s2, SEAT.yaw + 1.0 * sl, SEAT.roll - 2.4 * sl],
       look: [2 + 0.8 * s2, -2 + 2.0 * sl, 0],
-      rFoot: { pos: [-0.035, 0, SEAT.foot], pole: [-0.22, 0.5, 1] },
-      lFoot: { pos: [0.045, 0, SEAT.foot - 0.03], pole: [0.26, 0.5, 1] },
+      rFoot: { pos: SEAT.rFoot, rot: [0, 12, 0], pole: [0.05, 0.5, 1] },
+      lFoot: { pos: SEAT.lFoot, rot: [0, 16, 0], pole: [0.30, 0.5, 1] },
       rHand: { space: 'world', pos: SEAT.tiller, rod: [0.05, 0.08, 1], rodSpace: 'world', pole: [-0.5, -0.4, -0.8] }, rGrip: 1,
-      lHand: { space: 'world', pos: [0.165, 0.635, 0.13], fingers: [-0.18, -0.20, 1], palm: [0.05, -1, -0.1], pole: [0.8, -0.1, -0.6] }, lGrip: 0.18,
+      lHand: { space: 'world', pos: SEAT.lap, fingers: [0.1, -0.45, 1], palm: [0.05, -0.9, -0.42], pole: [0.8, -0.1, -0.6] }, lGrip: 0.18,
     };
   };
 

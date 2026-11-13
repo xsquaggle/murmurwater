@@ -1,9 +1,10 @@
-// node skin-pose.mjs model.glb clip time [xr]  -> skins the mesh on the CPU at that moment of a clip and prints the underside
+// node skin-pose.mjs model.glb clip time [xr] [joint regex]  -> skins the mesh on the CPU at that moment of a clip and prints the underside
 // (lowest y per 5 cm of z for |x| < xr), joint positions and the sockets. Used to seat a character at an exact height.
+// With a joint regex only the vertices whose strongest joint matches are counted (UpLeg: the thighs alone, without a coat hem).
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { mat4, quat, vec3 } from 'gl-matrix';
-const [file, clipName, tArg, xrArg] = process.argv.slice(2); const t = Number(tArg || 0), xr = Number(xrArg || 0.3);
+const [file, clipName, tArg, xrArg, onlyArg] = process.argv.slice(2); const only = onlyArg ? new RegExp(onlyArg) : null; const t = Number(tArg || 0), xr = Number(xrArg || 0.3);
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS); const doc = await io.read(file); const root = doc.getRoot();
 const skin = root.listSkins()[0]; const joints = skin.listJoints(); const ibm = skin.getInverseBindMatrices().getArray();
 const anim = root.listAnimations().find(a => a.getName() === clipName); if (!anim) throw new Error('no clip ' + clipName);
@@ -20,6 +21,7 @@ const p = [], jj = [], ww = []; const bins = new Map(); let lo = [1e9, 1e9, 1e9]
 for (let v = 0; v < pos.getCount(); v++) { pos.getElement(v, p); ja.getElement(v, jj); wa.getElement(v, ww); const o = vec3.create();
   for (let k = 0; k < 4; k++) if (ww[k] > 0) { const q = vec3.transformMat4(vec3.create(), p, JM[jj[k]]); vec3.scaleAndAdd(o, o, q, ww[k]); }
   for (let c = 0; c < 3; c++) { lo[c] = Math.min(lo[c], o[c]); hi[c] = Math.max(hi[c], o[c]); }
+  if (only) { let m = 0; for (let k = 1; k < 4; k++) if (ww[k] > ww[m]) m = k; if (!only.test(joints[jj[m]].getName())) continue; }
   if (Math.abs(o[0]) < xr) { const b = Math.floor(o[2] / 0.05); const e = bins.get(b) || { min: 1e9, max: -1e9 }; e.min = Math.min(e.min, o[1]); e.max = Math.max(e.max, o[1]); bins.set(b, e); } }
 console.log('bounds', lo.map(v => v.toFixed(3)).join(' '), '..', hi.map(v => v.toFixed(3)).join(' '));
 for (const b of [...bins.keys()].sort((a, c) => a - c)) console.log(`z ${(b * 0.05).toFixed(2)}..${(b * 0.05 + 0.05).toFixed(2)}  underside ${bins.get(b).min.toFixed(3)}  top ${bins.get(b).max.toFixed(3)}`);
