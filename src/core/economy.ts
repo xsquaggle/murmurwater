@@ -1,31 +1,28 @@
 /** Catch valuation, the hold, the journal, selling. Pure functions over GameState. */
 import { fish, RARITIES } from './content';
 import { STRANGE_TRAITS, type CatchResult } from './fishing';
+import { stats } from './gear';
 import type { CatchItem, GameState } from './state';
 
-export const RHYTHM = { max: 10, perStack: 0.05, decayAfter: 60 };
+/** Rhythm: each catch in a row without a snap adds a stack; the cap comes from gear (stats().rhythmCap, 10 to start). */
+export const RHYTHM = { perStack: 0.05, decayAfter: 60 };
 
 export function traitMult(trait: string | null): number {
   return trait ? STRANGE_TRAITS.find((t) => t.id === trait)?.mult ?? 1 : 1;
 }
 
-/** Global value multiplier from progression (Echo upgrades, relics, gear) — extended as systems land. */
-export function valueMultiplier(s: GameState): number {
-  return 1 + (s.echoUpgrades['value'] ?? 0) * 0.1;
-}
+export function rhythmMult(s: GameState, cap = stats(s).rhythmCap): number { return 1 + Math.min(cap, s.rhythm) * RHYTHM.perStack; }
 
-export function rhythmMult(s: GameState): number { return 1 + Math.min(RHYTHM.max, s.rhythm) * RHYTHM.perStack; }
-
-export function catchValue(s: GameState, c: CatchResult): number {
+export function catchValue(s: GameState, c: CatchResult, st = stats(s)): number {
   const f = fish(c.fishId);
-  const v = f.baseValue * c.sizeFactor * traitMult(c.trait) * rhythmMult(s) * valueMultiplier(s) * (c.perfectHook ? 1.1 : 1);
+  const v = f.baseValue * c.sizeFactor * traitMult(c.trait) * rhythmMult(s, st.rhythmCap) * st.value * (c.perfectHook ? 1.1 : 1);
   return Math.max(1, Math.round(v));
 }
 
 export interface AddResult { item: CatchItem | null; firstCatch: boolean; newRecord: boolean; holdFull: boolean }
 
 /** Records a landed catch: journal, rhythm, stats, and the hold (if there is room). */
-export function addCatch(s: GameState, c: CatchResult): AddResult {
+export function addCatch(s: GameState, c: CatchResult, st = stats(s)): AddResult {
   const j = s.journal[c.fishId];
   const firstCatch = !j;
   const newRecord = !!j && c.weight > j.bestWeight;
@@ -37,9 +34,9 @@ export function addCatch(s: GameState, c: CatchResult): AddResult {
   };
   s.lifetime.catches++;
   if (c.perfectHook) s.lifetime.perfectHooks++;
-  s.rhythm = Math.min(RHYTHM.max, s.rhythm + 1);
-  const value = catchValue(s, c);
-  if (s.hold.length >= s.holdCapacity) return { item: null, firstCatch, newRecord, holdFull: true };
+  s.rhythm = Math.min(st.rhythmCap, s.rhythm + 1);
+  const value = catchValue(s, c, st);
+  if (s.hold.length >= st.hold) return { item: null, firstCatch, newRecord, holdFull: true };
   const item: CatchItem = { uid: s.nextUid++, fishId: c.fishId, weight: c.weight, trait: c.trait, value, perfect: c.perfectHook };
   s.hold.push(item);
   return { item, firstCatch, newRecord, holdFull: false };
@@ -47,10 +44,14 @@ export function addCatch(s: GameState, c: CatchResult): AddResult {
 
 export function breakRhythm(s: GameState) { s.rhythm = 0; }
 
+/** Coins that were earned (sales, rewards, finds): they count toward the tide's total and the lifetime's. */
+export function earn(s: GameState, coins: number) { s.coins += coins; s.lifetime.coins += coins; s.run.coins += coins; }
+
+/** Sells the hold and everything hauled from the pots. */
 export function sellAll(s: GameState): number {
-  const total = s.hold.reduce((a, c) => a + c.value, 0);
-  s.hold = [];
-  s.coins += total; s.lifetime.coins += total; s.run.coins += total;
+  const total = s.hold.reduce((a, c) => a + c.value, 0) + s.pots.hold.reduce((a, c) => a + c.value, 0);
+  s.hold = []; s.pots.hold = [];
+  earn(s, total);
   return total;
 }
 
@@ -58,7 +59,7 @@ export function sellItem(s: GameState, uid: number): number {
   const i = s.hold.findIndex((c) => c.uid === uid);
   if (i < 0) return 0;
   const [c] = s.hold.splice(i, 1);
-  s.coins += c.value; s.lifetime.coins += c.value; s.run.coins += c.value;
+  earn(s, c.value);
   return c.value;
 }
 

@@ -17,7 +17,8 @@ import { BAITS_BY_ID, RODS_BY_ID, type FerryPoint, type MooringDef, type NpcSpot
 import { LANDING } from '../core/landing';
 import { DAY_LENGTH_S } from '../render/daycycle';
 import type { ChartRaster, ChartView } from '../ui/chart';
-import { fmt, sellAll } from '../core/economy';
+import { earn, fmt, sellAll } from '../core/economy';
+import { buyBait, buyRod, type CollectionDef } from '../core/gear';
 import { saveSettings, type Settings } from './settings';
 import { QUALITY } from '../render/renderer';
 
@@ -80,6 +81,7 @@ export class Town {
       quit: () => { void g.save().then(() => window.mwNative?.quit()); },
       close: () => this.closeScreens(),
       canQuit: !!window.mwNative,
+      stats: () => g.stats,
       chart: () => this.chartView(),
       sailTo: (id) => this.sailTo(id),
     };
@@ -351,10 +353,8 @@ export class Town {
 
   private buyRod(id: string) {
     const g = this.g, s = g.state, r = RODS_BY_ID.get(id)!;
-    if (s.coins < r.price || s.gear.rods.includes(id)) return;
     const before = readySet(s);
-    s.coins -= r.price;
-    s.gear.rods.push(id); s.gear.rodLevels[id] = 0; s.gear.rod = id;
+    if (!buyRod(s, id)) return;
     g.refreshSession();
     g.audio.coin(6);
     g.hud.toast(`Bought the ${r.name}`, 'gold');
@@ -363,18 +363,21 @@ export class Town {
   }
 
   private buyBait(id: string, n: number) {
-    const g = this.g, s = g.state, b = BAITS_BY_ID.get(id)!;
-    if (s.coins < b.price * n) return;
-    s.coins -= b.price * n;
-    s.gear.baits[id] = (s.gear.baits[id] ?? 0) + n;
+    const g = this.g;
+    if (!buyBait(g.state, id, n)) return;
     g.audio.coin(2);
     void g.save();
   }
 
+  /** A journal page was filled: say so and show what it gave. */
+  pagesDone(pages: CollectionDef[]) {
+    for (const p of pages) { this.g.audio.discover(); this.g.hud.toast(`${p.name} is complete`, 'gold'); this.g.refreshSession(); }
+  }
+
   /** The goal line: the story's next step, with a couple of practical overrides. */
   goal(): string {
-    const s = this.g.state;
-    if (s.hold.length >= s.holdCapacity) return 'Your hold is full: sell your catch to Mara at the stall';
+    const g = this.g, s = g.state;
+    if (s.hold.length >= g.holdCapacity) return 'Your hold is full: sell your catch to Mara at the stall';
     // The lamp is on Gull Point, and the only way over is Pell's boat.
     if (questStatus(s, 'hb-06-relight') === 'active' && !this.lampLit) {
       return this.island === 'gull-point' ? 'Relight: climb the lighthouse stair and light the lamp' : 'Relight: ask Pell at the dock to row you out to Gull Point';
@@ -387,7 +390,7 @@ export class Town {
     const g = this.g, s = g.state;
     const at = (x: number, z: number, lift: number) => ({ x, z, y: Math.max(g.groundAt(x, z) ?? 0, g.world.hf.height(x, z), 0) + lift });
     const person = (id: string) => { const p = this.npcs.get(id)?.fig.root; return p?.visible ? { x: p.position.x, z: p.position.z, y: p.position.y + 2.6 } : null; };
-    if (s.hold.length >= s.holdCapacity) return person('mara');
+    if (s.hold.length >= g.holdCapacity) return person('mara');
     const goal = currentGoal(s);
     if (goal.npc) return person(goal.npc);
     if (goal.at) return at(goal.at[0], goal.at[1], 5);
@@ -417,7 +420,7 @@ export class Town {
     const g = this.g, s = g.state, def = this.region.chests?.find((c) => c.id === id);
     if (!def || s.flags.includes(`chest:${id}`)) return;
     s.flags.push(`chest:${id}`);
-    s.coins += def.coins; s.lifetime.coins += def.coins; s.run.coins += def.coins;
+    earn(s, def.coins);
     const got = [`◉ ${def.coins}`];
     for (const [bait, n] of Object.entries(def.items ?? {})) { s.gear.baits[bait] = (s.gear.baits[bait] ?? 0) + n; got.push(`${n} ${BAITS_BY_ID.get(bait)?.name ?? bait}`); }
     this.showChests();
@@ -618,7 +621,7 @@ export class Town {
     const goal = this.goalTarget(), aboard = g.sailing.aboard;
     if (goal && !this.blocking) {
       const d = Math.hypot(goal.x - g.pos.x, goal.z - g.pos.z);
-      const isPerson = !!currentGoal(s).npc || s.hold.length >= s.holdCapacity;
+      const isPerson = !!currentGoal(s).npc || s.hold.length >= g.holdCapacity;
       if (aboard ? d > 14 : !isPerson && d < 95) {
         const v = new Vector3(goal.x, goal.y, goal.z).project(g.camera);
         if (v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05) items.push({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, kind: 'place', glyph: '✦', label: aboard && d > 40 ? `${Math.round(d / 5) * 5} m` : null, alpha: 1 });

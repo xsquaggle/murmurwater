@@ -4,10 +4,10 @@
       "reach": 18, "power": 2.4, "control": 1.0, "luck": 0, "grace": 0.55,
       "desc": "Your aunt's old rod. Bends like a willow, holds like one too." },
     { "id": "harbour-rod", "name": "Harbour Rod", "tier": 1, "rarity": "fine", "price": 450,
-      "reach": 24, "power": 3.0, "control": 1.2, "luck": 0.1, "grace": 0.65,
+      "reach": 24, "power": 3.0, "control": 1.2, "luck": 0.25, "grace": 0.65,
       "desc": "Mara's shop standard. Varnished, reliable, smells faintly of tar." },
     { "id": "gullwing-rod", "name": "Gullwing Rod", "tier": 2, "rarity": "rare", "price": 2600,
-      "reach": 30, "power": 3.7, "control": 1.45, "luck": 0.22, "grace": 0.75,
+      "reach": 30, "power": 3.7, "control": 1.45, "luck": 0.5, "grace": 0.75,
       "desc": "Light as a feather because it is mostly feathers." }
   ]
 }

@@ -3,7 +3,8 @@
  * Plain DOM + CSS so text is crisp at any UI scale.
  */
 import { fish } from '../core/content';
-import { fmt, rarityIndex } from '../core/economy';
+import { fmt, rarityIndex, rhythmMult } from '../core/economy';
+import type { Stats } from '../core/gear';
 import { FEEL, STRANGE_TRAITS, type FishingSession } from '../core/fishing';
 import type { CatchItem, GameState } from '../core/state';
 
@@ -172,13 +173,13 @@ export class Hud {
     void item;
   }
 
-  update(dt: number, s: GameState, session: FishingSession, bitePos: { x: number; y: number } | null) {
+  update(dt: number, s: GameState, session: FishingSession, bitePos: { x: number; y: number } | null, st: Stats) {
     this.shownCoins += (s.coins - this.shownCoins) * Math.min(1, dt * 8);
     if (Math.abs(s.coins - this.shownCoins) < 0.5) this.shownCoins = s.coins;
     (this.coins.querySelector('b') as HTMLElement).textContent = fmt(this.shownCoins);
-    (this.hold.querySelector('b') as HTMLElement).textContent = `${s.hold.length}/${s.holdCapacity}`;
-    this.hold.classList.toggle('full', s.hold.length >= s.holdCapacity);
-    (this.rhythm.querySelector('b') as HTMLElement).textContent = `×${(1 + Math.min(10, s.rhythm) * 0.05).toFixed(2)}`;
+    (this.hold.querySelector('b') as HTMLElement).textContent = `${s.hold.length}/${st.hold}`;
+    this.hold.classList.toggle('full', s.hold.length >= st.hold);
+    (this.rhythm.querySelector('b') as HTMLElement).textContent = `×${rhythmMult(s, st.rhythmCap).toFixed(2)}`;
     this.rhythm.classList.toggle('on', s.rhythm > 0);
 
     const ph = session.phase;

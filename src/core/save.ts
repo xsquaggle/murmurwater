@@ -26,6 +26,15 @@ export const MIGRATIONS: Record<number, Migration> = {
     w.onBoat = false;
     return s;
   },
+  // v3 → v4: the hold's size comes from gear (the creel, a coat, the boat) instead of being saved, the one old
+  // Echo upgrade becomes the first ranks of Tidewise. Pots, the creel level and the Echoes paid out so far
+  // are new fields and take their defaults.
+  3: (s) => {
+    delete s.holdCapacity;
+    const up = (s.echoUpgrades ??= {});
+    if (up.value) { up.tidewise = Math.min(10, up.value); delete up.value; }
+    return s;
+  },
 };
 
 // JSON can't hold Infinity (the free breadcrumb stack); encode it.

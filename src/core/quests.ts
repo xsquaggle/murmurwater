@@ -11,10 +11,13 @@ import npcsJson from '../data/npcs.json';
 import relicsJson from '../data/relics.json';
 import boatsJson from '../data/boats.json';
 import { BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, RODS_BY_ID, fish, inHours } from './content';
+import { LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable } from './gear';
+import { earn } from './economy';
 import { Rng, hashString } from './rng';
 import type { GameState } from './state';
 
-export type ObjectiveType = 'catch' | 'sell' | 'earn' | 'perfect' | 'own' | 'visit';
+export type ObjectiveType = 'catch' | 'sell' | 'earn' | 'perfect' | 'own' | 'visit' | 'haul' | 'ring';
+const OBJECTIVE_TYPES: ObjectiveType[] = ['catch', 'sell', 'earn', 'perfect', 'own', 'visit', 'haul', 'ring'];
 export interface ObjectiveDef {
   type: ObjectiveType; label: string; count?: number;
   /** catch: a specific species, a minimum rarity, a minimum weight, a strange trait. */
@@ -26,17 +29,23 @@ export interface ObjectiveDef {
 export interface Rewards {
   coins?: number; moonpearls?: number; items?: Record<string, number>; rods?: string[];
   flags?: string[]; relics?: string[]; boats?: string[];
+  lures?: string[]; wearables?: string[]; /** Lantern Pots to add to the ones owned. */ pots?: number;
 }
 export interface QuestDef {
   id: string; chain: 'main' | 'side'; giver: string; title: string; summary: string;
   requires: string[]; requiresFlags?: string[];
   intro: string[]; objectives: ObjectiveDef[]; outro: string[]; rewards: Rewards;
+  /** Handed over when the quest is accepted (the tool the job is about). */ gives?: Rewards;
+  /** Taking the job brings the dusk on if the sun is still up (a job that needs the dark should not mean a wait). */ dusk?: boolean;
   /** Short line the giver says while the quest is in progress. */ reminder?: string;
 }
 export interface NpcDef { id: string; name: string; role: string; region: string; voice: string; barks: string[] }
 export interface RelicDef { id: string; name: string; effect: { luck?: number; value?: number; biteSpeed?: number }; lore: string }
 /** speed m/s, turn rad/s, accel 1/s, draft/length/beam m (see core/boat.ts); hull and lamp are the ratings that open rougher and foggier seas. */
 export interface BoatDef { id: string; name: string; speed: number; turn: number; accel: number; draft: number; length: number; beam: number; hull: number; lamp: number; hold: number; price: number; desc: string }
+
+/** The hours the sun comes up and goes down, for jobs that bring the dusk on. */
+export const DAWN = 6, DUSK = 17;
 
 export const QUESTS: QuestDef[] = questsJson.quests as QuestDef[];
 export const NPCS: NpcDef[] = npcsJson.npcs as NpcDef[];
@@ -52,7 +61,9 @@ export function npc(id: string): NpcDef { const n = NPCS_BY_ID.get(id); if (!n) 
 export type QuestEvent =
   | { type: 'catch'; fishId: string; weight: number; trait: string | null; perfect: boolean }
   | { type: 'sell'; count: number; coins: number }
-  | { type: 'visit'; place: string };
+  | { type: 'visit'; place: string }
+  /** Fish brought up from a Lantern Pot. */ | { type: 'haul'; count: number }
+  /** The Drowned Bell was rung. */ | { type: 'ring' };
 
 // ---------------------------------------------------------------- story quests
 
@@ -79,12 +90,15 @@ export function isComplete(s: GameState, q: QuestDef): boolean {
 }
 
 export function owns(s: GameState, item: string): boolean {
-  return s.gear.rods.includes(item) || (s.gear.baits[item] ?? 0) > 0 || s.boats.owned.includes(item);
+  return s.gear.rods.includes(item) || (s.gear.baits[item] ?? 0) > 0 || s.boats.owned.includes(item) || s.gear.lures.includes(item) || s.gear.wearables.includes(item);
 }
 
 export function accept(s: GameState, id: string): boolean {
   if (questStatus(s, id) !== 'available') return false;
   s.quests.active[id] = {};
+  const q = QUESTS_BY_ID.get(id)!;
+  if (q.gives) applyRewards(s, q.gives);
+  if (q.dusk && s.hour >= DAWN && s.hour < DUSK) s.hour = DUSK;
   return true;
 }
 
@@ -99,13 +113,16 @@ export function turnIn(s: GameState, id: string): Rewards | null {
 }
 
 export function applyRewards(s: GameState, r: Rewards) {
-  if (r.coins) { s.coins += r.coins; s.lifetime.coins += r.coins; s.run.coins += r.coins; }
+  if (r.coins) earn(s, r.coins);
   if (r.moonpearls) s.moonpearls += r.moonpearls;
   for (const [id, n] of Object.entries(r.items ?? {})) s.gear.baits[id] = (s.gear.baits[id] ?? 0) + n;
   for (const id of r.rods ?? []) if (!s.gear.rods.includes(id)) { s.gear.rods.push(id); s.gear.rodLevels[id] = 0; }
   for (const f of r.flags ?? []) if (!s.flags.includes(f)) s.flags.push(f);
   for (const id of r.relics ?? []) if (!s.relics.includes(id)) s.relics.push(id);
   for (const id of r.boats ?? []) if (!s.boats.owned.includes(id)) { s.boats.owned.push(id); s.boats.current ??= id; }
+  for (const id of r.lures ?? []) grantLure(s, id);
+  for (const id of r.wearables ?? []) grantWearable(s, id);
+  if (r.pots) s.pots.owned += r.pots;
 }
 
 export function describeRewards(r: Rewards): string[] {
@@ -116,6 +133,9 @@ export function describeRewards(r: Rewards): string[] {
   for (const id of r.rods ?? []) out.push(RODS_BY_ID.get(id)?.name ?? id);
   for (const id of r.relics ?? []) out.push(`Relic: ${RELICS_BY_ID.get(id)?.name ?? id}`);
   for (const id of r.boats ?? []) out.push(`Boat: ${BOATS_BY_ID.get(id)?.name ?? id}`);
+  for (const id of r.lures ?? []) out.push(`Lure: ${LURES_BY_ID.get(id)?.name ?? id}`);
+  for (const id of r.wearables ?? []) out.push(WEARABLES_BY_ID.get(id)?.name ?? id);
+  if (r.pots) out.push(r.pots > 1 ? `${r.pots} Lantern Pots` : 'A Lantern Pot');
   return out;
 }
 
@@ -135,6 +155,8 @@ function advanceBy(o: ObjectiveDef, ev: QuestEvent): number {
     case 'sell': return ev.type === 'sell' ? ev.count : 0;
     case 'earn': return ev.type === 'sell' ? ev.coins : 0;
     case 'visit': return ev.type === 'visit' && ev.place === o.place ? 1 : 0;
+    case 'haul': return ev.type === 'haul' ? ev.count : 0;
+    case 'ring': return ev.type === 'ring' ? 1 : 0;
     default: return 0;
   }
 }
@@ -320,16 +342,19 @@ export function validateQuests(placeIds: Set<string>): string[] {
     if (!q.intro.length || !q.outro.length) errs.push(`${q.id}: needs intro and outro lines`);
     if (!q.objectives.length) errs.push(`${q.id}: no objectives`);
     for (const o of q.objectives) {
-      if (!['catch', 'sell', 'earn', 'perfect', 'own', 'visit'].includes(o.type)) errs.push(`${q.id}: bad objective type ${o.type}`);
+      if (!OBJECTIVE_TYPES.includes(o.type)) errs.push(`${q.id}: bad objective type ${o.type}`);
       if (o.fish && !FISH_BY_ID.has(o.fish)) errs.push(`${q.id}: unknown fish ${o.fish}`);
-      if (o.type === 'own' && !(RODS_BY_ID.has(o.item!) || BAITS_BY_ID.has(o.item!) || BOATS_BY_ID.has(o.item!))) errs.push(`${q.id}: unknown item ${o.item}`);
+      if (o.type === 'own' && !(RODS_BY_ID.has(o.item!) || BAITS_BY_ID.has(o.item!) || BOATS_BY_ID.has(o.item!) || LURES_BY_ID.has(o.item!) || WEARABLES_BY_ID.has(o.item!))) errs.push(`${q.id}: unknown item ${o.item}`);
       if (o.type === 'visit' && !placeIds.has(o.place!)) errs.push(`${q.id}: unknown place ${o.place}`);
     }
-    const r = q.rewards;
+    for (const r of [q.rewards, q.gives ?? {}]) {
     for (const id of Object.keys(r.items ?? {})) if (!BAITS_BY_ID.has(id)) errs.push(`${q.id}: unknown reward bait ${id}`);
     for (const id of r.rods ?? []) if (!RODS_BY_ID.has(id)) errs.push(`${q.id}: unknown reward rod ${id}`);
     for (const id of r.relics ?? []) if (!RELICS_BY_ID.has(id)) errs.push(`${q.id}: unknown relic ${id}`);
     for (const id of r.boats ?? []) if (!BOATS_BY_ID.has(id)) errs.push(`${q.id}: unknown boat ${id}`);
+    for (const id of r.lures ?? []) if (!LURES_BY_ID.has(id)) errs.push(`${q.id}: unknown lure ${id}`);
+    for (const id of r.wearables ?? []) if (!WEARABLES_BY_ID.has(id)) errs.push(`${q.id}: unknown wearable ${id}`);
+    }
   }
   for (const q of QUESTS) for (const r of q.requires) if (!ids.has(r)) errs.push(`${q.id}: requires unknown quest ${r}`);
   // Every quest must be reachable from the start (no cycles, no orphans).

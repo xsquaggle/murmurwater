@@ -1,7 +1,48 @@
 {
   "baits": [
-    { "id": "breadcrumb", "name": "Breadcrumbs", "price": 0, "biteSpeed": 1.0, "affinity": {}, "desc": "Free, endless, and frankly beneath most fish." },
-    { "id": "sandworm", "name": "Sandworm", "price": 3, "biteSpeed": 1.25, "affinity": { "pebble-goby": 1.5, "moss-eel": 1.4 }, "desc": "Wriggles convincingly." },
-    { "id": "glowgrub", "name": "Glowgrub", "price": 12, "biteSpeed": 1.15, "affinity": { "lampjaw": 2.0, "hollow-lantern": 1.6 }, "rarityBoost": 0.1, "desc": "A grub that glows. Night fish find it irresistible." }
+    { "id": "breadcrumb",
+      "name": "Breadcrumbs",
+      "price": 0,
+      "biteSpeed": 1.0,
+      "affinity": {},
+      "blurb": "Free and endless",
+      "desc": "Free, endless, and frankly beneath most fish."
+    },
+    { "id": "sandworm",
+      "name": "Sandworm",
+      "price": 2,
+      "biteSpeed": 1.15,
+      "affinity": {
+        "moss-eel": 2.5,
+        "kettle-carp": 1.5,
+        "pebble-goby": 1.3
+      },
+      "blurb": "Bottom feeders: eels, carp, gobies",
+      "desc": "Wriggles convincingly. Eels cannot leave it alone."
+    },
+    { "id": "brine-shrimp",
+      "name": "Brine Shrimp",
+      "price": 5,
+      "biteSpeed": 1.1,
+      "affinity": {
+        "twofold-flounder": 2.0,
+        "coral-snapper": 1.2
+      },
+      "blurb": "Reef fish: flounder, snapper",
+      "desc": "Pink, salty, and gone the moment it touches deep water."
+    },
+    { "id": "glowgrub",
+      "name": "Glowgrub",
+      "price": 15,
+      "biteSpeed": 1.1,
+      "affinity": {
+        "hollow-lantern": 2.2,
+        "lampjaw": 1.3,
+        "manyeye": 2.0
+      },
+      "rarityBoost": 0.1,
+      "blurb": "Night fish, and rarer ones",
+      "desc": "A grub that glows. The things that hunt by their own light come to see whose it is."
+    }
   ]
 }

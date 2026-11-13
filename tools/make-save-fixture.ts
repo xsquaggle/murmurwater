@@ -18,5 +18,12 @@ s.flags.push('lamp-lit', 'hb-lighthouse-lit');
 s.boats = { owned: ['skiff'], current: 'skiff', upgrades: {}, at: { x: -319, z: 28, heading: -1.5708 } };
 s.world.charted = ['hearthbay', 'gull-point', 'kettle-isle'];
 s.world.onBoat = true; s.world.pos = [-319, 0.2, 28];
+// v4: gear beyond the rod, pots in the water, a rung Bell.
+s.gear.creel = 2; s.gear.rodLevels['driftwood-rod'] = 3;
+s.gear.lures = ['brass-spinner']; s.gear.lure = 'brass-spinner';
+s.gear.wearables = ['wool-cap', 'keepers-boots']; s.gear.worn.hat = 'wool-cap'; s.gear.worn.boots = 'keepers-boots';
+s.pots = { owned: 2, placed: [{ id: 1, region: 'hearthbay', zone: 'hb-dock', x: -120, z: 30, fish: [{ uid: 9, fishId: 'butterperch', weight: 0.4, trait: null, value: 3, perfect: false }], t: 12, n: 4 }], hold: [], levels: { speed: 1, size: 0, quality: 2 }, nextId: 2 };
+s.echoes = 4; s.echoUpgrades = { tidewise: 2 }; s.lifetime.echoes = 7; s.run = { number: 2, coins: 800, startedAt: 3000 };
+s.flags.push('bell-found', 'pots-open');
 writeFileSync(`tests/fixtures/saves/v${SAVE_VERSION}.json`, serialize(s, new Date('2026-11-12T00:00:00Z')));
 console.log('wrote fixture v' + SAVE_VERSION);

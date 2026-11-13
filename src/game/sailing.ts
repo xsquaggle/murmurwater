@@ -11,6 +11,7 @@ import { assets } from '../render/assets';
 import { clearance, nearestFloat, newBoat, stepBoat, type BoatEnv, type BoatState } from '../core/boat';
 import { LANDING, boatEnv, hullDistance, landingSpot } from '../core/landing';
 import { BOATS_BY_ID, type BoatDef } from '../core/quests';
+import { earn } from '../core/economy';
 import type { ChartPlace, MooringDef, RegionContent } from '../core/content';
 
 interface Hop { from: Vector3; to: Vector3; t: number; dur: number; rise: number; toBoat: boolean; done: () => void }
@@ -228,7 +229,7 @@ export class Sailing {
     const g = this.g, s = g.state;
     s.world.charted.push(c.id);
     const coins = c.coins ?? 0;
-    if (coins) { s.coins += coins; s.lifetime.coins += coins; s.run.coins += coins; }
+    if (coins) earn(s, coins);
     g.audio.discover();
     g.hud.toast(`On the chart: ${c.name}${coins ? ` · ◉ ${coins}` : ''}`, 'gold');
     void g.save();

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { addCatch, catchValue, fmt, sellAll } from '../src/core/economy';
 import { newGame } from '../src/core/state';
+import { stats } from '../src/core/gear';
 
 const c = (over = {}) => ({ fishId: 'butterperch', weight: 0.8, sizeFactor: 1, trait: null, perfectHook: false, cleanCast: false, fightTime: 5, ...over });
 
@@ -19,8 +20,7 @@ describe('economy', () => {
     expect(r.firstCatch).toBe(true);
     expect(s.hold.length).toBe(1);
     expect(addCatch(s, c({ weight: 1.2 })).newRecord).toBe(true);
-    s.holdCapacity = 2;
-    expect(addCatch(s, c()).holdFull).toBe(true);
+    expect(addCatch(s, c(), { ...stats(s), hold: 2 }).holdFull).toBe(true);
     const total = sellAll(s);
     expect(total).toBeGreaterThan(0);
     expect(s.coins).toBe(total);

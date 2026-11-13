@@ -105,14 +105,20 @@ describe('story quests', () => {
       'hb-06-relight': () => onQuestEvent(s, { type: 'visit', place: 'lighthouse-lamp' }),
       'hb-07-kettle': () => onQuestEvent(s, { type: 'visit', place: 'keepers-kettle' }),
       'hb-08-teeth': () => onQuestEvent(s, catchEv('twofold-flounder')),
+      'hb-08b-stall': () => onQuestEvent(s, { type: 'sell', count: 30, coins: 6000 }),
+      'hb-p1-pots': () => { expect(s.pots.owned).toBe(1); onQuestEvent(s, { type: 'haul', count: 3 }); },
+      'hb-09-bell': () => onQuestEvent(s, { type: 'visit', place: 'drowned-bell' }),
+      'hb-10-turning': () => onQuestEvent(s, { type: 'ring' }),
     };
-    for (let guard = 0; guard < 20 && s.quests.done.length < QUESTS.length; guard++) {
+    for (let guard = 0; guard < 40 && s.quests.done.length < QUESTS.length; guard++) {
       const q = QUESTS.find((x) => questStatus(s, x.id) === 'available');
       if (!q) break;
       accept(s, q.id); play[q.id](); expect(turnIn(s, q.id), q.id).not.toBeNull();
     }
     expect(s.quests.done.length).toBe(QUESTS.length);
     expect(currentGoal(s).text).toMatch(/journal/i);
+    expect(s.flags).toEqual(expect.arrayContaining(['pots-open', 'bell-found', 'tide-turned']));
+    expect(s.gear.wearables).toEqual(expect.arrayContaining(['keepers-souwester', 'keepers-whistle']));
   });
 });
 

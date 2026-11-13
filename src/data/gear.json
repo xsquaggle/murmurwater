@@ -1,0 +1,63 @@
+{
+  "tuning": {
+    "maxLevel": 10, "costShare": 0.15, "costFloor": 40, "costGrowth": 1.9,
+    "perLevel": { "power": 0.04, "control": 0.03, "reach": 0.015, "grace": 0.01, "luck": 0.02 }
+  },
+  "creel": {
+    "base": 12,
+    "levels": [
+      { "slots": 16, "value": 0.1, "price": 150, "name": "Wicker Creel" },
+      { "slots": 20, "value": 0.2, "price": 500, "name": "Lined Creel" },
+      { "slots": 26, "value": 0.3, "price": 1500, "name": "Salt Box" },
+      { "slots": 32, "value": 0.4, "price": 4500, "name": "Ice Chest" },
+      { "slots": 40, "value": 0.5, "price": 12000, "name": "Keeper's Ice Chest" }
+    ]
+  },
+  "lures": [
+    { "id": "brass-spinner", "name": "Brass Spinner", "price": 700, "effect": { "size": 0.18 },
+      "blurb": "Bigger fish", "desc": "Heavy brass. Only the big ones bother with it." },
+    { "id": "moth-lure", "name": "Paper Moth", "price": 1100, "when": "night", "effect": { "biteSpeed": 0.3 },
+      "blurb": "Faster bites after dark", "desc": "A paper moth on a hook. It flutters when nobody is watching." },
+    { "id": "tin-minnow", "name": "Tin Minnow", "effect": { "luck": 0.1 },
+      "blurb": "Rarer fish", "desc": "Somebody loved this once. The paint is worn away where a thumb would go." }
+  ],
+  "wearables": [
+    { "id": "wool-cap", "name": "Wool Cap", "slot": "hat", "price": 250, "effect": { "biteSpeed": 0.05 },
+      "blurb": "Bites come 5% sooner", "desc": "Itchy. Fish respect the commitment." },
+    { "id": "oilskin-coat", "name": "Oilskin Coat", "slot": "coat", "price": 900, "effect": { "hold": 4 },
+      "blurb": "4 more hold slots", "desc": "More pocket than coat." },
+    { "id": "tar-boots", "name": "Tarred Boots", "slot": "boots", "price": 500, "effect": { "control": 0.05 },
+      "blurb": "5% more line control", "desc": "You stand a little firmer than the fish expects." },
+    { "id": "gull-feather", "name": "Gull Feather", "slot": "charm", "price": 400, "effect": { "biteWindow": 0.06 },
+      "blurb": "A longer moment to hook", "desc": "It points at the float just before it goes under. Mostly." },
+    { "id": "keepers-souwester", "name": "The Keeper's Sou'wester", "slot": "hat", "set": "keepers-things", "effect": { "luck": 0.05 },
+      "blurb": "Rarer fish", "desc": "The brim is stiff with twelve winters of salt. It fits." },
+    { "id": "keepers-oilskin", "name": "The Keeper's Oilskin", "slot": "coat", "set": "keepers-things", "effect": { "value": 0.08, "hold": 4 },
+      "blurb": "Fish sell for 8% more, 4 more hold slots", "desc": "A list in the pocket, in a careful hand: the names of fish. Some are crossed out." },
+    { "id": "keepers-boots", "name": "The Keeper's Boots", "slot": "boots", "set": "keepers-things", "effect": { "grace": 0.2, "control": 0.04 },
+      "blurb": "The line forgives more", "desc": "Left side by side above the tide line, toes to the sea." },
+    { "id": "keepers-whistle", "name": "The Keeper's Whistle", "slot": "charm", "set": "keepers-things", "effect": { "biteWindow": 0.08, "strange": 0.01 },
+      "blurb": "A longer moment to hook, stranger fish", "desc": "Blow it and nothing sounds. Something out past the Teeth turns to listen anyway." }
+  ],
+  "sets": [
+    { "id": "keepers-things", "name": "The Keeper's Things",
+      "bonuses": [
+        { "pieces": 2, "effect": { "value": 0.05 }, "blurb": "Fish sell for 5% more" },
+        { "pieces": 4, "effect": { "luck": 0.08, "rhythmCap": 2 }, "blurb": "Rarer fish, and Rhythm builds two stacks higher" }
+      ] }
+  ],
+  "collections": [
+    { "id": "hearthbay-page", "name": "The Hearthbay page", "region": "hearthbay", "skipRarity": "uncanny",
+      "rewards": { "wearables": ["keepers-oilskin"] },
+      "text": "Every Hearthbay fish, drawn and named. Wick presses something heavy and yellow into your arms." }
+  ],
+  "pots": {
+    "interval": 50, "capacity": 3, "value": 0.5, "rarityFalloff": 0.5, "maxOwned": 3,
+    "prices": [500, 2500],
+    "upgrades": {
+      "speed":   { "name": "Brighter wicks", "blurb": "Pots fill 10% faster", "max": 6, "base": 200, "growth": 2.2, "per": 0.1 },
+      "size":    { "name": "Deeper baskets", "blurb": "Each pot holds one more", "max": 4, "base": 250, "growth": 2.4, "per": 1 },
+      "quality": { "name": "Sweeter bait", "blurb": "Pot fish sell for 15% more", "max": 4, "base": 300, "growth": 2.4, "per": 0.15 }
+    }
+  }
+}

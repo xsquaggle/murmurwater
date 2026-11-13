@@ -4,6 +4,7 @@
  */
 import { BAITS, FISH, RODS, fish as fishDef } from '../core/content';
 import { fmt, rarityIndex } from '../core/economy';
+import type { Stats } from '../core/gear';
 import { BOARD, QUESTS, RELICS_BY_ID, boardOpen, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus } from '../core/quests';
 import type { GameState } from '../core/state';
 import { ACTION_LABELS, DEFAULT_BINDINGS, type Action } from '../game/input';
@@ -140,6 +141,8 @@ export interface UiHost {
   quit(): void;
   close(): void;
   canQuit: boolean;
+  /** What the player's gear adds up to right now. */
+  stats(): Stats;
   /** Everything the chart shows, as of now. */
   chart(): ChartView;
   /** Fast travel: sail the boat to a mooring. */
@@ -284,8 +287,8 @@ export class Screens {
     this.card.append(this.header('Satchel', [['hold', 'Hold'], ['gear', 'Gear'], ['journal', 'Journal'], ['quests', 'Quests']]));
     if (kind === 'hold') {
       const total = s.hold.reduce((a, c) => a + c.value, 0);
-      this.card.append(el('p', { class: 'muted' }, s.hold.length ? `${s.hold.length} of ${s.holdCapacity} slots · worth ◉ ${fmt(total)} at Mara’s stall` : 'Your hold is empty. The sea is not.'));
-      this.card.append(el('div', { class: 'hold-grid' }, ...Array.from({ length: s.holdCapacity }, (_, i) => {
+      this.card.append(el('p', { class: 'muted' }, s.hold.length ? `${s.hold.length} of ${this.host.stats().hold} slots · worth ◉ ${fmt(total)} at Mara’s stall` : 'Your hold is empty. The sea is not.'));
+      this.card.append(el('div', { class: 'hold-grid' }, ...Array.from({ length: this.host.stats().hold }, (_, i) => {
         const c = s.hold[i];
         if (!c) return el('div', { class: 'slot empty' });
         const f = fishDef(c.fishId);

@@ -3,8 +3,9 @@
  * One in-game day lasts DAY_LENGTH_S real seconds.
  */
 import { Color, Vector3 } from 'three';
+import { DAY_LENGTH_S } from '../core/state';
 
-export const DAY_LENGTH_S = 24 * 60;
+export { DAY_LENGTH_S };
 
 interface Key {
   h: number;

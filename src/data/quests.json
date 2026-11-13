@@ -153,7 +153,8 @@
         "flags": [
           "has-lampjaw-light"
         ]
-      }
+      },
+      "dusk": true
     },
     {
       "id": "hb-06-relight",
@@ -243,7 +244,10 @@
           "type": "catch",
           "fish": "twofold-flounder",
           "count": 1,
-          "at": [-268, 240],
+          "at": [
+            -268,
+            240
+          ],
           "label": "Catch a Twofold Flounder at the Teeth"
         }
       ],
@@ -257,6 +261,145 @@
         "items": {
           "glowgrub": 10
         }
+      }
+    },
+    {
+      "id": "hb-08b-stall",
+      "chain": "main",
+      "giver": "mara",
+      "title": "A Full Stall",
+      "summary": "Keep Mara's stall full: sell 6,000 coins' worth of fish.",
+      "requires": [
+        "hb-08-teeth"
+      ],
+      "intro": [
+        "Word's got round that there's fish on my stall again. Proper fish, deep-water fish. I've had people at the door before light.",
+        "Keep it full for me. Six thousand coins' worth across this counter, and the village eats well till the cold.",
+        "There's a hat in the back that's been waiting for somebody. I'd say whose, if I could think."
+      ],
+      "objectives": [
+        {
+          "type": "earn",
+          "count": 6000,
+          "label": "Sell 6,000 coins' worth of fish"
+        }
+      ],
+      "reminder": "Keep the stall full. Deep water pays best, so mind the Teeth.",
+      "outro": [
+        "Six thousand. I've not written a number like that in this book since... well. There's no since. It's a new book.",
+        "Here. It fits you. I knew it would, and I can't think how I knew."
+      ],
+      "rewards": {
+        "wearables": [
+          "keepers-souwester"
+        ]
+      }
+    },
+    {
+      "id": "hb-p1-pots",
+      "chain": "side",
+      "giver": "mara",
+      "title": "Lanterns in the Water",
+      "summary": "Set the Lantern Pot in the water, let it fish while you do, and haul it up.",
+      "requires": [
+        "hb-08-teeth"
+      ],
+      "intro": [
+        "Your aunt kept lantern pots off this dock. A light in a basket. Fish swim in to look, and can't think how to leave.",
+        "There's one left in the shed. Set it in the water and it fishes while you do. Only fish it's seen you catch, mind. It learns from you.",
+        "And it only works while you're about. Leave it a night and you'll find it just as you left it. Don't ask me why."
+      ],
+      "gives": {
+        "pots": 1
+      },
+      "objectives": [
+        {
+          "type": "haul",
+          "count": 3,
+          "label": "Haul 3 fish from a Lantern Pot"
+        }
+      ],
+      "reminder": "Set the pot in the water, give it a while, then go and haul it up. It won't come to you.",
+      "outro": [
+        "There. Small fish, pot fish. But they sell, and you never lifted a rod.",
+        "I've more pots if you want them, and brighter wicks. I'll put them out on the stall."
+      ],
+      "rewards": {
+        "coins": 60,
+        "flags": [
+          "pots-open"
+        ]
+      }
+    },
+    {
+      "id": "hb-09-bell",
+      "chain": "main",
+      "giver": "pell",
+      "title": "The Drowned Bell",
+      "summary": "Sail north-west past Gull Point and find the bell the sea left standing.",
+      "requires": [
+        "hb-07-kettle",
+        "hb-08b-stall"
+      ],
+      "intro": [
+        "You've the kettle, and Mara's had her flounder. That's the bay, as far as coins will take you.",
+        "North-west, past Gull Point, a belfry stands in the sea with its bell still in it. The water took the church. It left the bell.",
+        "Go and look at it. Only look. I'll tell you the rest when you've seen it's real."
+      ],
+      "objectives": [
+        {
+          "type": "visit",
+          "place": "drowned-bell",
+          "label": "Sail north-west past Gull Point and find the Drowned Bell"
+        }
+      ],
+      "reminder": "North-west, past Gull Point. A belfry standing in the sea. You can't miss it. I've tried.",
+      "outro": [
+        "So it's still there. Good. Some tides it isn't.",
+        "The keepers ring it when the bay has given all it has. The tide turns. The islands forget, and start again kinder.",
+        "You won't forget. That's the keeper's share. Here, this was hers. It makes no sound, so mind who you blow it at."
+      ],
+      "rewards": {
+        "flags": [
+          "bell-found"
+        ],
+        "wearables": [
+          "keepers-whistle"
+        ]
+      }
+    },
+    {
+      "id": "hb-10-turning",
+      "chain": "main",
+      "giver": "pell",
+      "title": "The Turning",
+      "summary": "Ring the Drowned Bell when the bay has nothing left to sell you.",
+      "requires": [
+        "hb-09-bell"
+      ],
+      "intro": [
+        "When you're ready, ring it. Your catch is sold, your coins go out with the tide, and the islands forget what you bought with them.",
+        "What you keep: your rods, her things, your boat, your journal. And the Echoes. The more the tide carried, the more of them come back.",
+        "No hurry. You'll know the day. It's the day the stall has nothing left you want."
+      ],
+      "objectives": [
+        {
+          "type": "ring",
+          "count": 1,
+          "label": "Ring the Drowned Bell"
+        }
+      ],
+      "reminder": "The bell's where you left it, north-west past Gull Point. Ring it when the stall has nothing left you want.",
+      "outro": [
+        "Morning. First time out here? No. No, I know you. I nearly always do.",
+        "Those are Echoes in your satchel. Spend them. They're the only coin that stays spent.",
+        "The fog's thinner on the far side of a Turning. Not thin enough. Ask me again when you've rung her a few more times."
+      ],
+      "rewards": {
+        "moonpearls": 1,
+        "flags": [
+          "tide-turned"
+        ]
       }
     }
   ]

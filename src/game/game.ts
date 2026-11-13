@@ -14,13 +14,13 @@ import { PerfOverlay } from '../ui/perf';
 import { Town } from './town';
 import { Sailing } from './sailing';
 import { defaultSettings, keyLabel, type Settings } from './settings';
-import { relicBonus } from '../core/quests';
 import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
 import { Rng } from '../core/rng';
 import { FishingSession, type FishingInput, type SpotInfo } from '../core/fishing';
 import { REGIONS_BY_ID, bait, rod, zoneAt } from '../core/content';
 import { addCatch, breakRhythm, rarityIndex, RHYTHM } from '../core/economy';
+import { claimCollections, fishingContext, isNight, spendBait, stats, type Stats } from '../core/gear';
 import { type GameState } from '../core/state';
 import { serialize, type SaveStore } from '../core/save';
 import { walkableHeight } from '../core/landing';
@@ -128,29 +128,31 @@ export class Game {
 
   waveY(x: number, z: number) { return waveHeight(CALM_WAVES, x, z, this.world.time, SEA_STATE * 0.6); }
 
+  /** What the player's gear adds up to here and now (refreshed with the session and once a second). */
+  stats!: Stats;
+  private statsAge = 0;
+  private wasNight = false;
+  refreshStats() { this.stats = stats(this.state, { hour: this.world.hour, afloat: !!this.sailing?.aboard }); this.statsAge = 0; this.wasNight = isNight(this.world.hour); }
+  get holdCapacity() { return this.stats.hold; }
+
   private newSession(): FishingSession {
     const s = this.state;
     const region = REGIONS_BY_ID.get(s.world.region)!;
-    // Relics that hurry the bite work through the bait.
-    const b = bait(s.gear.bait), hurry = relicBonus(s, 'biteSpeed');
-    return new FishingSession({
-      rod: rod(s.gear.rod), bait: hurry ? { ...b, biteSpeed: b.biteSpeed * (1 + hurry) } : b, hour: this.world.hour, luck: relicBonus(s, 'luck'), biteWindowMult: 1, strangeChance: 0.03,
-      flags: new Set(s.flags), region: s.world.region,
-      spot: (dist: number): SpotInfo => {
-        // Walk back along the aim line until the lure lands in water at least 0.6 m deep.
-        const dir = new Vector3(Math.sin(this.castYaw), 0, Math.cos(this.castYaw));
-        for (let d = dist; d > 2; d -= 0.5) {
-          const x = this.pos.x + dir.x * d, z = this.pos.z + dir.z * d;
-          const depth = this.world.hf.depth(x, z);
-          if (depth >= 0.6) return { zoneId: zoneAt(region, x, z)?.id ?? null, depth, hotspot: false, distance: d };
-        }
-        return { zoneId: null, depth: 0, hotspot: false, distance: 0 };
-      },
-    }, new Rng(this.rngSeed++));
+    this.refreshStats();
+    return new FishingSession(fishingContext(s, { hour: this.world.hour }, (dist: number): SpotInfo => {
+      // Walk back along the aim line until the lure lands in water at least 0.6 m deep.
+      const dir = new Vector3(Math.sin(this.castYaw), 0, Math.cos(this.castYaw));
+      for (let d = dist; d > 2; d -= 0.5) {
+        const x = this.pos.x + dir.x * d, z = this.pos.z + dir.z * d;
+        const depth = this.world.hf.depth(x, z);
+        if (depth >= 0.6) return { zoneId: zoneAt(region, x, z)?.id ?? null, depth, hotspot: false, distance: d };
+      }
+      return { zoneId: null, depth: 0, hotspot: false, distance: 0 };
+    }, this.stats), new Rng(this.rngSeed++));
   }
 
   /** Rebuild the fishing session after gear changes (only between casts). */
-  refreshSession() { if (this.session.phase === 'idle') this.session = this.newSession(); }
+  refreshSession() { if (this.session.phase === 'idle') this.session = this.newSession(); else this.refreshStats(); }
 
   /** Put the camera straight behind the player (after a teleport). */
   snapCamera() {
@@ -221,6 +223,9 @@ export class Game {
     s.hour = (s.hour + (dt * 24) / DAY_LENGTH_S) % 24;
     this.world.hour = s.hour;
     this.session.ctx.hour = s.hour;
+    // Gear that depends on the hour or on being afloat: look again now and then, and when night falls or lifts.
+    this.statsAge += dt;
+    if (this.statsAge > 1) { if (isNight(s.hour) !== this.wasNight) this.refreshSession(); else this.refreshStats(); }
 
     // Mouse look / aim.
     const [mdx, mdy] = inp.consumeMouse();
@@ -348,11 +353,8 @@ export class Game {
         case 'nibble': this.audio.nibble(); this.view.nibble(); this.shadows.nibble(); break;
         case 'bite': this.audio.bite(); this.shake = 0.25; break;
         case 'hook': {
-          const b = s.gear.bait;
-          if (b !== 'breadcrumb' && isFinite(s.gear.baits[b] ?? 0)) {
-            s.gear.baits[b] = Math.max(0, (s.gear.baits[b] ?? 0) - 1);
-            if (s.gear.baits[b] === 0) { s.gear.bait = 'breadcrumb'; this.hud.toast(`Out of ${bait(b).name}: back to breadcrumbs`); }
-          }
+          const out = spendBait(s);
+          if (out) this.hud.toast(`Out of ${bait(out).name}: back to breadcrumbs`);
         }
           this.audio.hook(e.grade === 'perfect'); this.hud.toast(e.grade === 'perfect' ? 'Perfect hook!' : 'Hooked!', e.grade === 'perfect' ? 'gold' : 'good'); this.shake = 0.35; break;
         case 'tooEarly': this.shadows.spook(); this.hud.toast(e.spooked ? 'Too early — you spooked it' : 'Wait for the bobber to go under', 'bad'); break;
@@ -361,7 +363,8 @@ export class Game {
         case 'run': this.shake = 0.2; break;
         case 'thrash': this.shake = 0.6; this.audio.splash(1.2); if (this.view.hooked) this.shadows.scatter(this.view.hooked.x, this.view.hooked.z, 5); break;
         case 'landed': {
-          const res = addCatch(s, e.catch);
+          const res = addCatch(s, e.catch, this.stats);
+          if (res.firstCatch) this.town.pagesDone(claimCollections(s));
           this.town.questEvent({ type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook });
           const r = rarityIndex(e.catch.fishId);
           this.audio.catchFanfare(r);
@@ -576,7 +579,7 @@ export class Game {
       const v = this.view.bobberPos.clone().project(this.camera);
       bitePos = { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (-v.y * 0.5 + 0.5) * window.innerHeight };
     }
-    this.hud.update(dt, s, this.session, bitePos);
+    this.hud.update(dt, s, this.session, bitePos, this.stats);
     this.town.present(dt);
     this.hud.setGoal(this.town.goal());
     this.hud.setHint(this.town.blocking ? '' : this.hint());

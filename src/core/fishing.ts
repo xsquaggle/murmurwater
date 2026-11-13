@@ -85,6 +85,7 @@ export interface FishingContext {
   luck: number;               // extra luck from gear/relics/echoes (0 = none)
   biteWindowMult: number;     // ≥ 1 widens bite windows
   strangeChance: number;      // base ~0.03
+  size?: number;              // 0..0.6: pushes the size roll toward heavy (lures)
   flags: Set<string>;         // story flags for gated fish
   region: string;
   spot: (distance: number) => SpotInfo; // where the lure lands for a given cast distance
@@ -339,7 +340,7 @@ export class FishingSession {
   private land() {
     const fs = this.fight!;
     const f = fs.fish;
-    const r = Math.pow(this.rng.next(), 1.7);
+    const r = 1 - (1 - Math.pow(this.rng.next(), 1.7)) * (1 - (this.ctx.size ?? 0));
     const weight = Math.round((f.weight[0] + (f.weight[1] - f.weight[0]) * r) * 100) / 100;
     const sizeFactor = 0.75 + 0.6 * r;
     let trait: StrangeTrait | null = null;
@@ -373,9 +374,7 @@ export class FishingSession {
     const cands = FISH.filter((f) => f.region === c.region && (!zone || f.zones.includes(zone)) && inHours(c.hour, f.hours) && (!f.requires || c.flags.has(f.requires)));
     if (!cands.length) return null;
     const luck = c.luck + c.rod.luck + (c.bait.rarityBoost ?? 0) + (this.cleanCast ? 0.08 : 0) + (this.spot.hotspot ? 0.15 : 0);
-    return this.rng.weighted(cands, (f) => {
-      const tier = RARITIES.indexOf(f.rarity);
-      return RARITY_WEIGHT[f.rarity] * (1 + luck * tier * 0.6) * (c.bait.affinity[f.id] ?? 1);
-    });
+    // Luck compounds with rarity: (1 + luck) per tier, so a lucky rod turns the rare into the regular.
+    return this.rng.weighted(cands, (f) => RARITY_WEIGHT[f.rarity] * Math.pow(1 + luck, RARITIES.indexOf(f.rarity)) * (c.bait.affinity[f.id] ?? 1));
   }
 }

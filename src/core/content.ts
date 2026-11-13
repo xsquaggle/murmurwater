@@ -22,7 +22,7 @@ export interface RodDef {
   reach: number; power: number; control: number; luck: number; grace: number; desc: string;
 }
 export interface BaitDef {
-  id: string; name: string; price: number; biteSpeed: number; affinity: Record<string, number>; rarityBoost?: number; desc: string;
+  id: string; name: string; price: number; biteSpeed: number; affinity: Record<string, number>; rarityBoost?: number; /** What it is for, in a few words (the shop). */ blurb: string; desc: string;
 }
 export interface ZoneDef { id: string; name: string; x: number; z: number; r: number; priority: number }
 /** A spot in the world the player can interact with (quest targets, stalls, the ferry). */
@@ -40,7 +40,7 @@ export interface ChartPlace { id: string; name: string; kind: 'island' | 'rocks'
 /** Somewhere to leave a boat: a fast-travel point once its chart place is found. */
 export interface MooringDef { id: string; name: string; place: string; x: number; z: number; heading: number }
 /** A sea chest waiting where a boat can reach it: opened once, and it stays open. */
-export interface ChestDef { id: string; x: number; z: number; yaw: number; coins: number; items?: Record<string, number>; text: string }
+export interface ChestDef { id: string; x: number; z: number; yaw: number; coins: number; items?: Record<string, number>; lures?: string[]; wearables?: string[]; text: string }
 export interface RegionContent extends RegionDef {
   zones: ZoneDef[]; places?: PlaceDef[]; npcSpots?: NpcSpot[]; critters?: CritterDef[]; ferry?: Record<string, FerryPoint>;
   chart?: ChartPlace[]; moorings?: MooringDef[]; chests?: ChestDef[];
@@ -50,7 +50,7 @@ export interface RegionContent extends RegionDef {
 
 export const FISH: FishDef[] = fishJson.fish as FishDef[];
 export const RODS: RodDef[] = rodsJson.rods as RodDef[];
-export const BAITS: BaitDef[] = baitsJson.baits as BaitDef[];
+export const BAITS: BaitDef[] = baitsJson.baits as unknown as BaitDef[];
 export const REGIONS: RegionContent[] = regionsJson.regions as unknown as RegionContent[];
 
 const byId = <T extends { id: string }>(arr: T[]) => new Map(arr.map((x) => [x.id, x]));

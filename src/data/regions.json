@@ -94,6 +94,18 @@
           "height": 1.1,
           "seed": 7,
           "profile": "bar"
+        },
+        {
+          "id": "bell-shoal",
+          "name": "The Drowned Belfry",
+          "x": -300,
+          "z": -215,
+          "rx": 20,
+          "rz": 9,
+          "rot": 0.6,
+          "height": 1.3,
+          "seed": 11,
+          "profile": "bar"
         }
       ],
       "carves": [
@@ -120,6 +132,11 @@
           "x": -118,
           "z": 22,
           "facing": -1.5708
+        },
+        "belfry": {
+          "x": -285.2,
+          "z": -227.6,
+          "rot": 0.6
         }
       },
       "zones": [
@@ -198,6 +215,13 @@
           "x": -350.0,
           "z": 31.0,
           "r": 2.6
+        },
+        {
+          "id": "drowned-bell",
+          "name": "The Drowned Bell",
+          "x": -290.0,
+          "z": -224.6,
+          "r": 3.4
         }
       ],
       "critters": [
@@ -403,6 +427,16 @@
           "r": 55,
           "coins": 30,
           "note": "A spit of sand that is sometimes there."
+        },
+        {
+          "id": "drowned-belfry",
+          "name": "The Drowned Belfry",
+          "kind": "rocks",
+          "x": -300,
+          "z": -216,
+          "r": 75,
+          "coins": 80,
+          "note": "A belfry standing in the sea with its bell still in it. The church is somewhere underneath."
         }
       ],
       "chests": [
@@ -416,6 +450,28 @@
             "glowgrub": 5
           },
           "text": "Sand in the hinges, and somebody’s initials scratched out of the lid."
+        },
+        {
+          "id": "belfry-chest",
+          "x": -305.0,
+          "z": -211.6,
+          "yaw": 0.9,
+          "coins": 100,
+          "wearables": [
+            "keepers-boots"
+          ],
+          "text": "Above the tide line, a sea chest. Inside, a pair of boots, side by side, toes to the sea."
+        },
+        {
+          "id": "kettle-west-chest",
+          "x": -391.6,
+          "z": 101.6,
+          "yaw": -0.7,
+          "coins": 120,
+          "lures": [
+            "tin-minnow"
+          ],
+          "text": "Half a chest, and the tide has had the rest. Something bright is still wedged in the corner."
         }
       ],
       "moorings": [
@@ -442,6 +498,14 @@
           "x": -319.0,
           "z": 28.0,
           "heading": -1.5708
+        },
+        {
+          "id": "belfry-shoal",
+          "name": "The Drowned Belfry",
+          "place": "drowned-belfry",
+          "x": -295.0,
+          "z": -206.5,
+          "heading": 2.12
         }
       ]
     }
