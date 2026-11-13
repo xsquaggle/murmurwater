@@ -8,13 +8,15 @@ Setup, in any scratch folder: create `tools/`, copy these files into it, then
 | Script | What it does |
 |---|---|
 | `splitsheet.py` | Cuts a character turnaround sheet into four square views (front, facing-left, back, facing-right) at one shared scale, for multi-view image-to-3D. |
-| `optimize.mjs` | Static meshes: weld, simplify to a triangle budget, drop normal/ORM maps, bake orientation, scale and origin into the vertices (`--fit w,h,d` for a mild non-uniform fit), build an emissive map, compress textures to WebP. |
+| `optimize.mjs` | Static meshes: weld, simplify to a triangle budget, drop normal/ORM maps, bake orientation, scale and origin into the vertices (`--fit w,h,d` for a mild non-uniform fit, `--oy` for an origin above the base such as a waterline, `--cut y --legs d` to lengthen legs below a height), build an emissive map, compress textures to WebP. |
+| `measure-prop.mjs` | Prints, height by height, a model's radius, extent and upward-facing area: finds a deck, a lid or a waterline before sizing. |
+| `build-sail-rig.mjs` | Builds `boats/sail-rig.glb` in code from the painted side elevation of the rig, which gives the proportions and is the texture: lathe mast, tube spars, two-sided sail grid with a `belly` morph target. `node build-sail-rig.mjs sail-rig.png out.glb`. |
 | `merge-anim.mjs` | Characters: merges several single-clip auto-rig outputs of the same mesh into one GLB with named clips. Each auto-rig job returns a different skeleton, so clips are retargeted through the skinning matrices onto the first file's skeleton. Also removes the armature's 0.01 scale so the skeleton is in metres. Per-clip flags: `:inplace` removes root drift, `:anchor` starts the clip over the model origin, `:trim=a-b` keeps part of it. |
 | `emissive.mjs` | Shared by the two scripts above: builds the glow map from warm bright texels, optionally limited to a 3D box. |
 | `author-anim.mjs` + `wick-clips.mjs` | Wick's sketchbook clips: the same solver without finger joints (`--fingers 0`), arms authored on top of the library idle, look and talk clips, plus the `BookSocket` empty. `node author-anim.mjs wick.glb out.glb wick-clips.mjs --fingers 0`. |
 | `author-anim.mjs` + `player-clips.mjs` | Player fishing clips. Adds four finger joints (found from the hand geometry) and the `RodSocket` and `CatchSocket` empties, then bakes clips described as pose specs (hips, spine, look target, hand targets solved with two-bone IK, finger curl) on top of the rest pose or a frame of a library clip. `node author-anim.mjs player.glb out.glb player-clips.mjs --drop cast`. |
 | `rig-cat.mjs` | Biscuit: builds a quadruped skeleton, skin weights (geometric segmentation plus Laplacian diffusion) and procedural walk, idle and sit clips. `node rig-cat.mjs stand in.glb out.glb` (or `sit`). |
-| `render.mjs` + `viewer.html` | Renders a turntable contact sheet (or frames of a clip) with three.js in headless Chromium and prints triangle count, bounds and clip list. `dark=1` shows only the emissive parts; `rod=1` and `fish=1` draw a debug rod and fish on the sockets; `focus=x,y,z,r` fixes the camera target. |
+| `render.mjs` + `viewer.html` | Renders a turntable contact sheet (or frames of a clip) with three.js in headless Chromium and prints triangle count, bounds and clip list. `dark=1` shows only the emissive parts; `rod=1` and `fish=1` draw a debug rod and fish on the sockets; `focus=x,y,z,r` fixes the camera target; `add=<url>@x,y,z[,yaw]` places further models in the scene (the rig on the skiff); `morph=<w>` sets every morph weight. |
 | `clip-sheet.sh`, `pose-sheet.sh` | Clip strips (one row per clip, six frames) and pose comparisons, built on `render.mjs` and ImageMagick. |
 
 Conventions for every model: glTF, +Y up, metres, front (face, mouth, bow) toward +Z, one material, base-colour texture in WebP (`EXT_texture_webp`), metallic 0, roughness 0.9, no mesh compression.
@@ -49,12 +51,12 @@ The scripts behind `public/audio/music/` and `public/audio/sfx/`. Setup: Python 
 | `audition.py` | Try a candidate cut or layering before it goes in the manifest: its CLAP rank among the 28 sound descriptions and its tags. |
 | `listen_music.py` | Tempo, key, tags and level of a music track, window by window. |
 | `loop.py` | Cut a seamless music loop: candidate start and end points on phrase boundaries, crossfade into the audio before the loop start, seam report. |
-| `master_music.py` | Loops and stings to -18 LUFS OGG Vorbis, checking that the decoded length is the length written. |
+| `master_music.py` | Loops and stings to -18 LUFS OGG Vorbis, checking that the decoded length is the length written; a sting can be transposed by playing it faster or slower. `master_music.py <name>` does one file. |
 | `sfx_manifest.py` | What every sound effect is made from: source file, cut, speed, layers, level. Also the pack list and the synthesised chime. |
 | `sfx_build.py` | Builds every effect in the manifest: cut, layer, trim to the sound, level, encode, and write `index.json`. Output is byte-identical from run to run. |
 | `sfx_check.py`, `sfx-check.json` | CLAP rank and AudioSet tags of every finished effect. |
 | `loop_check.py` | Whether a loop's wrap point stands out from the rest of the loop. |
 | `browser-check.cjs` | Decodes every music and effect file in headless Chromium and prints channels, sample rate and exact length. |
-| `assets_md.py`, `sfx-index.json` | The per-file source tables in `docs/ASSETS.md`, written from the build's index. |
+| `assets_md.py`, `assets_update.py`, `sfx-index.json` | The per-file source tables in `docs/ASSETS.md`, written from the build's index; `assets_update.py docs/ASSETS.md` replaces the three tables in place. |
 
 Two things learned the hard way. Chromium's Vorbis decoder can return a short file up to 128 samples short at the end, so one-shots carry 4 ms of trailing silence and loops are rotated until they decode to exactly their length (a loop sounds the same from any starting point). And generation is hit and miss for mechanical sounds: short caption-like prompts work for common sounds (a cat, coins, water, rowing, creaking wood, steps on grass) and fail for a reel, a whoosh or a plop, which is why those come from CC0 recordings.

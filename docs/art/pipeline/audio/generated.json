@@ -268,5 +268,53 @@
   "model": "elevenlabs_music_v2_5",
   "prompt": "Instrumental night-time version of a cozy fishing village theme for a video game. D major, very slow, about 60 BPM in 6/8, sparse and hushed. A celesta alone plays a simple, hummable lullaby-like melody built on a rising three-note figure answered by a gentle falling phrase, with long pauses between phrases, over a low sustained drone from bowed double bass and harmonium. A few distant nylon-guitar harmonics. Once or twice a slightly detuned music box echoes a phrase and lands on one subtly wrong note. Calm, lonely, slightly mysterious. No vocals, no drums. The same sparse texture from the first second to the last: no intro, no build-up, no final chord, because it plays as a seamless loop.",
   "duration": 150
+ },
+ "sting-discover.a": {
+  "job": "ff9ad421-4f3c-4d27-8a1b-669200dc51db",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "A three-second musical sting for discovering a new place in a cozy fishing and sailing game: nylon-string guitar and concertina play one bright, quick rising arpeggio in D major that opens out onto a high sustained note, a soft glockenspiel sparkle lands on the last note, and the D major chord rings out warmly. Airy and full of wonder, like a view opening up. Starts immediately, ends resolved. No vocals, no drums.",
+  "duration": 4
+ },
+ "sting-discover.b": {
+  "job": "3334c776-2497-4cc3-afcf-89b2cbbc9e52",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "A three-second musical sting for sighting a new island in a cozy sailing game: a bright rising five-note flourish in D major on nylon-string guitar doubled by glockenspiel, answered by a warm concertina chord of D major that swells and rings out. Joyful, fresh, open. Starts immediately, ends resolved. No vocals, no drums.",
+  "duration": 4
+ },
+ "hull-wash.a": {
+  "job": "a3789eaa-3614-4772-89c2-56012e3ad840",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Water rushing along the hull of a small wooden boat",
+  "duration": 10
+ },
+ "hull-wash.b": {
+  "job": "b9836f23-1bc7-4ec4-8c04-94364642ace9",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Boat moving through water, steady gurgling bow wash",
+  "duration": 10
+ },
+ "sail-flap.a": {
+  "job": "50ddc212-e03b-4855-a199-86411c940cc9",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Sail flapping in the wind",
+  "duration": 5
+ },
+ "sail-flap.b": {
+  "job": "9b79bb36-8b21-4021-a1c4-2ac4801a411c",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Canvas flag snapping in gusts of wind",
+  "duration": 5
+ },
+ "rope-creak.a": {
+  "job": "c03ffd1e-23f8-4bb0-813f-e34221777d33",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Rope creaking under tension",
+  "duration": 5
+ },
+ "boat-bump.a": {
+  "job": "5d7799d2-ede2-4a93-a289-700dc5521340",
+  "model": "mirelo_text_to_audio",
+  "prompt": "Wooden boat bumping against a dock",
+  "duration": 4
  }
 }

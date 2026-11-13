@@ -1999,6 +1999,75 @@
   "bytes": 14905
  },
  {
+  "name": "sail-flap_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "sail-flap.a",
+    "job": "50ddc212-e03b-4855-a199-86411c940cc9",
+    "cut": [
+     0.25,
+     1.2
+    ]
+   }
+  ],
+  "how": "one gust of a generated take, with the wind rumble below 80 Hz removed",
+  "file": "sail-flap_1.ogg",
+  "seconds": 0.954,
+  "samples": 42071,
+  "decoded": 43072,
+  "peak_db": -7.1,
+  "loud100_db": -17.1,
+  "bytes": 12760
+ },
+ {
+  "name": "sail-flap_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "sail-flap.a",
+    "job": "50ddc212-e03b-4855-a199-86411c940cc9",
+    "cut": [
+     1.2,
+     2.0
+    ]
+   }
+  ],
+  "how": "one gust of a generated take, with the wind rumble below 80 Hz removed",
+  "file": "sail-flap_2.ogg",
+  "seconds": 0.804,
+  "samples": 35456,
+  "decoded": 35328,
+  "peak_db": -2.2,
+  "loud100_db": -17.1,
+  "bytes": 11510
+ },
+ {
+  "name": "sail-flap_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "sail-flap.a",
+    "job": "50ddc212-e03b-4855-a199-86411c940cc9",
+    "cut": [
+     2.0,
+     3.55
+    ]
+   }
+  ],
+  "how": "one gust of a generated take, with the wind rumble below 80 Hz removed",
+  "file": "sail-flap_3.ogg",
+  "seconds": 1.554,
+  "samples": 68531,
+  "decoded": 68531,
+  "peak_db": -5.9,
+  "loud100_db": -17.1,
+  "bytes": 18107
+ },
+ {
   "name": "waves-lap_1",
   "loop": true,
   "sources": [
@@ -2084,6 +2153,30 @@
   "peak_db": -6.2,
   "loud100_db": -15.1,
   "bytes": 102996,
+  "rotated": 0
+ },
+ {
+  "name": "hull-wash_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "hull-wash.b",
+    "job": "b9836f23-1bc7-4ec4-8c04-94364642ace9",
+    "cut": [
+     1.1,
+     9.9
+    ]
+   }
+  ],
+  "how": "8.8 s cut with a 1 s crossfade into the audio before the loop start, rumble below 110 Hz removed",
+  "file": "hull-wash_1.ogg",
+  "seconds": 8.8,
+  "samples": 388080,
+  "decoded": 388080,
+  "peak_db": -3.0,
+  "loud100_db": -13.2,
+  "bytes": 80497,
   "rotated": 0
  }
 ]

@@ -20,7 +20,7 @@ Locked style reference images, generated against `docs/ART_BIBLE.md`. All 1344×
 
 ## Concept images for 3D generation (`docs/art/concepts/`)
 
-Clean single-subject concepts generated against the style references (the ref image was passed as an image reference), used as the source images for image-to-3D. Stored as WebP (2K originals re-encoded at quality 90). `views/` holds the per-view crops (front, facing-left, back, facing-right) cut from the character turnaround sheets with ImageMagick/Pillow. All: Higgsfield, gpt_image_2_6, quality high, 2026-11-12, generated for this project.
+Clean single-subject concepts generated against the style references (the ref image was passed as an image reference), used as the source images for image-to-3D. Stored as WebP (2K originals re-encoded at quality 90). `views/` holds the per-view crops (front, facing-left, back, facing-right) cut from the character turnaround sheets with ImageMagick/Pillow. All: Higgsfield, gpt_image_2_6, quality high, 2026-11-12 (the last four rows 2026-11-13), generated for this project.
 
 | File | Subject | Style ref | Job id |
 |---|---|---|---|
@@ -47,6 +47,10 @@ Clean single-subject concepts generated against the style references (the ref im
 | `notice-board.webp` | Notice board with shingled roof | 01 | `5538ca1e-25a4-4a8c-9465-25a428cb47fc` |
 | `pebble-goby.webp` | Fish: pebble-goby | 05 | `abbb6a48-ece5-49d7-9055-899d67b569f7` |
 | `sketchbook.webp` | Prop: Wick's sketchbook | 06 | `4004874e-3736-42e7-8432-a3bca16cb077` |
+| `sail-rig.webp` | Sail rig for the skiff: flat side elevation on a transparent ground (2K), used for the model's proportions and as its texture | 01 | `39e82bdb-1125-49cc-8562-3629e424bf81` |
+| `chest.webp` | Prop: small sea chest, lid closed (1K) | 01 | `efd3d6a2-8be3-4cb2-a008-25ea0512654e` |
+| `buoy.webp` | Prop: red and white marker buoy with a bell (1K) | 01 | `06d5a4f9-bc17-4d3c-80d3-7d9d92bb378a` |
+| `jetty.webp` | Prop: short landing stage on long piles (1K) | 01 | `782916cd-93b2-4048-8081-2a9902cf714a` |
 
 ## 3D models (`public/models/`)
 
@@ -77,10 +81,18 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `props/fish-stall.glb` | 6,454 | 2.60 x 2.40 x 1.45 | base centre | no | `fish-stall` | `73c896bf-54f8-41a2-9d6f-8e50decd1f69` |
 | `props/notice-board.glb` | 2,817 | 1.75 x 2.20 x 0.98 | base centre | no | `notice-board` | `a22e9d6d-7ed3-4da4-a3cc-71f2fadc5c87` |
 | `props/sketchbook.glb` | 914 | 0.24 x 0.25 x 0.055 | centre, cover on +Z | no | `sketchbook` | `3d645d40-ba8f-41e2-9531-2100077904f1` |
+| `boats/sail-rig.glb` | 1,092 | 0.21 x 3.49 x 2.32 | mast foot | no | `sail-rig` | built in code, no 3D job (see below) |
+| `props/chest.glb` | 1,860 | 0.85 x 0.49 x 0.52 (body 0.66 wide, rope handles beyond) | base centre, lock on +Z | no | `chest` | `a459bd33-43af-415d-a0db-75dacd4cf31b` |
+| `props/buoy.glb` | 1,892 | 0.87 x 1.81 x 0.87 | waterline, on the axis: 1.20 m above it, 0.61 m below | no | `buoy` | `e544a9f1-80bc-442e-8a17-4d1860ce02af` |
+| `props/jetty.glb` | 3,770 | 2.39 x 3.70 x 6.00 | centre of the deck, 0.90 m below the deck top; piles reach 2.00 m below the origin | no | `jetty` | `c6bb7b79-e4fa-4583-b180-25c8b745ba08` |
 
 Fish are normalized to 1 m nose to tail along +Z, so the game scales each to its species length. Glow maps are an `emissiveTexture` on the same material with `KHR_materials_emissive_strength` 1.5, derived from the warm bright texels of the base colour; `docs/art/sheets/emissive-dark.webp` shows them with the lights off.
 
 Notes: the fish stall is the second run of its job (the first, `c941c034-4adf-48ff-b2f8-9cec702029ba`, came back with a blank grey texture and was discarded); its bounds were fitted to 2.6 x 2.4 x 1.45 m with a mild non-uniform scale (`--fit`), about 15 % shallower than generated. The sketchbook has a 512 px texture and was fitted to 0.24 x 0.25 x 0.055 m (thinner than generated) so it sits between Wick's hands. Biscuit is two sculpts, standing and sitting, because the two poses do not deform into each other cleanly; the game swaps models when the cat sits.
+
+Phase 2 props (2026-11-13): the chest, buoy and jetty are Tripo H3.1 with detailed texture and standard geometry. The buoy floats with its drum half under: the origin is at the middle of the drum. The jetty's deck is 2.1 m wide (2.4 m over the piles) and 5.8 m long, its two tall mooring posts (to 1.70 m) are at the +Z end and the rope ladder is on the -X side; below 0.5 m its piles and braces were stretched by a quarter (`--cut 0.5 --legs 2`) so that they reach 2 m under the origin, and it keeps 3,770 triangles, above the 2,000 prop budget, because it is a 6 m structure.
+
+`boats/sail-rig.glb` is built in code by `docs/art/pipeline/build-sail-rig.mjs` from the painted side elevation `sail-rig.webp`: the picture is measured for the proportions and is also the texture (its transparent surround filled from the nearest paint). Mast (a lathe, 3.03 m to the cap), boom and yard (ten-sided tubes), the boom's jaw and a two-sided 12 x 10 sail grid, one mesh and one material. The sail lies in the Y-Z plane and the picture is the view from +X; the boom points to -Z, is 2.24 m long, and rises from 1.10 m above the mast foot at the mast to 1.45 m at its tip so that it clears a seated head; the yard's peak is at 3.49 m. Morph target 0, `belly`, fills the sail: weight 1 (the default) bellies it 0.22 m toward +X, -1 toward -X, 0 leaves it flat. `docs/art/sheets/sail-rig-on-skiff.webp` shows it stepped on the skiff's floor at (0, 0.66, 0.95).
 
 ### Player rig and animation clips
 
@@ -201,7 +213,7 @@ Checks on the 40 finished files (`check.py`, `second.py`, `spk.py`, `browser-che
 
 ## Music (`public/audio/music/`)
 
-Three seamless loops and two stings, OGG Vorbis (quality 6), 44.1 kHz stereo, levelled to about -18 LUFS with a plain gain. All: Higgsfield `generate_audio`, model `elevenlabs_music_v2_5` (ElevenLabs Music), instrumental, 2026-11-12, generated for this project. The exact prompts are in `docs/art/pipeline/audio/generated.json`.
+Three seamless loops and three stings, OGG Vorbis (quality 6), 44.1 kHz stereo, levelled to about -18 LUFS with a plain gain. All: Higgsfield `generate_audio`, model `elevenlabs_music_v2_5` (ElevenLabs Music), instrumental, 2026-11-12 (`sting-discover` 2026-11-13), generated for this project. The exact prompts are in `docs/art/pipeline/audio/generated.json`.
 
 | File | Length | Loudness, peak | Made from | Job id |
 |---|---|---|---|---|
@@ -210,18 +222,19 @@ Three seamless loops and two stings, OGG Vorbis (quality 6), 44.1 kHz stereo, le
 | `gull-point.ogg` | 128.99 s loop | -18.0 LUFS, -3.9 dBFS | 150 s generation, cut from 12 s to 141 s, 8 s crossfade | `748e8e91-f358-4b1f-8255-1731191aed48` |
 | `sting-quest.ogg` | 3.60 s | -18.0 LUFS, -2.5 dBFS | first 3.6 s of a 4 s generation, 0.6 s fade out | `24856db4-a821-4e32-891e-aecbfc20e2fe` |
 | `sting-rare.ogg` | 4.00 s | -18.0 LUFS, -6.0 dBFS | first 4 s of a 6 s generation, 1.6 s fade out | `1c9215c3-ab7b-497b-914d-43ffab7f3abd` |
+| `sting-discover.ogg` | 3.00 s | -17.9 LUFS, -2.0 dBFS | a 6 s generation that came back in C major, played 12.2 % faster so that it sounds a tone higher, in D major; its first 3 s, 0.9 s fade out | `ff9ad421-4f3c-4d27-8a1b-669200dc51db` |
 
 How the loops are cut (`loop.py`): the loop is a stretch of the recording whose last moments are cross-faded into the audio that came just before the loop start, so the wrap point is the recording's own continuity. Start and end are chosen on phrase boundaries by matching harmony, timbre and onsets, then aligned to the waveform. Every file decodes in Chromium to exactly the sample count that was written, and the change in spectrum across each wrap is within the range of ordinary note onsets in the same track (`loop_check.py`).
 
-Notes. The day and night themes are two generations from sibling prompts (same key centre, same described melody shape, day at 96 BPM and night much slower and sparser); the generator takes no reference audio, so the night theme is a relative of the day theme, not the same melody note for note. Automatic listening (key and tempo detection, AudioSet tags) hears the day theme in D major with plucked strings and a music box, and does not confirm the concertina; the night theme reads as D minor, celesta-like and lullaby; Gull Point as foghorn and singing bowl. Claude cannot hear, so these want a human ear. One generation was discarded: job `45f9a0ef-0b85-451a-99f1-53c1051e7de4` asked for both themes in one 340 s piece and came back 49 s long.
+Notes. The day and night themes are two generations from sibling prompts (same key centre, same described melody shape, day at 96 BPM and night much slower and sparser); the generator takes no reference audio, so the night theme is a relative of the day theme, not the same melody note for note. Automatic listening (key and tempo detection, AudioSet tags) hears the day theme in D major with plucked strings and a music box, and does not confirm the concertina; the night theme reads as D minor, celesta-like and lullaby; Gull Point as foghorn and singing bowl. Claude cannot hear, so these want a human ear. One generation was discarded: job `45f9a0ef-0b85-451a-99f1-53c1051e7de4` asked for both themes in one 340 s piece and came back 49 s long. A second take of the discovery sting (job `3334c776-2497-4cc3-afcf-89b2cbbc9e52`) was a single D major strum, too close to `sting-quest`, and was not used.
 
 ## Sound effects (`public/audio/sfx/`)
 
-28 sounds in 2 to 4 variations each, 95 files named `<name>_<n>.ogg`, mono 44.1 kHz OGG Vorbis (quality 5), 126 s and 1.6 MB in total. Most are CC0 recordings from OpenGameArt, cut and levelled; thirteen clips were generated; the quest chime is synthesised. Built by `docs/art/pipeline/audio/sfx_build.py` from `sfx_manifest.py`, which holds every cut.
+30 sounds in 1 to 4 variations each, 99 files named `<name>_<n>.ogg`, mono 44.1 kHz OGG Vorbis (quality 5), 138 s and 1.7 MB in total. Most are CC0 recordings from OpenGameArt, cut and levelled; fifteen clips were generated; the quest chime is synthesised. The sailing sounds (`sail-flap`, `hull-wash`) were added on 2026-11-13. Built by `docs/art/pipeline/audio/sfx_build.py` from `sfx_manifest.py`, which holds every cut.
 
-Levels: within one sound, every variation has the same loudness. One-shots aim at -17 dBFS RMS over their loudest 100 ms (footsteps and interface sounds 4 dB lower, the nibble 6 dB lower, the chime and page turn 3 dB lower) and never peak above -1 dBFS, so sounds with sharp transients (splashes, coins, page turns, clicks) sit a few dB under that; `sfx-index.json` lists each file's level. Loops: `waves-lap` and `cat-purr` at -22 LUFS, `reel-click` at -20 LUFS.
+Levels: within one sound, every variation has the same loudness. One-shots aim at -17 dBFS RMS over their loudest 100 ms (footsteps and interface sounds 4 dB lower, the nibble 6 dB lower, the chime and page turn 3 dB lower) and never peak above -1 dBFS, so sounds with sharp transients (splashes, coins, page turns, clicks) sit a few dB under that; `sfx-index.json` lists each file's level. Loops: `waves-lap` and `cat-purr` at -22 LUFS, `reel-click` at -20 LUFS; `hull-wash` is mostly low in pitch, so its peak limit holds it at -23.9 LUFS.
 
-Loops: `waves-lap_1/2` are exactly 20 s, `reel-click_1/2` exactly 1 s, `cat-purr_1/2` are the recordist's own loops. All six decode in Chromium to exactly their own length. One-shots end with 4 ms of silence because Chromium can return a short Vorbis file up to 128 samples short at the end.
+Loops: `waves-lap_1/2` are exactly 20 s, `reel-click_1/2` exactly 1 s, `cat-purr_1/2` are the recordist's own loops, `hull-wash_1` is exactly 8.8 s. All seven decode in Chromium to exactly their own length. One-shots end with 4 ms of silence because Chromium can return a short Vorbis file up to 128 samples short at the end.
 
 | File | Length | Made from |
 |---|---|---|
@@ -316,10 +329,14 @@ Loops: `waves-lap_1/2` are exactly 20 s, `reel-click_1/2` exactly 1 s, `cat-purr
 | `cat-meow_1.ogg` | 0.92 s | generated `cat-meow.b` 0.2 to 1.12 s |
 | `cat-meow_2.ogg` | 1.60 s | generated `cat-meow.p` 0.36 to 1.96 s |
 | `cat-meow_3.ogg` | 1.15 s | generated `cat-meow.a` |
+| `sail-flap_1.ogg` | 0.95 s | generated `sail-flap.a` 0.25 to 1.2 s (one gust of a generated take, with the wind rumble below 80 Hz removed) |
+| `sail-flap_2.ogg` | 0.80 s | generated `sail-flap.a` 1.2 to 2 s (one gust of a generated take, with the wind rumble below 80 Hz removed) |
+| `sail-flap_3.ogg` | 1.55 s | generated `sail-flap.a` 2 to 3.55 s (one gust of a generated take, with the wind rumble below 80 Hz removed) |
 | `waves-lap_1.ogg` | 20.00 s loop | `randommind` `VistulaShort_0.mp3` 234 to 254 s (20 s cut with a 2 s crossfade into the audio before the loop start) |
 | `waves-lap_2.ogg` | 20.00 s loop | `randommind` `VistulaShort_0.mp3` 150 to 170 s (20 s cut with a 2 s crossfade into the audio before the loop start) |
 | `cat-purr_1.ogg` | 5.65 s loop | `kerzoven` `cat_purrsleepy_loop.wav` (the author's loop with rumble below 35 Hz removed) |
 | `cat-purr_2.ogg` | 8.31 s loop | `kerzoven` `cat_purractive_loop.wav` (the author's loop with rumble below 35 Hz removed) |
+| `hull-wash_1.ogg` | 8.80 s loop | generated `hull-wash.b` 1.1 to 9.9 s (8.8 s cut with a 1 s crossfade into the audio before the loop start, rumble below 110 Hz removed) |
 
 CC0 packs, all from OpenGameArt (licence on each page: CC0 1.0; Fisheefects is offered under CC0, CC-BY 4.0 and OGA-BY 3.0, used here under CC0), downloaded 2026-11-12:
 
@@ -344,7 +361,7 @@ CC0 packs, all from OpenGameArt (licence on each page: CC0 1.0; Fisheefects is o
 
 The gull recordings are the least direct source: the pack's page says they were cut from a video "with full permission to share, commercial free use, no attribution required" and publishes them as CC0. Swap them if a recording with a firmer origin is wanted.
 
-Generated clips (Higgsfield `generate_audio`, model `mirelo_text_to_audio`, 2026-11-12, generated for this project):
+Generated clips (Higgsfield `generate_audio`, model `mirelo_text_to_audio`, 2026-11-12 and, for the sailing sounds, 2026-11-13, generated for this project):
 
 | Clip | Prompt | Seconds | Job id |
 |---|---|---|---|
@@ -358,8 +375,10 @@ Generated clips (Higgsfield `generate_audio`, model `mirelo_text_to_audio`, 2026
 | `dock-creak.c` | Wood creaking | 4 | `874e39b9-857f-4700-9699-dd73d86017cb` |
 | `fish-splash.a` | Fish splashing in water | 3 | `c1b915a7-b293-43c5-af7f-d6a94f950c45` |
 | `fish-splash.b` | Fish splashing in water | 3 | `ba8fa6b0-f661-4afa-bbd3-f5e7a527c6ec` |
+| `hull-wash.b` | Boat moving through water, steady gurgling bow wash | 10 | `b9836f23-1bc7-4ec4-8c04-94364642ace9` |
 | `oars.b` | Rowing a boat, oars splashing | 5 | `13029ce9-f776-483d-ad5b-db55cbe5180f` |
 | `oars.c` | Rowing a boat, oars splashing | 5 | `a1d235f0-d6b9-4302-b630-5a3ee4131769` |
+| `sail-flap.a` | Sail flapping in the wind | 5 | `50ddc212-e03b-4855-a199-86411c940cc9` |
 | `step-grass.a` | Footsteps on grass | 4 | `84505621-1f49-46e3-bae0-5bd648c96ae3` |
 
-Checks (`sfx_check.py`, results in `sfx-check.json`): two listeners that are not people. CLAP is asked which of the 28 sounds' descriptions each file fits best: 56 of 95 files put their own description first and 83 put it in the top three; the rest are neighbours of something similar (a wood step next to a knock, `bite-dunk` next to `bobber-plop`). AudioSet tags agree for the animal, water, coin, creak, swish and reel sounds (for example Meow 0.87 to 0.94, Purr 0.85 and 0.92, Squawk 0.74 to 0.93 for three of the four gulls, Whoosh 0.27 to 0.48, Rattle 0.24 to 0.48 for `reel-spin`, Ocean and Waves for `waves-lap`). `line-snap` is the one neither listener recognises as a snapping line (it reads as a crack and a whip); it and the layered sounds (`bite-dunk`, `hook-set`) are the first to check by ear.
+Checks (`sfx_check.py`, results in `sfx-check.json`): two listeners that are not people. CLAP is asked which of 35 descriptions each file fits best (one for each sound, including five sailing sounds that are still to come): 53 of 99 files put their own description first and 84 put it in the top three; the rest are neighbours of something similar (a wood step next to a knock, `bite-dunk` next to `bobber-plop`). AudioSet tags agree for the animal, water, coin, creak, swish and reel sounds (for example Meow 0.87 to 0.94, Purr 0.85 and 0.92, Squawk 0.74 to 0.93 for three of the four gulls, Whoosh 0.27 to 0.48, Rattle 0.24 to 0.48 for `reel-spin`, Ocean and Waves for `waves-lap`). `line-snap` is the one neither listener recognises as a snapping line (it reads as a crack and a whip); it and the layered sounds (`bite-dunk`, `hook-set`) are the first to check by ear. Of the sailing sounds, two of the three `sail-flap` cuts put their own description first and the third puts it third (tags: wind, flap); `hull-wash_1` reads as a boat on water (tags Ocean 0.45, Boat 0.39) but sits nearer the descriptions of rowing and boarding than its own (ninth), so it also wants a human ear.

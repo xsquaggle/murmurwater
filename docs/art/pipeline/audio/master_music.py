@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""master_music.py : loops and stings -> public-ready OGG Vorbis (44.1 kHz stereo, about -18 LUFS).
+"""master_music.py [name ...] : loops and stings -> public-ready OGG Vorbis (44.1 kHz stereo, about -18 LUFS).
 Loops get a plain gain only, so the cut made by loop.py stays sample-exact; stings are trimmed and faded."""
 import os, re, subprocess, sys, numpy as np, soundfile as sf
 A = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); M = os.path.join(A, 'music'); OUT = os.path.join(M, 'final'); os.makedirs(OUT, exist_ok=True)
@@ -18,14 +18,19 @@ def finish(x, sr, name):
     n = len(back) // 4 // x.shape[1]; l2, pk2 = lufs(ogg)
     print(f'{name}.ogg  {len(x) / sr:.3f} s  gain {g:+.1f} dB  {l2:.1f} LUFS  peak {pk2:.1f} dBFS  {os.path.getsize(ogg) / 1e6:.2f} MB  decoded samples {n} vs source {len(x)}' + ('' if n == len(x) else '  <<< LENGTH DIFFERS'))
     os.remove(tmp)
-def sting(src, name, end, fade):
-    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', src, '-ar', '44100', '-ac', '2', '-f', 'f32le', '-'], capture_output=True).stdout
+def sting(src, name, end, fade, semitones=0):
+    """semitones transposes the take by playing it faster or slower (pitch and tempo together), for a take that came back in the wrong key."""
+    shift = ['-af', f'asetrate={44100 * 2 ** (semitones / 12):.3f},aresample=44100:resampler=soxr'] if semitones else []
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', src, *shift, '-ar', '44100', '-ac', '2', '-f', 'f32le', '-'], capture_output=True).stdout
     x = np.frombuffer(raw, dtype=np.float32).reshape(-1, 2).copy(); sr = 44100; m = np.abs(x).max(axis=1)
     a = max(0, int(np.argmax(m > m.max() * 10 ** (-40 / 20))) - int(0.01 * sr)); x = x[a: a + int(end * sr)]
     f = int(fade * sr); x[-f:] *= (np.cos(np.linspace(0, np.pi / 2, f)) ** 2)[:, None]; x[:64] *= np.linspace(0, 1, 64)[:, None]
     finish(x, sr, name)
 if __name__ == '__main__':
+    only = sys.argv[1:]
     for n in ('hearthbay-day', 'hearthbay-night', 'gull-point'):
+        if only and n not in only: continue
         x, sr = sf.read(os.path.join(M, n + '.loop.wav'), dtype='float32'); finish(x, sr, n)
-    sting(os.path.join(M, 'raw', 'sting-quest.a.mp3'), 'sting-quest', 3.6, 0.6)
-    sting(os.path.join(M, 'raw', 'sting-rare.a.mp3'), 'sting-rare', 4.0, 1.6)
+    for name, take, end, fade, semi in (('sting-quest', 'a', 3.6, 0.6, 0), ('sting-rare', 'a', 4.0, 1.6, 0),
+                                        ('sting-discover', 'a', 3.0, 0.9, 2)):      # sting-discover came back in C major; played a tone higher it is in D
+        if not only or name in only: sting(os.path.join(M, 'raw', f'{name}.{take}.mp3'), name, end, fade, semi)

@@ -126,9 +126,13 @@ def build(B):
     one('dock-creak', [dict(src=TREE, a=0.05, b=1.95, speed=0.7, fo=0.2), dict(src=MIR % 'dock-creak.a', a=0.85, b=2.4, fo=0.2), dict(src=MIR % 'dock-creak.b', a=1.75, b=3.55, fi=0.02, fo=0.2), dict(src=MIR % 'dock-creak.c', a=1.95, b=3.4, fi=0.02, fo=0.3)])
     one('cat-meow', [dict(src=MIR % 'cat-meow.b', a=0.2, b=1.12), dict(src=MIR % 'cat-meow.p', a=0.36, b=1.96, fo=0.08), dict(src=MIR % 'cat-meow.a', a=0.84, fo=0.22)])
 
+    # ---- sailing ----
+    one('sail-flap', [dict(src=MIR % 'sail-flap.a', a=a, b=b, hp=80, fi=0.03, fo=fo) for a, b, fo in ((0.25, 1.2, 0.2), (1.2, 2.0, 0.2), (2.0, 3.55, 0.25))], trim=False, how='one gust of a generated take, with the wind rumble below 80 Hz removed')
+
     # ---- loops ----
     add('waves-lap_1', make=lambda: B.loop_cut(VIST, 234.0, 20.0, 2.0), loop=True, lufs=-22, sources=[dict(label(VIST), cut=[234.0, 254.0])], how='20 s cut with a 2 s crossfade into the audio before the loop start')
     add('waves-lap_2', make=lambda: B.loop_cut(VIST, 150.0, 20.0, 2.0), loop=True, lufs=-22, sources=[dict(label(VIST), cut=[150.0, 170.0])], how='20 s cut with a 2 s crossfade into the audio before the loop start')
     add('cat-purr_1', make=lambda: B.circular(B.load(CAT + 'cat_purrsleepy_loop.wav'), hp=35), loop=True, lufs=-22, sources=[label(CAT + 'cat_purrsleepy_loop.wav')], how="the author's loop with rumble below 35 Hz removed")
     add('cat-purr_2', make=lambda: B.circular(B.load(CAT + 'cat_purractive_loop.wav'), hp=35), loop=True, lufs=-22, sources=[label(CAT + 'cat_purractive_loop.wav')], how="the author's loop with rumble below 35 Hz removed")
+    add('hull-wash_1', make=lambda: B.circular(B.loop_cut(MIR % 'hull-wash.b', 1.1, 8.8, 1.0), hp=110), loop=True, lufs=-22, sources=[dict(label(MIR % 'hull-wash.b'), cut=[1.1, 9.9])], how='8.8 s cut with a 1 s crossfade into the audio before the loop start, rumble below 110 Hz removed')
     return items

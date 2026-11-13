@@ -2,6 +2,7 @@
 // node optimize.mjs in.glb out.glb [--size 1.7] [--axis y|x|z|max] [--yaw 90] [--pitch 0] [--roll 0] [--origin feet|centre]
 //   [--tris 3000] [--tex 1024] [--emissive hue0,hue1,minV,minS] [--estrength 1.5] [--name id] [--keep-pbr]
 //   [--fit w,h,d]  (non-uniform: stretch the bounds to exactly w x h x d metres after rotation; use for mild corrections only)
+//   [--oy 0.6]  (origin this far above the lowest point, e.g. a waterline)  [--cut y --legs d]  (stretch everything below y so the lowest point is d below the origin)
 // Static meshes get transforms baked into vertices. Output: +Y up, metres, front toward +Z (after --yaw).
 import { NodeIO, Document } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, EXTTextureWebP } from '@gltf-transform/extensions';
@@ -13,13 +14,13 @@ import { mat4, quat, vec3 } from 'gl-matrix';
 
 const args = process.argv.slice(2);
 const [inp, out] = args;
-const opt = { size: null, axis: 'max', yaw: 0, pitch: 0, roll: 0, origin: 'feet', tris: null, tex: 1024, emissive: null, ebox: null, estrength: 1.5, name: null, keepPbr: false, rough: 0.9, texfmt: 'webp' };
+const opt = { oy: null, cut: null, legs: null, size: null, axis: 'max', yaw: 0, pitch: 0, roll: 0, origin: 'feet', tris: null, tex: 1024, emissive: null, ebox: null, estrength: 1.5, name: null, keepPbr: false, rough: 0.9, texfmt: 'webp' };
 for (let i = 2; i < args.length; i++) {
   const k = args[i].replace(/^--/, '');
   if (k === 'keep-pbr') { opt.keepPbr = true; continue; }
   opt[k] = args[++i];
 }
-for (const k of ['size', 'yaw', 'pitch', 'roll', 'tris', 'tex', 'estrength', 'rough']) if (opt[k] !== null) opt[k] = Number(opt[k]);
+for (const k of ['oy', 'cut', 'legs', 'size', 'yaw', 'pitch', 'roll', 'tris', 'tex', 'estrength', 'rough']) if (opt[k] !== null) opt[k] = Number(opt[k]);
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const doc = await io.read(inp);
@@ -61,6 +62,11 @@ if (!skinned) {
   const c = [(b.min[0] + b.max[0]) / 2, opt.origin === 'feet' ? b.min[1] : (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2];
   if (opt.origin === 'top-back') { c[1] = b.max[1]; c[2] = b.min[2]; }
   apply(mat4.fromTranslation(mat4.create(), [-c[0], -c[1], -c[2]]));
+  if (opt.oy !== null) apply(mat4.fromTranslation(mat4.create(), [0, -opt.oy, 0]));
+  if (opt.cut !== null && opt.legs !== null) {     // longer legs: scale heights below the cut, leave everything above it alone
+    const lowest = bounds().min[1], k = (-opt.legs - opt.cut) / (lowest - opt.cut), v = [0, 0, 0];
+    for (const mesh of root.listMeshes()) for (const p of mesh.listPrimitives()) { const a = p.getAttribute('POSITION'); for (let i = 0; i < a.getCount(); i++) { a.getElement(i, v); if (v[1] < opt.cut) { v[1] = opt.cut + (v[1] - opt.cut) * k; a.setElement(i, v); } } }
+  }
 }
 
 if (opt.emissive) await addEmissive(doc, opt);

@@ -41,8 +41,11 @@ if (q.get('dark') === '1') { scene.children.forEach(l => { if (l.isLight) l.inte
 const cam = new THREE.PerspectiveCamera(28, 1, 0.01, 500);
 
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
-Promise.all([loader.loadAsync(url), q.get('attach') ? loader.loadAsync(q.get('attach')) : null]).then(([gltf, extra]) => {
+Promise.all([loader.loadAsync(url), q.get('attach') ? loader.loadAsync(q.get('attach')) : null]).then(async ([gltf, extra]) => {
   const root = gltf.scene; scene.add(root);
+  // add=<url>@x,y,z[,yaw];... places further models in the scene (a rig on a boat, a figure for scale); morph=<w> sets every morph weight
+  for (const spec of (q.get('add') || '').split(';').filter(Boolean)) { const [u, at] = spec.split('@'); const [x, y, z, yaw] = (at || '0,0,0').split(',').map(Number); const g = await loader.loadAsync(u); g.scene.position.set(x, y, z); g.scene.rotation.y = THREE.MathUtils.degToRad(yaw || 0); root.add(g.scene); }
+  if (q.get('morph') !== null) root.traverse(o => { if (o.morphTargetInfluences) o.morphTargetInfluences.fill(+q.get('morph')); });
   if (extra) { const sk = root.getObjectByName(q.get('socket') || 'BookSocket'); if (sk) sk.add(extra.scene); }
   let tris = 0, verts = 0, mats = new Set(), texs = new Set(), skinned = 0;
   root.traverse(o => {
