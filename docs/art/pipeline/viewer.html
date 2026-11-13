@@ -45,7 +45,7 @@ Promise.all([loader.loadAsync(url), q.get('attach') ? loader.loadAsync(q.get('at
   const root = gltf.scene; scene.add(root);
   // add=<url>@x,y,z[,yaw];... places further models in the scene (a rig on a boat, a figure for scale); morph=<w> sets every morph weight
   for (const spec of (q.get('add') || '').split(';').filter(Boolean)) { const [u, at] = spec.split('@'); const [x, y, z, yaw] = (at || '0,0,0').split(',').map(Number); const g = await loader.loadAsync(u); g.scene.position.set(x, y, z); g.scene.rotation.y = THREE.MathUtils.degToRad(yaw || 0); root.add(g.scene); }
-  if (q.get('morph') !== null) root.traverse(o => { if (o.morphTargetInfluences) o.morphTargetInfluences.fill(+q.get('morph')); });
+  if (q.get('morph') !== null) root.traverse(o => { if (o.morphTargetInfluences) { const w = q.get('morph').split(',').map(Number); o.morphTargetInfluences.forEach((_, i) => { o.morphTargetInfluences[i] = w.length > 1 ? (w[i] || 0) : w[0]; }); } });   // morph=w for all, morph=w0,w1 per target
   if (extra) { const sk = root.getObjectByName(q.get('socket') || 'BookSocket'); if (sk) sk.add(extra.scene); }
   let tris = 0, verts = 0, mats = new Set(), texs = new Set(), skinned = 0;
   root.traverse(o => {

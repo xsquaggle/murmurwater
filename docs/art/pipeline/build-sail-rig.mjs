@@ -3,6 +3,8 @@
 // also the texture. Mast (lathe), boom and yard (tubes), boom jaw (box) and a two-sided sail grid, one mesh, one material.
 // Origin at the mast foot, +Y up, sail in the Y-Z plane, boom toward -Z. The picture is the view from +X.
 // Morph target 0 ("belly") fills the sail toward +X; weight -1 fills it toward -X, 0 leaves it flat. Default weight 1.
+// Morph target 1 ("furl") lowers the sail: the yard comes down to lie along the boom and the cloth is gathered into a
+// roll between them. Default weight 0. The two add up, so set belly to 0 as furl goes to 1.
 import { Document, NodeIO } from '@gltf-transform/core';
 import { EXTTextureWebP } from '@gltf-transform/extensions';
 import sharp from 'sharp';
@@ -34,8 +36,8 @@ const Tm = px => (px - MX) / (1653 - MX);
 const yardPy = px => YARD.yAt620 + YARD.slope * (px - 620);
 const uvOf = (px, py) => [(px - CROP.x0) / (CROP.x1 - CROP.x0), (py - CROP.y0) / (CROP.y1 - CROP.y0)];
 
-const P = [], N = [], UV = [], I = [], DP = [], DN = [];
-const vert = (p, n, t, dp = [0, 0, 0], dn = [0, 0, 0]) => { P.push(...p); N.push(...n); UV.push(...t); DP.push(...dp); DN.push(...dn); return P.length / 3 - 1; };
+const P = [], N = [], UV = [], I = [], DP = [], DN = [], FP = [], FN = [];     // DP, DN: belly deltas; FP, FN: furl deltas
+const vert = (p, n, t, dp = [0, 0, 0], dn = [0, 0, 0], fp = [0, 0, 0], fn = [0, 0, 0]) => { P.push(...p); N.push(...n); UV.push(...t); DP.push(...dp); DN.push(...dn); FP.push(...fp); FN.push(...fn); return P.length / 3 - 1; };
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -104,7 +106,22 @@ function tube(p0, p1, i0, i1, r, rImg) {
 const boomAt = px => [0, BOOM_Y + RISE * Tm(px), Zm(px)];
 tube(boomAt(BOOM_X0), boomAt(BOOM_X1), [BOOM_X0, BOOM_PY], [BOOM_X1, BOOM_PY], R_BOOM, BOOM_R);
 const yardAt = px => [0, Ym(yardPy(px)), Zm(px)];
+const yardFirst = P.length / 3;
 tube(yardAt(YARD.x0), yardAt(YARD.x1), [YARD.x0, yardPy(YARD.x0)], [YARD.x1, yardPy(YARD.x1)], R_YARD, YARD.r);
+
+// ---- furled: the yard lowered onto a roll of cloth that lies along the top of the boom
+const FURL = { rx: 0.10, ry: 0.078, lift: 0.9 * R_BOOM };          // half width and half height of the roll, its underside above the boom's centre line
+const boomY = z => BOOM_Y + RISE * (-z / 2.22);                     // the boom's centre line, carried on past its tip
+const aBoom = norm(sub(boomAt(BOOM_X1), boomAt(BOOM_X0))), aYard = norm(sub(yardAt(YARD.x1), yardAt(YARD.x0))), yardLen = Math.hypot(...sub(yardAt(YARD.x1), yardAt(YARD.x0)));
+const yardDown0 = [0, boomY(Zm(YARD.x0)) + FURL.lift + 2 * FURL.ry + R_YARD - 0.012, Zm(YARD.x0)];
+const yardDown = px => { const t = (px - YARD.x0) / (YARD.x1 - YARD.x0); return [0, yardDown0[1] + aBoom[1] * yardLen * t, yardDown0[2] + aBoom[2] * yardLen * t]; };
+{ // the yard keeps its length: it turns about X from its own slope to the boom's and drops (a morph, so half way it is a hair shorter)
+  const c = dot(aYard, aBoom), sn = aYard[1] * aBoom[2] - aYard[2] * aBoom[1], rot = v => [v[0], c * v[1] - sn * v[2], sn * v[1] + c * v[2]], o = yardAt(YARD.x0);
+  for (let i = yardFirst; i < P.length / 3; i++) {
+    const p = at(P, i), n = at(N, i), q = rot(sub(p, o)).map((v, k) => v + yardDown0[k]), m = rot(n);
+    for (let k = 0; k < 3; k++) { FP[3 * i + k] = q[k] - p[k]; FN[3 * i + k] = m[k] - n[k]; }
+  }
+}
 
 // ---- boom jaw: a block round the boom's fore end, against the mast
 {
@@ -127,11 +144,20 @@ tube(yardAt(YARD.x0), yardAt(YARD.x1), [YARD.x0, yardPy(YARD.x0)], [YARD.x1, yar
   };
   const nrm = (u, v) => { const e = 1e-3, cl = x => Math.min(1, Math.max(0, x));
     const du = sub(S(cl(u + e), v, 1).p, S(cl(u - e), v, 1).p), dv = sub(S(u, cl(v + e), 1).p, S(u, cl(v - e), 1).p); let n = norm(cross(du, dv)); if (n[0] < 0) n = n.map(x => -x); return n; };
+  // furled: the foot stays on the boom and the head on the lowered yard. From the foot the cloth goes once round the roll
+  // (up the +X side, over, down the -X side: the first 8 rows) and then up through the middle to the yard (the last 2).
+  const F = (u, v) => {
+    const px = SAIL.xl + u * (SAIL.xr - SAIL.xl), z = Zm(px) + (yardDown(px)[2] - Zm(px)) * v;
+    const rx = FURL.rx * (0.8 + 0.2 * Math.sin(Math.PI * u)) * (1 + 0.15 * Math.sin(6 * Math.PI * u + 0.5));       // a little lumpy, slimmer at the ends
+    const th = -Math.PI / 2 + 2 * Math.PI * Math.min(v, 0.8) / 0.8, up = Math.max(0, v - 0.8) / 0.2 * 2 * FURL.ry;
+    return [v <= 0.8 ? rx * Math.cos(th) : 0, boomY(z) + FURL.lift + FURL.ry + FURL.ry * Math.sin(th) + up, z];
+  };
+  const fnrm = (u, v) => { const e = 1e-3, cl = x => Math.min(1, Math.max(0, x)); return norm(cross(sub(F(cl(u + e), v), F(cl(u - e), v)), sub(F(u, cl(v + e)), F(u, cl(v - e))))); };
   for (const side of [1, -1]) {
     const first = P.length / 3;
     for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) {
-      const u = i / NU, v = j / NV, a = S(u, v, 0), b = S(u, v, 1), n = nrm(u, v);
-      vert(a.p, [side, 0, 0], uvOf(a.px, a.py), sub(b.p, a.p), [side * n[0] - side, side * n[1], side * n[2]]);
+      const u = i / NU, v = j / NV, a = S(u, v, 0), b = S(u, v, 1), n = nrm(u, v), fn = fnrm(u, v);
+      vert(a.p, [side, 0, 0], uvOf(a.px, a.py), sub(b.p, a.p), [side * n[0] - side, side * n[1], side * n[2]], sub(F(u, v), a.p), [side * fn[0] - side, side * fn[1], side * fn[2]]);
     }
     for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) {
       const a = first + j * (NU + 1) + i, b = a + 1, c = a + NU + 1, d = c + 1; tri(a, b, d); tri(a, d, c);
@@ -172,7 +198,8 @@ const mat = doc.createMaterial('sail-rig_mat').setBaseColorTexture(texture).setM
 const prim = doc.createPrimitive().setMaterial(mat).setIndices(acc(I, 'SCALAR', Uint16Array))
   .setAttribute('POSITION', acc(P, 'VEC3')).setAttribute('NORMAL', acc(N, 'VEC3')).setAttribute('TEXCOORD_0', acc(UV, 'VEC2'));
 prim.addTarget(doc.createPrimitiveTarget('belly').setAttribute('POSITION', acc(DP, 'VEC3')).setAttribute('NORMAL', acc(DN, 'VEC3')));
-const mesh = doc.createMesh('sail-rig').addPrimitive(prim).setWeights([1]).setExtras({ targetNames: ['belly'] });
+prim.addTarget(doc.createPrimitiveTarget('furl').setAttribute('POSITION', acc(FP, 'VEC3')).setAttribute('NORMAL', acc(FN, 'VEC3')));
+const mesh = doc.createMesh('sail-rig').addPrimitive(prim).setWeights([1, 0]).setExtras({ targetNames: ['belly', 'furl'] });
 doc.createScene('sail-rig').addChild(doc.createNode('sail-rig').setMesh(mesh));
 await new NodeIO().registerExtensions([EXTTextureWebP]).write(out, doc);
 let lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9]; for (let i = 0; i < P.length; i += 3) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], P[i + k]); hi[k] = Math.max(hi[k], P[i + k]); }
