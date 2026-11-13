@@ -11,7 +11,7 @@ Last updated: 2026-11-13, phase 2 first slice (boats and free sailing), v0.2.0.
 - Hearthbay plays end to end: Mara's first jobs, selling at her stall, the shop and notice board, Wick's sketch, Pell's ferry to Gull Point, relighting the lamp, and back. Every quest fish is catchable from the dock.
 - The cast is built to feel thrown (wind-up, whip, lure flight on an arc, line paying out, splash by power, camera kick, aim ring); fish shadows roam and one stalks the float before each bite.
 - Generated models are in for the player, NPCs, Biscuit the cat, fish, skiff and harbour props (see `docs/ASSETS.md`); stand-ins remain only where a file is missing.
-- Sound: 95 recorded effect files, 3 looping themes and 2 stings are wired in (`src/audio/audio.ts`); each one-shot keeps a synth stand-in for a missing file. All 40 voice lines are recorded.
+- Sound: 95 recorded effect files, 3 looping themes and 2 stings are wired in (`src/audio/audio.ts`); each one-shot keeps a synth stand-in for a missing file. All 52 voice lines are recorded.
 - Sailing (v0.2.0): Pell gives the Keeper's Skiff when the lamp is relit. The player boards it from any shore, sails it freely inside Hearthbay Waters (Kettle Isle, the Teeth, Pip's Bar), fishes from it when it is still, finds places for the chart, travels between known moorings from the chart, and is turned back by the Murmur Fog at the edge. Two more story quests (hb-07 the kettle, hb-08 the Teeth flounder) use it; a sea chest waits on Pip's Bar.
 - Settings are separate from the save (Electron `userData/settings.json`, browser localStorage). An unreadable save is quarantined, never overwritten.
 
@@ -42,7 +42,7 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 
 ## Known issues
 - The sailing sounds, the murmur and the open-water theme were levelled by measurement; nobody has heard them in play.
-- The seated player's feet hang a little above the skiff's boards (the asset thread has a rebake of `boat_sit` on offer).
+- Seated at the tiller, the hem of the coat passes through the thwart (it cannot fold), and a stowed oar lies beside the right hip.
 - The sail bot is slow on SwiftShader (about 10 minutes at medium quality, run alone). Run the Chromium bots one at a time: two at once on this 4-core, 13 GB machine ran 15 to 40 times slower and one was killed for memory.
 - Steep harbour cliff shows large flat facets; Gull Point arrival faces the hillside; some houses float slightly.
 - Nobody has heard the mix: levels are set by measurement (`e2e/audio.cjs`). To check by ear: line snap, bite dunk, hook set, the day theme's instruments, music against voices; Mara's "Your aunt's, it was" and "stall", Pell's "Gull Point".

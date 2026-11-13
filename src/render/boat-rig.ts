@@ -221,10 +221,11 @@ export class BoatRig {
   constructor(hull: Object3D, isModel: boolean, sailRig: Object3D | null = null) {
     hull.position.set(0, 0, 0); hull.rotation.set(0, 0, 0);
     this.sink = isModel ? -0.3 : 0.42;
-    // The skiff's floorboards are 0.64 m above her keel and her stern thwart 1.10 m; the seated pose puts the
-    // player's origin 0.35 m below the seat and their tiller hand 0.26 m to starboard of it, on the centre line.
+    // The skiff's floorboards are 0.64 m above her keel and her stern thwart 1.10 m. Standing and seated, the
+    // player's origin is on the boards; the seated clip perches them on the thwart with the tiller hand 0.26 m
+    // to starboard of the origin, on the centre line.
     this.standSpot = isModel ? [0, 0.636, -0.3] : [0, -0.2, -0.3];
-    this.seatSpot = isModel ? [0.257, 0.75, -1.1] : [0, -0.2, -0.9];
+    this.seatSpot = isModel ? [0.257, 0.636, -1.1] : [0, -0.2, -0.9];
     if (isModel) {
       const b = new Builder(47, 0.03);
       b.add(new CylinderGeometry(0.02, 0.03, 0.82, 6), C(PALETTE.driftwood), { pos: [0, 0, 0.41], rot: [Math.PI / 2, 0, 0] });
