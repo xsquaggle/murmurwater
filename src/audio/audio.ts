@@ -19,6 +19,7 @@ const SFX = {
   'gulls': [4, 0.42], 'dock-creak': [4, 0.4], 'cat-meow': [3, 0.7],
   // Sailing
   'sail-flap': [3, 0.7], 'boat-bump': [3, 0.9], 'rope-creak': [3, 0.5], 'boat-board': [2, 0.8], 'chart-open': [2, 0.7],
+  'chest-open': [2, 0.8],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
@@ -314,6 +315,8 @@ export class AudioEngine {
     this.noise(0.1, 500, 0.6, 0.22, 'lowpass', 180); this.noise(0.16, 380, 0.6, 0.16, 'lowpass', 140, 0.11);
   }
   chartOpen() { if (!this.sfx('chart-open')) this.pageTurn(); }
+  /** A sea chest's lid: a creak with the clink of what is inside (the recording has both). */
+  chestOpen() { if (!this.sfx('chest-open')) this.coin(8); }
   /** A new place on the chart: a short rising figure (the recorded sting once it exists). */
   discover() {
     const synth = () => { [587.33, 739.99, 880, 1174.66].forEach((f, i) => this.tone(f, 0.5, 0.12, 'triangle', i * 0.11)); this.tone(293.66, 1.1, 0.07, 'sine', 0.05); };

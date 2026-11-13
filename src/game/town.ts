@@ -421,7 +421,7 @@ export class Town {
     const got = [`◉ ${def.coins}`];
     for (const [bait, n] of Object.entries(def.items ?? {})) { s.gear.baits[bait] = (s.gear.baits[bait] ?? 0) + n; got.push(`${n} ${BAITS_BY_ID.get(bait)?.name ?? bait}`); }
     this.showChests();
-    g.audio.coin(8); g.audio.discover();
+    g.audio.chestOpen(); g.audio.discover();
     g.fx.glow.burst(_v.set(def.x, (g.groundAt(def.x, def.z) ?? 1) + 0.7, def.z), 22, this.gold, 1.6, 2.4, 0.9, 0.12, 2.5);
     g.hud.toast(def.text);
     g.hud.toast(`In the chest: ${got.join(', ')}`, 'gold');
