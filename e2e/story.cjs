@@ -83,7 +83,7 @@ const { chromium } = require('playwright');
         for (let i = 1; i <= maxCatches; i++) {
           if (hour !== undefined) g.state.hour = hour;
           // Keep the hold from filling: only the quest catch matters here.
-          if (g.state.hold.length >= g.state.holdCapacity - 1) g.state.hold.length = 0;
+          if (g.state.hold.length >= g.holdCapacity - 1) g.state.hold.length = 0;
           this.fish(1);
           if ((g.state.journal[fishId]?.caught ?? 0) > before) return i;
         }

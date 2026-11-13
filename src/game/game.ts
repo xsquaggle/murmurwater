@@ -13,6 +13,7 @@ import { Hud } from '../ui/hud';
 import { PerfOverlay } from '../ui/perf';
 import { Town } from './town';
 import { Sailing } from './sailing';
+import { PotField } from './potfield';
 import { defaultSettings, keyLabel, type Settings } from './settings';
 import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
@@ -89,6 +90,9 @@ export class Game {
   botInput: FishingInput | null = null;
   readonly town: Town;
   readonly sailing: Sailing;
+  readonly pots: PotField;
+  /** Hours the sky is still behind the clock, after the clock was put on (see rushSky). */
+  private skyLag = 0;
   /** Camera shake multiplier from settings (0 = off). */
   shakeScale = 1;
 
@@ -115,6 +119,7 @@ export class Game {
     this.sailing = new Sailing(this);
     this.faceYaw = this.yaw;
     this.town = new Town(this, uiRoot, settings);
+    this.pots = new PotField(this);
     this.town.applySettings(['volumes', 'sensitivity', 'invertY', 'bindings', 'uiScale', 'subtitles']);
     this.onResize();
     window.addEventListener('resize', () => this.onResize());
@@ -132,14 +137,14 @@ export class Game {
   stats!: Stats;
   private statsAge = 0;
   private wasNight = false;
-  refreshStats() { this.stats = stats(this.state, { hour: this.world.hour, afloat: !!this.sailing?.aboard }); this.statsAge = 0; this.wasNight = isNight(this.world.hour); }
+  refreshStats() { this.stats = stats(this.state, { hour: this.state.hour, afloat: !!this.sailing?.aboard }); this.statsAge = 0; this.wasNight = isNight(this.state.hour); }
   get holdCapacity() { return this.stats.hold; }
 
   private newSession(): FishingSession {
     const s = this.state;
     const region = REGIONS_BY_ID.get(s.world.region)!;
     this.refreshStats();
-    return new FishingSession(fishingContext(s, { hour: this.world.hour }, (dist: number): SpotInfo => {
+    return new FishingSession(fishingContext(s, { hour: s.hour }, (dist: number): SpotInfo => {
       // Walk back along the aim line until the lure lands in water at least 0.6 m deep.
       const dir = new Vector3(Math.sin(this.castYaw), 0, Math.cos(this.castYaw));
       for (let d = dist; d > 2; d -= 0.5) {
@@ -154,6 +159,12 @@ export class Game {
   /** Rebuild the fishing session after gear changes (only between casts). */
   refreshSession() { if (this.session.phase === 'idle') this.session = this.newSession(); else this.refreshStats(); }
 
+  /**
+   * The clock was put on by `hours` (a job that brings the dusk): the sky hurries after it over a few seconds
+   * instead of jumping. Fishing goes by the clock at once.
+   */
+  rushSky(hours: number) { this.skyLag = Math.max(0, Math.min(23, hours)); }
+
   /** Put the camera straight behind the player (after a teleport). */
   snapCamera() {
     this.camYaw = this.yaw; this.faceYaw = this.yaw;
@@ -166,6 +177,12 @@ export class Game {
 
   /** A knock to the camera (the hull striking something). */
   jolt(amount: number) { this.shake = Math.max(this.shake, amount); }
+
+  /** Turn the view toward a point (something worth looking at has just happened there). */
+  lookToward(p: Vector3, pitch = this.camPitch) {
+    this.camYaw = Math.atan2(p.x - this.pos.x, p.z - this.pos.z);
+    this.camPitch = pitch;
+  }
 
   /** Swing the view up to the lighthouse lamp (after lighting it). */
   lookAtLamp() {
@@ -221,7 +238,8 @@ export class Game {
     this.time += dt;
     s.playTime += dt;
     s.hour = (s.hour + (dt * 24) / DAY_LENGTH_S) % 24;
-    this.world.hour = s.hour;
+    if (this.skyLag > 0) this.skyLag = Math.max(0, this.skyLag - dt * Math.max(0.6, this.skyLag * 0.9));
+    this.world.hour = (s.hour - this.skyLag + 24) % 24;
     this.session.ctx.hour = s.hour;
     // Gear that depends on the hour or on being afloat: look again now and then, and when night falls or lifts.
     this.statsAge += dt;
@@ -323,10 +341,14 @@ export class Game {
 
     // People, places, menus.
     this.town.step(dt);
+    // Lantern Pots: their clocks, and the pot key.
+    const after = this.session.phase;
+    this.pots.step(dt, (after === 'idle' || after === 'landed' || after === 'lost') && !this.town.blocking && !sail.busy);
 
-    // Rhythm decays if you stop fishing for a while.
-    if (this.session.phase === 'idle') { this.idleSince += dt; if (this.idleSince > RHYTHM.decayAfter && s.rhythm > 0) { s.rhythm = 0; this.hud.toast('Your rhythm fades'); } }
-    else this.idleSince = 0;
+    // Rhythm fades if you stop fishing for a while. Not while she is under way: sailing to the next ground is part of the work.
+    const underWay = sail.aboard && (Math.abs(sail.boat.speed) > 0.9 || sail.throttle !== 0);
+    if (this.session.phase !== 'idle') this.idleSince = 0;
+    else if (!underWay) { this.idleSince += dt; if (this.idleSince > RHYTHM.decayAfter && s.rhythm > 0) { s.rhythm = 0; this.hud.toast('Your rhythm fades'); } }
 
     this.saveTimer += dt;
     if (this.saveTimer > 30) { this.saveTimer = 0; void this.save(); }
@@ -572,6 +594,7 @@ export class Game {
     this.world.pocketScale += ((sail.aboard ? 0.22 : 1) - this.world.pocketScale) * Math.min(1, dt * 3);
     this.world.murk = sail.murmur;
     this.world.update(dt, this.camera, this.pos);
+    this.pots.present(dt);
 
     // HUD
     let bitePos: { x: number; y: number } | null = null;
@@ -584,8 +607,9 @@ export class Game {
     this.hud.setGoal(this.town.goal());
     this.hud.setHint(this.town.blocking ? '' : this.hint());
     this.hud.setCompass(sail.aboard && !this.town.blocking ? { yaw: camYaw, knots: sail.made * 1.94, marks: this.town.bearings() } : null);
-    const fp = this.town.focusPrompt;
-    this.hud.setPrompt(fp && !this.town.blocking ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '', sail.aboard);
+    const fp = this.town.focusPrompt, pp = this.pots.prompt;
+    const prompts = this.town.blocking ? [] : [fp ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '', pp ? `<kbd>${keyName(this.input.bindings.pot[0])}</kbd> ${pp}` : ''].filter(Boolean);
+    this.hud.setPrompt(prompts.join('<br>'), sail.aboard);
 
     const night = this.world.light.night;
     this.audio.update(dt, {
@@ -613,9 +637,11 @@ export class Game {
     const moves = [b.forward[0], b.left[0], b.back[0], b.right[0]];
     const walk = moves.join() === 'KeyW,KeyA,KeyS,KeyD' ? '<kbd>WASD</kbd>' : moves.map((c) => `<kbd>${shortKey(c)}</kbd>`).join('');
     switch (ph) {
-      case 'idle':
-        if (this.sailing.aboard) return `${walk} sail · ${k('cast')} hold to cast once she is still · ${k('map')} chart`;
-        return `${k('cast')} hold to cast · ${walk} walk · ${k('sprint')} run`;
+      case 'idle': {
+        const pot = this.pots.spot ? ` · ${k('pot')} set a Lantern Pot` : '';
+        if (this.sailing.aboard) return `${walk} sail · ${k('cast')} hold to cast once she is still · ${k('map')} chart${pot}`;
+        return `${k('cast')} hold to cast · ${walk} walk · ${k('sprint')} run${pot}`;
+      }
       case 'charging': return 'Release in the bright band for a clean cast';
       case 'waiting': return `Watch the water… hook it when the float goes under · ${k('cancel')} reel in`;
       case 'bite': return `${k('cast')} Hook it!`;

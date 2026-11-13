@@ -10,20 +10,22 @@ import { hashString } from '../core/rng';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
 import { converse, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
-  BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
-  readySet, newlyReady, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
+  BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, count, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
+  tickBoard, turnIn, type QuestEvent, type QuestUpdate,
 } from '../core/quests';
-import { BAITS_BY_ID, RODS_BY_ID, type FerryPoint, type MooringDef, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
+import { BAITS_BY_ID, type FerryPoint, type MooringDef, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
 import { LANDING } from '../core/landing';
 import { DAY_LENGTH_S } from '../render/daycycle';
 import type { ChartRaster, ChartView } from '../ui/chart';
 import { earn, fmt, sellAll } from '../core/economy';
-import { buyBait, buyRod, type CollectionDef } from '../core/gear';
-import { saveSettings, type Settings } from './settings';
+import { LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable, type CollectionDef } from '../core/gear';
+import { BELL_FLAG, canRing, echoesFor, ringBell, turnings } from '../core/bell';
+import { trade } from './trade';
+import { keyLabel, saveSettings, type Settings } from './settings';
 import { QUALITY } from '../render/renderer';
 
 interface Interactable {
-  kind: 'npc' | 'board' | 'lamp' | 'boat' | 'ashore' | 'kettle' | 'chest'; id: string; pos: Vector3; r: number; prompt: string;
+  kind: 'npc' | 'board' | 'lamp' | 'boat' | 'ashore' | 'kettle' | 'chest' | 'bell'; id: string; pos: Vector3; r: number; prompt: string;
   /** How far away it counts as being, when that is not simply the distance to `pos` (the boat's hull). */ dist?: number;
 }
 interface Step { at: number; run: () => void }
@@ -73,8 +75,8 @@ export class Town {
     void fetch('audio/voice/voiced.json').then((r) => (r.ok ? r.json() : {})).then((v) => { this.voiced = v ?? {}; }).catch(() => {});
     const host: UiHost = {
       state: g.state, settings,
-      buyRod: (id) => this.buyRod(id), equipRod: (id) => { g.state.gear.rod = id; g.refreshSession(); },
-      buyBait: (id, n) => this.buyBait(id, n), equipBait: (id) => { g.state.gear.bait = id; g.refreshSession(); },
+      act: (a) => trade(g, a),
+      ringBell: () => this.ringBell(),
       acceptBoard: (id) => { acceptBoard(g.state, id); },
       abandonBoard: (id) => { abandonBoard(g.state, id); },
       applySettings: (k) => this.applySettings(k),
@@ -172,6 +174,11 @@ export class Town {
     for (const c of this.region.chests ?? []) {
       if (!this.g.state.flags.includes(`chest:${c.id}`)) out.push({ kind: 'chest', id: c.id, pos: this.spot(c), r: 2.4, prompt: 'Open the chest' });
     }
+    const bell = this.places.get('drowned-bell');
+    if (bell) {
+      const s = this.g.state, found = s.flags.includes(BELL_FLAG);
+      out.push({ kind: 'bell', id: bell.id, pos: this.spot(bell), r: bell.r, prompt: !found ? 'Look at the bell' : canRing(s) ? 'Take hold of the bell rope' : 'The Drowned Bell' });
+    }
     for (const [id, e] of this.npcs) {
       if (!e.fig.root.visible) continue;
       out.push({ kind: 'npc', id, pos: e.fig.root.position, r: 2.8, prompt: `Talk to ${npc(id).name}` });
@@ -228,6 +235,7 @@ export class Town {
     else if (it.kind === 'ashore') this.g.sailing.stepAshore();
     else if (it.kind === 'kettle') this.takeKettle();
     else if (it.kind === 'chest') this.openChest(it.id);
+    else if (it.kind === 'bell') this.atBell();
     return true;
   }
   get focusPrompt() { return this.focus?.prompt ?? null; }
@@ -251,7 +259,11 @@ export class Town {
     const s = this.g.state;
     if (!s.flags.includes(`met-${npcId}`)) s.flags.push(`met-${npcId}`);
     const seq = (this.barkSeq[npcId] = (this.barkSeq[npcId] ?? Math.floor(s.playTime)) + 1);
-    this.openConversation(converse(s, npcId, this.island, seq));
+    // The first word with each of them after a Turning: they very nearly know the keeper.
+    const deja = `deja:${npcId}`, turned = turnings(s);
+    const conv = converse(s, npcId, this.island, seq, turned > 0 && !s.flags.includes(deja) ? turned : 0);
+    if (conv.deja) s.flags.push(deja);
+    this.openConversation(conv);
   }
 
   private openConversation(conv: Conversation) {
@@ -271,8 +283,8 @@ export class Town {
     const got = describeRewards(r);
     if (got.length) setTimeout(() => this.g.hud.toast(got.join(' · '), 'good'), 450);
     if (r.flags?.includes('hb-lighthouse-lit')) this.g.world.lighthouseLit = true;
-    // Baits and relics both change what the next cast can do.
-    if (r.items || r.relics?.length) this.g.refreshSession();
+    // Bait, relics and the keeper's things all change what the next cast can do.
+    this.g.refreshSession();
     if (r.boats?.length) {
       // She is in the water from this moment, lying off the nearest landing.
       this.g.sailing.launch();
@@ -288,9 +300,23 @@ export class Town {
     const g = this.g, s = g.state;
     switch (a.type) {
       case 'accept': {
+        const q = QUESTS_BY_ID.get(a.quest)!, hour = s.hour;
         if (accept(s, a.quest)) {
           g.audio.questAccept();
-          g.hud.toast(`New quest: ${QUESTS_BY_ID.get(a.quest)!.title}`, 'gold');
+          g.hud.toast(`New quest: ${q.title}`, 'gold');
+          // The tool for the job, handed over with it.
+          if (q.gives) {
+            g.refreshSession();
+            setTimeout(() => g.hud.toast(`${npc(q.giver).name.split(' ')[0]} hands you: ${describeRewards(q.gives!).join(', ')}`, 'good'), 500);
+            if (q.gives.pots) setTimeout(() => g.hud.toast(`Stand by open water and press ${keyLabel(g.input.bindings.pot[0] ?? '')} to set it`), 1700);
+          }
+          // A job that wants the dark brings the dusk on: the sky hurries after the clock.
+          const jump = (((s.hour - hour) % 24) + 24) % 24;
+          if (jump > 0.2) { g.rushSky(jump); setTimeout(() => g.hud.toast('The afternoon goes by in a breath. Dusk already.'), 900); }
+          // Somewhere the keeper has already been counts as found.
+          for (const o of q.objectives) if (o.type === 'visit' && o.place && s.flags.includes(`seen:${o.place}`)) onQuestEvent(s, { type: 'visit', place: o.place });
+          // And a bell already rung does not need ringing again to prove it.
+          if (turnings(s) > 0 && q.objectives.some((o) => o.type === 'ring')) onQuestEvent(s, { type: 'ring' });
           // Some objectives may already be met (e.g. you already own the rod).
           if (questStatus(s, a.quest) === 'ready') setTimeout(() => g.hud.toast(`Already done! Talk to ${npc(QUESTS_BY_ID.get(a.quest)!.giver).name}`, 'good'), 500);
         }
@@ -298,7 +324,7 @@ export class Town {
         break;
       }
       case 'sell': {
-        const n = s.hold.length;
+        const n = s.hold.length + s.pots.hold.length;
         const total = sellAll(s);
         g.audio.coin(n);
         g.hud.toast(`Sold ${n} fish for ◉ ${fmt(total)}`, 'gold');
@@ -345,28 +371,10 @@ export class Town {
       const i = q.objectives.findIndex((_, k) => (s.quests.active[id]?.[k] ?? 0) > 0);
       const o = q.objectives[Math.max(0, i)];
       const prog = s.quests.active[id]?.[Math.max(0, i)] ?? 0;
-      if ((o.count ?? 1) > 1) g.hud.toast(`${q.title}: ${prog}/${o.count}`);
+      if ((o.count ?? 1) > 1) g.hud.toast(`${q.title}: ${count(prog)}/${count(o.count!)}`);
     }
     for (const b of u.boardDone) { g.audio.coin(4); g.hud.toast(`Notice paid: ${b.title} · ${describeRewards(b.reward).join(', ')}`, 'gold'); }
     return u;
-  }
-
-  private buyRod(id: string) {
-    const g = this.g, s = g.state, r = RODS_BY_ID.get(id)!;
-    const before = readySet(s);
-    if (!buyRod(s, id)) return;
-    g.refreshSession();
-    g.audio.coin(6);
-    g.hud.toast(`Bought the ${r.name}`, 'gold');
-    for (const q of newlyReady(s, before)) g.hud.toast(`${QUESTS_BY_ID.get(q)!.title}: done! Return to ${npc(QUESTS_BY_ID.get(q)!.giver).name}`, 'gold');
-    void g.save();
-  }
-
-  private buyBait(id: string, n: number) {
-    const g = this.g;
-    if (!buyBait(g.state, id, n)) return;
-    g.audio.coin(2);
-    void g.save();
   }
 
   /** A journal page was filled: say so and show what it gave. */
@@ -399,11 +407,15 @@ export class Town {
   }
 
   /** Compass marks for the helm: the goal, and the moorings the player knows. */
-  bearings(): { bearing: number; kind: 'goal' | 'mooring' }[] {
-    const g = this.g, out: { bearing: number; kind: 'goal' | 'mooring' }[] = [];
+  bearings(): { bearing: number; kind: 'goal' | 'mooring' | 'pot' }[] {
+    const g = this.g, out: { bearing: number; kind: 'goal' | 'mooring' | 'pot' }[] = [];
     const to = (x: number, z: number) => Math.atan2(x - g.pos.x, -(z - g.pos.z));
     for (const m of this.region.moorings ?? []) {
       if (g.state.world.charted.includes(m.place) && Math.hypot(m.x - g.pos.x, m.z - g.pos.z) > 30) out.push({ bearing: to(m.x, m.z), kind: 'mooring' });
+    }
+    // Pots with something in them, so they can be steered for.
+    for (const p of g.state.pots.placed) {
+      if (p.region === g.state.world.region && p.fish.length && Math.hypot(p.x - g.pos.x, p.z - g.pos.z) > 25) out.push({ bearing: to(p.x, p.z), kind: 'pot' });
     }
     const goal = this.goalTarget();
     if (goal && Math.hypot(goal.x - g.pos.x, goal.z - g.pos.z) > 12) out.push({ bearing: to(goal.x, goal.z), kind: 'goal' });
@@ -423,6 +435,9 @@ export class Town {
     earn(s, def.coins);
     const got = [`◉ ${def.coins}`];
     for (const [bait, n] of Object.entries(def.items ?? {})) { s.gear.baits[bait] = (s.gear.baits[bait] ?? 0) + n; got.push(`${n} ${BAITS_BY_ID.get(bait)?.name ?? bait}`); }
+    for (const id of def.lures ?? []) { grantLure(s, id); got.push(LURES_BY_ID.get(id)?.name ?? id); }
+    for (const id of def.wearables ?? []) { grantWearable(s, id); got.push(WEARABLES_BY_ID.get(id)?.name ?? id); }
+    g.refreshSession();
     this.showChests();
     g.audio.chestOpen(); g.audio.discover();
     g.fx.glow.burst(_v.set(def.x, (g.groundAt(def.x, def.z) ?? 1) + 0.7, def.z), 22, this.gold, 1.6, 2.4, 0.9, 0.12, 2.5);
@@ -442,6 +457,58 @@ export class Town {
     this.questEvent({ type: 'visit', place: 'keepers-kettle' });
     void g.save();
   }
+
+  // ------------------------------------------------------------------ the Drowned Bell
+  private atBell() {
+    const g = this.g, s = g.state;
+    if (s.flags.includes(BELL_FLAG)) { this.openScreen('bell'); return; }
+    // Before Pell has said what it is for, it is only a thing to have seen.
+    if (!s.flags.includes('seen:drowned-bell')) { s.flags.push('seen:drowned-bell'); g.audio.discover(); }
+    g.lookToward(g.world.bellPos, -0.1);
+    g.hud.toast('A bell, green with the sea, hung where a church used to be. The rope is dry.');
+    if (questStatus(s, 'hb-09-bell') === 'active') this.questEvent({ type: 'visit', place: 'drowned-bell' });
+    else if (questStatus(s, 'hb-09-bell') !== 'ready') g.hud.toast('Somebody in Hearthbay will want to hear of this.');
+    void g.save();
+  }
+
+  /** Rings the Bell: two strokes, the sea goes out, and the keeper wakes on the Hearthbay dock at first light. */
+  ringBell() {
+    const g = this.g, s = g.state, w = g.world;
+    if (!canRing(s) || this.seq.length) return;
+    const echoes = echoesFor(s);
+    this.screens.close();
+    g.lookToward(w.bellPos, -0.12);
+    this.run([
+      { at: 0.2, run: () => { w.tollBell(1); g.audio.bellToll(1); g.jolt(0.25); g.fx.glow.burst(_v.copy(w.bellPos), 40, this.cyan, 3, 2, 2.2, 0.16, 0.6); } },
+      { at: 2.4, run: () => { w.tollBell(0.9); g.audio.bellToll(0.85); g.jolt(0.2); g.fx.glow.burst(_v.copy(w.bellPos), 40, this.cyan, 4, 2, 2.4, 0.16, 0.6); } },
+      { at: 4.2, run: () => { g.audio.tideTurn(); g.hud.fade(true, 'The bell is heard a long way down. The tide turns.'); } },
+      { at: 6.6, run: () => {
+        const t = ringBell(s);
+        if (!t) return;
+        // The world follows the save: the keeper on the dock, the boat on her home mooring, the pots gone from the water.
+        g.pos.set(s.world.pos[0], g.groundAt(s.world.pos[0], s.world.pos[2]) ?? s.world.pos[1], s.world.pos[2]);
+        g.yaw = s.world.yaw;
+        g.sailing.launch(); g.sailing.murmur = 0;
+        g.rushSky(0); g.world.hour = s.hour;
+        g.refreshSession(); g.snapCamera();
+        this.arrive();
+        // Counted now, so a save made in the dark has it; said once the morning can be seen.
+        this.turned = { echoes: t.echoes, sold: t.sold, ready: onQuestEvent(s, { type: 'ring' }).ready };
+        void g.save();
+      } },
+      { at: 8.6, run: () => { g.hud.fade(false); g.input.requestLock(); } },
+      { at: 9.8, run: () => {
+        const t = this.turned;
+        g.audio.discover();
+        g.hud.toast(`The tide has turned. ✺ ${t?.echoes ?? echoes} Echoes came back with it.`, 'gold');
+        if (t?.sold) setTimeout(() => g.hud.toast(`Your catch went with the tide for ◉ ${fmt(t.sold)}`), 1200);
+        setTimeout(() => g.hud.toast(`Spend Echoes in your satchel (${keyLabel(g.input.bindings.inventory[0] ?? '')}), on the Echoes page`), 2600);
+        for (const id of t?.ready ?? []) { const q = QUESTS_BY_ID.get(id)!; setTimeout(() => { g.audio.questReady(); g.hud.toast(`${q.title}: done! Return to ${npc(q.giver).name}`, 'gold'); }, 4200); }
+      } },
+    ]);
+  }
+  private turned: { echoes: number; sold: number; ready: string[] } | null = null;
+  private cyan = new Color('#7CFFD4');
 
   // ------------------------------------------------------------------ the chart
   /** Terrain heights for the chart, sampled once: the islands and a margin of sea round them. */
@@ -475,6 +542,7 @@ export class Town {
       you: { x: g.pos.x, z: g.pos.z, aboard: sail.aboard },
       boat: sail.owned ? { x: sail.boat.x, z: sail.boat.z, heading: sail.boat.heading } : null,
       goal: goal ? { x: goal.x, z: goal.z } : null,
+      pots: s.pots.placed.filter((p) => p.region === s.world.region).map((p) => ({ x: p.x, z: p.z, fish: p.fish.length, full: p.fish.length >= g.stats.potCapacity })),
       from: ph === 'idle' || ph === 'landed' || ph === 'lost' ? sail.mooredAt()?.id ?? null : null,
       hint: rc.edgeHint ?? '',
     };
@@ -635,6 +703,15 @@ export class Town {
         const v = new Vector3(sail.boat.x, 4.4, sail.boat.z).project(g.camera);
         if (v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05) items.push({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, kind: 'place', glyph: '⚓', label: d > 40 ? sail.def!.name.replace(/^The /, '') : null, alpha: 1 });
       }
+    }
+    // Lantern Pots out of arm's reach: how many fish each holds, so a full one can be seen from the dock or the helm.
+    if (!this.blocking) for (const p of s.pots.placed) {
+      if (p.region !== s.world.region) continue;
+      const d = Math.hypot(p.x - g.pos.x, p.z - g.pos.z), n = p.fish.length;
+      if (d < 9 || d > (n ? 170 : 55)) continue;
+      const v = _v.set(p.x, 1.7, p.z).project(g.camera);
+      if (v.z > 1 || Math.abs(v.x) > 1.05 || Math.abs(v.y) > 1.05) continue;
+      items.push({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, kind: n >= g.stats.potCapacity ? 'pot full' : 'pot', glyph: String(n), label: null, alpha: n ? 1 : 0.55 });
     }
     g.hud.setMarkers(items);
     // The kettle steams for as long as it sits on its stones.

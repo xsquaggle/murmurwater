@@ -6,7 +6,7 @@ import { Heightfield, type RegionDef } from '../core/world';
 import { createSky, createSkyUniforms, type SkyUniforms } from './sky';
 import { Water } from './water';
 import { buildTerrain } from './terrain';
-import { addLanternLight, buildArch, buildBuoy, buildDock, buildKettleCamp, buildLighthouse, buildNoticeBoard, buildRowboat, buildStall, createPropMaterial, scatterIsland } from './props';
+import { addLanternLight, buildArch, buildBellPost, buildBelfry, buildBuoy, buildDock, buildKettleCamp, buildLighthouse, buildNoticeBoard, buildRowboat, buildStall, createPropMaterial, scatterIsland } from './props';
 import { assets } from './assets';
 import { buildHullMask } from './boat-rig';
 import { dockDeckAt } from '../core/dock';
@@ -31,6 +31,8 @@ export class WorldScene {
   private lanterns: PointLight[] = [];
   private lighthouseGlass: MeshStandardMaterial;
   lighthouseLit = false;
+  /** 0..1: how lit the lanterns and windows are (they come on at dusk). */
+  glow = 0;
   readonly dockEnd: Vector3;
   readonly deckY: number;
   readonly spawn: Vector3;
@@ -56,6 +58,10 @@ export class WorldScene {
   /** Sea chests by id: the shut one and the open one stand in the same place and one of them shows. */
   readonly chests = new Map<string, { shut: Object3D; open: Object3D }>();
   private buoys: { obj: Object3D; x: number; z: number; ph: number }[] = [];
+  /** The Drowned Bell, where the region has one: the part that swings, how long since it was struck, and how hard. */
+  private bell: { pivot: Object3D; t: number; amp: number } | null = null;
+  /** Where the bell hangs, for the camera and for sparks. */
+  readonly bellPos = new Vector3();
 
   constructor(readonly region: RegionDef, profile: QualityProfile) {
     this.hf = new Heightfield(region);
@@ -219,6 +225,55 @@ export class WorldScene {
       this.blockers.push([c.x, c.z, 0.6]);
     }
 
+    // The Drowned Belfry: a church tower standing in the sea off its shoal, leaning a little, the bell still hung.
+    const bf = L.belfry;
+    if (bf) {
+      const g = new Group();
+      const model = assets.instance('belfry');
+      let pivot: Object3D | null = model?.getObjectByName('Bell') ?? null;
+      let ropeFrom = new Vector3(-0.95, 6.83, 0);
+      if (model) {
+        g.add(model);
+        const socket = model.getObjectByName('RopeSocket');
+        if (socket) ropeFrom = socket.position.clone();
+      } else {
+        const built = buildBelfry();
+        const tower = new Mesh(built.tower, createPropMaterial()), bell = new Mesh(built.bell, createPropMaterial());
+        for (const m of [tower, bell]) { m.castShadow = true; m.receiveShadow = true; this.propMats.push(m.material as MeshStandardMaterial); }
+        bell.position.set(...built.bellAt);
+        g.add(tower, bell);
+        pivot = bell;
+      }
+      g.position.set(bf.x, 0, bf.z); g.rotation.set(-0.035, bf.rot ?? 0, 0.05, 'YXZ');
+      s.add(g);
+      g.updateMatrixWorld(true);
+      this.blockers.push([bf.x, bf.z, 2.6]);
+      this.rocks.push([bf.x, bf.z, 2.9]);
+      if (pivot) { this.bell = { pivot, t: 99, amp: 0 }; pivot.getWorldPosition(this.bellPos); this.bellPos.y -= 0.7; }
+      // The rope comes ashore to a post on the shoal, where a keeper can reach it.
+      const at = rc.places?.find((p) => p.id === 'drowned-bell');
+      if (at) {
+        const dx = bf.x - at.x, dz = bf.z - at.z, d = Math.hypot(dx, dz) || 1;
+        const px = at.x + (dx / d) * 1.1, pz = at.z + (dz / d) * 1.1;
+        const post = new Mesh(buildBellPost(), createPropMaterial());
+        post.position.set(px, this.hf.height(px, pz) - 0.25, pz); post.rotation.y = 0.8; post.castShadow = true;
+        this.propMats.push(post.material as MeshStandardMaterial);
+        s.add(post);
+        this.blockers.push([px, pz, 0.3]);
+        // Two lengths of rope with a sag between them.
+        const a = ropeFrom.applyMatrix4(g.matrixWorld), b = new Vector3(px, post.position.y + 1.0, pz);
+        const mid = a.clone().lerp(b, 0.55); mid.y -= 0.9;
+        const ropeMat = new MeshStandardMaterial({ color: new Color('#B9A27C'), roughness: 0.95, flatShading: true });
+        for (const [p, q] of [[a, mid], [mid, b]]) {
+          const len = p.distanceTo(q), geo = new CylinderGeometry(0.022, 0.022, len, 5, 1);
+          geo.rotateX(Math.PI / 2);
+          const seg = new Mesh(geo, ropeMat);
+          seg.position.copy(p).lerp(q, 0.5); seg.lookAt(q);
+          s.add(seg);
+        }
+      }
+    }
+
     this.hemi = new HemisphereLight(0xffffff, 0x000000, 1);
     s.add(this.hemi);
     this.key = new DirectionalLight(0xffffff, 2);
@@ -247,6 +302,9 @@ export class WorldScene {
   private beamMat: ShaderMaterial;
   private boatBase = new Vector3();
   private boatYaw = 0;
+
+  /** Strikes the bell: it swings and settles (the sound is the game's business). */
+  tollBell(strength = 1) { if (this.bell) { this.bell.t = 0; this.bell.amp = 0.42 * strength; } }
 
   /** Moors the ferry at an island's landing (positions come from the region's ferry points). */
   placeFerry(island: string) {
@@ -301,7 +359,7 @@ export class WorldScene {
     (this.terrainMat.userData.uniforms.uCausticStrength as { value: number }).value = 1 - lt.night * 0.85;
 
     // Lights come on at dusk and flicker like flames.
-    const glow = Math.min(1, Math.max(0, (lt.night - 0.05) * 1.6 + (lt.hour > 17 || lt.hour < 7 ? 0.35 : 0)));
+    const glow = this.glow = Math.min(1, Math.max(0, (lt.night - 0.05) * 1.6 + (lt.hour > 17 || lt.hour < 7 ? 0.35 : 0)));
     for (const m of this.propMats) { const un = m.userData.uniforms; if (un) un.uGlow.value = glow; }
     this.lanterns.forEach((l, i) => {
       const flick = 0.85 + 0.15 * Math.sin(this.time * 9.1 + i * 2.3) * Math.sin(this.time * 3.7 + i);
@@ -319,6 +377,11 @@ export class WorldScene {
     for (const bu of this.buoys) {
       bu.obj.position.set(bu.x, waveHeight(CALM_WAVES, bu.x, bu.z, this.time, 0.36) + 0.02, bu.z);
       bu.obj.rotation.set(Math.sin(this.time * 1.1 + bu.ph) * 0.09, bu.ph, Math.sin(this.time * 0.8 + bu.ph * 2) * 0.09);
+    }
+    if (this.bell) {
+      // Struck, it swings and dies away; left alone it still stirs a little, as if something had just let go of it.
+      const bl = this.bell; bl.t += dt;
+      bl.pivot.rotation.z = bl.amp * Math.exp(-bl.t * 0.55) * Math.sin(bl.t * 3.4) + 0.018 * Math.sin(this.time * 0.6);
     }
     if (this.ferryHeld) return;
     const b = this.boatBase;

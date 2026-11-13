@@ -123,7 +123,7 @@ module.exports.install = (page) => page.evaluate(() => {
         const before = s.journal[fishId]?.caught ?? 0;
         for (let n = 1; n <= max; n++) {
           if (hour !== undefined) s.hour = hour;
-          if (s.hold.length >= s.holdCapacity - 1) s.hold.length = 0;
+          if (s.hold.length >= g.holdCapacity - 1) s.hold.length = 0;
           g.simulate(1 / 60, () => ({ ...NO, primary: true, primaryPressed: true }));
           let guard = 0;
           while (g.session.phase === 'charging' && g.session.power < 0.88 && guard++ < 200) g.simulate(1 / 60, () => ({ ...NO, primary: true }));

@@ -3,10 +3,16 @@
  * journal, quests), pause and settings. Plain DOM; the game supplies a UiHost to act on choices.
  */
 import { BAITS, FISH, RODS, fish as fishDef } from '../core/content';
-import { fmt, rarityIndex } from '../core/economy';
-import type { Stats } from '../core/gear';
-import { BOARD, QUESTS, RELICS_BY_ID, boardOpen, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus } from '../core/quests';
+import { RHYTHM, fmt, rarityIndex } from '../core/economy';
+import {
+  COLLECTIONS, CREEL, ECHO_UPGRADES, LURES, LURES_BY_ID, POTS, SETS, SLOTS, TUNING, WEARABLES, WEARABLES_BY_ID, collectionProgress, creel, creelNext, potPrice, potUpgradeCost,
+  setPieces, tuneCost, tunedRod, type PotUpgrade, type Stats,
+} from '../core/gear';
+import { BELL_FLAG, canRing, coinsToNextEcho, echoCost, echoRank, echoesFor, startCoins, turnings, unsoldValue } from '../core/bell';
+import { potInterval, potsInHand } from '../core/pots';
+import { BOARD, QUESTS, RELICS_BY_ID, boardOpen, count, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus } from '../core/quests';
 import type { GameState } from '../core/state';
+import type { GearAction } from '../game/trade';
 import { ACTION_LABELS, DEFAULT_BINDINGS, type Action } from '../game/input';
 import { RESOLUTIONS, keyLabel, type Settings } from '../game/settings';
 import type { Choice, Conversation, Line, TalkAction } from '../game/talk';
@@ -131,10 +137,10 @@ export class Dialogue {
 export interface UiHost {
   state: GameState;
   settings: Settings;
-  buyRod(id: string): void;
-  equipRod(id: string): void;
-  buyBait(id: string, n: number): void;
-  equipBait(id: string): void;
+  /** Buy, tune, put on, spend Echoes. Returns whether anything changed. */
+  act(a: GearAction): boolean;
+  /** Ring the Drowned Bell (the screen closes and the tide turns). */
+  ringBell(): void;
   acceptBoard(id: string): void;
   abandonBoard(id: string): void;
   applySettings(changed: (keyof Settings)[]): void;
@@ -149,7 +155,8 @@ export interface UiHost {
   sailTo(mooring: string): void;
 }
 
-export type ScreenKind = 'shop' | 'board' | 'hold' | 'gear' | 'journal' | 'quests' | 'pause' | 'settings' | 'chart';
+export type ScreenKind = 'shop' | 'board' | 'hold' | 'gear' | 'journal' | 'quests' | 'echoes' | 'bell' | 'pause' | 'settings' | 'chart';
+type ShopTab = 'rods' | 'tackle' | 'clothes' | 'pots';
 
 export class Screens {
   readonly root: HTMLElement;
@@ -157,6 +164,7 @@ export class Screens {
   current: ScreenKind | null = null;
   private rebinding: { action: Action; slot: number } | null = null;
   private selectedFish: string | null = null;
+  private shopTab: ShopTab = 'rods';
 
   constructor(parent: HTMLElement, private host: UiHost) {
     this.root = el('div', { class: 'screen' });
@@ -198,7 +206,8 @@ export class Screens {
     this.card.className = 'screen-card sc-' + k;
     if (k === 'shop') this.renderShop();
     else if (k === 'board') this.renderBoard();
-    else if (k === 'hold' || k === 'gear' || k === 'journal' || k === 'quests') this.renderSatchel(k);
+    else if (k === 'hold' || k === 'gear' || k === 'journal' || k === 'quests' || k === 'echoes') this.renderSatchel(k);
+    else if (k === 'bell') this.renderBell();
     else if (k === 'pause') this.renderPause();
     else if (k === 'settings') this.renderSettings();
     else if (k === 'chart') this.renderChart();
@@ -230,33 +239,96 @@ export class Screens {
   }
 
   // ---- shop
+  /** A button that does something to the gear and redraws the screen. */
+  private btn(label: string, a: GearAction, o: { gold?: boolean; disabled?: boolean; cls?: string } = {}) {
+    return el('button', { class: `btn${o.gold ? ' gold' : ''}${o.cls ? ' ' + o.cls : ''}`, disabled: o.disabled, onclick: () => { this.host.act(a); this.render(); } }, label);
+  }
+  private pips(n: number, max: number) { return el('span', { class: 'pips', title: `${n} of ${max}` }, ...Array.from({ length: max }, (_, i) => el('i', { class: i < n ? 'on' : '' }))); }
+
   private renderShop() {
-    const s = this.host.state;
+    const s = this.host.state, st = this.host.stats();
     this.card.append(this.header('Mara’s Good Shelf'));
-    const coins = el('div', { class: 'sc-coins' }, `◉ ${fmt(s.coins)}`);
+    const tabs: [ShopTab, string][] = [['rods', 'Rods and bait'], ['tackle', 'Lures and creel'], ['clothes', 'Clothes']];
+    if (s.flags.includes('pots-open')) tabs.push(['pots', 'Lantern Pots']);
+    if (!tabs.some(([k]) => k === this.shopTab)) this.shopTab = 'rods';
+    this.card.append(el('div', { class: 'shop-bar' },
+      el('div', { class: 'sc-coins' }, `◉ ${fmt(s.coins)}`),
+      el('div', { class: 'sc-tabs' }, ...tabs.map(([k, label]) => el('button', { class: 'sc-tab' + (k === this.shopTab ? ' on' : ''), onclick: () => { this.shopTab = k; this.render(); } }, label)))));
     const stat = (label: string, v: number, max: number) => el('div', { class: 'stat' }, el('span', {}, label), el('div', { class: 'stat-bar' }, el('i', { style: `width:${Math.min(100, (v / max) * 100)}%` })));
-    const rods = el('div', { class: 'shop-col' }, el('h3', {}, 'Rods'), ...RODS.map((r) => {
-      const owned = s.gear.rods.includes(r.id), equipped = s.gear.rod === r.id;
-      const btn = equipped ? el('button', { class: 'btn ghost', disabled: true }, 'In hand')
-        : owned ? el('button', { class: 'btn', onclick: () => { this.host.equipRod(r.id); this.render(); } }, 'Use this')
-        : el('button', { class: 'btn gold', disabled: s.coins < r.price, onclick: () => { this.host.buyRod(r.id); this.render(); } }, `Buy ◉ ${fmt(r.price)}`);
-      return el('div', { class: 'item' + (equipped ? ' sel' : '') },
-        el('div', { class: 'item-top' }, el('b', {}, r.name), btn),
-        el('div', { class: 'item-desc' }, r.desc),
-        el('div', { class: 'stats' }, stat('Reach', r.reach, 40), stat('Power', r.power, 5), stat('Control', r.control, 2), stat('Luck', r.luck, 0.4)));
-    }));
-    const baits = el('div', { class: 'shop-col' }, el('h3', {}, 'Bait'), ...BAITS.map((b) => {
-      const have = s.gear.baits[b.id] ?? 0, equipped = s.gear.bait === b.id;
-      const likes = Object.keys(b.affinity).map((id) => fishDef(id).name).join(', ');
-      return el('div', { class: 'item' + (equipped ? ' sel' : '') },
-        el('div', { class: 'item-top' }, el('b', {}, b.name), el('span', { class: 'have' }, have === Infinity ? '∞' : `× ${have}`)),
-        el('div', { class: 'item-desc' }, b.desc + (likes ? ` Favoured by: ${likes}.` : '')),
-        el('div', { class: 'item-btns' },
-          b.price > 0 ? el('button', { class: 'btn gold', disabled: s.coins < b.price * 10, onclick: () => { this.host.buyBait(b.id, 10); this.render(); } }, `10 for ◉ ${b.price * 10}`) : null,
-          b.price > 0 ? el('button', { class: 'btn gold', disabled: s.coins < b.price * 50, onclick: () => { this.host.buyBait(b.id, 50); this.render(); } }, `50 for ◉ ${b.price * 50}`) : null,
-          equipped ? el('button', { class: 'btn ghost', disabled: true }, 'On the hook') : el('button', { class: 'btn', disabled: have <= 0, onclick: () => { this.host.equipBait(b.id); this.render(); } }, 'Use this')));
-    }));
-    this.card.append(coins, el('div', { class: 'shop-cols' }, rods, baits));
+    const buy = (price: number, a: GearAction) => this.btn(`Buy ◉ ${fmt(price)}`, a, { gold: true, disabled: s.coins < price });
+    let left: HTMLElement, right: HTMLElement;
+
+    if (this.shopTab === 'rods') {
+      left = el('div', { class: 'shop-col' }, el('h3', {}, 'Rods'), ...RODS.map((r) => {
+        const owned = s.gear.rods.includes(r.id), equipped = s.gear.rod === r.id, lvl = s.gear.rodLevels[r.id] ?? 0, t = owned ? tunedRod(s, r.id) : r;
+        const main = equipped ? el('button', { class: 'btn ghost', disabled: true }, 'In hand')
+          : owned ? this.btn('Use this', { type: 'equipRod', id: r.id })
+          : buy(r.price, { type: 'buyRod', id: r.id });
+        const cost = owned ? tuneCost(s, r.id, st) : null;
+        return el('div', { class: 'item' + (equipped ? ' sel' : '') },
+          el('div', { class: 'item-top' }, el('b', {}, r.name, lvl ? el('span', { class: 'plus' }, `+${lvl}`) : null), main),
+          el('div', { class: 'item-desc' }, r.desc),
+          el('div', { class: 'stats' }, stat('Reach', t.reach, 48), stat('Power', t.power, 7), stat('Control', t.control, 2.8), stat('Luck', t.luck, 0.8)),
+          owned ? el('div', { class: 'tune' }, el('span', {}, 'Tuning'), this.pips(lvl, TUNING.maxLevel),
+            cost !== null ? this.btn(`Tune ◉ ${fmt(cost)}`, { type: 'tune', id: r.id }, { gold: true, disabled: s.coins < cost, cls: 'small' }) : el('span', { class: 'muted' }, 'As good as she gets')) : null);
+      }));
+      right = el('div', { class: 'shop-col' }, el('h3', {}, 'Bait'), ...BAITS.map((b) => {
+        const have = s.gear.baits[b.id] ?? 0, equipped = s.gear.bait === b.id;
+        const likes = Object.keys(b.affinity).map((id) => fishDef(id).name).join(', ');
+        return el('div', { class: 'item' + (equipped ? ' sel' : '') },
+          el('div', { class: 'item-top' }, el('b', {}, b.name), el('span', { class: 'have' }, have === Infinity ? '∞' : `× ${have}`)),
+          el('div', { class: 'item-blurb' }, b.blurb),
+          el('div', { class: 'item-desc' }, b.desc + (likes ? ` Favoured by: ${likes}.` : '')),
+          el('div', { class: 'item-btns' },
+            b.price > 0 ? this.btn(`10 for ◉ ${b.price * 10}`, { type: 'buyBait', id: b.id, n: 10 }, { gold: true, disabled: s.coins < b.price * 10 }) : null,
+            b.price > 0 ? this.btn(`50 for ◉ ${b.price * 50}`, { type: 'buyBait', id: b.id, n: 50 }, { gold: true, disabled: s.coins < b.price * 50 }) : null,
+            equipped ? el('button', { class: 'btn ghost', disabled: true }, 'On the hook') : this.btn('Use this', { type: 'equipBait', id: b.id }, { disabled: have <= 0 })));
+      }));
+    } else if (this.shopTab === 'tackle') {
+      left = el('div', { class: 'shop-col' }, el('h3', {}, 'Lures'),
+        el('p', { class: 'muted' }, 'A lure rides the line above the bait. One at a time, and it never wears out.'),
+        ...LURES.filter((l) => l.price !== undefined || s.gear.lures.includes(l.id)).map((l) => {
+          const owned = s.gear.lures.includes(l.id), on = s.gear.lure === l.id;
+          return el('div', { class: 'item' + (on ? ' sel' : '') },
+            el('div', { class: 'item-top' }, el('b', {}, l.name), on ? el('button', { class: 'btn ghost', disabled: true }, 'On the line') : owned ? this.btn('Use this', { type: 'equipLure', id: l.id }) : buy(l.price!, { type: 'buyLure', id: l.id })),
+            el('div', { class: 'item-blurb' }, l.blurb), el('div', { class: 'item-desc' }, l.desc));
+        }));
+      const have = creel(s), next = creelNext(s);
+      right = el('div', { class: 'shop-col' }, el('h3', {}, 'Creel'),
+        el('p', { class: 'muted' }, 'What you carry your catch in. A better one holds more, and fish kept well sell for more.'),
+        el('div', { class: 'item sel' }, el('div', { class: 'item-top' }, el('b', {}, have.name), el('button', { class: 'btn ghost', disabled: true }, 'Yours')),
+          el('div', { class: 'item-blurb' }, `${have.slots} slots` + (have.value ? ` · fish sell for ${Math.round(have.value * 100)}% more` : ''))),
+        next ? el('div', { class: 'item' }, el('div', { class: 'item-top' }, el('b', {}, next.name), buy(next.price, { type: 'buyCreel' })),
+          el('div', { class: 'item-blurb' }, `${next.slots} slots · fish sell for ${Math.round(next.value * 100)}% more`),
+          el('div', { class: 'item-desc' }, `${CREEL.levels.length - s.gear.creel - 1 ? `${CREEL.levels.length - s.gear.creel - 1} better still after this one.` : 'The best there is.'}`))
+          : el('p', { class: 'muted' }, 'There is no better creel than the one you have.'));
+    } else if (this.shopTab === 'clothes') {
+      const cards = WEARABLES.filter((w) => w.price !== undefined).map((w) => {
+        const owned = s.gear.wearables.includes(w.id), on = s.gear.worn[w.slot] === w.id;
+        return el('div', { class: 'item' + (on ? ' sel' : '') },
+          el('div', { class: 'item-top' }, el('b', {}, w.name, el('span', { class: 'slot-tag' }, w.slot)), on ? el('button', { class: 'btn ghost', disabled: true }, 'Wearing') : owned ? this.btn('Put on', { type: 'wear', id: w.id }) : buy(w.price!, { type: 'buyWearable', id: w.id })),
+          el('div', { class: 'item-blurb' }, w.blurb), el('div', { class: 'item-desc' }, w.desc));
+      });
+      left = el('div', { class: 'shop-col' }, el('h3', {}, 'Clothes'), ...cards.filter((_, i) => i % 2 === 0));
+      right = el('div', { class: 'shop-col' }, el('h3', {}, ' '), ...cards.filter((_, i) => i % 2 === 1),
+        el('p', { class: 'muted' }, 'One hat, one coat, one pair of boots, one charm. The keeper’s own things are not for sale. They turn up.'));
+    } else {
+      const price = potPrice(s);
+      left = el('div', { class: 'shop-col' }, el('h3', {}, 'Lantern Pots'),
+        el('p', { class: 'muted' }, `A pot fishes on its own while you fish, traps only fish from your journal, and stops when it is full. Each one traps a fish about every ${Math.round(potInterval(st))} seconds, holds ${st.potCapacity}, and its fish sell for ${Math.round(st.potValue * 100)}% of a hand-caught one.`),
+        el('div', { class: 'item sel' }, el('div', { class: 'item-top' }, el('b', {}, `Your pots: ${st.potCount}`), el('span', { class: 'have' }, `${s.pots.placed.length} in the water`)),
+          el('div', { class: 'item-desc' }, `${potsInHand(s, st)} in hand, ready to set.`)),
+        price !== null ? el('div', { class: 'item' }, el('div', { class: 'item-top' }, el('b', {}, 'Another Lantern Pot'), buy(price, { type: 'buyPot' })),
+          el('div', { class: 'item-blurb' }, 'One more pot in the water'), el('div', { class: 'item-desc' }, 'Wicker, a lamp, and a line long enough for anywhere you would want to leave it.'))
+          : el('p', { class: 'muted' }, 'That is every pot Mara has. More would need somebody who remembers how they were made.'));
+      right = el('div', { class: 'shop-col' }, el('h3', {}, 'For the pots'), ...(Object.keys(POTS.upgrades) as PotUpgrade[]).map((k) => {
+        const u = POTS.upgrades[k], lvl = s.pots.levels[k], cost = potUpgradeCost(s, k);
+        return el('div', { class: 'item' },
+          el('div', { class: 'item-top' }, el('b', {}, u.name), cost !== null ? buy(cost, { type: 'potUpgrade', k }) : el('span', { class: 'muted' }, 'As good as it gets')),
+          el('div', { class: 'item-blurb' }, u.blurb), el('div', { class: 'tune' }, el('span', {}, 'Level'), this.pips(lvl, u.max)));
+      }));
+    }
+    this.card.append(el('div', { class: 'shop-cols' }, left, right));
   }
 
   // ---- notice board
@@ -282,9 +354,11 @@ export class Screens {
   }
 
   // ---- satchel
-  private renderSatchel(kind: 'hold' | 'gear' | 'journal' | 'quests') {
-    const s = this.host.state;
-    this.card.append(this.header('Satchel', [['hold', 'Hold'], ['gear', 'Gear'], ['journal', 'Journal'], ['quests', 'Quests']]));
+  private renderSatchel(kind: 'hold' | 'gear' | 'journal' | 'quests' | 'echoes') {
+    const s = this.host.state, st = this.host.stats();
+    const tabs: [ScreenKind, string][] = [['hold', 'Hold'], ['gear', 'Gear'], ['journal', 'Journal'], ['quests', 'Quests']];
+    if (s.flags.includes(BELL_FLAG) || s.lifetime.echoes > 0) tabs.push(['echoes', 'Echoes']);
+    this.card.append(this.header('Satchel', tabs));
     if (kind === 'hold') {
       const total = s.hold.reduce((a, c) => a + c.value, 0);
       this.card.append(el('p', { class: 'muted' }, s.hold.length ? `${s.hold.length} of ${this.host.stats().hold} slots · worth ◉ ${fmt(total)} at Mara’s stall` : 'Your hold is empty. The sea is not.'));
@@ -294,19 +368,23 @@ export class Screens {
         const f = fishDef(c.fishId);
         return el('div', { class: `slot r${rarityIndex(c.fishId)}` }, el('b', {}, f.name), el('span', {}, `${c.weight.toFixed(2)} kg`), c.trait ? el('em', {}, c.trait) : null, el('span', { class: 'val' }, `◉ ${fmt(c.value)}`));
       })));
+      if (s.pots.hold.length) {
+        const worth = s.pots.hold.reduce((a, c) => a + c.value, 0);
+        this.card.append(el('h3', {}, 'From the pots'), el('p', { class: 'muted' }, `${s.pots.hold.length} fish hauled from your Lantern Pots, worth ◉ ${fmt(worth)}. They ride in the pot basket, not your hold, and Mara takes them with the rest.`));
+      }
     } else if (kind === 'gear') {
-      const rods = s.gear.rods.map((id) => RODS.find((r) => r.id === id)!).filter(Boolean);
-      this.card.append(el('h3', {}, 'Rods'), el('div', { class: 'gear-row' }, ...rods.map((r) => el('button', { class: 'chip' + (s.gear.rod === r.id ? ' on' : ''), onclick: () => { this.host.equipRod(r.id); this.render(); } }, r.name))));
-      const baits = BAITS.filter((b) => (s.gear.baits[b.id] ?? 0) > 0);
-      this.card.append(el('h3', {}, 'Bait'), el('div', { class: 'gear-row' }, ...baits.map((b) => el('button', { class: 'chip' + (s.gear.bait === b.id ? ' on' : ''), onclick: () => { this.host.equipBait(b.id); this.render(); } }, `${b.name} ${s.gear.baits[b.id] === Infinity ? '∞' : '× ' + s.gear.baits[b.id]}`))));
-      this.card.append(el('h3', {}, 'Relics'), s.relics.length
-        ? el('div', { class: 'relics' }, ...s.relics.map((id) => { const r = RELICS_BY_ID.get(id)!; return el('div', { class: 'relic' }, el('b', {}, r.name), el('div', { class: 'item-desc' }, r.lore)); }))
-        : el('p', { class: 'muted' }, 'Nothing strange in your pockets. Yet.'));
+      this.renderGear(s, st);
+    } else if (kind === 'echoes') {
+      this.renderEchoes(s);
     } else if (kind === 'journal') {
       const region = FISH.filter((f) => f.region === s.world.region);
       const found = region.filter((f) => s.journal[f.id]).length;
       const sel = this.selectedFish && s.journal[this.selectedFish] ? this.selectedFish : null;
       this.card.append(el('p', { class: 'muted' }, `Hearthbay: ${found} of ${region.length} found`));
+      for (const c of COLLECTIONS.filter((x) => x.region === s.world.region)) {
+        const p = collectionProgress(s, c), done = s.flags.includes(`page:${c.id}`);
+        this.card.append(el('p', { class: 'page-line' + (done ? ' done' : '') }, done ? `✓ ${c.name} is complete.` : `${c.name}: ${p.found} of ${p.total}. Wick has something put by for whoever fills it.`));
+      }
       const grid = el('div', { class: 'journal-grid' }, ...region.map((f) => {
         const j = s.journal[f.id];
         const r = RARITIES_IDX(f.id);
@@ -327,7 +405,7 @@ export class Screens {
         this.card.append(el('div', { class: 'qcard' + (ready ? ' ready' : '') },
           el('div', { class: 'item-top' }, el('b', {}, q.title), el('span', { class: 'muted' }, npc(q.giver).name)),
           el('div', { class: 'item-desc' }, q.summary),
-          ...q.objectives.map((o, i) => el('div', { class: 'qobj' }, `${objectiveProgress(s, q, i) >= objectiveTarget(o) ? '✓' : '○'} ${o.label}` + (objectiveTarget(o) > 1 ? ` (${objectiveProgress(s, q, i)}/${objectiveTarget(o)})` : ''))),
+          ...q.objectives.map((o, i) => el('div', { class: 'qobj' }, `${objectiveProgress(s, q, i) >= objectiveTarget(o) ? '✓' : '○'} ${o.label}` + (objectiveTarget(o) > 1 ? ` (${count(objectiveProgress(s, q, i))}/${count(objectiveTarget(o))})` : ''))),
           ready ? el('div', { class: 'qready' }, `Return to ${npc(q.giver).name}`) : null,
           el('div', { class: 'note-reward' }, 'Reward: ' + describeRewards(q.rewards).join(', '))));
       }
@@ -338,6 +416,99 @@ export class Screens {
       }
       if (done.length) this.card.append(el('h3', {}, 'Done'), el('div', { class: 'muted' }, done.map((q) => q.title).join(' · ')));
     }
+  }
+
+  // ---- gear
+  private renderGear(s: GameState, st: Stats) {
+    const act = (a: GearAction) => () => { this.host.act(a); this.render(); };
+    const pct = (v: number) => `${v >= 0 ? '+' : ''}${Math.round(v * 100)}%`;
+    // What it all adds up to, in the numbers the game plays with.
+    const sums: [string, string][] = [
+      ['Reach', `${st.rod.reach.toFixed(1)} m`], ['Power', st.rod.power.toFixed(2)], ['Control', st.rod.control.toFixed(2)],
+      ['Luck', pct(st.rod.luck + st.luck)], ['Fish sell for', pct(st.value - 1)], ['Hold', `${st.hold} slots`],
+      ['Rhythm', `up to ×${(1 + st.rhythmCap * RHYTHM.perStack).toFixed(2)}`],
+    ];
+    if (st.biteSpeed !== 1) sums.push(['Bites come', `${pct(st.biteSpeed - 1)} sooner`]);
+    if (st.biteWindow !== 1) sums.push(['Time to hook', pct(st.biteWindow - 1)]);
+    if (st.size > 0) sums.push(['Bigger fish', pct(st.size)]);
+    if (st.strange > 0.031) sums.push(['Strange fish', `${(st.strange * 100).toFixed(0)}% of catches`]);
+    this.card.append(el('div', { class: 'sum' }, ...sums.map(([k, v]) => el('div', { class: 'sum-i' }, el('span', {}, k), el('b', {}, v)))));
+
+    const rods = s.gear.rods.map((id) => RODS.find((r) => r.id === id)!).filter(Boolean);
+    this.card.append(el('h3', {}, 'Rod'), el('div', { class: 'gear-row' }, ...rods.map((r) => el('button', { class: 'chip' + (s.gear.rod === r.id ? ' on' : ''), onclick: act({ type: 'equipRod', id: r.id }) }, r.name + ((s.gear.rodLevels[r.id] ?? 0) ? ` +${s.gear.rodLevels[r.id]}` : '')))));
+    const baits = BAITS.filter((b) => (s.gear.baits[b.id] ?? 0) > 0);
+    this.card.append(el('h3', {}, 'Bait'), el('div', { class: 'gear-row' }, ...baits.map((b) => el('button', { class: 'chip' + (s.gear.bait === b.id ? ' on' : ''), title: b.blurb, onclick: act({ type: 'equipBait', id: b.id }) }, `${b.name} ${s.gear.baits[b.id] === Infinity ? '∞' : '× ' + s.gear.baits[b.id]}`))),
+      el('p', { class: 'muted tip' }, BAITS.find((b) => b.id === s.gear.bait)?.blurb ?? ''));
+    if (s.gear.lures.length) {
+      const on = s.gear.lure ? LURES_BY_ID.get(s.gear.lure) : null;
+      this.card.append(el('h3', {}, 'Lure'), el('div', { class: 'gear-row' },
+        ...s.gear.lures.map((id) => el('button', { class: 'chip' + (s.gear.lure === id ? ' on' : ''), onclick: act({ type: 'equipLure', id }) }, LURES_BY_ID.get(id)?.name ?? id)),
+        el('button', { class: 'chip' + (s.gear.lure === null ? ' on' : ''), onclick: act({ type: 'equipLure', id: null }) }, 'None')),
+        el('p', { class: 'muted tip' }, on ? `${on.blurb}. ${on.desc}` : 'Nothing on the line but bait.'));
+    }
+    if (s.gear.wearables.length) {
+      this.card.append(el('h3', {}, 'Wearing'), el('div', { class: 'wear' }, ...SLOTS.map((slot) => {
+        const mine = s.gear.wearables.map((id) => WEARABLES_BY_ID.get(id)!).filter((w) => w && w.slot === slot), on = s.gear.worn[slot] ? WEARABLES_BY_ID.get(s.gear.worn[slot]!) : null;
+        return el('div', { class: 'wear-slot' }, el('div', { class: 'wear-k' }, slot),
+          mine.length ? el('div', { class: 'gear-row' }, ...mine.map((w) => el('button', { class: 'chip' + (on?.id === w.id ? ' on' : ''), title: w.desc, onclick: act({ type: 'wear', id: w.id }) }, w.name)))
+            : el('div', { class: 'muted' }, 'Nothing yet'),
+          el('div', { class: 'muted tip' }, on ? on.blurb : mine.length ? 'Bare. Click one to put it on.' : ''));
+      })));
+      for (const set of SETS) {
+        const owned = WEARABLES.filter((w) => w.set === set.id && s.gear.wearables.includes(w.id)).length, total = WEARABLES.filter((w) => w.set === set.id).length;
+        if (!owned) continue;
+        const worn = setPieces(s, set.id);
+        this.card.append(el('div', { class: 'set' }, el('b', {}, set.name), el('span', { class: 'muted' }, ` ${worn} of ${total} worn · ${owned} found`),
+          ...set.bonuses.map((b) => el('div', { class: 'qobj' + (worn >= b.pieces ? ' got' : '') }, `${worn >= b.pieces ? '✓' : '○'} ${b.pieces} worn: ${b.blurb}`))));
+      }
+    }
+    if (st.potCount > 0) {
+      this.card.append(el('h3', {}, 'Lantern Pots'), el('p', { class: 'muted' },
+        `${st.potCount} pot${st.potCount === 1 ? '' : 's'}: ${s.pots.placed.length} in the water, ${potsInHand(s, st)} in hand. Each traps a fish about every ${Math.round(potInterval(st))} seconds while you play, and holds ${st.potCapacity}.`));
+    }
+    this.card.append(el('h3', {}, 'Relics'), s.relics.length
+      ? el('div', { class: 'relics' }, ...s.relics.map((id) => { const r = RELICS_BY_ID.get(id)!; return el('div', { class: 'relic' }, el('b', {}, r.name), el('div', { class: 'item-desc' }, r.lore)); }))
+      : el('p', { class: 'muted' }, 'Nothing strange in your pockets. Yet.'));
+  }
+
+  // ---- Echoes
+  private renderEchoes(s: GameState) {
+    const n = turnings(s), now = echoesFor(s);
+    this.card.append(el('div', { class: 'echo-head' },
+      el('div', { class: 'echo-n' }, el('span', {}, '✺'), String(s.echoes)),
+      el('div', {}, el('b', {}, n ? `The tide has turned ${n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`}.` : 'The tide has not turned yet.'),
+        el('div', { class: 'muted' }, now >= 1 ? `The Drowned Bell would give ✺ ${now} more if you rang it now.` : `The Bell has nothing for you yet: ◉ ${fmt(coinsToNextEcho(s))} more earned and it will.`),
+        el('div', { class: 'muted' }, 'Echoes are what the sea gives back. What they buy is never forgotten.'))));
+    this.card.append(el('div', { class: 'echo-grid' }, ...ECHO_UPGRADES.map((u) => {
+      const rank = echoRank(s, u.id), cost = echoCost(s, u.id), max = u.cost.length;
+      const blurb = u.startCoins ? (cost !== null ? `Begin each tide with ◉ ${fmt(u.startCoins[rank])}` + (rank ? ` (now ◉ ${fmt(startCoins(s))})` : '') : `Begin each tide with ◉ ${fmt(startCoins(s))}`) : u.blurb;
+      return el('div', { class: 'item echo' + (rank ? ' has' : '') },
+        el('div', { class: 'item-top' }, el('b', {}, u.name), cost !== null
+          ? this.btn(`✺ ${cost}`, { type: 'buyEcho', id: u.id }, { cls: 'echo-btn', disabled: s.echoes < cost })
+          : el('span', { class: 'muted' }, 'Whole')),
+        el('div', { class: 'item-blurb' }, blurb + (rank && !u.startCoins ? ` · ${rank} time${rank === 1 ? '' : 's'} over` : '')),
+        el('div', { class: 'item-desc' }, u.desc), this.pips(rank, max));
+    })));
+  }
+
+  // ---- the Drowned Bell
+  private renderBell() {
+    const s = this.host.state, give = echoesFor(s), can = canRing(s), catchWorth = unsoldValue(s);
+    this.card.append(this.header('The Drowned Bell'));
+    this.card.append(el('p', { class: 'bell-lead' }, 'Ring it, and the tide turns. The sea takes back what coins bought, the islands forget, and the morning starts over on the Hearthbay dock. What the tide carried comes back to you as Echoes.'));
+    const li = (items: string[]) => el('ul', {}, ...items.map((t) => el('li', {}, t)));
+    this.card.append(el('div', { class: 'bell-cols' },
+      el('div', { class: 'bell-col takes' }, el('h3', {}, 'The tide takes'), li([
+        `Your coins (◉ ${fmt(s.coins)} now${catchWorth ? `, and ◉ ${fmt(catchWorth)} when your catch is sold first` : ''})`,
+        'Rod tuning', 'Your creel, back to the basket', 'Bait', 'Pot upgrades, and pots in the water come home', 'Notice board jobs and your Rhythm'])),
+      el('div', { class: 'bell-col keeps' }, el('h3', {}, 'You keep'), li([
+        'Rods, lures, clothes and the keeper’s things', 'The skiff', 'Your Lantern Pots', 'Relics and Moonpearls', 'The journal, the chart and the story', 'Echoes, and everything they have bought']))));
+    this.card.append(el('div', { class: 'bell-give' + (can ? ' can' : '') }, can
+      ? el('div', {}, 'The Bell will give ', el('b', {}, `✺ ${give} Echo${give === 1 ? '' : 'es'}`), el('div', { class: 'muted' }, `The next one is ◉ ${fmt(coinsToNextEcho(s))} of fish away. Waiting never loses any.`))
+      : el('div', {}, 'The bay has not given enough yet.', el('div', { class: 'muted' }, `◉ ${fmt(coinsToNextEcho(s))} more earned, and the Bell will have an Echo for you.`))));
+    this.card.append(el('div', { class: 'bell-btns' },
+      el('button', { class: 'btn big gold', disabled: !can, onclick: () => this.host.ringBell() }, 'Ring the Bell'),
+      el('button', { class: 'btn big ghost', onclick: () => this.host.close() }, 'Not yet')));
   }
 
   // ---- pause & settings

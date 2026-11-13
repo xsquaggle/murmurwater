@@ -21,6 +21,8 @@ export interface ChartView {
   you: { x: number; z: number; aboard: boolean };
   boat: { x: number; z: number; heading: number } | null;
   goal: { x: number; z: number } | null;
+  /** Lantern Pots in the water: how many fish each holds, and whether it is full. */
+  pots?: { x: number; z: number; fish: number; full: boolean }[];
   /** The mooring the boat lies at, when a course can be set from here. */
   from: string | null;
   /** What lies past the edge of the chart. */
@@ -173,6 +175,17 @@ export function drawChart(canvas: HTMLCanvasElement, v: ChartView, cssW: number)
     g.stroke();
     g.beginPath(); g.arc(x, y + 0.6 * u, 4 * u, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
     g.beginPath(); g.arc(x, y - 4.4 * u, 1.3 * u, 0, Math.PI * 2); g.stroke();
+  }
+
+  // Lantern Pots: a small lantern, lit when there is something in it.
+  for (const p of v.pots ?? []) {
+    const [x, y] = pin(p.x, p.z);
+    g.beginPath(); g.roundRect(x - 3.4 * u, y - 4.4 * u, 6.8 * u, 8.8 * u, 2 * u);
+    g.fillStyle = p.full ? '#FFB35C' : p.fish ? '#FFE2A0' : '#F6EBD2';
+    if (p.fish) { g.shadowColor = 'rgba(255,179,92,.9)'; g.shadowBlur = (p.full ? 9 : 5) * u; }
+    g.fill(); g.shadowBlur = 0;
+    g.lineWidth = 1.4 * u; g.strokeStyle = ink(); g.stroke();
+    g.beginPath(); g.arc(x, y - 4.4 * u, 2.2 * u, Math.PI, 0); g.stroke();
   }
 
   // The goal: a four-pointed star.

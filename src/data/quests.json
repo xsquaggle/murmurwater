@@ -386,6 +386,7 @@
         {
           "type": "ring",
           "count": 1,
+          "place": "drowned-bell",
           "label": "Ring the Drowned Bell"
         }
       ],

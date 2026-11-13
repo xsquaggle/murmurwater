@@ -1,23 +1,56 @@
 {
   "npcs": [
-    { "id": "mara", "name": "Mara Thimble", "role": "Harbormistress", "region": "hearthbay", "voice": "warm, brisk, middle-aged woman with a soft coastal accent",
+    {
+      "id": "mara",
+      "name": "Mara Thimble",
+      "role": "Harbormistress",
+      "region": "hearthbay",
+      "voice": "warm, brisk, middle-aged woman with a soft coastal accent",
       "barks": [
         "Tide's kind today. Don't waste it talking to me.",
         "Butterperch fry up lovely. Not that I'd know. I'm far too busy.",
         "If you see a light out past the Teeth, don't row toward it. Just… don't.",
         "Your rod's older than you are. Treat it gently."
-      ] },
-    { "id": "pell", "name": "Pell", "role": "Ferryman", "region": "hearthbay", "voice": "very old, slow, gentle man; deep, dry, a little amused",
+      ],
+      "turned": [
+        "You've the look of someone I've sold a rod to. I haven't, have I? No. Never mind me.",
+        "I wrote your name in the book this morning, before you'd said it. Odd, that.",
+        "Somebody's been at my prices in the night. Everything's back where it started."
+      ]
+    },
+    {
+      "id": "pell",
+      "name": "Pell",
+      "role": "Ferryman",
+      "region": "hearthbay",
+      "voice": "very old, slow, gentle man; deep, dry, a little amused",
       "barks": [
         "High water at a quarter past never. Low water just after you've forgotten.",
         "The lamp remembers. That's the trouble with lamps.",
         "Mind the second moon. It minds you."
-      ] },
-    { "id": "wick", "name": "Wick", "role": "Fish artist, age nine", "region": "hearthbay", "voice": "excited young child, quick and breathless",
+      ],
+      "turned": [
+        "Tide's turned. You'll have noticed. Nobody else will.",
+        "You again. For the first time.",
+        "The bell's quiet this morning. That's how you know it rang."
+      ]
+    },
+    {
+      "id": "wick",
+      "name": "Wick",
+      "role": "Fish artist, age nine",
+      "region": "hearthbay",
+      "voice": "excited young child, quick and breathless",
       "barks": [
         "I'm drawing a fish with nine eyes. No, ten. It keeps changing.",
         "Biscuit ate my blue crayon. Now everything's a bit green.",
         "Did you know fish dream? I asked one. It said yes."
-      ] }
+      ],
+      "turned": [
+        "I drew you yesterday. But I only met you today. Look, it's even got your hat.",
+        "Biscuit knows you. Biscuit doesn't know anybody.",
+        "Everything's new again. I like new. I think I've liked it lots of times."
+      ]
+    }
   ]
 }

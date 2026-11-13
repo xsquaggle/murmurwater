@@ -39,7 +39,7 @@ export interface QuestDef {
   /** Taking the job brings the dusk on if the sun is still up (a job that needs the dark should not mean a wait). */ dusk?: boolean;
   /** Short line the giver says while the quest is in progress. */ reminder?: string;
 }
-export interface NpcDef { id: string; name: string; role: string; region: string; voice: string; barks: string[] }
+export interface NpcDef { id: string; name: string; role: string; region: string; voice: string; barks: string[]; /** Said once after each Turning. */ turned?: string[] }
 export interface RelicDef { id: string; name: string; effect: { luck?: number; value?: number; biteSpeed?: number }; lore: string }
 /** speed m/s, turn rad/s, accel 1/s, draft/length/beam m (see core/boat.ts); hull and lamp are the ratings that open rougher and foggier seas. */
 export interface BoatDef { id: string; name: string; speed: number; turn: number; accel: number; draft: number; length: number; beam: number; hull: number; lamp: number; hold: number; price: number; desc: string }
@@ -221,6 +221,9 @@ export function npcOffer(s: GameState, npcId: string): NpcOffer {
   return { kind: 'none' };
 }
 
+/** A count as people write it: 6,000 rather than 6000. */
+export const count = (n: number) => Math.floor(n).toLocaleString('en-US');
+
 /** The onboarding goal line: always one clear next step from the story chain. */
 export interface Goal { text: string; npc?: string; place?: string; at?: [number, number] }
 export function currentGoal(s: GameState): Goal {
@@ -233,7 +236,7 @@ export function currentGoal(s: GameState): Goal {
     const i = q.objectives.findIndex((o, k) => objectiveProgress(s, q, k) < objectiveTarget(o));
     const o = q.objectives[i];
     const t = objectiveTarget(o);
-    const prog = t > 1 ? ` (${objectiveProgress(s, q, i)}/${t})` : '';
+    const prog = t > 1 ? ` (${count(objectiveProgress(s, q, i))}/${count(t)})` : '';
     return { text: `${q.title}: ${o.label}${prog}`, place: o.place, at: o.at };
   }
   // 3. A new story quest waiting with someone.

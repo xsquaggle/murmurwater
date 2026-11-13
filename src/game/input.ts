@@ -4,19 +4,19 @@
  */
 export type Action =
   | 'forward' | 'back' | 'left' | 'right' | 'sprint'
-  | 'cast' | 'cancel' | 'interact' | 'journal' | 'inventory' | 'map' | 'pause' | 'steerLeft' | 'steerRight';
+  | 'cast' | 'cancel' | 'interact' | 'pot' | 'journal' | 'inventory' | 'map' | 'pause' | 'steerLeft' | 'steerRight';
 
 export const DEFAULT_BINDINGS: Record<Action, string[]> = {
   forward: ['KeyW', 'ArrowUp'], back: ['KeyS', 'ArrowDown'], left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'],
   sprint: ['ShiftLeft'],
-  cast: ['Mouse0', 'Space'], cancel: ['Mouse2', 'KeyQ'], interact: ['KeyE'],
+  cast: ['Mouse0', 'Space'], cancel: ['Mouse2', 'KeyQ'], interact: ['KeyE'], pot: ['KeyF'],
   journal: ['KeyJ'], inventory: ['Tab', 'KeyI'], map: ['KeyM'], pause: ['Escape'],
   steerLeft: ['KeyA', 'ArrowLeft'], steerRight: ['KeyD', 'ArrowRight'],
 };
 
 export const ACTION_LABELS: Record<Action, string> = {
   forward: 'Move forward', back: 'Move back', left: 'Move left', right: 'Move right', sprint: 'Sprint',
-  cast: 'Cast / hook / reel', cancel: 'Reel in / cancel', interact: 'Talk / interact', journal: 'Journal',
+  cast: 'Cast / hook / reel', cancel: 'Reel in / cancel', interact: 'Talk / interact', pot: 'Set / haul a Lantern Pot', journal: 'Journal',
   inventory: 'Inventory', map: 'Chart', pause: 'Pause', steerLeft: 'Steer fish left', steerRight: 'Steer fish right',
 };
 

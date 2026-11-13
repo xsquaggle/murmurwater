@@ -27,6 +27,14 @@ export function echoesFor(s: GameState): number {
   return Math.max(0, Math.floor(BELL.k * Math.pow(s.lifetime.coins + unsold(s), BELL.power)) - s.lifetime.echoes);
 }
 
+/** Coins still to be earned before the Bell has one more Echo to give than it has now. */
+export function coinsToNextEcho(s: GameState): number {
+  const next = s.lifetime.echoes + echoesFor(s) + 1;
+  return Math.max(0, Math.ceil(Math.pow(next / BELL.k, 1 / BELL.power) - (s.lifetime.coins + unsold(s))));
+}
+/** What the catch on hand would sell for (the Bell sells it before the tide turns). */
+export function unsoldValue(s: GameState): number { return unsold(s); }
+
 /** How many times the Bell has been rung. */
 export function turnings(s: GameState): number { return s.run.number - 1; }
 
@@ -55,6 +63,8 @@ export function ringBell(s: GameState): Turning | null {
   s.boats.upgrades = {}; s.boats.at = null;
   s.quests.board = { quests: [], timer: 0, serial: s.quests.board.serial };
   s.rhythm = 0;
+  // Everyone gets to nearly remember the keeper once more.
+  s.flags = s.flags.filter((f) => !f.startsWith('deja:'));
   s.run = { number: s.run.number + 1, coins: 0, startedAt: s.playTime };
   // The keeper wakes on the Hearthbay dock at first light.
   s.hour = BELL.dawn;

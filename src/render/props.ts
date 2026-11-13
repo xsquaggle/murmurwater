@@ -4,7 +4,7 @@
  */
 import {
   BoxGeometry, Color, ConeGeometry, CylinderGeometry, DodecahedronGeometry, Group, IcosahedronGeometry,
-  InstancedMesh, Matrix4, Mesh, MeshStandardMaterial, Object3D, PointLight, SphereGeometry, TorusGeometry, Vector3,
+  InstancedMesh, LatheGeometry, Matrix4, Mesh, MeshStandardMaterial, Object3D, PointLight, SphereGeometry, TorusGeometry, Vector2, Vector3,
   BufferGeometry, Quaternion, Euler,
 } from 'three';
 import { Builder } from './builder';
@@ -480,6 +480,94 @@ export function buildKettleCamp(seed = 57): { camp: BufferGeometry; kettle: Buff
   // A dent, and soot up one side.
   k.add(new SphereGeometry(0.07, 5, 4), tinDark, { pos: [-0.12, 0.14, 0.13], scale: [1, 1, 0.5] });
   return { camp: b.build(), kettle: k.build() };
+}
+
+/**
+ * A Lantern Pot's float: a cork drum with a little lantern on it, and the wicker pot hanging below.
+ * Origin at the waterline. TEMPORARY stand-in until the generated float lands (see HANDOFF).
+ */
+export function buildPotFloat(seed = 61): BufferGeometry {
+  const b = new Builder(seed, 0.05);
+  const cork = C('#C9A46A'), wood = C(PALETTE.driftwood), dark = C('#3A3442'), red = C(PALETTE.coral);
+  b.add(new CylinderGeometry(0.33, 0.29, 0.44, 8), cork, { pos: [0, -0.06, 0] });
+  b.add(new CylinderGeometry(0.34, 0.34, 0.09, 8), red, { pos: [0, 0.07, 0] });
+  b.add(new CylinderGeometry(0.27, 0.33, 0.06, 8), wood, { pos: [0, 0.19, 0] });
+  // The lantern: four posts, the glass, a cap and a ring to lift it by.
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) b.add(new BoxGeometry(0.03, 0.34, 0.03), dark, { pos: [x * 0.1, 0.39, z * 0.1] });
+  b.add(new BoxGeometry(0.17, 0.28, 0.17), C(PALETTE.wick), { pos: [0, 0.38, 0] }, { emissive: 1, jitter: 0 });
+  b.add(new ConeGeometry(0.19, 0.15, 4), dark, { pos: [0, 0.63, 0], rot: [0, Math.PI / 4, 0] });
+  b.add(new TorusGeometry(0.055, 0.014, 4, 8), dark, { pos: [0, 0.75, 0] });
+  // The pot itself, seen through the water: a wicker basket on two lines.
+  b.add(new CylinderGeometry(0.34, 0.26, 0.5, 8), C('#6A5440'), { pos: [0, -0.95, 0] });
+  b.add(new CylinderGeometry(0.36, 0.36, 0.05, 8), C('#4E3E30'), { pos: [0, -0.7, 0] });
+  for (const x of [-1, 1]) b.add(new CylinderGeometry(0.012, 0.012, 0.5, 4), C('#C9B48E'), { pos: [x * 0.22, -0.46, 0] });
+  return b.build();
+}
+
+/**
+ * The Drowned Belfry: the top of a church tower standing in the sea, its bell still hung. Origin at the
+ * waterline, in the middle of the tower; the bell is a separate mesh, pivoted at its headstock, so it can swing.
+ * TEMPORARY stand-in until the generated belfry lands (see HANDOFF).
+ */
+export function buildBelfry(seed = 67): { tower: BufferGeometry; bell: BufferGeometry; bellAt: [number, number, number] } {
+  const b = new Builder(seed, 0.06);
+  const stone = C('#8C8A8F'), stoneDark = C('#63626B'), weed = C(PALETTE.pine), moss = C(PALETTE.moss), slate = C('#4A3A63'), hole = C('#1E1A2A');
+  // A square prism from a four-sided cylinder: `side` is the width of a face.
+  const prism = (sideTop: number, sideBottom: number, h: number) => { const g = new CylinderGeometry(sideTop / Math.SQRT2, sideBottom / Math.SQRT2, h, 4, 1); g.rotateY(Math.PI / 4); return g; };
+  // Stone that is green and dark where the sea reaches it, and paler up in the weather.
+  const wet = (c: Vector3) => (c.y < 0.55 ? stoneDark.clone().lerp(weed, 0.75) : c.y < 1.5 ? stone.clone().lerp(moss, 0.4 * (1.5 - c.y)) : c.y > 4.4 ? stone.clone().lerp(C(PALETTE.bone), 0.18) : stone);
+  // What is left of the church roof under the water, and stones that have come down.
+  b.add(Builder.wobble(new BoxGeometry(4.4, 1.6, 4.4, 2, 1, 2), 0.25, seed), (c) => stoneDark.clone().lerp(weed, c.y > -0.9 ? 0.6 : 0.25), { pos: [0, -1.3, 0] });
+  for (const [x, z, r] of [[2.5, 1.2, 0.55], [-2.2, 2.3, 0.4], [1.4, -2.7, 0.5], [-2.9, -0.8, 0.35]] as const) {
+    b.add(Builder.wobble(new DodecahedronGeometry(r, 0), 0.12, seed + x), stoneDark.clone().lerp(weed, 0.5), { pos: [x, -0.15, z], scale: [1, 0.7, 1] });
+  }
+  // The shaft, in three courses so it catches the light in bands.
+  b.add(Builder.wobble(prism(3.1, 3.3, 2.2), 0.06, seed + 1), wet, { pos: [0, 0.5, 0] });
+  b.add(Builder.wobble(prism(2.95, 3.1, 1.8), 0.05, seed + 2), wet, { pos: [0, 2.5, 0] });
+  b.add(Builder.wobble(prism(2.8, 2.95, 1.6), 0.05, seed + 3), wet, { pos: [0, 4.2, 0] });
+  b.add(new BoxGeometry(3.15, 0.24, 3.15), stoneDark, { pos: [0, 5.1, 0] });
+  // Two slits, low down. Something under the water has a light on.
+  b.add(new BoxGeometry(0.22, 0.9, 0.12), C(PALETTE.wrongCyan), { pos: [0.5, 2.5, 1.5] }, { emissive: 0.55, jitter: 0 });
+  b.add(new BoxGeometry(0.12, 0.9, 0.22), C(PALETTE.wrongCyan), { pos: [-1.5, 3.9, -0.4] }, { emissive: 0.55, jitter: 0 });
+  // The bell stage: four piers, a sill and a lintel on each face, open to the weather.
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) b.add(Builder.wobble(new BoxGeometry(0.62, 2.7, 0.62), 0.04, seed + x * 3 + z), stone, { pos: [x * 1.12, 6.55, z * 1.12] });
+  for (const a of [0, 1, 2, 3]) {
+    const rot: [number, number, number] = [0, (a * Math.PI) / 2, 0];
+    const side = (x: number, y: number, z: number): [number, number, number] => { const c = Math.cos(rot[1]), sn = Math.sin(rot[1]); return [x * c + z * sn, y, -x * sn + z * c]; };
+    b.add(new BoxGeometry(1.7, 0.42, 0.5), stone, { pos: side(0, 7.68, 1.12), rot });
+    b.add(new BoxGeometry(0.5, 0.36, 0.46), stoneDark, { pos: side(-0.62, 7.3, 1.12), rot: [0, rot[1], 0.5] });
+    b.add(new BoxGeometry(0.5, 0.36, 0.46), stoneDark, { pos: side(0.62, 7.3, 1.12), rot: [0, rot[1], -0.5] });
+    b.add(new BoxGeometry(1.7, 0.2, 0.36), stoneDark, { pos: side(0, 5.42, 1.12), rot });
+  }
+  // The beam the bell hangs from, and its wheel.
+  b.add(new BoxGeometry(2.5, 0.22, 0.24), C(PALETTE.driftwood), { pos: [0, 7.25, 0] });
+  b.add(new TorusGeometry(0.42, 0.04, 4, 10), C('#6E553F'), { pos: [-0.95, 7.25, 0], rot: [0, Math.PI / 2, 0] });
+  // Cornice and the spire: slates missing, the top gone, the weathercock still pointing at something.
+  b.add(new BoxGeometry(3.2, 0.3, 3.2), stoneDark, { pos: [0, 8.05, 0] });
+  let n = 0;
+  b.add(prism(0.7, 3.0, 3.1), () => (n++ % 5 === 3 ? hole : slate), { pos: [0, 9.75, 0] }, { jitter: 0.1 });
+  b.add(new CylinderGeometry(0.035, 0.035, 1.3, 5), C('#2B2630'), { pos: [0.12, 11.85, 0], rot: [0, 0, -0.22] });
+  b.add(new BoxGeometry(0.62, 0.05, 0.05), C('#2B2630'), { pos: [0.2, 12.2, 0], rot: [0, 0.4, -0.22] });
+  b.add(new ConeGeometry(0.16, 0.42, 3), C(PALETTE.lantern), { pos: [0.3, 12.52, 0], rot: [0, 0.4, Math.PI / 2 - 0.22], scale: [1, 1, 0.35] }, { emissive: 0.25 });
+
+  // The bell: green with the sea, and not as dull as it should be.
+  const k = new Builder(seed + 9, 0.05);
+  const bronze = C('#5F8F86'), bright = C('#8FC7B8');
+  const profile = [[0.0, 0], [0.2, -0.02], [0.3, -0.1], [0.36, -0.34], [0.42, -0.66], [0.52, -0.92], [0.7, -1.12], [0.74, -1.2], [0.66, -1.2]].map(([r, y]) => new Vector2(r, y));
+  k.add(new LatheGeometry(profile, 10), (c) => (c.y < -1.02 ? bright : bronze), { pos: [0, -0.12, 0] }, { emissive: 0.16 });
+  k.add(new BoxGeometry(0.5, 0.16, 0.16), C(PALETTE.driftwood), { pos: [0, -0.06, 0] });
+  k.add(new CylinderGeometry(0.025, 0.025, 0.9, 5), C('#2B2630'), { pos: [0, -0.75, 0] });
+  k.add(new SphereGeometry(0.12, 6, 5), C('#2B2630'), { pos: [0, -1.22, 0] });
+  return { tower: b.build(), bell: k.build(), bellAt: [0, 7.14, 0] };
+}
+
+/** The post on the shoal the bell rope is made fast to. Origin at the sand. */
+export function buildBellPost(seed = 71): BufferGeometry {
+  const b = new Builder(seed, 0.06);
+  b.add(Builder.wobble(new CylinderGeometry(0.1, 0.13, 1.5, 6), 0.02, seed), C(PALETTE.driftwood), { pos: [0, 0.45, 0], rot: [0.05, 0, -0.06] });
+  b.add(new TorusGeometry(0.14, 0.03, 4, 8), C('#C9B48E'), { pos: [0, 1.02, 0], rot: [Math.PI / 2, 0, 0] });
+  b.add(new TorusGeometry(0.14, 0.03, 4, 8), C('#C9B48E'), { pos: [0, 0.95, 0], rot: [Math.PI / 2, 0, 0] });
+  return b.build();
 }
 
 export function addLanternLight(parent: Object3D, pos: Vector3, intensity = 6, distance = 16): PointLight {

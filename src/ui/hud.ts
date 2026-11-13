@@ -5,6 +5,7 @@
 import { fish } from '../core/content';
 import { fmt, rarityIndex, rhythmMult } from '../core/economy';
 import type { Stats } from '../core/gear';
+import { potsWaiting } from '../core/pots';
 import { FEEL, STRANGE_TRAITS, type FishingSession } from '../core/fishing';
 import type { CatchItem, GameState } from '../core/state';
 
@@ -23,7 +24,8 @@ const h = (tag: string, cls: string, parent?: HTMLElement, html = '') => {
 
 export class Hud {
   readonly root: HTMLElement;
-  private coins: HTMLElement; private hold: HTMLElement; private rhythm: HTMLElement;
+  private coins: HTMLElement; private hold: HTMLElement; private rhythm: HTMLElement; private pots: HTMLElement; private echoes: HTMLElement;
+  private potsWas = ''; private echoesWas = '';
   private goal: HTMLElement; private goalText: HTMLElement;
   private power: HTMLElement; private powerFill: HTMLElement;
   private bite: HTMLElement;
@@ -44,9 +46,14 @@ export class Hud {
   constructor(parent: HTMLElement) {
     this.root = h('div', 'hud', parent);
     const tr = h('div', 'hud-tr', this.root);
+    this.echoes = h('div', 'pill echoes', tr, '<span class="ico">✺</span><b>0</b>');
+    this.echoes.title = 'Echoes: spend them in the satchel';
     this.coins = h('div', 'pill coins', tr, '<span class="ico">◉</span><b>0</b>');
     this.hold = h('div', 'pill hold', tr, '<span class="ico">⛁</span><b>0/12</b>');
+    this.pots = h('div', 'pill pots', tr, '<span class="ico lant"></span><b>0/3</b>');
+    this.pots.title = 'Fish waiting in your Lantern Pots';
     this.rhythm = h('div', 'pill rhythm', tr, '<span class="ico">♪</span><b>×1.00</b>');
+    this.pots.style.display = 'none'; this.echoes.style.display = 'none';
     this.goal = h('div', 'goal', this.root, '<div class="goal-k">Next</div>');
     this.goalText = h('div', 'goal-t', this.goal);
     this.power = h('div', 'power', this.root, `<div class="power-sweet" style="left:${FEEL.sweetSpot[0] * 100}%;width:${(FEEL.sweetSpot[1] - FEEL.sweetSpot[0]) * 100}%"></div>`);
@@ -84,7 +91,7 @@ export class Hud {
   }
 
   /** Floating markers over NPCs and places: '!' new quest, '?' ready to hand in, names when close. */
-  setMarkers(items: { x: number; y: number; kind: 'offer' | 'turnIn' | 'place' | null; glyph?: string; label: string | null; alpha: number }[]) {
+  setMarkers(items: { x: number; y: number; kind: 'offer' | 'turnIn' | 'place' | 'pot' | 'pot full' | null; glyph?: string; label: string | null; alpha: number }[]) {
     while (this.markerEls.length < items.length) this.markerEls.push(h('div', 'marker', this.markers, '<div class="mk"></div><div class="nm"></div>'));
     this.markerEls.forEach((e, i) => {
       const it = items[i];
@@ -112,7 +119,7 @@ export class Hud {
    * The helm compass. `yaw` is the view's heading in world terms (forward = (sin, cos), north = −z);
    * marks are compass bearings in radians to things worth steering for. Null hides it.
    */
-  setCompass(c: { yaw: number; knots: number; marks: { bearing: number; kind: 'goal' | 'mooring' }[] } | null) {
+  setCompass(c: { yaw: number; knots: number; marks: { bearing: number; kind: 'goal' | 'mooring' | 'pot' }[] } | null) {
     this.compass.classList.toggle('on', !!c);
     if (!c) return;
     const deg = (((Math.PI - c.yaw) * 180) / Math.PI % 360 + 360) % 360;
@@ -181,6 +188,23 @@ export class Hud {
     this.hold.classList.toggle('full', s.hold.length >= st.hold);
     (this.rhythm.querySelector('b') as HTMLElement).textContent = `×${rhythmMult(s, st.rhythmCap).toFixed(2)}`;
     this.rhythm.classList.toggle('on', s.rhythm > 0);
+    // Lantern Pots: fish waiting out of room for them, once there is a pot to speak of. Echoes, once the Bell is known.
+    const pw = potsWaiting(s, st), set = s.pots.placed.length;
+    const pots = st.potCount <= 0 ? '' : set ? `${pw.fish}/${pw.room}${pw.fish >= pw.room ? ' full' : ''}` : 'none set';
+    if (pots !== this.potsWas) {
+      this.potsWas = pots;
+      this.pots.style.display = pots ? '' : 'none';
+      (this.pots.querySelector('b') as HTMLElement).textContent = pots.replace(' full', '');
+      this.pots.classList.toggle('full', pots.endsWith(' full'));
+      this.pots.classList.toggle('idle', !set);
+    }
+    const echoes = s.lifetime.echoes > 0 || s.echoes > 0 ? String(s.echoes) : '';
+    if (echoes !== this.echoesWas) {
+      this.echoesWas = echoes;
+      this.echoes.style.display = echoes ? '' : 'none';
+      (this.echoes.querySelector('b') as HTMLElement).textContent = echoes;
+      this.echoes.classList.toggle('spend', s.echoes > 0);
+    }
 
     const ph = session.phase;
     this.power.classList.toggle('on', ph === 'charging');

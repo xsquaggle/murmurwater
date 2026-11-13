@@ -21,6 +21,8 @@ export interface Conversation {
   choices: Choice[];
   /** A quest handed in when the lines finish (rewards are granted then). */
   turnIn?: string;
+  /** The speaker used their line about nearly remembering the keeper (said once each tide). */
+  deja?: boolean;
 }
 
 const q = (id: string) => QUESTS.find((x) => x.id === id)!;
@@ -33,6 +35,14 @@ export const barkLine = (npcId: string, i: number): Line => {
   return { npc: npcId, text: barks[k], voice: `${npcId}/bark.${k}` };
 };
 
+/** What somebody says the first time they meet the keeper after the Bell has turned the tide. */
+export const turnedLine = (npcId: string, i: number): Line | null => {
+  const lines = npc(npcId).turned ?? [];
+  if (!lines.length) return null;
+  const k = ((i % lines.length) + lines.length) % lines.length;
+  return { npc: npcId, text: lines[k], voice: `${npcId}/turned.${k}` };
+};
+
 /**
  * FNV-1a hash of a line's text. The voice index (audio/voice/voiced.json) records the hash each file was
  * recorded from, so a line whose text changes later goes quiet instead of playing the old recording.
@@ -43,7 +53,10 @@ export const textHash = (text: string): string => hashString(text).toString(16).
 export function allVoiceLines(): (Line & { speaker: string; voiceStyle: string })[] {
   const out: Line[] = [];
   for (const quest of QUESTS) out.push(...introLines(quest), ...(quest.reminder ? [reminderLine(quest)] : []), ...outroLines(quest));
-  for (const id of new Set(QUESTS.map((x) => x.giver).concat(['mara', 'pell', 'wick']))) npc(id).barks.forEach((_, i) => out.push(barkLine(id, i)));
+  for (const id of new Set(QUESTS.map((x) => x.giver).concat(['mara', 'pell', 'wick']))) {
+    npc(id).barks.forEach((_, i) => out.push(barkLine(id, i)));
+    (npc(id).turned ?? []).forEach((_, i) => out.push(turnedLine(id, i)!));
+  }
   return out.map((l) => ({ ...l, speaker: npc(l.npc).name, voiceStyle: npc(l.npc).voice }));
 }
 
@@ -56,7 +69,8 @@ export const FERRY_ROUTE: Record<string, { to: string; label: string }> = {
 function hub(s: GameState, npcId: string, island: string): Choice[] {
   const c: Choice[] = [];
   if (npcId === 'mara') {
-    if (s.hold.length) c.push({ label: `Sell my catch (${s.hold.length} fish)`, action: { type: 'sell' } });
+    const n = s.hold.length + s.pots.hold.length;
+    if (n) c.push({ label: `Sell my catch (${n} fish)`, action: { type: 'sell' } });
     if (s.flags.includes('shop-open')) c.push({ label: 'Show me the good shelf.', action: { type: 'shop' } });
   }
   if (npcId === 'pell') {
@@ -71,8 +85,12 @@ function hub(s: GameState, npcId: string, island: string): Choice[] {
   return c;
 }
 
-/** The conversation an NPC starts when the player talks to them. `seq` picks a bark so they don't repeat. */
-export function converse(s: GameState, npcId: string, island: string, seq = 0): Conversation {
+/**
+ * The conversation an NPC starts when the player talks to them. `seq` picks a bark so they don't repeat.
+ * `deja`: how many times the Bell has been rung, if this is the first chat with them since: they open with
+ * a line about it instead of a bark (story lines come first; the caller marks it said when `deja` comes back set).
+ */
+export function converse(s: GameState, npcId: string, island: string, seq = 0, deja = 0): Conversation {
   const offer = npcOffer(s, npcId);
   switch (offer.kind) {
     case 'turnIn':
@@ -84,8 +102,10 @@ export function converse(s: GameState, npcId: string, island: string, seq = 0): 
       };
     case 'active':
       return { npc: npcId, lines: [reminderLine(offer.quest)], choices: hub(s, npcId, island) };
-    default:
-      return { npc: npcId, lines: [barkLine(npcId, seq)], choices: hub(s, npcId, island) };
+    default: {
+      const turned = deja > 0 ? turnedLine(npcId, deja - 1) : null;
+      return { npc: npcId, lines: [turned ?? barkLine(npcId, seq)], choices: hub(s, npcId, island), deja: !!turned };
+    }
   }
 }
 

@@ -136,6 +136,12 @@ export function stats(s: GameState, env: Env = {}): Stats {
   };
 }
 
+/** A rod as its tuning has made it (nothing else added): for the shelf, where each rod is shown on its own. */
+export function tunedRod(s: GameState, id: string): RodDef {
+  const base = rod(id), lvl = s.gear.rodLevels[id] ?? 0, t = TUNING.perLevel;
+  return { ...base, power: base.power * (1 + t.power * lvl), control: base.control * (1 + t.control * lvl), reach: base.reach * (1 + t.reach * lvl), grace: base.grace * (1 + t.grace * lvl), luck: base.luck + t.luck * lvl };
+}
+
 /** What a fishing session plays with, for the player's gear here and now. */
 export function fishingContext(s: GameState, env: Env & { hour: number }, spot: FishingContext['spot'], st = stats(s, env)): FishingContext {
   const b = bait(s.gear.bait);

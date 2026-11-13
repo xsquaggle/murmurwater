@@ -37,6 +37,11 @@ export function potTable(s: GameState, pot: PotState, hour: number): FishDef[] {
     && !!s.journal[f.id] && inHours(hour, f.hours) && (!f.requires || s.flags.includes(f.requires)));
 }
 
+/** How many kinds of fish a pot here could ever trap (any hour): 0 means it sits in water the journal knows nothing of. */
+export function potKnows(s: GameState, zone: string | null, region = s.world.region): number {
+  return FISH.filter((f) => f.region === region && (!zone || f.zones.includes(zone)) && f.rarity !== 'uncanny' && !!s.journal[f.id] && (!f.requires || s.flags.includes(f.requires))).length;
+}
+
 function trap(s: GameState, pot: PotState, hour: number, st: Stats): CatchItem | null {
   const table = potTable(s, pot, hour);
   const rng = new Rng(hashString(`${s.seed}:pot:${pot.id}:${pot.n++}`));

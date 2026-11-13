@@ -20,6 +20,8 @@ const SFX = {
   // Sailing
   'sail-flap': [3, 0.7], 'boat-bump': [3, 0.9], 'rope-creak': [3, 0.5], 'boat-board': [2, 0.8], 'chart-open': [2, 0.7],
   'chest-open': [2, 0.8],
+  // Lantern Pots and the Drowned Bell
+  'pot-set': [1, 0.8], 'pot-haul': [2, 0.85], 'bell-toll': [1, 1], 'echo-buy': [1, 0.8], 'tide-turn': [1, 0.9],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
@@ -29,7 +31,7 @@ type Loop = (typeof LOOPS)[number];
  * Sounds that have been asked for but are not recorded yet (see docs/HANDOFF.md). They are not fetched and
  * not counted as missing; their synth stand-ins play instead. Delete a name here when its files land.
  */
-const PENDING: ReadonlySet<string> = new Set<string>();
+const PENDING: ReadonlySet<string> = new Set<string>(['pot-set', 'pot-haul', 'bell-toll', 'echo-buy', 'tide-turn']);
 
 interface SfxOpts { gain?: number; rate?: number; at?: number; vary?: number; bus?: Bus; dur?: number }
 export interface AudioState {
@@ -319,6 +321,35 @@ export class AudioEngine {
   chartOpen() { if (!this.sfx('chart-open')) this.pageTurn(); }
   /** A sea chest's lid: a creak with the clink of what is inside (the recording has both). */
   chestOpen() { if (!this.sfx('chest-open')) this.coin(8); }
+  // ---- Lantern Pots and the Drowned Bell ----
+  /** A pot going into the water: the float's plop and the basket sinking after it. */
+  potSet() { if (!this.sfx('pot-set')) { this.plop(0.9); this.noise(0.5, 500, 0.7, 0.12, 'lowpass', 160, 0.12); } }
+  /** A pot coming up: water running off wicker, and fish. */
+  potHaul(fish = 1) {
+    if (this.sfx('pot-haul', { gain: 0.8 + 0.05 * Math.min(6, fish) })) return;
+    this.noise(0.55, 900, 0.6, 0.28, 'bandpass', 2600); this.splash(0.5 + 0.1 * Math.min(5, fish));
+  }
+  /** A fish finding its way into a pot nearby: barely there. */
+  potCatch(gain = 1) { if (!this.sfx('nibble', { gain: 0.5 * gain, rate: 0.7, vary: 0.1 })) this.tone(240, 0.08, 0.05 * gain, 'sine', 0, 150); }
+  /** The Drowned Bell: one stroke, long in dying. Synthesised from a bell's partials until the recording lands. */
+  bellToll(gain = 1) {
+    if (this.sfx('bell-toll', { gain, vary: 0 })) return;
+    const f = 174.6;
+    for (const [ratio, peak, dur] of [[0.5, 0.3, 5.5], [1, 0.26, 4.5], [1.19, 0.2, 3.6], [1.5, 0.14, 2.8], [2, 0.16, 2.4], [2.51, 0.08, 1.6], [3.01, 0.06, 1.2], [4.1, 0.04, 0.8]] as const) this.tone(f * ratio, dur, peak * gain, 'sine');
+    this.noise(0.05, 2400, 1.2, 0.2 * gain, 'bandpass');
+  }
+  /** The tide turning: the sea drawing a long way back. */
+  tideTurn() {
+    if (this.sfx('tide-turn', { vary: 0 })) return;
+    this.noise(3.4, 220, 0.5, 0.4, 'lowpass', 1400); this.noise(2.6, 1800, 0.7, 0.12, 'bandpass', 300, 1.2);
+    this.tone(87.3, 3.6, 0.16, 'sine', 0.2, 58);
+  }
+  /** An Echo spent: a figure that sounds as if it were being remembered rather than played. */
+  echoBuy() {
+    if (this.sfx('echo-buy')) return;
+    [880, 659.25, 783.99, 1174.66].forEach((fr, i) => { this.tone(fr, 0.7, 0.1, 'sine', i * 0.09); this.tone(fr * 1.003, 0.9, 0.05, 'triangle', i * 0.09 + 0.22); });
+  }
+
   /** A new place on the chart: a short rising figure (the recorded sting once it exists). */
   discover() {
     const synth = () => { [587.33, 739.99, 880, 1174.66].forEach((f, i) => this.tone(f, 0.5, 0.12, 'triangle', i * 0.11)); this.tone(293.66, 1.1, 0.07, 'sine', 0.05); };
