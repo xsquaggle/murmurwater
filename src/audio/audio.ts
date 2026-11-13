@@ -314,6 +314,8 @@ export class AudioEngine {
     if (this.sfx('sail-flap', { vary: 0.1 })) return;
     this.noise(0.1, 500, 0.6, 0.22, 'lowpass', 180); this.noise(0.16, 380, 0.6, 0.16, 'lowpass', 140, 0.11);
   }
+  /** A halyard run through its block: the sail coming down. */
+  ropeCreak() { if (!this.sfx('rope-creak', { gain: 0.9, vary: 0.1 })) this.noise(0.25, 700, 0.8, 0.08, 'bandpass', 500); }
   chartOpen() { if (!this.sfx('chart-open')) this.pageTurn(); }
   /** A sea chest's lid: a creak with the clink of what is inside (the recording has both). */
   chestOpen() { if (!this.sfx('chest-open')) this.coin(8); }

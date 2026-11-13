@@ -189,7 +189,7 @@ export class Wake {
 
 // ------------------------------------------------------------------ the rig
 
-export interface RigFrame { time: number; waveY: WaveY; /** 0 (day) .. 1 (night) */ night: number; /** the helm: −1..1 each */ throttle: number; rudder: number; /** the sea the wake is drawn on */ water: Water | null }
+export interface RigFrame { time: number; waveY: WaveY; /** 0 (day) .. 1 (night) */ night: number; /** the helm: −1..1 each */ throttle: number; rudder: number; /** the sea the wake is drawn on */ water: Water | null; /** the sail should be down on the boom: she is left, or lies still */ furl: boolean }
 
 export class BoatRig {
   /** World-space group: placed at the boat, turned to its heading, rocked by the waves. */
@@ -208,6 +208,10 @@ export class BoatRig {
   private sprayT = 0; private restRing = 0;
   /** Set when the sail swings across; the game plays the flap and clears it. */
   gybed = false;
+  /** 0 (sail set) .. 1 (down on the boom). She starts furled: a boat is found at rest. */
+  private furl = 1;
+  /** Set when the sail starts up or starts down; the game plays the sound and clears it. */
+  sailMoved: 'up' | 'down' | null = null;
   private readonly sink: number;
   /** Where a person is aboard, in the hull's own frame [to port, up, forward]: on their feet amidships, and seated at the tiller. */
   private readonly standSpot: readonly [number, number, number];
@@ -289,8 +293,18 @@ export class BoatRig {
     this.sailGroup.rotation.y = this.swing;
     // With the boom out to starboard the cloth bellies to starboard too, away from the wind; slack, it shivers.
     this.belly += (-this.side * (0.1 + 0.9 * this.fill) - this.belly) * Math.min(1, dt * 4);
-    if (this.cloth) this.cloth.morphTargetInfluences![0] = this.belly + (1 - this.fill) * 0.16 * Math.sin(f.time * 6.3);
-    this.sail?.shape(this.fill, f.time, -this.side);
+    // Left alone or lying still, the sail comes down onto the boom (the rig's second morph target), and goes
+    // up again as she is sailed. The two targets add, so the belly goes out as the sail comes down.
+    const was = this.furl;
+    this.furl = Math.min(1, Math.max(0, this.furl + (f.furl ? dt : -dt) / 0.9));
+    if (was >= 1 && this.furl < 1) this.sailMoved = 'up'; else if (was <= 0 && this.furl > 0) this.sailMoved = 'down';
+    const down = this.furl * this.furl * (3 - 2 * this.furl);
+    if (this.cloth) {
+      const m = this.cloth.morphTargetInfluences!;
+      m[0] = (this.belly + (1 - this.fill) * 0.16 * Math.sin(f.time * 6.3)) * (1 - down);
+      if (m.length > 1) m[1] = down;
+    }
+    this.sail?.shape(this.fill * (1 - down), f.time, -this.side);
 
     // Close to the wood it lights, so a little goes a long way.
     this.lamp.intensity = 3.6 * Math.max(0, f.night * 1.4 - 0.1);

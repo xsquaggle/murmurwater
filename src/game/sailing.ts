@@ -36,6 +36,8 @@ export class Sailing {
   private landing: { x: number; y: number; z: number } | null = null;
   private landingT = 0; private scanT = 0; private murmurTold = 0; private slowTold = 0;
   private stand = new Vector3();
+  /** How long she has lain still with no call for way, s: after a moment the sail comes down. */
+  private restT = 99;
 
   constructor(private g: Game) {
     this.region = g.world.region as RegionContent;
@@ -110,6 +112,7 @@ export class Sailing {
     this.rudder = steer ? (inp.held('left') ? 1 : 0) - (inp.held('right') ? 1 : 0) : 0;
     // With a line out she is checked quickly, so the float does not drag.
     if (this.aboard && fishing) { this.boat.speed *= Math.exp(-2.4 * dt); this.boat.yawRate *= Math.exp(-3 * dt); }
+    this.restT = this.throttle > 0 || this.boat.speed > 0.6 ? 0 : this.restT + dt;
     const h0 = this.boat.heading, x0 = this.boat.x, z0 = this.boat.z;
     const r = stepBoat(this.boat, { throttle: this.throttle, rudder: this.rudder }, this.def, this.env, dt);
     if (dt > 0) this.made += (Math.hypot(this.boat.x - x0, this.boat.z - z0) / dt - this.made) * Math.min(1, dt * 6);
@@ -260,7 +263,10 @@ export class Sailing {
   present(dt: number) {
     const g = this.g;
     if (!this.def || !this.rig) return;
-    this.rig.update(dt, this.boat, { time: g.world.time, waveY: (x, z) => g.waveY(x, z), night: g.world.light.night, throttle: this.throttle, rudder: this.rudder, water: g.world.water }, g.fx, this.def.speed);
+    // The sail is down when she is left, and when she has lain still for a moment with nobody asking for way.
+    const furl = !this.aboard || this.restT > 1.2;
+    this.rig.update(dt, this.boat, { time: g.world.time, waveY: (x, z) => g.waveY(x, z), night: g.world.light.night, throttle: this.throttle, rudder: this.rudder, water: g.world.water, furl }, g.fx, this.def.speed);
+    if (this.rig.sailMoved) { if (this.aboard) { if (this.rig.sailMoved === 'up') g.audio.sailFlap(); else g.audio.ropeCreak(); } this.rig.sailMoved = null; }
     // The player rides the boat's rise and fall.
     if (this.aboard && !this.hop) this.rig.personAt(this.boat, g.pos, this.seat);
   }
