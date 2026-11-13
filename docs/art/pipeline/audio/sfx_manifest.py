@@ -135,4 +135,31 @@ def build(B):
     add('cat-purr_1', make=lambda: B.circular(B.load(CAT + 'cat_purrsleepy_loop.wav'), hp=35), loop=True, lufs=-22, sources=[label(CAT + 'cat_purrsleepy_loop.wav')], how="the author's loop with rumble below 35 Hz removed")
     add('cat-purr_2', make=lambda: B.circular(B.load(CAT + 'cat_purractive_loop.wav'), hp=35), loop=True, lufs=-22, sources=[label(CAT + 'cat_purractive_loop.wav')], how="the author's loop with rumble below 35 Hz removed")
     add('hull-wash_1', make=lambda: B.circular(B.loop_cut(MIR % 'hull-wash.b', 1.1, 8.8, 1.0), hp=110), loop=True, lufs=-22, sources=[dict(label(MIR % 'hull-wash.b'), cut=[1.1, 9.9])], how='8.8 s cut with a 1 s crossfade into the audio before the loop start, rumble below 110 Hz removed')
+
+    def murmur(seconds=11.0, seed=7):
+        """A wordless hum: a few voices on each note of an open fifth of D, every voice a stack of harmonics under slowly changing vowel
+        formants with its own vibrato and breath, one note sliding a semitone, over a breath of low noise.
+        Every part runs a whole number of cycles in the loop, so there is no seam."""
+        n = int(round(seconds * SR)); t = np.arange(n) / SR; T = n / SR; r = np.random.default_rng(seed)
+        cyc = lambda m, ph=0.0: np.sin(2 * np.pi * (m * t / T + ph))                    # m whole cycles in the loop
+        vowel = lambda f, F: sum(a * np.exp(-0.5 * ((f - c) / w) ** 2) for c, w, a in F) + 0.003
+        OO = ((300, 110, 1.0), (870, 150, 0.30), (2240, 260, 0.03)); MM = ((250, 90, 1.0), (1000, 200, 0.05)); AH = ((640, 140, 0.9), (1080, 170, 0.45), (2500, 300, 0.05))
+        y = np.zeros(n); air = np.zeros(n); fr = np.fft.rfftfreq(n, 1 / SR)
+        #        pitch  gain singers slide (cycles, Hz)  vowels
+        notes = ((73.42, 1.00, 2, 0, 0.0, (MM, OO)), (110.00, 0.85, 3, 0, 0.0, (OO, MM)), (146.83, 0.60, 3, 0, 0.0, (OO, AH)), (226.4, 0.20, 2, 1, 6.5, (OO, AH)))   # the last note bends between A and B flat
+        for f, g, singers, sm, sh, (V0, V1) in notes:
+            for k in range(singers):
+                f0 = round(f * 2 ** (r.uniform(-9, 9) / 1200) * T) / T; ph = r.uniform(0, 1, 8); vr = round(r.uniform(4.7, 5.8) * T)      # each singer a few cents off, with a vibrato of their own
+                depth = 0.011 * f0 / (vr / T) * (0.55 + 0.45 * cyc(int(r.integers(1, 4)), ph[1]))                                         # about 1 % of pitch
+                bend = depth * cyc(vr, ph[2]) + 0.5 * cyc(int(r.integers(1, 4)), ph[0]) + (sh * T / sm * cyc(sm, 0.25) if sm else 0)
+                w = 0.5 + 0.5 * cyc(int(r.integers(1, 3)), ph[3]); breath = 0.68 + 0.32 * cyc(int(r.integers(1, 4)), ph[4])
+                for h in range(1, int(2600 / f0) + 1):
+                    amp = (1 - w) * vowel(h * f0, V0) + w * vowel(h * f0, V1)
+                    y += g / singers ** 0.5 * breath * amp / h ** 1.3 * (1 + 0.05 * cyc(vr, ph[5])) * np.sin(2 * np.pi * (h * f0 * t + r.uniform()) + h * bend)
+                a = np.fft.irfft(np.fft.rfft(r.standard_normal(n)) * (vowel(fr, V0) + vowel(fr, V1)) * (fr > 150), n)                    # the air in the voice, through the same vowels
+                air += g / singers ** 0.5 * breath * a / np.abs(a).max()
+        spec = np.fft.rfft(r.standard_normal(n)) * np.exp(-0.5 * ((np.log2(np.maximum(fr, 1) / 190)) / 0.9) ** 2)        # a band of noise around 190 Hz; made in the frequency domain, so it loops
+        sea = np.fft.irfft(spec, n); sea *= (0.55 + 0.45 * cyc(2, 0.13)) * (0.8 + 0.2 * cyc(5, 0.4))
+        return y / np.abs(y).max() + 0.05 * air / np.abs(air).max() + 0.16 * sea / np.abs(sea).max()
+    add('murmur_1', make=murmur, loop=True, lufs=-22, sources=[{'kind': 'synth', 'what': 'ten humming voices on an open fifth of D (D2, A2 and D3, each a few cents apart with a vibrato of its own, and one note that slides between A3 and B flat), with slowly changing vowels, over a breath of low noise'}], how='synthesised in sfx_manifest.py; every part runs a whole number of cycles in 11 s, so there is no seam')
     return items

@@ -1,5 +1,6 @@
 // Hand-authored clips for the 24-joint biped rig that merge-anim.mjs writes (unit scale, rest pose = bind pose, facing +Z).
-// node author-anim.mjs in.glb out.glb clips.mjs [--fps 30] [--drop cast,other] [--fingers 0]
+// node author-anim.mjs in.glb out.glb clips.mjs [--fps 30] [--drop cast,other] [--fingers 0] [--only clip,clip]
+//   --only bakes just the named clips of the module and leaves every other clip and the sockets exactly as they are.
 //   --fingers 0 leaves the hands as they are (no finger joints); the clips module may return rodSocket: false.
 //
 // A clip is a function of time that returns a pose spec; every frame is solved with FK for the body and analytic
@@ -16,7 +17,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const [inp, out, clipsFile, ...rest] = process.argv.slice(2);
-const opt = { fps: 30, drop: '', fingers: '1' };
+const opt = { fps: 30, drop: '', fingers: '1', only: '' };
 for (let i = 0; i < rest.length; i++) if (rest[i].startsWith('--')) opt[rest[i].slice(2)] = rest[++i];
 opt.fps = Number(opt.fps);
 
@@ -280,6 +281,8 @@ const ctx = { blend, palmCentre, solve, lerp, ease, keys, names, P, Rb, HAND, GR
 
 const mod = await import(pathToFileURL(path.resolve(clipsFile)).href);
 const def = mod.default(ctx);
+const only = new Set(String(opt.only).split(',').filter(Boolean));
+if (only.size) { def.clips = def.clips.filter(c => only.has(c.name)); def.sockets = []; def.rodSocket = false; for (const n of only) if (!def.clips.some(c => c.name === n)) throw new Error('no clip ' + n + ' in ' + clipsFile); }
 
 // ---------- sockets as nodes ----------
 const addSocket = (name, parentJoint, worldO, worldR, parentWorld) => {

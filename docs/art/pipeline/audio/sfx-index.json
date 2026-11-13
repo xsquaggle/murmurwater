@@ -2178,5 +2178,24 @@
   "loud100_db": -13.2,
   "bytes": 80497,
   "rotated": 0
+ },
+ {
+  "name": "murmur_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "ten humming voices on an open fifth of D (D2, A2 and D3, each a few cents apart with a vibrato of its own, and one note that slides between A3 and B flat), with slowly changing vowels, over a breath of low noise"
+   }
+  ],
+  "how": "synthesised in sfx_manifest.py; every part runs a whole number of cycles in 11 s, so there is no seam",
+  "file": "murmur_1.ogg",
+  "seconds": 11.0,
+  "samples": 485100,
+  "decoded": 485100,
+  "peak_db": -8.2,
+  "loud100_db": -16.7,
+  "bytes": 102879,
+  "rotated": 0
  }
 ]
