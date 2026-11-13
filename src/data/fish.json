@@ -158,8 +158,7 @@
       "rarity": "epic",
       "region": "hearthbay",
       "zones": [
-        "hb-teeth",
-        "hb-open"
+        "hb-teeth"
       ],
       "baseValue": 150,
       "weight": [

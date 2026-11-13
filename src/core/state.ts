@@ -4,7 +4,7 @@
  */
 import type { BoardQuest } from './quests';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface CatchItem {
   uid: number; fishId: string; weight: number; trait: string | null; value: number; perfect: boolean;
@@ -31,8 +31,10 @@ export interface GameState {
     lures: string[]; lure: string | null;
     wearables: string[]; worn: { hat: string | null; coat: string | null; boots: string | null; charm: string | null };
   };
-  boats: { owned: string[]; current: string | null; upgrades: Record<string, number> };
-  world: { region: string; pos: [number, number, number]; yaw: number; discovered: string[]; onBoat: boolean };
+  /** at: where the current boat floats (null until it is first put in the water) (v3). */
+  boats: { owned: string[]; current: string | null; upgrades: Record<string, number>; at: { x: number; z: number; heading: number } | null };
+  /** discovered: regions reached. charted: places found and marked on the chart (v3). onBoat: the player is aboard. */
+  world: { region: string; pos: [number, number, number]; yaw: number; discovered: string[]; charted: string[]; onBoat: boolean };
   /** active: quest id → objective index → progress. board: the rotating notice-board jobs (v2). */
   quests: { active: Record<string, Record<string, number>>; done: string[]; board: { quests: BoardQuest[]; timer: number; serial: number } };
   flags: string[];
@@ -62,8 +64,8 @@ export function newGame(seed = Date.now() % 1_000_000): GameState {
       lures: [], lure: null,
       wearables: [], worn: { hat: null, coat: null, boots: null, charm: null },
     },
-    boats: { owned: [], current: null, upgrades: {} },
-    world: { region: 'hearthbay', pos: [-118, 1.4, 22], yaw: -Math.PI / 2, discovered: ['hearthbay'], onBoat: false },
+    boats: { owned: [], current: null, upgrades: {}, at: null },
+    world: { region: 'hearthbay', pos: [-118, 1.4, 22], yaw: -Math.PI / 2, discovered: ['hearthbay'], charted: ['hearthbay'], onBoat: false },
     quests: { active: {}, done: [], board: { quests: [], timer: 0, serial: 0 } },
     flags: [],
     relics: [],

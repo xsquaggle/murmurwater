@@ -10,6 +10,7 @@ import { ACTION_LABELS, DEFAULT_BINDINGS, type Action } from '../game/input';
 import { RESOLUTIONS, keyLabel, type Settings } from '../game/settings';
 import type { Choice, Conversation, Line, TalkAction } from '../game/talk';
 import type { Quality } from '../render/renderer';
+import { drawChart, type ChartView } from './chart';
 
 type Attrs = Record<string, string | number | boolean | ((e: Event) => void) | undefined>;
 export function el(tag: string, attrs: Attrs = {}, ...kids: (Node | string | null | undefined | false)[]): HTMLElement {
@@ -139,9 +140,13 @@ export interface UiHost {
   quit(): void;
   close(): void;
   canQuit: boolean;
+  /** Everything the chart shows, as of now. */
+  chart(): ChartView;
+  /** Fast travel: sail the boat to a mooring. */
+  sailTo(mooring: string): void;
 }
 
-export type ScreenKind = 'shop' | 'board' | 'hold' | 'gear' | 'journal' | 'quests' | 'pause' | 'settings';
+export type ScreenKind = 'shop' | 'board' | 'hold' | 'gear' | 'journal' | 'quests' | 'pause' | 'settings' | 'chart';
 
 export class Screens {
   readonly root: HTMLElement;
@@ -193,6 +198,32 @@ export class Screens {
     else if (k === 'hold' || k === 'gear' || k === 'journal' || k === 'quests') this.renderSatchel(k);
     else if (k === 'pause') this.renderPause();
     else if (k === 'settings') this.renderSettings();
+    else if (k === 'chart') this.renderChart();
+  }
+
+  // ---- chart
+  private renderChart() {
+    const v = this.host.chart();
+    this.card.append(this.header(v.title));
+    const canvas = el('canvas', { class: 'chart-map' }) as HTMLCanvasElement;
+    drawChart(canvas, v, 640);
+    const known = v.places.filter((p) => p.known), hidden = v.places.length - known.length;
+    const list = el('div', { class: 'chart-list' },
+      el('p', { class: 'muted' }, v.from
+        ? 'She lies at a mooring. Pick another and she will carry you there.'
+        : 'Bring her to a mooring you know, with the rod put away, to set a course from the chart.'),
+      ...known.map((p) => {
+        const m = v.moorings.find((x) => x.place === p.id && x.known);
+        const here = !!m && m.id === v.from;
+        return el('div', { class: 'chart-place' + (here ? ' here' : '') },
+          el('div', { class: 'item-top' }, el('b', {}, p.name),
+            here ? el('span', { class: 'chart-here' }, 'Moored here')
+              : m ? el('button', { class: 'btn gold', disabled: !v.from, onclick: () => this.host.sailTo(m.id) }, 'Sail here') : null),
+          el('div', { class: 'item-desc' }, p.note + (m ? '' : ' No mooring: sail her there yourself.')));
+      }),
+      hidden ? el('p', { class: 'muted chart-unknown' }, `${hidden} place${hidden === 1 ? '' : 's'} still uncharted. Sail close and they go on the chart.`) : el('p', { class: 'muted chart-unknown' }, 'Every place in these waters is on the chart.'),
+      el('p', { class: 'muted chart-edge' }, v.hint));
+    this.card.append(el('div', { class: 'chart-wrap' }, canvas, list));
   }
 
   // ---- shop

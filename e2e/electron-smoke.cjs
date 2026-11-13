@@ -14,7 +14,7 @@ const { _electron: electron } = require('playwright');
     // Every recorded sound and every music file must be inside the packaged app.
     const sounds = await g.audio.preload();
     const music = [];
-    for (const m of ['hearthbay-day', 'hearthbay-night', 'gull-point', 'sting-quest', 'sting-rare']) {
+    for (const m of ['hearthbay-day', 'hearthbay-night', 'gull-point', 'open-water', 'sting-quest', 'sting-rare', 'sting-discover']) {
       const ok = await fetch(`audio/music/${m}.ogg`).then((x) => x.ok).catch(() => false);
       if (!ok) music.push(m);
     }

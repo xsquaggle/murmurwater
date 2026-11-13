@@ -60,8 +60,9 @@ function hub(s: GameState, npcId: string, island: string): Choice[] {
     if (s.flags.includes('shop-open')) c.push({ label: 'Show me the good shelf.', action: { type: 'shop' } });
   }
   if (npcId === 'pell') {
+    // Pell rows the player about only until they have a boat of their own.
     const relight = questStatus(s, 'hb-06-relight');
-    if (relight === 'active' || relight === 'ready' || relight === 'done' || island === 'gull-point') {
+    if (!s.boats.owned.length && (relight === 'active' || relight === 'ready' || relight === 'done' || island === 'gull-point')) {
       const r = FERRY_ROUTE[island];
       if (r) c.push({ label: r.label, action: { type: 'ferry', to: r.to } });
     }

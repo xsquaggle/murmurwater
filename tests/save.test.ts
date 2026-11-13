@@ -44,6 +44,27 @@ describe('saves', () => {
     expect(st.coins).toBe(1530);
     expect(st.journal['kettle-carp'].caught).toBe(3);
   });
+  it('v2 saves migrate to v3: the boat has no place yet and the chart starts with what was found', () => {
+    const st = deserialize(readFileSync(join(__dirname, 'fixtures', 'saves', 'v2.json'), 'utf8'));
+    expect(st.boats.at).toBeNull();
+    expect(st.world.charted).toEqual(['hearthbay']);
+    expect(st.world.onBoat).toBe(false);
+    expect(st.quests.active['hb-02-supper']).toEqual({ 0: 3 });
+    expect(st.quests.board.quests[0].progress).toBe(1);
+    // A v2 save from after the lamp was lit already knows Gull Point.
+    const lit = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'saves', 'v2.json'), 'utf8'));
+    lit.state.flags.push('lamp-lit'); lit.state.boats.owned = ['skiff']; lit.state.boats.current = 'skiff';
+    const st2 = deserialize(JSON.stringify(lit));
+    expect(st2.world.charted).toEqual(['hearthbay', 'gull-point']);
+    expect(st2.boats.owned).toEqual(['skiff']);
+    expect(st2.boats.at).toBeNull();
+  });
+  it('v3 saves keep the boat, the chart and being aboard', () => {
+    const st = deserialize(readFileSync(join(__dirname, 'fixtures', 'saves', 'v3.json'), 'utf8'));
+    expect(st.boats.at).toEqual({ x: -319, z: 28, heading: -1.5708 });
+    expect(st.world.charted).toContain('kettle-isle');
+    expect(st.world.onBoat).toBe(true);
+  });
   it('every fixture save from every past version still loads', () => {
     const dir = join(__dirname, 'fixtures', 'saves');
     const files = readdirSync(dir).filter((f) => f.endsWith('.json'));

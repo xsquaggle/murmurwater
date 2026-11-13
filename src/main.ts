@@ -6,6 +6,9 @@ import { assets } from './render/assets';
 import { makeFish } from './render/fish-models';
 import { loadSettings } from './game/settings';
 import * as quests from './core/quests';
+import { findRoute } from './core/seaways';
+import { clearance } from './core/boat';
+import { LANDING, hullDistance, landingSpot } from './core/landing';
 
 declare global {
   interface Window {
@@ -89,6 +92,9 @@ async function boot() {
     makeFish,
     get assetsMissing() { return [...assets.missing]; },
     quests,
+    findRoute,
+    clearance,
+    landingSpot, hullDistance, LANDING,
     buildMs: 0,
     frameStats() { return game.perf?.stats() ?? { fps: 0, p50: 0, p99: 0, cpu: 0 }; },
   };

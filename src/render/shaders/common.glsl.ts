@@ -23,6 +23,7 @@ uniform vec3 uHorizon;
 uniform float uNight;
 uniform float uTime;
 uniform float uCloudCover;
+uniform vec4 uMurk;
 `;
 
 /**
@@ -76,6 +77,8 @@ vec3 skyColor(vec3 d, float mirror) {
   float moon = smoothstep(0.99955, 0.9998, md);
   col = mix(col, vec3(0.95, 0.93, 0.85) * 2.2, moon * uNight);
   col += vec3(0.6, 0.7, 1.0) * pow(max(md, 0.0), 60.0) * 0.12 * uNight;
+  // The Murmur Fog at the edge of a region: it closes in from the horizon up. The second moon shines through it.
+  if (uMurk.a > 0.001) col = mix(col, uMurk.rgb, uMurk.a * (1.0 - 0.5 * smoothstep(0.05, 0.85, d.y)));
   // The second moon: only ever seen in reflections.
   if (mirror > 0.5) {
     vec3 m2 = normalize(uMoonDir + vec3(0.18, 0.05, -0.12));

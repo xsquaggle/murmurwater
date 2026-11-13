@@ -190,6 +190,74 @@
         ],
         "moonpearls": 1
       }
+    },
+    {
+      "id": "hb-07-kettle",
+      "chain": "main",
+      "giver": "pell",
+      "title": "A Kettle on the Shore",
+      "summary": "Sail the skiff out to Kettle Isle, west of the cove, and find the keeper's kettle.",
+      "requires": [
+        "hb-06-relight"
+      ],
+      "intro": [
+        "She's light on the helm. Push her on and she goes, let her be and she glides. Never cast till she's settled.",
+        "South-west of here there's an isle with a kettle on it. The keeper took her tea there, tides she wanted quiet.",
+        "Go and see if it's still warm. It will be. That's the part I don't care for."
+      ],
+      "objectives": [
+        {
+          "type": "visit",
+          "place": "keepers-kettle",
+          "label": "Sail to Kettle Isle, west of the cove, and find the kettle"
+        }
+      ],
+      "reminder": "Kettle Isle. West of the cove, out past its mouth. You'll know the beach.",
+      "outro": [
+        "Warm, was it. Twelve winters on a bare rock, and warm.",
+        "Keep it. Her things go to whoever keeps the light."
+      ],
+      "rewards": {
+        "coins": 80,
+        "relics": [
+          "keepers-kettle"
+        ]
+      }
+    },
+    {
+      "id": "hb-08-teeth",
+      "chain": "main",
+      "giver": "mara",
+      "title": "What Bites at the Teeth",
+      "summary": "Sail south-west to the Teeth and catch a Twofold Flounder.",
+      "requires": [
+        "hb-06-relight"
+      ],
+      "intro": [
+        "So he's given you the skiff. Good. It's sat at that dock like a held breath.",
+        "South-west there's three black rocks, the Teeth. Deep water. Nothing off them has reached my stall in a long while.",
+        "Bring me a Twofold Flounder. And don't let it look at you with both faces at once."
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "fish": "twofold-flounder",
+          "count": 1,
+          "at": [-268, 240],
+          "label": "Catch a Twofold Flounder at the Teeth"
+        }
+      ],
+      "reminder": "The Teeth, south-west past the sandbar. Flounder sit deep, so give it line.",
+      "outro": [
+        "Oh, that's the one. Look at it. Looking at us.",
+        "My sister brought these in by the basket. I don't know why I said that. I haven't got a sister."
+      ],
+      "rewards": {
+        "coins": 250,
+        "items": {
+          "glowgrub": 10
+        }
+      }
     }
   ]
 }

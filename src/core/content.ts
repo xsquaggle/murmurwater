@@ -32,8 +32,20 @@ export interface NpcSpot { npc: string; island: string; x: number; z: number; ya
 /** An ambient animal that wanders within `r` of (x, z). */
 export interface CritterDef { id: string; kind: 'cat'; island: string; x: number; z: number; r: number }
 export interface FerryPoint { x: number; z: number; yaw: number; boat: [number, number, number] }
+/**
+ * A place that goes on the chart when the player first comes within `r` of it (r 0 = known from the start).
+ * `coins` is the finder's reward; `note` is the line written beside it on the chart.
+ */
+export interface ChartPlace { id: string; name: string; kind: 'island' | 'rocks' | 'bar'; x: number; z: number; r: number; coins?: number; note?: string }
+/** Somewhere to leave a boat: a fast-travel point once its chart place is found. */
+export interface MooringDef { id: string; name: string; place: string; x: number; z: number; heading: number }
+/** A sea chest waiting where a boat can reach it: opened once, and it stays open. */
+export interface ChestDef { id: string; x: number; z: number; yaw: number; coins: number; items?: Record<string, number>; text: string }
 export interface RegionContent extends RegionDef {
   zones: ZoneDef[]; places?: PlaceDef[]; npcSpots?: NpcSpot[]; critters?: CritterDef[]; ferry?: Record<string, FerryPoint>;
+  chart?: ChartPlace[]; moorings?: MooringDef[]; chests?: ChestDef[];
+  /** What turns a boat back at the edge of the region (shown while the sea murmurs). */
+  edgeHint?: string;
 }
 
 export const FISH: FishDef[] = fishJson.fish as FishDef[];
@@ -86,6 +98,9 @@ export function validateContent(): string[] {
     for (const sp of r.npcSpots ?? []) if (!islands.has(sp.island)) errs.push(`region ${r.id}: npc ${sp.npc} on unknown island ${sp.island}`);
     for (const c of r.critters ?? []) if (!islands.has(c.island)) errs.push(`region ${r.id}: critter ${c.id} on unknown island ${c.island}`);
     for (const k of Object.keys(r.ferry ?? {})) if (!islands.has(k)) errs.push(`region ${r.id}: ferry to unknown island ${k}`);
+    const charted = new Set((r.chart ?? []).map((c) => c.id));
+    if (charted.size !== (r.chart ?? []).length) errs.push(`region ${r.id}: duplicate chart place`);
+    for (const m of r.moorings ?? []) if (!charted.has(m.place)) errs.push(`region ${r.id}: mooring ${m.id} at unknown chart place ${m.place}`);
   }
   return errs;
 }

@@ -340,7 +340,8 @@ export function buildNoticeBoard(seed = 33): BufferGeometry {
 }
 
 // ---------------------------------------------------------------- scattering
-export interface Scatter { group: Group; houses: Vector3[] }
+/** rocks: boulders at the water's edge as [x, z, radius, base height], for boats (and feet) to go around. */
+export interface Scatter { group: Group; houses: Vector3[]; rocks: [number, number, number, number][] }
 
 function instanced(geos: BufferGeometry[], mats: Matrix4[][], mat: MeshStandardMaterial, cast = true): InstancedMesh[] {
   return geos.map((g, i) => {
@@ -358,6 +359,7 @@ export function scatterIsland(hf: Heightfield, opts: { villageCenter: Vector3; v
   const group = new Group();
   const mat = createPropMaterial();
   const houses: Vector3[] = [];
+  const rocks: [number, number, number, number][] = [];
   const blocked: { p: Vector3; r: number }[] = opts.avoid.map((p) => ({ p, r: 12 }));
   // Keep paths and paved yards clear of houses, trees and boulders.
   const paved = (x: number, z: number, r: number) => [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]].some(([ox, oz]) => hf.surfaceAt(x + ox, z + oz).w > 0.01);
@@ -400,7 +402,11 @@ export function scatterIsland(hf: Heightfield, opts: { villageCenter: Vector3; v
       // Chunky shore boulders, some half-submerged and visible through the shallows.
       if (rng.chance(y < 0 ? 0.01 : 0.03)) {
         const p0 = new Vector3(x, y, z);
-        if (free(p0, 2)) { blocked.push({ p: p0, r: 2 }); rockM[rng.int(0, 3)].push(place(x, y - 0.4, z, rng.range(0, 6.3), rng.range(1.4, 3.8))); }
+        if (free(p0, 2)) {
+          const sc = rng.range(1.4, 3.8);
+          blocked.push({ p: p0, r: 2 }); rockM[rng.int(0, 3)].push(place(x, y - 0.4, z, rng.range(0, 6.3), sc));
+          rocks.push([x, z, sc, y]);
+        }
       }
       if (y < 0.4) continue;
     }
@@ -420,11 +426,60 @@ export function scatterIsland(hf: Heightfield, opts: { villageCenter: Vector3; v
       if (heath > 0.55 && rng.chance(0.09) && free(p, 0.8)) tuftM[rng.int(1, 2)].push(place(x, y - 0.1, z, rng.range(0, 6.3), rng.range(0.8, 1.4)));
     }
     if ((ny < 0.78 && rng.chance(0.06)) || (y < 1.6 && rng.chance(0.012))) {
-      if (free(p, 1)) rockM[rng.int(0, 3)].push(place(x, y - 0.3, z, rng.range(0, 6.3), rng.range(0.6, 2.4)));
+      if (free(p, 1)) {
+        const sc = rng.range(0.6, 2.4);
+        rockM[rng.int(0, 3)].push(place(x, y - 0.3, z, rng.range(0, 6.3), sc));
+        if (y < 0.6 && sc > 1) rocks.push([x, z, sc, y]);
+      }
     }
   }
   [...instanced(pineGeos, pineM, mat), ...instanced(roundGeos, roundM, mat), ...instanced(rockGeos, rockM, mat), ...instanced(tuftGeos, tuftM, mat, false)].forEach((im) => group.add(im));
-  return { group, houses };
+  return { group, houses, rocks };
+}
+
+// ---------------------------------------------------------------- at sea
+/** A mooring buoy: a striped float with a ring and a little pennant. Origin at the waterline. */
+export function buildBuoy(seed = 51): BufferGeometry {
+  const b = new Builder(seed, 0.04);
+  const red = C(PALETTE.coral), white = C(PALETTE.bone), dark = C('#3A3442');
+  b.add(new CylinderGeometry(0.34, 0.42, 0.3, 8), red, { pos: [0, -0.1, 0] });
+  b.add(new CylinderGeometry(0.42, 0.42, 0.22, 8), white, { pos: [0, 0.16, 0] });
+  b.add(new CylinderGeometry(0.2, 0.42, 0.34, 8), red, { pos: [0, 0.44, 0] });
+  b.add(new CylinderGeometry(0.03, 0.03, 0.9, 5), dark, { pos: [0, 1.0, 0] });
+  b.add(new TorusGeometry(0.11, 0.025, 4, 8), dark, { pos: [0, 0.68, 0.14], rot: [0, 0, 0] });
+  b.add(new ConeGeometry(0.16, 0.34, 3), C(PALETTE.lantern), { pos: [0.17, 1.32, 0], rot: [0, 0, -Math.PI / 2] }, { emissive: 0.5 });
+  return b.build();
+}
+
+/**
+ * The keeper's camp on Kettle Isle: a flat stone, a ring of cold ashes, a driftwood seat. The kettle is a
+ * separate mesh so it can be taken. TEMPORARY stand-in until a generated camp model lands (see HANDOFF).
+ */
+export function buildKettleCamp(seed = 57): { camp: BufferGeometry; kettle: BufferGeometry } {
+  const b = new Builder(seed, 0.06);
+  const stone = C('#8A8E92'), dark = C('#4A4650'), wood = C(PALETTE.driftwood);
+  b.add(Builder.wobble(new CylinderGeometry(0.75, 0.9, 0.42, 7), 0.08, seed), stone, { pos: [0, 0.2, 0] });
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2 + 0.3;
+    b.add(Builder.wobble(new DodecahedronGeometry(0.16, 0), 0.04, seed + i), i % 2 ? stone : C('#6B7079'), { pos: [1.5 + Math.cos(a) * 0.48, 0.08, 0.3 + Math.sin(a) * 0.48] });
+  }
+  b.add(new CylinderGeometry(0.36, 0.4, 0.05, 8), dark, { pos: [1.5, 0.03, 0.3] });
+  b.add(new CylinderGeometry(0.05, 0.06, 0.6, 5), C('#3A3442'), { pos: [1.42, 0.1, 0.34], rot: [0, 0.4, 1.35] });
+  b.add(Builder.wobble(new CylinderGeometry(0.19, 0.23, 1.7, 6), 0.05, seed + 20), wood, { pos: [0.5, 0.2, -1.5], rot: [0, 0.35, Math.PI / 2] });
+  b.add(new CylinderGeometry(0.05, 0.07, 0.5, 5), wood, { pos: [1.0, 0.45, -1.35], rot: [0.5, 0, 0.3] });
+  // A tin cup left on the stone.
+  b.add(new CylinderGeometry(0.06, 0.05, 0.1, 6), C('#C9B48E'), { pos: [-0.38, 0.47, 0.22] });
+
+  const k = new Builder(seed + 1, 0.04);
+  const tin = C('#9FB0B5'), tinDark = C('#6E7F86');
+  k.add(new SphereGeometry(0.2, 8, 5), tin, { pos: [0, 0.16, 0], scale: [1, 0.82, 1] });
+  k.add(new CylinderGeometry(0.11, 0.17, 0.08, 8), tinDark, { pos: [0, 0.33, 0] });
+  k.add(new SphereGeometry(0.035, 5, 4), C(PALETTE.driftwood), { pos: [0, 0.39, 0] });
+  k.add(new CylinderGeometry(0.025, 0.045, 0.24, 5), tin, { pos: [0.24, 0.24, 0], rot: [0, 0, -0.9] });
+  k.add(new TorusGeometry(0.16, 0.018, 4, 10, Math.PI), C('#C9B48E'), { pos: [0, 0.3, 0] });
+  // A dent, and soot up one side.
+  k.add(new SphereGeometry(0.07, 5, 4), tinDark, { pos: [-0.12, 0.14, 0.13], scale: [1, 1, 0.5] });
+  return { camp: b.build(), kettle: k.build() };
 }
 
 export function addLanternLight(parent: Object3D, pos: Vector3, intensity = 6, distance = 16): PointLight {

@@ -1,18 +1,22 @@
 /** Assembles a region's 3D scene: sky, water, terrain, landmarks, scatter, lighting, time of day. */
 import {
-  AdditiveBlending, BufferGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, FogExp2, Group, HemisphereLight, Mesh, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Scene, ShaderMaterial, Vector3,
+  AdditiveBlending, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, FogExp2, Group, HemisphereLight, Mesh, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Scene, ShaderMaterial, Vector3,
 } from 'three';
 import { Heightfield, type RegionDef } from '../core/world';
 import { createSky, createSkyUniforms, type SkyUniforms } from './sky';
 import { Water } from './water';
 import { buildTerrain } from './terrain';
-import { addLanternLight, buildArch, buildDock, buildLighthouse, buildNoticeBoard, buildRowboat, buildStall, createPropMaterial, scatterIsland } from './props';
+import { addLanternLight, buildArch, buildBuoy, buildDock, buildKettleCamp, buildLighthouse, buildNoticeBoard, buildRowboat, buildStall, createPropMaterial, scatterIsland } from './props';
 import { assets } from './assets';
+import { buildHullMask } from './boat-rig';
 import { dockDeckAt } from '../core/dock';
 import { waveHeight, CALM_WAVES } from '../core/waves';
 import type { RegionContent } from '../core/content';
 import { sample, type Lighting } from './daycycle';
 import type { QualityProfile } from './renderer';
+
+/** The Murmur Fog by day. */
+const MURK = new Color('#B4A6CE');
 
 export class WorldScene {
   readonly scene = new Scene();
@@ -39,8 +43,19 @@ export class WorldScene {
   /** Pell's ferry (the generated skiff, or the stand-in rowboat). */
   readonly ferryBoat: Object3D;
   private ferryBeached = false;
+  /** True when the ferry is the generated skiff model (it sits deeper than the stand-in). */
+  readonly ferryIsModel: boolean;
+  /** Set once the player owns the boat: the game moves it from then on (see game/sailing.ts). */
+  ferryHeld = false;
   /** Houses and big props the player can't walk through: [x, z, radius]. */
   readonly blockers: [number, number, number][] = [];
+  /** Boulders at the water's edge a hull can't pass: [x, z, radius]. */
+  readonly rocks: [number, number, number][] = [];
+  /** The keeper's kettle on Kettle Isle (hidden once it has been taken). */
+  kettle: Object3D | null = null;
+  /** Sea chests by id: the shut one and the open one stand in the same place and one of them shows. */
+  readonly chests = new Map<string, { shut: Object3D; open: Object3D }>();
+  private buoys: { obj: Object3D; x: number; z: number; ph: number }[] = [];
 
   constructor(readonly region: RegionDef, profile: QualityProfile) {
     this.hf = new Heightfield(region);
@@ -137,8 +152,11 @@ export class WorldScene {
     const boat = skiff ?? new Mesh(buildRowboat(), createPropMaterial());
     if (!skiff) this.propMats.push((boat as Mesh).material as MeshStandardMaterial);
     boat.traverse((o) => { if ((o as Mesh).isMesh) (o as Mesh).castShadow = true; });
+    // Her floor is below the waterline: the mask keeps the sea from showing inside her.
+    if (skiff) boat.add(buildHullMask());
     s.add(boat);
     this.ferryBoat = boat;
+    this.ferryIsModel = !!skiff;
     this.boat = boat;
     this.placeFerry('hearthbay');
 
@@ -146,6 +164,13 @@ export class WorldScene {
     const scatter = scatterIsland(this.hf, { villageCenter: village, villageRadius: 55, avoid: [new Vector3(L.lighthouse.x, 0, L.lighthouse.z), new Vector3(L.dock.x, 0, L.dock.z)], seed: 5 });
     s.add(scatter.group);
     for (const h of scatter.houses) this.blockers.push([h.x, h.z, 3.4]);
+    // Shore boulders: boats go around them, and so do feet, except where someone has to stand or land.
+    const rc = region as RegionContent;
+    const keep = [...(rc.places ?? []), ...(rc.npcSpots ?? []), ...Object.values(rc.ferry ?? {}), ...(rc.moorings ?? []), L.spawn];
+    for (const [x, z, sc, y] of scatter.rocks) {
+      if (y < 0.6) this.rocks.push([x, z, sc * 1.0]);
+      if (y > -0.3 && keep.every((k) => Math.hypot(k.x - x, k.z - z) > sc + 7)) this.blockers.push([x, z, sc * 0.8]);
+    }
     scatter.group.traverse((o) => { if ((o as Mesh).isMesh) this.propMats.push((o as Mesh).material as MeshStandardMaterial); });
 
     const arch = new Mesh(buildArch(), createPropMaterial());
@@ -156,6 +181,43 @@ export class WorldScene {
     s.add(arch);
 
     this.spawn = new Vector3(L.spawn.x, this.deckY, L.spawn.z);
+
+    // Mooring buoys (the home dock needs none), and the keeper's camp on Kettle Isle.
+    const buoyGeo = buildBuoy(), buoyMat = createPropMaterial();
+    this.propMats.push(buoyMat);
+    for (const m of (rc.moorings ?? []).slice(1)) {
+      const obj = assets.instance('buoy') ?? new Mesh(buoyGeo, buoyMat);
+      // Off the boat's quarter, so a moored hull does not sit on it.
+      const x = m.x - Math.sin(m.heading) * 2.6 + Math.cos(m.heading) * 2.4, z = m.z - Math.cos(m.heading) * 2.6 - Math.sin(m.heading) * 2.4;
+      obj.traverse((o) => { o.castShadow = true; }); s.add(obj);
+      this.buoys.push({ obj, x, z, ph: x * 0.37 });
+    }
+    const camp = rc.places?.find((p) => p.id === 'keepers-kettle');
+    if (camp) {
+      const built = buildKettleCamp();
+      const g = new Group();
+      const base = new Mesh(built.camp, createPropMaterial());
+      const kettle = new Mesh(built.kettle, createPropMaterial());
+      kettle.position.set(0.05, 0.4, -0.05); kettle.rotation.y = 0.7;
+      for (const m of [base, kettle]) { m.castShadow = true; m.receiveShadow = true; this.propMats.push(m.material as MeshStandardMaterial); }
+      g.add(base, kettle);
+      g.position.set(camp.x, this.hf.height(camp.x, camp.z) - 0.04, camp.z); g.rotation.y = 0.5;
+      s.add(g);
+      this.kettle = kettle;
+      this.blockers.push([camp.x, camp.z, 0.8]);
+    }
+    // Sea chests, half sunk in the sand and a little askew.
+    for (const c of rc.chests ?? []) {
+      const stand = () => { const m = new Mesh(new BoxGeometry(0.66, 0.42, 0.44), createPropMaterial()); m.geometry.translate(0, 0.21, 0); m.castShadow = true; this.propMats.push(m.material as MeshStandardMaterial); return m as Object3D; };
+      const shut = assets.instance('chest') ?? stand(), open = assets.instance('chestOpen') ?? stand();
+      for (const o of [shut, open]) {
+        o.position.set(c.x, this.hf.height(c.x, c.z) - 0.09, c.z); o.rotation.set(0.07, c.yaw, -0.05); o.scale.setScalar(1.45);
+        s.add(o);
+      }
+      open.visible = false;
+      this.chests.set(c.id, { shut, open });
+      this.blockers.push([c.x, c.z, 0.6]);
+    }
 
     this.hemi = new HemisphereLight(0xffffff, 0x000000, 1);
     s.add(this.hemi);
@@ -174,6 +236,12 @@ export class WorldScene {
   }
   private boat: Object3D;
   private pocket: PointLight;
+  /** Turns the pocket lantern down (in the boat, where the sail and the stern lamp are an arm's length away). */
+  pocketScale = 1;
+  /** 0..1: how far into the Murmur Fog at the region's edge the player is. Set by the game each frame. */
+  murk = 0;
+  private murkNow = 0;
+  private murkColor = new Color();
   private lampLight: PointLight;
   private beams = new Group();
   private beamMat: ShaderMaterial;
@@ -203,9 +271,14 @@ export class WorldScene {
     u.uHorizon.value.copy(lt.horizon);
     u.uNight.value = lt.night;
 
+    // The Murmur Fog: near the edge of the region the haze closes in, pale violet by day and dark at night.
+    this.murkNow += (this.murk - this.murkNow) * Math.min(1, dt * 1.2);
+    const mk = this.murkNow < 0.002 ? 0 : this.murkNow;
     const fog = this.scene.fog as FogExp2;
     fog.color.copy(lt.fog);
-    fog.density = lt.fogDensity;
+    if (mk > 0) fog.color.lerp(this.murkColor.copy(MURK).multiplyScalar(1 - 0.84 * lt.night), Math.min(1, mk * 1.7) * 0.8);
+    fog.density = lt.fogDensity + 0.03 * Math.pow(mk, 1.6);
+    u.uMurk.value.set(fog.color.r, fog.color.g, fog.color.b, Math.min(1, mk * 1.5));
 
     this.key.color.copy(lt.keyColor);
     this.key.intensity = lt.keyIntensity;
@@ -216,8 +289,8 @@ export class WorldScene {
     this.hemi.intensity = lt.hemiIntensity;
 
     const wu = this.water.material.uniforms;
-    wu.uFogColor.value.copy(lt.fog);
-    wu.uFogDensity.value = lt.fogDensity;
+    wu.uFogColor.value.copy(fog.color);
+    wu.uFogDensity.value = fog.density;
     wu.uKeyDir.value.copy(lt.keyDir);
     wu.uKeyColor.value.copy(lt.keyColor);
     wu.uKeyIntensity.value = lt.keyIntensity;
@@ -241,10 +314,15 @@ export class WorldScene {
     this.beams.rotation.y = this.time * 0.35;
     this.beamMat.uniforms.uOpacity.value = 0.08 + 0.34 * dark;
     this.pocket.position.set(focus.x, focus.y + 2.3, focus.z);
-    this.pocket.intensity = 22 * dark;
+    this.pocket.intensity = 22 * dark * this.pocketScale;
 
+    for (const bu of this.buoys) {
+      bu.obj.position.set(bu.x, waveHeight(CALM_WAVES, bu.x, bu.z, this.time, 0.36) + 0.02, bu.z);
+      bu.obj.rotation.set(Math.sin(this.time * 1.1 + bu.ph) * 0.09, bu.ph, Math.sin(this.time * 0.8 + bu.ph * 2) * 0.09);
+    }
+    if (this.ferryHeld) return;
     const b = this.boatBase;
-    const isModel = !(this.boat as Mesh).isMesh;
+    const isModel = this.ferryIsModel;
     if (this.ferryBeached) this.boat.position.set(b.x, b.y, b.z);
     else this.boat.position.set(b.x, waveHeight(CALM_WAVES, b.x, b.z, this.time, 0.36) + (isModel ? -0.32 : 0.42) + Math.sin(this.time * 1.3) * 0.04, b.z);
     this.boat.rotation.set(this.ferryBeached ? 0.04 : Math.sin(this.time * 0.9) * 0.025, this.boatYaw, this.ferryBeached ? 0.09 : Math.sin(this.time * 1.1) * 0.04, 'YXZ');

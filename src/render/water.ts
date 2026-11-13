@@ -11,6 +11,9 @@ import { CALM_WAVES, packWaves, type Wave } from '../core/waves';
 import { PALETTE } from './palette';
 import { SHADOW_N } from './fish-shadows';
 
+/** How many points of a boat's wake the water can draw. */
+export const WAKE_N = 48;
+
 export interface WaterOptions {
   heightTex: DataTexture | Texture;
   heightBounds: Vector4; // minX, minZ, sizeX, sizeZ
@@ -53,6 +56,13 @@ export class Water {
   readonly fishA = Array.from({ length: SHADOW_N }, () => new Vector4());
   readonly fishB = Array.from({ length: SHADOW_N }, () => new Vector4(1, 0, 0, 0.05));
   readonly fishField = new Vector4(0, 0, 0, 0);
+  /**
+   * A boat's wake (written by boat-rig's Wake), newest point first: xz and how far it has spread to each
+   * side; then its age (0..1) and strength; and the circle that holds it all, with the number of points.
+   */
+  readonly wakeA = Array.from({ length: WAKE_N }, () => new Vector4());
+  readonly wakeB = Array.from({ length: WAKE_N }, () => new Vector2());
+  readonly wakeField = new Vector4(0, 0, 0, 0);
 
   constructor(opts: WaterOptions) {
     const waves = packWaves(opts.waves ?? CALM_WAVES).map((w) => new Vector4(...w));
@@ -82,8 +92,11 @@ export class Water {
         uFish: { value: this.fishA },
         uFishB: { value: this.fishB },
         uFishField: { value: this.fishField },
+        uWake: { value: this.wakeA },
+        uWakeB: { value: this.wakeB },
+        uWakeField: { value: this.wakeField },
       },
-      defines: { FISH_N: SHADOW_N },
+      defines: { FISH_N: SHADOW_N, WAKE_N },
       vertexShader: /* glsl */ `
         uniform float uTime;
         uniform vec4 uWaves[6];
@@ -149,10 +162,45 @@ export class Water {
         uniform vec4 uFish[FISH_N];
         uniform vec4 uFishB[FISH_N];
         uniform vec4 uFishField;
+        uniform vec4 uWake[WAKE_N];
+        uniform vec2 uWakeB[WAKE_N];
+        uniform vec4 uWakeField;
         varying vec3 vWorld;
         varying vec3 vNormal;
         varying float vCrest;
         varying float vDepth;
+
+        // A boat's wake as foam on the surface: two arms that spread from the stern and break into flecks
+        // as they age, and churned water between them close behind her. q is the point on the water; the
+        // noise is fixed to the water, so the foam stays where it was laid.
+        float wakeFoam(vec2 q) {
+          // The nearest point of the track, measured in widths of the wake there.
+          float rel = 1.0;
+          vec2 m = vec2(0.0);
+          int count = int(uWakeField.w + 0.5);
+          for (int i = 0; i < WAKE_N - 1; i++) {
+            if (i >= count - 1) break;
+            vec4 a = uWake[i], b = uWake[i + 1];
+            vec2 ab = b.xy - a.xy;
+            float l2 = max(dot(ab, ab), 1e-5);
+            float t = dot(q - a.xy, ab) / l2;
+            // Nothing ahead of the stern: the track starts at the boat.
+            if (i == 0 && t < 0.0) continue;
+            float h = clamp(t, 0.0, 1.0);
+            float r = length(q - a.xy - ab * h) / mix(a.z, b.z, h);
+            if (r < rel) { rel = r; m = mix(uWakeB[i], uWakeB[i + 1], h); }   // age 0..1, strength
+          }
+          if (rel >= 1.0) return 0.0;
+          float n1 = mw_vnoise(q * 1.3 + uTime * 0.03), n2 = mw_vnoise(q * 4.1 - uTime * 0.06);
+          float age = m.x;
+          // The arms: a soft-edged line each side, eaten away by the noise as it ages.
+          float wob = rel + (n2 - 0.5) * 0.16 + (n1 - 0.5) * 0.08;
+          float arm = smoothstep(0.6, 0.8, wob) * (1.0 - smoothstep(0.86, 1.0, wob));
+          float keep = smoothstep(age * 1.1 - 0.22, age * 1.1 + 0.1, n1 * 0.6 + n2 * 0.4);
+          // The churn: flecks between the arms, thick at the stern and gone within a few boat lengths.
+          float mid = (1.0 - smoothstep(0.2, 0.75, rel)) * (1.0 - smoothstep(0.0, 0.3, age)) * smoothstep(0.42 + 0.5 * age, 0.62 + 0.5 * age, n2 * 0.65 + n1 * 0.35);
+          return m.y * (1.0 - smoothstep(0.5, 1.0, age)) * max(arm * keep * (0.72 - 0.25 * age), mid * 0.5);
+        }
 
         float seabedF(vec2 xz) {
           vec2 uv = (xz - uHeightBounds.xy) / uHeightBounds.zw;
@@ -246,6 +294,11 @@ export class Water {
           float streak = smoothstep(0.62, 0.8, mw_vnoise(vWorld.xz * vec2(0.9, 0.35) + uTime * 0.3));
           float crest = smoothstep(0.55, 0.8, vCrest) * streak * (1.0 - smoothstep(30.0, 90.0, dist));
           foam = max(foam, crest * 0.6);
+          // A boat's wake.
+          vec2 wd = vWorld.xz - uWakeField.xy;
+          if (uWakeField.w > 1.5 && dot(wd, wd) < uWakeField.z) {
+            foam = max(foam, wakeFoam(vWorld.xz));
+          }
           vec3 foamCol = uFoam * (uAmbient * 0.9 + uKeyColor * uKeyIntensity * 0.4 * wrap + 0.15);
           col = mix(col, foamCol, clamp(foam, 0.0, 1.0));
 

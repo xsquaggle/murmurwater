@@ -16,6 +16,16 @@ export const MIGRATIONS: Record<number, Migration> = {
     s.quests = { active: q.active ?? {}, done: q.done ?? [], board: { quests: [], timer: 0, serial: 0 } };
     return s;
   },
+  // v2 → v3: boats can be sailed. The boat gets a place in the water (null = put it at the landing on load),
+  // and the chart remembers the places found so far.
+  2: (s) => {
+    s.boats = { owned: [], current: null, upgrades: {}, ...(s.boats ?? {}), at: null };
+    const w = (s.world ??= {});
+    const flags: string[] = s.flags ?? [];
+    w.charted = ['hearthbay', ...(flags.includes('lamp-lit') || flags.includes('hb-lighthouse-lit') ? ['gull-point'] : [])];
+    w.onBoat = false;
+    return s;
+  },
 };
 
 // JSON can't hold Infinity (the free breadcrumb stack); encode it.

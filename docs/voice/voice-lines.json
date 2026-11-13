@@ -1,5 +1,5 @@
 {
-  "count": 40,
+  "count": 52,
   "lines": [
     {
       "key": "mara/hb-01-salt.intro.0",
@@ -270,6 +270,114 @@
       "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
       "text": "Good. Then you're the keeper now. Nobody chooses it. Take the skiff, it was hers.",
       "hash": "c8c124f2"
+    },
+    {
+      "key": "pell/hb-07-kettle.intro.0",
+      "file": "public/audio/voice/pell/hb-07-kettle.intro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "She's light on the helm. Push her on and she goes, let her be and she glides. Never cast till she's settled.",
+      "hash": "48c29cf5"
+    },
+    {
+      "key": "pell/hb-07-kettle.intro.1",
+      "file": "public/audio/voice/pell/hb-07-kettle.intro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "South-west of here there's an isle with a kettle on it. The keeper took her tea there, tides she wanted quiet.",
+      "hash": "8a8c0f80"
+    },
+    {
+      "key": "pell/hb-07-kettle.intro.2",
+      "file": "public/audio/voice/pell/hb-07-kettle.intro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Go and see if it's still warm. It will be. That's the part I don't care for.",
+      "hash": "e369c95a"
+    },
+    {
+      "key": "pell/hb-07-kettle.reminder",
+      "file": "public/audio/voice/pell/hb-07-kettle.reminder.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Kettle Isle. West of the cove, out past its mouth. You'll know the beach.",
+      "hash": "82cfd6a9"
+    },
+    {
+      "key": "pell/hb-07-kettle.outro.0",
+      "file": "public/audio/voice/pell/hb-07-kettle.outro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Warm, was it. Twelve winters on a bare rock, and warm.",
+      "hash": "583e463e"
+    },
+    {
+      "key": "pell/hb-07-kettle.outro.1",
+      "file": "public/audio/voice/pell/hb-07-kettle.outro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Keep it. Her things go to whoever keeps the light.",
+      "hash": "d6146be9"
+    },
+    {
+      "key": "mara/hb-08-teeth.intro.0",
+      "file": "public/audio/voice/mara/hb-08-teeth.intro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "So he's given you the skiff. Good. It's sat at that dock like a held breath.",
+      "hash": "299b3040"
+    },
+    {
+      "key": "mara/hb-08-teeth.intro.1",
+      "file": "public/audio/voice/mara/hb-08-teeth.intro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "South-west there's three black rocks, the Teeth. Deep water. Nothing off them has reached my stall in a long while.",
+      "hash": "8a5ce1d6"
+    },
+    {
+      "key": "mara/hb-08-teeth.intro.2",
+      "file": "public/audio/voice/mara/hb-08-teeth.intro.2.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Bring me a Twofold Flounder. And don't let it look at you with both faces at once.",
+      "hash": "eec2bf11"
+    },
+    {
+      "key": "mara/hb-08-teeth.reminder",
+      "file": "public/audio/voice/mara/hb-08-teeth.reminder.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "The Teeth, south-west past the sandbar. Flounder sit deep, so give it line.",
+      "hash": "e082e4f4"
+    },
+    {
+      "key": "mara/hb-08-teeth.outro.0",
+      "file": "public/audio/voice/mara/hb-08-teeth.outro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Oh, that's the one. Look at it. Looking at us.",
+      "hash": "eec0bcc3"
+    },
+    {
+      "key": "mara/hb-08-teeth.outro.1",
+      "file": "public/audio/voice/mara/hb-08-teeth.outro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "My sister brought these in by the basket. I don't know why I said that. I haven't got a sister.",
+      "hash": "51a7f1dc"
     },
     {
       "key": "mara/bark.0",

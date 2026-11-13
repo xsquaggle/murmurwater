@@ -105,7 +105,9 @@ export class ModelAvatar implements PlayerAvatar {
   private rodSocket: Object3D | null = null;
   private catchSocket: Object3D | null = null;
   /** Clip names for each role, preferring the authored rod clips when the model has them. */
-  private clip: { idle: string; walk: string; run: string; wait: string; leanL?: string; leanR?: string; show?: string; charge?: string; cast?: string };
+  private clip: { idle: string; walk: string; run: string; wait: string; leanL?: string; leanR?: string; show?: string; charge?: string; cast?: string; sit?: string };
+  /** 0..1: seated at a boat's tiller (the rod is stowed and the right hand is on the bar). */
+  private sitW = 0;
   /**
    * The mixer's output for the bones edited procedurally. three's mixer only writes a bone when its
    * animated value changes, so without restoring this each frame the IK and spine edits would pile up
@@ -130,7 +132,7 @@ export class ModelAvatar implements PlayerAvatar {
     this.clip = {
       idle, walk: has('rod_walk') ?? 'walk', run: has('rod_run') ?? 'run', wait: has('rod_wait') ?? idle,
       leanL: has('rod_lean_left'), leanR: has('rod_lean_right'), show: has('show_catch'),
-      charge: has('rod_charge'), cast: has('rod_cast'),
+      charge: has('rod_charge'), cast: has('rod_cast'), sit: has('boat_sit'),
     };
     // One-shots hold their last frame; the charge clip is scrubbed by cast power, never played.
     for (const n of [this.clip.show, this.clip.cast, this.clip.charge]) if (n) { const a = this.actions[n]; a.setLoop(LoopOnce, 1); a.clampWhenFinished = true; }
@@ -192,7 +194,10 @@ export class ModelAvatar implements PlayerAvatar {
     const want: Record<string, number> = {};
     for (const n of Object.keys(this.w)) want[n] = 0;
     const showing = !!(this.held && C.show && this.catchSocket);
+    const sitting = pose === 'sit' && !!C.sit;
+    this.sitW += ((sitting ? 1 : 0) - this.sitW) * Math.min(1, dt * 8);
     if (showing) want[C.show!] = 1;
+    else if (sitting) want[C.sit!] = 1;
     else if (fishing) {
       const lat = pose === 'fight' ? Math.max(-1, Math.min(1, opts.lateral ?? 0)) : 0;
       const lean = Math.abs(lat) * 0.75;
@@ -263,7 +268,7 @@ export class ModelAvatar implements PlayerAvatar {
     }
 
     // ---- rod placement in body space: the hand's socket when walking about, the sprung target when fishing.
-    this.rod.pivot.visible = !this.held;
+    this.rod.pivot.visible = !this.held && this.sitW < 0.5;
     _eu.set(this.lean, this.yaw, this.roll);
     const procQ = _q.setFromEuler(_eu).clone();
     const fw = this.rodSocket ? this.fishW : 1;
@@ -332,7 +337,7 @@ export class ModelAvatar implements PlayerAvatar {
   }
 
   tipWorld(out = new Vector3()): Vector3 { return this.rod.tip.getWorldPosition(out); }
-  get rodOut(): boolean { return !this.held; }
+  get rodOut(): boolean { return !this.held && this.sitW < 0.5; }
 
   holdFish(fish: Object3D | null) {
     if (this.held && this.held !== fish) {

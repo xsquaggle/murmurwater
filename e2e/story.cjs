@@ -1,5 +1,6 @@
-// Story bot: plays the whole Hearthbay chain through the real game (talking, fishing, selling, the shop UI,
-// the ferry, lighting the lamp), saves, reloads, and checks the story survived. Exits 1 on any failure.
+// Story bot: plays the Hearthbay chain up to the skiff through the real game (talking, fishing, selling, the
+// shop UI, the ferry, lighting the lamp), saves, reloads, and checks the story survived. Exits 1 on any
+// failure. The sailing quests that follow are the sailing bot's (e2e/sail.cjs).
 // Every quest fish is really caught off the end of the dock, so a fish nobody can reach fails the run.
 // The one shortcut is the clock: the bot sets the hour instead of waiting for night.
 const { chromium } = require('playwright');
@@ -9,6 +10,8 @@ const { chromium } = require('playwright');
   require('fs').mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  // A reload waits for the old page to let go of its renderer: slow on a software GPU, so give it time.
+  page.setDefaultNavigationTimeout(180000);
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/404|Failed to load resource/.test(m.text())) errors.push(m.text()); });
@@ -197,8 +200,13 @@ const { chromium } = require('playwright');
   await expectStatus('hb-06-relight', 'done');
   const end = await ev(() => { const s = window.__MW__.state; return { boats: s.boats.owned, lit: s.flags.includes('hb-lighthouse-lit'), pearls: s.moonpearls, done: s.quests.done.length }; });
   if (!end.lit || !end.boats.includes('skiff') || end.done !== 6) await fail('end state wrong ' + JSON.stringify(end));
-  await ev(() => { window.bot.choose('Hearthbay'); window.__MW__.game.simulate(4); });
-  if ((await ev(() => window.__MW__.game.town.island)) !== 'hearthbay') await fail('ferry home failed');
+  // The skiff is the player's own now: Pell sends them out in it and stops offering the ferry.
+  choices = await ev(() => window.bot.readAll());
+  if (!choices.some((c) => c.includes('do it')) || choices.some((c) => /Hearthbay|Gull Point/.test(c))) await fail('after the skiff Pell should offer the kettle errand and no ferry: ' + choices);
+  await ev(() => window.bot.choose('Not just now'));
+  const skiff = await ev(() => { const g = window.__MW__.game, b = g.sailing.boat; return { owned: g.sailing.owned, clear: window.__MW__.clearance(g.sailing.env, g.sailing.def, b.x, b.z, b.heading), near: Math.hypot(b.x - g.pos.x, b.z - g.pos.z) }; });
+  if (!skiff.owned || skiff.clear < 0 || skiff.near > 40) await fail('the skiff should be afloat by the Gull Point landing ' + JSON.stringify(skiff));
+  await shot('09b-skiff-at-gull-point');
 
   // 9. Journal and settings screens render.
   await ev(() => window.__MW__.game.town.openScreen('journal'));
@@ -213,6 +221,7 @@ const { chromium } = require('playwright');
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 1, null, { timeout: 180000 });
   const reloaded = await ev(() => window.__MW__.state.quests.done.length);
   if (reloaded !== 6) await fail('reload lost the story: ' + reloaded);
+  if (!(await ev(() => window.__MW__.game.sailing.owned))) await fail('reload lost the skiff');
   if (errors.length) await fail('page errors');
   console.log(JSON.stringify(end));
   console.log('STORY OK');

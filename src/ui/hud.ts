@@ -9,6 +9,9 @@ import type { CatchItem, GameState } from '../core/state';
 
 const RARITY_NAMES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Uncanny'];
 
+/** Compass strip: pixels per degree, and the width of its window. */
+const CP_PX = 3.2, CP_W = 420;
+
 const h = (tag: string, cls: string, parent?: HTMLElement, html = '') => {
   const e = document.createElement(tag);
   e.className = cls;
@@ -34,6 +37,8 @@ export class Hud {
   private markers: HTMLElement;
   private markerEls: HTMLElement[] = [];
   private fadeEl: HTMLElement;
+  private compass: HTMLElement; private cpStrip: HTMLElement; private cpMarks: HTMLElement; private cpKnots: HTMLElement;
+  private cpMarkEls: HTMLElement[] = [];
 
   constructor(parent: HTMLElement) {
     this.root = h('div', 'hud', parent);
@@ -60,6 +65,19 @@ export class Hud {
     this.toasts = h('div', 'toasts', this.root);
     this.hint = h('div', 'hint', this.root);
     this.prompt = h('div', 'prompt', this.root);
+    // The compass, shown at the helm: a strip of bearings that slides under a fixed needle.
+    this.compass = h('div', 'compass', this.root);
+    const win = h('div', 'cp-fade', h('div', 'cp-win', this.compass));
+    this.cpStrip = h('div', 'cp-strip', win);
+    const names: Record<number, string> = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' };
+    for (let d = -90; d <= 450; d += 15) {
+      const n = names[((d % 360) + 360) % 360];
+      const t = h('div', 'cp-tick' + (n ? (n.length === 1 ? ' card' : ' inter') : ''), this.cpStrip, n ?? '');
+      t.style.left = `${(d + 90) * CP_PX}px`;
+    }
+    this.cpMarks = h('div', 'cp-marks', win);
+    h('div', 'cp-needle', this.compass);
+    this.cpKnots = h('div', 'cp-kn', this.compass);
     this.markers = h('div', 'markers', parent);
     this.fadeEl = h('div', 'fade', parent, '<div class="fade-text"></div>');
   }
@@ -74,10 +92,12 @@ export class Hud {
       e.style.left = `${it.x}px`; e.style.top = `${it.y}px`; e.style.opacity = String(it.alpha);
       const mk = e.firstElementChild as HTMLElement, nm = e.lastElementChild as HTMLElement;
       mk.style.display = it.kind ? '' : 'none';
-      mk.className = 'mk ' + (it.kind ?? '');
-      mk.textContent = it.glyph ?? (it.kind === 'turnIn' ? '?' : it.kind === 'offer' ? '!' : '•');
+      // Written only when it changes: setting the same text again still makes the browser a new text node.
+      const cls = 'mk ' + (it.kind ?? ''), glyph = it.glyph ?? (it.kind === 'turnIn' ? '?' : it.kind === 'offer' ? '!' : '•'), label = it.label ?? '';
+      if (mk.className !== cls) mk.className = cls;
+      if (mk.textContent !== glyph) mk.textContent = glyph;
       nm.style.display = it.label ? '' : 'none';
-      nm.textContent = it.label ?? '';
+      if (nm.textContent !== label) nm.textContent = label;
     });
   }
 
@@ -87,12 +107,49 @@ export class Hud {
     if (on) (this.fadeEl.firstElementChild as HTMLElement).textContent = text;
   }
 
+  /**
+   * The helm compass. `yaw` is the view's heading in world terms (forward = (sin, cos), north = −z);
+   * marks are compass bearings in radians to things worth steering for. Null hides it.
+   */
+  setCompass(c: { yaw: number; knots: number; marks: { bearing: number; kind: 'goal' | 'mooring' }[] } | null) {
+    this.compass.classList.toggle('on', !!c);
+    if (!c) return;
+    const deg = (((Math.PI - c.yaw) * 180) / Math.PI % 360 + 360) % 360;
+    this.cpStrip.style.transform = `translateX(${(CP_W / 2 - (deg + 90) * CP_PX).toFixed(1)}px)`;
+    const kn = `${c.knots.toFixed(1)} kn`;
+    if (this.cpKnots.textContent !== kn) this.cpKnots.textContent = kn;
+    while (this.cpMarkEls.length < c.marks.length) this.cpMarkEls.push(h('div', 'cp-mark', this.cpMarks));
+    this.cpMarkEls.forEach((e, i) => {
+      const m = c.marks[i];
+      if (!m) { e.style.display = 'none'; return; }
+      let off = ((m.bearing * 180) / Math.PI - deg) % 360;
+      if (off > 180) off -= 360; else if (off < -180) off += 360;
+      // Past the ends of the strip a mark waits at the edge, so it still says which way to turn.
+      const lim = CP_W / 2 / CP_PX - 4, pinned = Math.abs(off) > lim;
+      e.style.display = '';
+      const cls = `cp-mark cp-${m.kind}${pinned ? ' pinned' : ''}`, glyph = m.kind === 'goal' ? '✦' : '';
+      if (e.className !== cls) e.className = cls;
+      if (e.textContent !== glyph) e.textContent = glyph;
+      e.style.left = `${CP_W / 2 + Math.max(-lim, Math.min(lim, off)) * CP_PX}px`;
+    });
+  }
+
   setGoal(text: string) { if (this.goalText.textContent !== text) { this.goalText.textContent = text; this.goal.classList.remove('flash'); void this.goal.offsetWidth; this.goal.classList.add('flash'); } }
-  setHint(text: string) { this.hint.innerHTML = text; this.hint.classList.toggle('on', !!text); }
-  setPrompt(text: string) { this.prompt.innerHTML = text; this.prompt.classList.toggle('on', !!text); }
+  // Both are called every frame with what is usually the same words: the page is only touched on a change.
+  setHint(text: string) { if (text === this.hintWas) return; this.hintWas = text; this.hint.innerHTML = text; this.hint.classList.toggle('on', !!text); }
+  /** `low` drops the prompt below the middle of the screen, clear of the boat when the player is in it. */
+  setPrompt(text: string, low = false) {
+    if (text === this.promptWas && low === this.promptLow) return;
+    this.promptWas = text; this.promptLow = low;
+    this.prompt.innerHTML = text; this.prompt.classList.toggle('on', !!text); this.prompt.classList.toggle('low', low);
+  }
+  private hintWas = ''; private promptWas = ''; private promptLow = false;
 
   toast(html: string, kind = '') {
+    // Said once: the same words are not stacked while they are still up.
+    if ([...this.toasts.children].some((c) => !c.classList.contains('out') && (c as HTMLElement).dataset.say === html)) return;
     const t = h('div', 'toast ' + kind, this.toasts, html);
+    t.dataset.say = html;
     // At most four at once: a burst pushes the oldest out early.
     const live = [...this.toasts.children].filter((c) => !c.classList.contains('out'));
     for (const old of live.slice(0, Math.max(0, live.length - 4))) { old.classList.add('out'); setTimeout(() => old.remove(), 600); }

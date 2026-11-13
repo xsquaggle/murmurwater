@@ -27,6 +27,10 @@ jobs:
         run: node e2e/story.cjs shots/story
         env:
           MW_QUALITY: low
+      - name: Sail bot (the skiff with the real helm: both sailing quests, the chart, the shore, the fog, a save at sea)
+        run: node e2e/sail.cjs shots/sail
+        env:
+          MW_QUALITY: low
       - name: Walk bot (solid props and people, everyone reachable on foot)
         run: node e2e/walk.cjs shots/walk
         env:

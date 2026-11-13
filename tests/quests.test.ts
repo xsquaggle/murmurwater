@@ -103,6 +103,8 @@ describe('story quests', () => {
       'hb-04-drawing': () => onQuestEvent(s, catchEv('coral-snapper')),
       'hb-05-dark-lamp': () => onQuestEvent(s, catchEv('lampjaw')),
       'hb-06-relight': () => onQuestEvent(s, { type: 'visit', place: 'lighthouse-lamp' }),
+      'hb-07-kettle': () => onQuestEvent(s, { type: 'visit', place: 'keepers-kettle' }),
+      'hb-08-teeth': () => onQuestEvent(s, catchEv('twofold-flounder')),
     };
     for (let guard = 0; guard < 20 && s.quests.done.length < QUESTS.length; guard++) {
       const q = QUESTS.find((x) => questStatus(s, x.id) === 'available');
@@ -164,12 +166,24 @@ describe('quest fish can be reached', () => {
   it('every gated fish waits on a flag some quest actually grants', () => {
     for (const f of FISH) if (f.requires) expect(flagsGranted.has(f.requires), `${f.id} requires "${f.requires}"`).toBe(true);
   });
-  it('every fish a story quest asks for bites off the Hearthbay dock', () => {
+  it('every fish a story quest asks for before the skiff bites off the Hearthbay dock', () => {
+    // Quests that come after the Relight (which hands over the skiff) may send you out to sea.
+    const afterSkiff = (id: string): boolean => id === 'hb-06-relight' || QUESTS.find((x) => x.id === id)!.requires.some(afterSkiff);
+    let checked = 0, atSea = 0;
     for (const q of QUESTS) for (const o of q.objectives) {
       if (o.type !== 'catch' || !o.fish) continue;
       const f = FISH.find((x) => x.id === o.fish)!;
+      if (q.requires.some(afterSkiff)) { atSea++; continue; }
+      checked++;
       expect(f.zones, `${q.id} wants ${f.id}`).toContain('hb-dock');
     }
+    expect(checked).toBeGreaterThan(1);
+    expect(atSea).toBeGreaterThan(0);
+  });
+  it('the relics a quest gives exist and say what they do', () => {
+    const s = newGame(2);
+    s.relics.push('keepers-kettle');
+    expect(relicBonus(s, 'biteSpeed')).toBeCloseTo(0.06);
   });
   it('the Lampjaw is a night fish', () => {
     const f = FISH.find((x) => x.id === 'lampjaw')!;

@@ -7,6 +7,8 @@ const { chromium } = require('playwright');
   const port = process.env.MW_PORT || 4173;
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
   const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
+  // A reload waits for the old page to let go of its renderer: slow on a software GPU, so give it time.
+  page.setDefaultNavigationTimeout(180000);
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/404|Failed to load resource/.test(m.text())) errors.push(m.text()); });

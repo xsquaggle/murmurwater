@@ -7,7 +7,7 @@ import { PALETTE } from './palette';
 
 const mat = (hex: string, rough = 0.8) => new MeshStandardMaterial({ color: new Color(hex), roughness: rough, flatShading: true });
 
-export type Pose = 'idle' | 'walk' | 'charge' | 'cast' | 'wait' | 'fight' | 'cheer';
+export type Pose = 'idle' | 'walk' | 'charge' | 'cast' | 'wait' | 'fight' | 'cheer' | 'sit';
 
 export class Avatar implements PlayerAvatar {
   readonly root = new Group();
@@ -70,7 +70,7 @@ export class Avatar implements PlayerAvatar {
     this.t += dt;
     let pitch = 0.55, yaw = 0, bend = 0.05, armL = 0.3;
     switch (pose) {
-      case 'walk': case 'idle': pitch = 0.35; bend = 0.04; break;
+      case 'walk': case 'idle': case 'sit': pitch = 0.35; bend = 0.04; break;
       case 'charge': pitch = -0.3 - 1.45 * (opts.power ?? 0); bend = -0.12 * (opts.power ?? 0); armL = 0.6; break;
       case 'cast': pitch = 1.25; bend = 0.25; armL = 0.5; break;
       case 'wait': pitch = 0.95 + Math.sin(this.t * 1.3) * 0.03; bend = 0.08; break;
@@ -147,7 +147,7 @@ export interface PlayerAvatar {
   readonly root: Group;
   update(dt: number, pose: Pose, speed: number, opts?: { power?: number; tension?: number; lateral?: number; reeling?: boolean }): void;
   tipWorld(out?: Vector3): Vector3;
-  /** False while the rod is put away (a catch is being shown). */
+  /** False while the rod is put away (a catch is being shown, or the player is seated at the tiller). */
   readonly rodOut: boolean;
   /** Show a caught fish in the player's hands (null to put it away). */
   holdFish(fish: Object3D | null): void;

@@ -7,7 +7,7 @@
  * by design: they follow a value that changes every frame.
  */
 export type Bus = 'music' | 'sfx' | 'voice' | 'ambience';
-export type Track = 'hearthbay-day' | 'hearthbay-night' | 'gull-point';
+export type Track = 'hearthbay-day' | 'hearthbay-night' | 'gull-point' | 'open-water';
 export type Ground = 'wood' | 'cobble' | 'grass' | 'sand';
 
 /** Recorded one-shots: [variations, volume]. Files are `audio/sfx/<name>_<n>.ogg`, n from 1. */
@@ -17,11 +17,18 @@ const SFX = {
   'quest-accept': [3, 1.6], 'step-wood': [4, 0.42], 'step-cobble': [4, 0.4], 'step-grass': [4, 0.4], 'step-sand': [4, 0.4],
   'ui-open': [4, 0.7], 'ui-close': [4, 0.7], 'ui-click': [4, 0.4], 'page-turn': [3, 0.6], 'lamp-ignite': [3, 0.95], 'oars': [4, 0.75],
   'gulls': [4, 0.42], 'dock-creak': [4, 0.4], 'cat-meow': [3, 0.7],
+  // Sailing
+  'sail-flap': [3, 0.7], 'boat-bump': [3, 0.9], 'rope-creak': [3, 0.5], 'boat-board': [2, 0.8], 'chart-open': [2, 0.7],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
-const LOOPS = ['reel-click', 'waves-lap', 'cat-purr'] as const;
+const LOOPS = ['reel-click', 'waves-lap', 'cat-purr', 'hull-wash', 'murmur'] as const;
 type Loop = (typeof LOOPS)[number];
+/**
+ * Sounds that have been asked for but are not recorded yet (see docs/HANDOFF.md). They are not fetched and
+ * not counted as missing; their synth stand-ins play instead. Delete a name here when its files land.
+ */
+const PENDING: ReadonlySet<string> = new Set<string>();
 
 interface SfxOpts { gain?: number; rate?: number; at?: number; vary?: number; bus?: Bus; dur?: number }
 export interface AudioState {
@@ -36,6 +43,10 @@ export interface AudioState {
   onDock?: boolean;
   /** 0..1 closeness to the cat: it purrs when you stand by it. */
   purr?: number;
+  /** Aboard a boat: 0..1 how fast she is going (the wash along the hull), or undefined ashore. */
+  hull?: number;
+  /** 0..1: the murmur at the edge of the region. */
+  murmur?: number;
 }
 
 export class AudioEngine {
@@ -48,6 +59,8 @@ export class AudioEngine {
   private humOsc!: OscillatorNode; private humGain!: GainNode;
   private seaGain!: GainNode; private seaFilter!: BiquadFilterNode;
   private chargeGain!: GainNode; private chargeFilter!: BiquadFilterNode; private chargeOsc!: OscillatorNode; private chargeTone!: GainNode;
+  private washGain!: GainNode; private washFilter!: BiquadFilterNode;
+  private murmurGain!: GainNode; private murmurLfo = 0;
   volumes = { master: 0.8, music: 0.6, sfx: 0.8, voice: 0.9, ambience: 0.6 };
   private files = new Map<string, AudioBuffer>();
 
@@ -66,7 +79,7 @@ export class AudioEngine {
   private playing: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   private voices = 0;
 
-  private gullTimer = 6; private creakTimer = 4;
+  private gullTimer = 6; private creakTimer = 4; private ropeTimer = 5;
 
   /** Must be called from a user gesture (browser autoplay rules). */
   start() {
@@ -103,6 +116,20 @@ export class AudioEngine {
     this.chargeOsc = ctx.createOscillator(); this.chargeOsc.type = 'triangle'; this.chargeOsc.frequency.value = 150;
     this.chargeTone = ctx.createGain(); this.chargeTone.gain.value = 0;
     this.chargeOsc.connect(this.chargeTone).connect(this.buses.sfx); this.chargeOsc.start();
+    // Water along the hull while sailing: a brighter wash that grows with speed.
+    const wash = ctx.createBufferSource(); wash.buffer = this.noiseBuf; wash.loop = true;
+    this.washFilter = ctx.createBiquadFilter(); this.washFilter.type = 'bandpass'; this.washFilter.frequency.value = 700; this.washFilter.Q.value = 0.5;
+    this.washGain = ctx.createGain(); this.washGain.gain.value = 0;
+    wash.connect(this.washFilter).connect(this.washGain).connect(this.buses.ambience); wash.start(0, 0.7);
+    // The murmur at the edge of the map: a low fifth that beats slowly, under a breath of noise.
+    this.murmurGain = ctx.createGain(); this.murmurGain.gain.value = 0; this.murmurGain.connect(this.buses.ambience);
+    for (const [f, g] of [[58.3, 0.5], [87.6, 0.32], [116.9, 0.12]] as const) {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const og = ctx.createGain(); og.gain.value = g; o.connect(og).connect(this.murmurGain); o.start();
+    }
+    const breath = ctx.createBufferSource(); breath.buffer = this.noiseBuf; breath.loop = true;
+    const bf = ctx.createBiquadFilter(); bf.type = 'bandpass'; bf.frequency.value = 320; bf.Q.value = 1.4;
+    const bg = ctx.createGain(); bg.gain.value = 0.35; breath.connect(bf).connect(bg).connect(this.murmurGain); breath.start(0, 1.3);
     void this.preload();
   }
 
@@ -124,8 +151,8 @@ export class AudioEngine {
     if (!this.ctx) this.start();
     if (this.bankLoad) return this.bankLoad;
     const names: string[] = [];
-    for (const [name, [n]] of Object.entries(SFX)) for (let i = 1; i <= n; i++) names.push(`${name}_${i}`);
-    for (const l of LOOPS) names.push(`${l}_1`);
+    for (const [name, [n]] of Object.entries(SFX)) if (!PENDING.has(name)) for (let i = 1; i <= n; i++) names.push(`${name}_${i}`);
+    for (const l of LOOPS) if (!PENDING.has(l)) names.push(`${l}_1`);
     const missing: string[] = [];
     const queue = [...names];
     const worker = async () => {
@@ -268,6 +295,32 @@ export class AudioEngine {
   step(ground: Ground, running: boolean) { this.sfx(`step-${ground}`, { gain: running ? 1 : 0.75, vary: 0.09 }); }
   meow() { this.sfx('cat-meow', { bus: 'ambience', gain: 1 }); }
 
+  // ---- sailing ----
+  /** Stepping into or out of a boat: a foot on the boards and the hull knocking. */
+  boatBoard() {
+    if (this.sfx('boat-board')) return;
+    this.tone(92, 0.16, 0.34, 'sine', 0, 58); this.noise(0.09, 420, 1.2, 0.2, 'lowpass');
+    this.tone(74, 0.2, 0.2, 'sine', 0.13, 50); this.noise(0.3, 900, 0.7, 0.07, 'lowpass', 300, 0.1);
+  }
+  /** The hull striking a shore, a rock or the dock; `hard` 0..1. */
+  boatBump(hard = 0.5) {
+    if (this.sfx('boat-bump', { gain: 0.5 + 0.6 * hard, rate: 1.1 - 0.2 * hard })) return;
+    this.tone(70 + 30 * (1 - hard), 0.22 + 0.15 * hard, 0.3 + 0.35 * hard, 'sine', 0, 42);
+    this.noise(0.12, 300, 1, 0.14 + 0.2 * hard, 'lowpass'); this.noise(0.5, 1200, 0.7, 0.05 + 0.12 * hard, 'lowpass', 300, 0.04);
+  }
+  /** The sail swinging across. */
+  sailFlap() {
+    if (this.sfx('sail-flap', { vary: 0.1 })) return;
+    this.noise(0.1, 500, 0.6, 0.22, 'lowpass', 180); this.noise(0.16, 380, 0.6, 0.16, 'lowpass', 140, 0.11);
+  }
+  chartOpen() { if (!this.sfx('chart-open')) this.pageTurn(); }
+  /** A new place on the chart: a short rising figure (the recorded sting once it exists). */
+  discover() {
+    const synth = () => { [587.33, 739.99, 880, 1174.66].forEach((f, i) => this.tone(f, 0.5, 0.12, 'triangle', i * 0.11)); this.tone(293.66, 1.1, 0.07, 'sine', 0.05); };
+    if (PENDING.has('sting-discover')) synth();
+    else void this.play('audio/music/sting-discover.ogg', 'music', 0.9).then((src) => { if (!src) synth(); });
+  }
+
   // ---- music ----
   /** Crossfades to a looping track. Only one track is kept decoded at a time. */
   setMusic(track: Track | null) {
@@ -335,6 +388,24 @@ export class AudioEngine {
       this.creakTimer = 8 + Math.random() * 16;
       if (s.onDock) this.sfx('dock-creak', { bus: 'ambience', gain: 0.5 + Math.random() * 0.5, vary: 0.1 });
     }
+    // Sailing: the wash along the hull, the rigging working, and the murmur at the edge of the map.
+    const hull = s.hull ?? -1;
+    const washLoop = this.loops.get('hull-wash');
+    if (washLoop) { washLoop.gain.gain.setTargetAtTime(hull > 0 ? 0.9 * hull : 0, now, 0.3); washLoop.src.playbackRate.setTargetAtTime(0.85 + 0.3 * Math.max(0, hull), now, 0.3); }
+    this.washGain.gain.setTargetAtTime(hull > 0 ? (washLoop ? 0.05 : 0.2) * hull * hull + 0.012 : 0, now, 0.25);
+    this.washFilter.frequency.setTargetAtTime(520 + 900 * Math.max(0, hull), now, 0.25);
+    if (hull >= 0) {
+      this.ropeTimer -= dt * (0.4 + hull);
+      if (this.ropeTimer <= 0) {
+        this.ropeTimer = 4 + Math.random() * 7;
+        if (!this.sfx('rope-creak', { bus: 'ambience', gain: 0.5 + 0.5 * Math.random(), vary: 0.12 })) this.sfx('dock-creak', { bus: 'ambience', gain: 0.3 + 0.3 * Math.random(), rate: 1.35, vary: 0.12 });
+      }
+    }
+    const mur = s.murmur ?? 0;
+    this.murmurLfo += dt;
+    const murLoop = this.loops.get('murmur');
+    if (murLoop) murLoop.gain.gain.setTargetAtTime(mur, now, 0.6);
+    this.murmurGain.gain.setTargetAtTime((murLoop ? 0.25 : 1) * 0.3 * mur * (0.75 + 0.25 * Math.sin(this.murmurLfo * 0.9)), now, 0.4);
     const purr = this.loops.get('cat-purr');
     if (purr) purr.gain.gain.setTargetAtTime(0.9 * (s.purr ?? 0), now, 0.4);
     if (s.music !== undefined) this.setMusic(s.music);

@@ -12,6 +12,7 @@ import { DAY_LENGTH_S } from '../render/daycycle';
 import { Hud } from '../ui/hud';
 import { PerfOverlay } from '../ui/perf';
 import { Town } from './town';
+import { Sailing } from './sailing';
 import { defaultSettings, keyLabel, type Settings } from './settings';
 import { relicBonus } from '../core/quests';
 import { AudioEngine, type Ground } from '../audio/audio';
@@ -22,6 +23,7 @@ import { REGIONS_BY_ID, bait, rod, zoneAt } from '../core/content';
 import { addCatch, breakRhythm, rarityIndex, RHYTHM } from '../core/economy';
 import { type GameState } from '../core/state';
 import { serialize, type SaveStore } from '../core/save';
+import { walkableHeight } from '../core/landing';
 import { waveHeight, CALM_WAVES } from '../core/waves';
 
 const STEP = 1 / 60;
@@ -44,7 +46,9 @@ export class Game {
   session: FishingSession;
   readonly pos = new Vector3();
   yaw = 0;
-  private camYaw = 0; private camPitch = 0.28; private camDist = 5.2;
+  /** Where the view points (the mouse turns it; a boat under way carries it round). */
+  camYaw = 0;
+  private camPitch = 0.28; private camDist = 5.2;
   private camTarget = new Vector3();
   /** Where the camera looks: the player's head, or out over the water toward the lure or fish while fishing. */
   private camAim = new Vector3();
@@ -65,6 +69,8 @@ export class Game {
   /** Bots: step and update everything but skip drawing (for frames between screenshots). */
   skipRender = false;
   private talkSwing = 0;
+  /** 0..1: how far the camera has eased into the helm view (aboard and not fishing). */
+  private helmView = 0;
   private camShoulder = 0.9;
   private stride = 0.5;
   private talkSwingWant: number | null = null;
@@ -77,9 +83,12 @@ export class Game {
   /** Screenshot/debug hooks: force an avatar pose or a fixed camera. */
   debugPose: { pose: Pose; speed?: number; power?: number; tension?: number; lateral?: number; reeling?: boolean } | null = null;
   debugCam: { pos: Vector3; look: Vector3 } | null = null;
+  /** The camera has come in beside tall ground (see the camera code). */
+  private camTucked = false;
   /** When set (tests/bot), replaces player input to the fishing session. */
   botInput: FishingInput | null = null;
   readonly town: Town;
+  readonly sailing: Sailing;
   /** Camera shake multiplier from settings (0 = off). */
   shakeScale = 1;
 
@@ -103,6 +112,7 @@ export class Game {
     this.camYaw = this.yaw;
     this.rngSeed = state.seed;
     this.session = this.newSession();
+    this.sailing = new Sailing(this);
     this.faceYaw = this.yaw;
     this.town = new Town(this, uiRoot, settings);
     this.town.applySettings(['volumes', 'sensitivity', 'invertY', 'bindings', 'uiScale', 'subtitles']);
@@ -121,8 +131,10 @@ export class Game {
   private newSession(): FishingSession {
     const s = this.state;
     const region = REGIONS_BY_ID.get(s.world.region)!;
+    // Relics that hurry the bite work through the bait.
+    const b = bait(s.gear.bait), hurry = relicBonus(s, 'biteSpeed');
     return new FishingSession({
-      rod: rod(s.gear.rod), bait: bait(s.gear.bait), hour: this.world.hour, luck: relicBonus(s, 'luck'), biteWindowMult: 1, strangeChance: 0.03,
+      rod: rod(s.gear.rod), bait: hurry ? { ...b, biteSpeed: b.biteSpeed * (1 + hurry) } : b, hour: this.world.hour, luck: relicBonus(s, 'luck'), biteWindowMult: 1, strangeChance: 0.03,
       flags: new Set(s.flags), region: s.world.region,
       spot: (dist: number): SpotInfo => {
         // Walk back along the aim line until the lure lands in water at least 0.6 m deep.
@@ -149,6 +161,9 @@ export class Game {
     const cx = this.pos.x - Math.sin(this.yaw) * this.camDist + Math.cos(this.yaw) * 0.9, cz = this.pos.z - Math.cos(this.yaw) * this.camDist - Math.sin(this.yaw) * 0.9;
     this.camera.position.set(cx, Math.max(this.pos.y + 2.2, this.world.hf.height(cx, cz) + 1.2, 1), cz);
   }
+
+  /** A knock to the camera (the hull striking something). */
+  jolt(amount: number) { this.shake = Math.max(this.shake, amount); }
 
   /** Swing the view up to the lighthouse lamp (after lighting it). */
   lookAtLamp() {
@@ -217,18 +232,29 @@ export class Game {
     }
     if (inp.wheel) { this.camDist = Math.max(2.8, Math.min(12, this.camDist + inp.wheel * 0.6)); inp.wheel = 0; }
 
-    // Movement (only when not fishing).
+    // Movement (only when not fishing): on foot, or at the helm.
     const ph = this.session.phase;
-    const canMove = (ph === 'idle' || ph === 'landed' || ph === 'lost') && !ui;
+    const sail = this.sailing;
+    const rodIdle = ph === 'idle' || ph === 'landed' || ph === 'lost';
+    const canMove = rodIdle && !ui && !sail.busy;
+    sail.step(dt, canMove, !rodIdle, ph === 'idle' || ph === 'lost');
     let mx = 0, mz = 0;
-    if (canMove) {
+    if (canMove && !sail.riding) {
       if (inp.held('forward')) mz += 1; if (inp.held('back')) mz -= 1;
       if (inp.held('left')) mx += 1; if (inp.held('right')) mx -= 1;
     }
     const len = Math.hypot(mx, mz);
     const target = len > 0 ? (inp.held('sprint') ? 6.2 : 3.6) : 0;
     this.speed += (target - this.speed) * Math.min(1, dt * 10);
-    if (len > 0) {
+    if (sail.riding) {
+      // Under way the player faces the bow; once she is still they turn to aim, as they do ashore.
+      if (sail.aboard && !sail.busy) {
+        const underWay = canMove && (Math.abs(sail.boat.speed) > 0.9 || sail.throttle !== 0);
+        const want = underWay ? sail.boat.heading : ph === 'idle' || ph === 'charging' ? this.camYaw : this.yaw;
+        let dy = want - this.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+        this.yaw += dy * Math.min(1, dt * (underWay ? 6 : 10));
+      }
+    } else if (len > 0) {
       const a = this.camYaw + Math.atan2(mx, mz);
       let dy = a - this.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       this.yaw += dy * Math.min(1, dt * 12);
@@ -238,8 +264,15 @@ export class Game {
         const dx = nx - bx, dz = nz - bz, d = Math.hypot(dx, dz), min = br + 0.35;
         if (d < min && d > 1e-4) { nx = bx + (dx / d) * min; nz = bz + (dz / d) * min; }
       }
-      const gy = this.groundAt(nx, nz);
-      if (gy !== null && Math.abs(gy - this.pos.y) < 1.2) {
+      const canStep = (y: number | null) => y !== null && Math.abs(y - this.pos.y) < 1.2;
+      let gy = this.groundAt(nx, nz);
+      if (!canStep(gy)) {
+        // The edge of the dock, the waterline, the foot of a cliff: slide along it instead of stopping dead.
+        const gx = this.groundAt(nx, this.pos.z), gz = this.groundAt(this.pos.x, nz);
+        if (canStep(gx) && (!canStep(gz) || Math.abs(nx - this.pos.x) >= Math.abs(nz - this.pos.z))) { nz = this.pos.z; gy = gx; }
+        else if (canStep(gz)) { nx = this.pos.x; gy = gz; }
+      }
+      if (canStep(gy)) {
         this.stride += Math.hypot(nx - this.pos.x, nz - this.pos.z);
         this.pos.x = nx; this.pos.z = nz;
         // A footfall every stride, on whatever is underfoot.
@@ -251,8 +284,10 @@ export class Game {
       let dy = this.camYaw - this.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       this.yaw += dy * Math.min(1, dt * 10);
     }
-    const gy = this.groundAt(this.pos.x, this.pos.z);
-    if (gy !== null) this.pos.y += (gy - this.pos.y) * Math.min(1, dt * 15);
+    if (!sail.riding) {
+      const gy = this.groundAt(this.pos.x, this.pos.z);
+      if (gy !== null) this.pos.y += (gy - this.pos.y) * Math.min(1, dt * 15);
+    }
 
     // Fishing input.
     let fi: FishingInput;
@@ -268,7 +303,9 @@ export class Game {
       };
     }
     if (ph === 'idle' && fi.primaryPressed) {
-      if (len > 0 || this.speed > 0.5) fi = { ...fi, primaryPressed: false };
+      if (sail.busy) fi = { ...fi, primaryPressed: false };
+      else if (sail.aboard && Math.abs(sail.boat.speed) > 0.9) { sail.tellSlow(); fi = { ...fi, primaryPressed: false }; }
+      else if (len > 0 || this.speed > 0.5) fi = { ...fi, primaryPressed: false };
       else if (!this.waterAhead()) { this.hud.toast('Face the water to cast'); fi = { ...fi, primaryPressed: false }; }
     }
     if (ph === 'charging') this.castYaw = this.yaw;
@@ -385,34 +422,37 @@ export class Game {
   }
 
   /** Solid things near the player: the world's fixed props plus whoever is standing about. */
+  /** Whether (x, z) is clear of everything solid by `margin` metres: props, houses, people. */
+  clearOfBodies(x: number, z: number, margin = 0.35): boolean {
+    for (const [bx, bz, br] of this.blockers()) if (Math.hypot(x - bx, z - bz) < br + margin) return false;
+    return true;
+  }
+
   private *blockers(): Iterable<readonly [number, number, number]> {
     yield* this.world.blockers;
     yield* this.town.bodies();
   }
 
   /** Ground height for walking: dock deck or dry land; null where you can't walk. */
-  groundAt(x: number, z: number): number | null {
-    const deck = this.world.dockDeckAt(x, z);
-    const h = this.world.hf.height(x, z);
-    if (deck !== null) return Math.max(deck, h);
-    if (h < 0.15) return null;
-    if (this.world.hf.normal(x, z, 0.8)[1] < 0.62) return null;
-    return h;
-  }
+  groundAt(x: number, z: number): number | null { return walkableHeight(this.world.hf, x, z); }
 
   /** Per-frame presentation (camera, avatar, views, HUD, audio). */
   private present(dt: number) {
     const s = this.state;
     const ph = this.session.phase;
     const fs = this.session.fight;
+    const sail = this.sailing;
+    sail.present(dt);
     // Avatar
     this.avatar.root.position.copy(this.pos);
     // Showing off a catch: turn to face the camera; otherwise face where we're heading.
-    const wantYaw = this.shown ? Math.atan2(this.camera.position.x - this.pos.x, this.camera.position.z - this.pos.z) : this.yaw;
+    // Seated at the tiller they face the bow, whatever they are looking at.
+    const seated = sail.aboard && !sail.busy && sail.seat > 0.5;
+    const wantYaw = this.shown ? Math.atan2(this.camera.position.x - this.pos.x, this.camera.position.z - this.pos.z) : seated ? sail.boat.heading : this.yaw;
     let dYaw = wantYaw - this.faceYaw; dYaw = Math.atan2(Math.sin(dYaw), Math.cos(dYaw));
-    this.faceYaw += dYaw * Math.min(1, dt * (this.shown ? 7 : 30));
+    this.faceYaw += dYaw * Math.min(1, dt * (this.shown ? 7 : sail.aboard ? 12 : 30));
     this.avatar.root.rotation.y = this.faceYaw;
-    const pose: Pose = ph === 'charging' ? 'charge' : ph === 'casting' ? 'cast' : ph === 'waiting' || ph === 'bite' ? 'wait' : ph === 'fighting' ? 'fight' : ph === 'landed' ? 'cheer' : this.speed > 0.2 ? 'walk' : 'idle';
+    const pose: Pose = ph === 'charging' ? 'charge' : ph === 'casting' ? 'cast' : ph === 'waiting' || ph === 'bite' ? 'wait' : ph === 'fighting' ? 'fight' : ph === 'landed' ? 'cheer' : seated ? 'sit' : this.speed > 0.2 ? 'walk' : 'idle';
     const dbg = this.debugPose;
     if (dbg) this.avatar.update(dt, dbg.pose, dbg.speed ?? 0, dbg);
     else this.avatar.update(dt, pose, this.speed, { power: this.session.power, tension: fs?.tension, lateral: fs ? (fs.run || 0) : 0, reeling: !!fs && this.input.held('cast') });
@@ -434,6 +474,13 @@ export class Game {
     // In conversation: closer and lower, centred between the two and aimed below their heads, so both
     // stand clear above the dialogue box.
     const talk = fishingView ? null : this.town.talkingTo;
+    // At the helm: further back and looking ahead of the bow, the more so the faster she goes.
+    const helm = sail.aboard && !sail.busy && !fishingView && !talk && ph !== 'charging';
+    this.helmView += ((helm ? 1 : 0) - this.helmView) * Math.min(1, dt * 3);
+    if (this.helmView > 0.01) {
+      const lead = this.helmView * (1.2 + 3 * sail.pace);
+      aim.x += Math.sin(sail.boat.heading) * lead; aim.z += Math.cos(sail.boat.heading) * lead;
+    }
     if (talk) {
       pivot.lerp(_talk.set(talk.x, talk.y + 1.5, talk.z), 0.5); aim.copy(pivot); aim.y -= 0.6;
       if (this.talkSwingWant === null) this.talkSwingWant = this.pickTalkSwing(pivot, talk);
@@ -442,15 +489,15 @@ export class Game {
     this.camTarget.lerp(pivot, Math.min(1, dt * 5));
     this.camAim.lerp(aim, Math.min(1, dt * (ph === 'casting' ? 10 : 4)));
     const camYaw = fishingView ? this.castYaw : this.camYaw + this.talkSwing;
-    const dist = talk ? Math.min(this.camDist, 4.6) : this.camDist + (ph === 'fighting' ? 2.2 : ph === 'waiting' || ph === 'bite' ? 2.4 : fishingView ? 1.6 : 0);
+    const dist = talk ? Math.min(this.camDist, 4.6) : this.camDist + (ph === 'fighting' ? 2.2 : ph === 'waiting' || ph === 'bite' ? 2.4 : fishingView ? 1.6 : 0) + this.helmView * (3.2 + 1.2 * sail.pace);
     // Low behind the angler for the throw, so the lure climbs against the sky; then it cranes up to look down
     // on the float, where the fish shadows are.
     const watching = ph === 'waiting' || ph === 'bite';
-    const pitch = talk ? Math.max(0.1, Math.min(this.camPitch, 0.2)) : watching ? Math.max(0.46, Math.min(0.75, this.camPitch + 0.12)) : fishingView ? Math.max(0.16, Math.min(0.6, this.camPitch)) : this.camPitch;
+    const pitch = talk ? Math.max(0.1, Math.min(this.camPitch, 0.2)) : watching ? Math.max(0.46, Math.min(0.75, this.camPitch + 0.12)) : fishingView ? Math.max(0.16, Math.min(0.6, this.camPitch)) : Math.max(this.camPitch, 0.24 * this.helmView);
     // The camera sits to one side of the player and looks the way they face, not at them: the point it
     // looks at is moved sideways by the same amount. So the view is parallel to the cast, and a throw goes
     // straight up the screen instead of veering off to one side.
-    this.camShoulder += ((fishingView ? 1.5 : talk ? 0 : 0.9) - this.camShoulder) * Math.min(1, dt * 5);
+    this.camShoulder += ((fishingView ? 1.5 : talk || helm ? 0 : 0.9) - this.camShoulder) * Math.min(1, dt * 5);
     const sideX = Math.cos(camYaw) * this.camShoulder, sideZ = -Math.sin(camYaw) * this.camShoulder;
     const want = new Vector3(
       this.camTarget.x - Math.sin(camYaw) * Math.cos(pitch) * dist + sideX,
@@ -459,6 +506,24 @@ export class Game {
     );
     this.camKick *= Math.exp(-dt * 5); this.fovKick *= Math.exp(-dt * 4);
     want.x += Math.sin(this.castYaw) * this.camKick * this.shakeScale; want.z += Math.cos(this.castYaw) * this.camKick * this.shakeScale;
+    // Something tall between the player and the camera (a cliff, a sea stack beside the boat): come in
+    // closer instead of climbing over it, or the view ends up looking straight down from its top.
+    // Only for ground too steep to walk: a hillside behind the player is climbed by the camera as it always
+    // was. Once in, it stays in until the ground is clearly lower, so a swell under the boat does not pump it.
+    const over = this.camTucked ? 1.6 : 2.5, steep = this.camTucked ? 1.2 : 1.45;
+    const run = Math.hypot(want.x - this.camTarget.x, want.z - this.camTarget.z);
+    let tucked = false;
+    for (let i = 1; i <= 10 && !tucked; i++) {
+      const t = i / 10;
+      const lx = this.camTarget.x + (want.x - this.camTarget.x) * t, lz = this.camTarget.z + (want.z - this.camTarget.z) * t;
+      const h = this.world.hf.height(lx, lz);
+      if (h > this.camTarget.y + (want.y - this.camTarget.y) * t + over && h - this.pos.y > steep * Math.max(0.5, run * t)) {
+        // Never nearer than a couple of metres: closer than that the view is all shoulder and sail.
+        want.lerpVectors(this.camTarget, want, Math.max(Math.min(1, 2.2 / Math.max(0.1, want.distanceTo(this.camTarget))), (i - 1) / 10));
+        tucked = true;
+      }
+    }
+    this.camTucked = tucked;
     const ground = this.world.hf.height(want.x, want.z);
     want.y = Math.max(want.y, Math.max(ground, this.waveY(want.x, want.z)) + 0.6);
     this.camera.position.lerp(want, Math.min(1, dt * 6));
@@ -468,7 +533,7 @@ export class Game {
     this.camera.lookAt(this.camAim.x + sideX + (Math.random() - 0.5) * sh, this.camAim.y + (Math.random() - 0.5) * sh, this.camAim.z + sideZ);
     if (this.debugCam) { this.camera.position.copy(this.debugCam.pos); this.camera.lookAt(this.debugCam.look); }
     // Field of view: closes in as the cast winds up, punches wide on release, tightens with line tension.
-    const fovWant = 55 + (ph === 'fighting' ? -4 * tension : 0) + (ph === 'charging' ? -5 * this.session.power : 0) + (ph === 'waiting' || ph === 'bite' ? -7 : 0);
+    const fovWant = 55 + 6 * this.helmView * sail.pace + (ph === 'fighting' ? -4 * tension : 0) + (ph === 'charging' ? -5 * this.session.power : 0) + (ph === 'waiting' || ph === 'bite' ? -7 : 0);
     this.fovBase += (fovWant - this.fovBase) * Math.min(1, dt * (ph === 'charging' ? 9 : 4));
     const fov = this.fovBase + this.fovKick * this.shakeScale;
     if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
@@ -501,6 +566,8 @@ export class Game {
       this.fx.ripples.spawn(this.aimV.set(bt.x, 0, bt.z), Math.min(1.3, 0.55 + 0.14 * bt.speed), bt.speed > 3 ? 0.5 : 0.9);
     }
     this.fx.update(dt, (x, z) => this.waveY(x, z));
+    this.world.pocketScale += ((sail.aboard ? 0.22 : 1) - this.world.pocketScale) * Math.min(1, dt * 3);
+    this.world.murk = sail.murmur;
     this.world.update(dt, this.camera, this.pos);
 
     // HUD
@@ -513,16 +580,20 @@ export class Game {
     this.town.present(dt);
     this.hud.setGoal(this.town.goal());
     this.hud.setHint(this.town.blocking ? '' : this.hint());
+    this.hud.setCompass(sail.aboard && !this.town.blocking ? { yaw: camYaw, knots: sail.made * 1.94, marks: this.town.bearings() } : null);
     const fp = this.town.focusPrompt;
-    this.hud.setPrompt(fp && !this.town.blocking ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '');
+    this.hud.setPrompt(fp && !this.town.blocking ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '', sail.aboard);
 
     const night = this.world.light.night;
     this.audio.update(dt, {
       reeling: !!fs && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3, tension, fighting: !!fs, sea: 0.5,
       charge: ph === 'charging' ? this.session.power : -1,
       // The night theme comes in once the sky is properly dark and leaves at first light.
-      music: this.town.island === 'gull-point' ? 'gull-point' : night > 0.6 ? 'hearthbay-night' : night < 0.4 ? 'hearthbay-day' : undefined,
-      day: 1 - night, onDock: this.world.dockDeckAt(this.pos.x, this.pos.z) !== null, purr: this.town.catCloseness(),
+      // By day the boat has her own tune; ashore each island keeps its own.
+      music: !sail.aboard && this.town.island === 'gull-point' ? 'gull-point'
+        : night > 0.6 ? 'hearthbay-night' : night < 0.4 ? (sail.aboard ? 'open-water' : 'hearthbay-day') : undefined,
+      day: 1 - night, onDock: !sail.riding && this.world.dockDeckAt(this.pos.x, this.pos.z) !== null, purr: this.town.catCloseness(),
+      hull: sail.aboard ? sail.pace : undefined, murmur: sail.murmur,
     });
     if (fs && tension > 0.9 && this.lastTension <= 0.9) this.audio.strain();
     this.lastTension = tension;
@@ -539,7 +610,9 @@ export class Game {
     const moves = [b.forward[0], b.left[0], b.back[0], b.right[0]];
     const walk = moves.join() === 'KeyW,KeyA,KeyS,KeyD' ? '<kbd>WASD</kbd>' : moves.map((c) => `<kbd>${shortKey(c)}</kbd>`).join('');
     switch (ph) {
-      case 'idle': return `${k('cast')} hold to cast · ${walk} walk · ${k('sprint')} run`;
+      case 'idle':
+        if (this.sailing.aboard) return `${walk} sail · ${k('cast')} hold to cast once she is still · ${k('map')} chart`;
+        return `${k('cast')} hold to cast · ${walk} walk · ${k('sprint')} run`;
       case 'charging': return 'Release in the bright band for a clean cast';
       case 'waiting': return `Watch the water… hook it when the float goes under · ${k('cancel')} reel in`;
       case 'bite': return `${k('cast')} Hook it!`;
@@ -550,8 +623,10 @@ export class Game {
 
   async save() {
     const s = this.state;
-    s.world.pos = [this.pos.x, this.pos.y, this.pos.z];
+    const at = this.sailing.steppingTo ?? this.pos;
+    s.world.pos = [at.x, at.y, at.z];
     s.world.yaw = this.yaw;
+    this.sailing.store();
     try { await this.store.write(serialize(s)); } catch (e) { console.error('save failed', e); }
   }
 }

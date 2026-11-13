@@ -35,9 +35,25 @@ const smax = (a: number, b: number, k: number) => {
 export class Heightfield {
   private noise: Noise2D;
   private islandNoise: Noise2D[];
+  /** For each hand-made shape, a circle [x, z, radius²] outside which it changes nothing. */
+  private shapeBounds: [number, number, number][];
+  /** Each island's rotation, worked out once: [cos, sin]. */
+  private islandRot: [number, number][];
+  /** The last answer of shapeAt, reused so that asking for a height allocates nothing. */
+  private q = { w: 0, h: 0, core: 0 };
   constructor(public readonly region: RegionDef, seed = 1234) {
     this.noise = new Noise2D(seed);
     this.islandNoise = region.islands.map((i) => new Noise2D(seed * 31 + i.seed));
+    this.islandRot = region.islands.map((i) => [Math.cos(i.rot), Math.sin(i.rot)]);
+    this.shapeBounds = (region.shapes ?? []).map((s) => {
+      if (s.type === 'flat') return [s.x, s.z, (s.r + s.soft) ** 2];
+      let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+      for (const p of s.points) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minZ = Math.min(minZ, p[1]); maxZ = Math.max(maxZ, p[1]); }
+      const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
+      let r = 0;
+      for (const p of s.points) r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cz));
+      return [cx, cz, (r + s.width / 2 + s.soft) ** 2];
+    });
   }
 
   /** Terrain height at world (x, z). Negative = below water. */
@@ -48,7 +64,7 @@ export class Heightfield {
     for (let k = 0; k < r.islands.length; k++) {
       const isl = r.islands[k];
       const dx = x - isl.x, dz = z - isl.z;
-      const c = Math.cos(isl.rot), s = Math.sin(isl.rot);
+      const rot = this.islandRot[k], c = rot[0], s = rot[1];
       const lx = (dx * c - dz * s) / isl.rx;
       const lz = (dx * s + dz * c) / isl.rz;
       let d = Math.sqrt(lx * lx + lz * lz);
@@ -84,7 +100,9 @@ export class Heightfield {
       }
       h = smax(h, ih, 2.5);
     }
-    for (const c of r.carves) {
+    const carves = r.carves;
+    for (let k = 0; k < carves.length; k++) {
+      const c = carves[k];
       const dx = x - c.x, dz = z - c.z;
       const d = Math.sqrt(dx * dx + dz * dz) / c.r;
       if (d < 1) {
@@ -92,40 +110,52 @@ export class Heightfield {
         h = h * (1 - f) + Math.min(h, -c.depth) * f;
       }
     }
-    for (const s of r.shapes ?? []) {
-      const q = this.shapeAt(s, x, z);
-      if (q.w > 0) h = h * (1 - q.w) + q.h * q.w;
+    const shapes = r.shapes;
+    if (shapes) for (let k = 0; k < shapes.length; k++) {
+      const q = this.shapeAt(k, x, z);
+      if (q && q.w > 0) h = h * (1 - q.w) + q.h * q.w;
     }
     return h;
   }
 
-  /** Blend weight (0..1) and target height of a shape at (x, z). */
-  private shapeAt(s: ShapeDef, x: number, z: number): { w: number; h: number; core: number } {
+  /**
+   * Blend weight (0..1) and target height of shape `k` at (x, z); null where the shape reaches nothing.
+   * The answer is a shared object: read it before asking again.
+   */
+  private shapeAt(k: number, x: number, z: number): { w: number; h: number; core: number } | null {
+    const b = this.shapeBounds[k], ox = x - b[0], oz = z - b[1];
+    if (ox * ox + oz * oz >= b[2]) return null;
+    const s = this.region.shapes![k], q = this.q;
     if (s.type === 'flat') {
-      const d = Math.hypot(x - s.x, z - s.z);
-      return { w: smooth(s.r + s.soft, s.r, d), h: s.h, core: smooth(s.r, s.r - 1.5, d) };
+      const d = Math.sqrt((x - s.x) * (x - s.x) + (z - s.z) * (z - s.z));
+      q.w = smooth(s.r + s.soft, s.r, d); q.h = s.h; q.core = smooth(s.r, s.r - 1.5, d);
+      return q;
     }
     let best = Infinity, bh = 0;
     const p = s.points;
     for (let i = 0; i < p.length - 1; i++) {
-      const [ax, az, ah] = p[i], [bx, bz, bh2] = p[i + 1];
-      const vx = bx - ax, vz = bz - az;
+      const a = p[i], c = p[i + 1];
+      const vx = c[0] - a[0], vz = c[1] - a[1];
       const L2 = vx * vx + vz * vz;
-      const u = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / L2));
-      const d = Math.hypot(x - (ax + vx * u), z - (az + vz * u));
-      if (d < best) { best = d; bh = ah + (bh2 - ah) * u; }
+      const u = Math.max(0, Math.min(1, ((x - a[0]) * vx + (z - a[1]) * vz) / L2));
+      const ex = x - (a[0] + vx * u), ez = z - (a[1] + vz * u);
+      const d = Math.sqrt(ex * ex + ez * ez);
+      if (d < best) { best = d; bh = a[2] + (c[2] - a[2]) * u; }
     }
     const hw = s.width / 2;
-    return { w: smooth(hw + s.soft, hw, best), h: bh, core: smooth(hw, hw - 0.8, best) };
+    q.w = smooth(hw + s.soft, hw, best); q.h = bh; q.core = smooth(hw, hw - 0.8, best);
+    return q;
   }
 
   /** The surface a hand-shaped area is paved with at (x, z), for terrain colouring. */
   surfaceAt(x: number, z: number): { kind: 'cobble' | 'dirt' | null; w: number } {
     let kind: 'cobble' | 'dirt' | null = null, w = 0;
-    for (const s of this.region.shapes ?? []) {
+    const shapes = this.region.shapes ?? [];
+    for (let k = 0; k < shapes.length; k++) {
+      const s = shapes[k];
       if (!s.surface) continue;
-      const q = this.shapeAt(s, x, z);
-      if (q.core > w) { w = q.core; kind = s.surface; }
+      const q = this.shapeAt(k, x, z);
+      if (q && q.core > w) { w = q.core; kind = s.surface; }
     }
     return { kind, w };
   }

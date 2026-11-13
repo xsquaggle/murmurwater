@@ -21,6 +21,7 @@ export interface ObjectiveDef {
   fish?: string; rarity?: string; minWeight?: number; strange?: boolean;
   /** own: a rod, bait or boat id. */ item?: string;
   /** visit: a place id from the region's places. */ place?: string;
+  /** Where to go for it, as [x, z], when it is not a place (a fishing ground): for the compass and the chart. */ at?: [number, number];
 }
 export interface Rewards {
   coins?: number; moonpearls?: number; items?: Record<string, number>; rods?: string[];
@@ -34,7 +35,8 @@ export interface QuestDef {
 }
 export interface NpcDef { id: string; name: string; role: string; region: string; voice: string; barks: string[] }
 export interface RelicDef { id: string; name: string; effect: { luck?: number; value?: number; biteSpeed?: number }; lore: string }
-export interface BoatDef { id: string; name: string; speed: number; turn: number; hold: number; price: number; desc: string }
+/** speed m/s, turn rad/s, accel 1/s, draft/length/beam m (see core/boat.ts); hull and lamp are the ratings that open rougher and foggier seas. */
+export interface BoatDef { id: string; name: string; speed: number; turn: number; accel: number; draft: number; length: number; beam: number; hull: number; lamp: number; hold: number; price: number; desc: string }
 
 export const QUESTS: QuestDef[] = questsJson.quests as QuestDef[];
 export const NPCS: NpcDef[] = npcsJson.npcs as NpcDef[];
@@ -198,7 +200,7 @@ export function npcOffer(s: GameState, npcId: string): NpcOffer {
 }
 
 /** The onboarding goal line: always one clear next step from the story chain. */
-export interface Goal { text: string; npc?: string; place?: string }
+export interface Goal { text: string; npc?: string; place?: string; at?: [number, number] }
 export function currentGoal(s: GameState): Goal {
   // 1. Anything ready to hand in (main chain first).
   const story = [...QUESTS].sort((a, b) => (a.chain === b.chain ? 0 : a.chain === 'main' ? -1 : 1));
@@ -210,7 +212,7 @@ export function currentGoal(s: GameState): Goal {
     const o = q.objectives[i];
     const t = objectiveTarget(o);
     const prog = t > 1 ? ` (${objectiveProgress(s, q, i)}/${t})` : '';
-    return { text: `${q.title}: ${o.label}${prog}`, place: o.place };
+    return { text: `${q.title}: ${o.label}${prog}`, place: o.place, at: o.at };
   }
   // 3. A new story quest waiting with someone.
   for (const q of story) if (questStatus(s, q.id) === 'available') return { text: `Talk to ${npc(q.giver).name}`, npc: q.giver };

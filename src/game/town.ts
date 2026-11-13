@@ -2,7 +2,7 @@
  * People and places: NPCs standing in the world, talking to them, the stall, the notice board,
  * Pell's ferry, the lighthouse lamp, quest progress toasts, and every menu screen.
  */
-import { Vector3 } from 'three';
+import { Color, Vector3 } from 'three';
 import type { Game } from './game';
 import { NpcFigure } from '../render/npc-figure';
 import { Cat } from '../render/cat';
@@ -10,15 +10,21 @@ import { hashString } from '../core/rng';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
 import { converse, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
-  QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
+  BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
   readySet, newlyReady, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
 } from '../core/quests';
-import { BAITS_BY_ID, RODS_BY_ID, type FerryPoint, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
+import { BAITS_BY_ID, RODS_BY_ID, type FerryPoint, type MooringDef, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
+import { LANDING } from '../core/landing';
+import { DAY_LENGTH_S } from '../render/daycycle';
+import type { ChartRaster, ChartView } from '../ui/chart';
 import { fmt, sellAll } from '../core/economy';
 import { saveSettings, type Settings } from './settings';
 import { QUALITY } from '../render/renderer';
 
-interface Interactable { kind: 'npc' | 'board' | 'lamp'; id: string; pos: Vector3; r: number; prompt: string }
+interface Interactable {
+  kind: 'npc' | 'board' | 'lamp' | 'boat' | 'ashore' | 'kettle' | 'chest'; id: string; pos: Vector3; r: number; prompt: string;
+  /** How far away it counts as being, when that is not simply the distance to `pos` (the boat's hull). */ dist?: number;
+}
 interface Step { at: number; run: () => void }
 
 export class Town {
@@ -37,6 +43,10 @@ export class Town {
   private focus: Interactable | null = null;
   private expectUnlock = false;
   private wasLocked = false;
+  private chartRaster: ChartRaster | null = null;
+  private steamT = 0;
+  private white = new Color('#FFFFFF');
+  private gold = new Color('#FFD27A');
 
   constructor(private g: Game, uiRoot: HTMLElement, public settings: Settings) {
     this.region = g.world.region as RegionContent;
@@ -51,10 +61,11 @@ export class Town {
       const cat = new Cat(new Vector3(c.x, 0, c.z), c.r, (x, z) => g.groundAt(x, z), hashString(c.id));
       this.critters.push({ island: c.island, cat }); g.world.scene.add(cat.root);
     }
-    this.island = this.islandAt(g.pos);
-    this.placeNpcs();
+    this.arrive();
     g.world.placeFerry(this.island);
     g.world.lighthouseLit = this.lampLit;
+    if (g.world.kettle) g.world.kettle.visible = !g.state.flags.includes('kettle-taken');
+    this.showChests();
 
     this.dialogue = new Dialogue(uiRoot, (line) => this.playVoice(line));
     // Which lines have a recording that matches their current text (see tools/voice-manifest.ts).
@@ -69,6 +80,8 @@ export class Town {
       quit: () => { void g.save().then(() => window.mwNative?.quit()); },
       close: () => this.closeScreens(),
       canQuit: !!window.mwNative,
+      chart: () => this.chartView(),
+      sailTo: (id) => this.sailTo(id),
     };
     this.screens = new Screens(uiRoot, host);
     // Every button in the interface clicks; tabs turn a page.
@@ -95,6 +108,7 @@ export class Town {
   get pausesWorld() { return this.screens.isOpen; }
 
   // ------------------------------------------------------------------ where things are
+  /** The island nearest a point (the Teeth count as one place). */
   islandAt(p: Vector3): string {
     let best = 'hearthbay', bd = Infinity;
     for (const isl of this.region.islands) {
@@ -103,12 +117,24 @@ export class Town {
       const d = Math.hypot((dx * c - dz * s) / isl.rx, (dx * s + dz * c) / isl.rz);
       if (d < bd) { bd = d; best = isl.id; }
     }
-    return best === 'gull-point' ? 'gull-point' : 'hearthbay';
+    return chartPlaceOf(best);
+  }
+
+  /** The player has come ashore somewhere (or the game has just loaded): work out who is where. */
+  arrive() {
+    const s = this.g.state;
+    this.island = this.islandAt(this.g.pos);
+    // Pell waits at Gull Point until the skiff has carried the player somewhere else; after that he keeps to the dock.
+    if (s.boats.owned.length && this.island !== 'gull-point' && !s.flags.includes('pell-home')) s.flags.push('pell-home');
+    this.placeNpcs();
   }
 
   private placeNpcs() {
+    const s = this.g.state, owner = s.boats.owned.length > 0;
     for (const [, e] of this.npcs) {
-      const sp = e.spots.find((s) => s.island === this.island) ?? null;
+      // Most people keep to one spot. The ferryman has two: he goes where he rows the player, until they sail themselves.
+      const at = !owner ? this.island : s.flags.includes('pell-home') ? e.spots[0].island : 'gull-point';
+      const sp = e.spots.length === 1 ? e.spots[0] : e.spots.find((x) => x.island === at) ?? null;
       e.fig.root.visible = !!sp;
       if (!sp) continue;
       const y = this.g.groundAt(sp.x, sp.z) ?? Math.max(0, this.g.world.hf.height(sp.x, sp.z));
@@ -117,19 +143,44 @@ export class Town {
     }
   }
 
+  /** The fixed spot of a place or a chest as a vector, made once: this is asked for every step. */
+  private spot(p: { id: string; x: number; z: number }): Vector3 {
+    let v = this.spots.get(p.id);
+    if (!v) { v = new Vector3(p.x, 0, p.z); this.spots.set(p.id, v); }
+    return v;
+  }
+  private spots = new Map<string, Vector3>();
+
   private interactables(): Interactable[] {
     const out: Interactable[] = [];
+    const sail = this.g.sailing;
+    // In the boat there is one thing to do with your feet: step off, where there is somewhere to stand.
+    if (sail.aboard) {
+      if (sail.canLand) out.push({ kind: 'ashore', id: 'ashore', pos: this.g.pos, r: 1, prompt: 'Step ashore', dist: 0 });
+      return out;
+    }
+    if (sail.boardable) {
+      // Measured to the hull, so whichever of the boat and a bystander is nearer is the one you get.
+      out.push({ kind: 'boat', id: 'boat', pos: this.g.pos, r: LANDING.reach + LANDING.slack, prompt: `Board the ${sail.def!.name.replace(/^The /, '')}`, dist: sail.distanceTo(this.g.pos) });
+    }
+    const kettle = this.places.get('keepers-kettle');
+    if (kettle && !this.g.state.flags.includes('kettle-taken')) {
+      out.push({ kind: 'kettle', id: 'keepers-kettle', pos: this.spot(kettle), r: kettle.r, prompt: questStatus(this.g.state, 'hb-07-kettle') === 'active' ? 'Take the kettle' : 'Look at the kettle' });
+    }
+    for (const c of this.region.chests ?? []) {
+      if (!this.g.state.flags.includes(`chest:${c.id}`)) out.push({ kind: 'chest', id: c.id, pos: this.spot(c), r: 2.4, prompt: 'Open the chest' });
+    }
     for (const [id, e] of this.npcs) {
       if (!e.fig.root.visible) continue;
       out.push({ kind: 'npc', id, pos: e.fig.root.position, r: 2.8, prompt: `Talk to ${npc(id).name}` });
     }
-    const v = (p: PlaceDef) => new Vector3(p.x, 0, p.z);
+    const v = (p: PlaceDef) => this.spot(p);
     const stall = this.places.get('mara-stall');
     if (stall && this.npcs.get('mara')?.fig.root.visible) out.push({ kind: 'npc', id: 'mara', pos: v(stall), r: stall.r, prompt: 'Talk to Mara' });
     const board = this.places.get('notice-board');
-    if (board && this.island === 'hearthbay') out.push({ kind: 'board', id: 'notice-board', pos: v(board), r: board.r, prompt: 'Read the notice board' });
+    if (board) out.push({ kind: 'board', id: 'notice-board', pos: v(board), r: board.r, prompt: 'Read the notice board' });
     const lamp = this.places.get('lighthouse-lamp');
-    if (lamp && this.island === 'gull-point') {
+    if (lamp) {
       const can = questStatus(this.g.state, 'hb-06-relight') === 'active' && !this.lampLit;
       out.push({ kind: 'lamp', id: 'lighthouse-lamp', pos: v(lamp), r: lamp.r, prompt: can ? 'Climb the stair and light the lamp' : this.lampLit ? 'The lamp burns steady' : 'The lighthouse door is stiff with salt' });
     }
@@ -144,7 +195,7 @@ export class Town {
       while (this.seq.length && this.seq[0].at <= this.seqT) this.seq.shift()!.run();
     }
     if (tickBoard(s, dt) && s.quests.board.serial > 3) g.hud.toast('New notices on the board');
-    if (this.blocking) { this.focus = null; return; }
+    if (this.blocking || g.sailing.busy) { this.focus = null; return; }
 
     // Nearest thing to interact with (only when the rod is idle).
     const ph = g.session.phase;
@@ -152,7 +203,7 @@ export class Town {
     if (ph === 'idle' || ph === 'landed' || ph === 'lost') {
       let bd = Infinity;
       for (const it of this.interactables()) {
-        const d = Math.hypot(g.pos.x - it.pos.x, g.pos.z - it.pos.z);
+        const d = it.dist ?? Math.hypot(g.pos.x - it.pos.x, g.pos.z - it.pos.z);
         if (d < it.r && d < bd) { bd = d; this.focus = it; }
       }
     }
@@ -160,7 +211,7 @@ export class Town {
     if (this.focus && inp.wasPressed('interact')) this.interact();
     else if (inp.wasPressed('journal')) this.openScreen('journal');
     else if (inp.wasPressed('inventory')) this.openScreen('hold');
-    else if (inp.wasPressed('map')) g.hud.toast('You’ll want a boat before a chart is any use.');
+    else if (inp.wasPressed('map')) { if (g.sailing.owned) this.openScreen('chart'); else g.hud.toast('You’ll want a boat before a chart is any use.'); }
     else if (inp.wasPressed('pause')) this.openScreen('pause');
   }
 
@@ -171,6 +222,10 @@ export class Town {
     if (it.kind === 'npc') this.talkTo(it.id);
     else if (it.kind === 'board') { if (!boardOpen(this.g.state)) this.g.hud.toast('Just a notice about a lost cat. Nothing for you yet.'); else this.openScreen('board'); }
     else if (it.kind === 'lamp') { if (questStatus(this.g.state, 'hb-06-relight') === 'active' && !this.lampLit) this.lightLamp(); else this.g.hud.toast(it.prompt); }
+    else if (it.kind === 'boat') this.g.sailing.board();
+    else if (it.kind === 'ashore') this.g.sailing.stepAshore();
+    else if (it.kind === 'kettle') this.takeKettle();
+    else if (it.kind === 'chest') this.openChest(it.id);
     return true;
   }
   get focusPrompt() { return this.focus?.prompt ?? null; }
@@ -214,7 +269,14 @@ export class Town {
     const got = describeRewards(r);
     if (got.length) setTimeout(() => this.g.hud.toast(got.join(' · '), 'good'), 450);
     if (r.flags?.includes('hb-lighthouse-lit')) this.g.world.lighthouseLit = true;
-    if (r.items) this.g.refreshSession();
+    // Baits and relics both change what the next cast can do.
+    if (r.items || r.relics?.length) this.g.refreshSession();
+    if (r.boats?.length) {
+      // She is in the water from this moment, lying off the nearest landing.
+      this.g.sailing.launch();
+      const name = BOATS_BY_ID.get(r.boats[0])?.name ?? 'boat';
+      setTimeout(() => this.g.hud.toast(`${name} is yours. She lies just off the landing.`, 'gold'), 1400);
+    }
     void this.g.save();
     const next = afterTurnIn(s, npcId, this.island);
     this.openConversation(next);
@@ -320,11 +382,121 @@ export class Town {
     return currentGoal(s).text;
   }
 
+  /** Where the current goal is, for the compass, the chart and the marker over it. */
+  goalTarget(): { x: number; z: number; y: number } | null {
+    const g = this.g, s = g.state;
+    const at = (x: number, z: number, lift: number) => ({ x, z, y: Math.max(g.groundAt(x, z) ?? 0, g.world.hf.height(x, z), 0) + lift });
+    const person = (id: string) => { const p = this.npcs.get(id)?.fig.root; return p?.visible ? { x: p.position.x, z: p.position.z, y: p.position.y + 2.6 } : null; };
+    if (s.hold.length >= s.holdCapacity) return person('mara');
+    const goal = currentGoal(s);
+    if (goal.npc) return person(goal.npc);
+    if (goal.at) return at(goal.at[0], goal.at[1], 5);
+    const place = goal.place ? this.places.get(goal.place) : null;
+    return place ? at(place.x, place.z, 3) : null;
+  }
+
+  /** Compass marks for the helm: the goal, and the moorings the player knows. */
+  bearings(): { bearing: number; kind: 'goal' | 'mooring' }[] {
+    const g = this.g, out: { bearing: number; kind: 'goal' | 'mooring' }[] = [];
+    const to = (x: number, z: number) => Math.atan2(x - g.pos.x, -(z - g.pos.z));
+    for (const m of this.region.moorings ?? []) {
+      if (g.state.world.charted.includes(m.place) && Math.hypot(m.x - g.pos.x, m.z - g.pos.z) > 30) out.push({ bearing: to(m.x, m.z), kind: 'mooring' });
+    }
+    const goal = this.goalTarget();
+    if (goal && Math.hypot(goal.x - g.pos.x, goal.z - g.pos.z) > 12) out.push({ bearing: to(goal.x, goal.z), kind: 'goal' });
+    return out;
+  }
+
+  // ------------------------------------------------------------------ sea chests
+  /** Shows each chest shut or open, as the save has it. */
+  private showChests() {
+    for (const [id, c] of this.g.world.chests) { const got = this.g.state.flags.includes(`chest:${id}`); c.shut.visible = !got; c.open.visible = got; }
+  }
+
+  private openChest(id: string) {
+    const g = this.g, s = g.state, def = this.region.chests?.find((c) => c.id === id);
+    if (!def || s.flags.includes(`chest:${id}`)) return;
+    s.flags.push(`chest:${id}`);
+    s.coins += def.coins; s.lifetime.coins += def.coins; s.run.coins += def.coins;
+    const got = [`◉ ${def.coins}`];
+    for (const [bait, n] of Object.entries(def.items ?? {})) { s.gear.baits[bait] = (s.gear.baits[bait] ?? 0) + n; got.push(`${n} ${BAITS_BY_ID.get(bait)?.name ?? bait}`); }
+    this.showChests();
+    g.audio.coin(8); g.audio.discover();
+    g.fx.glow.burst(_v.set(def.x, (g.groundAt(def.x, def.z) ?? 1) + 0.7, def.z), 22, this.gold, 1.6, 2.4, 0.9, 0.12, 2.5);
+    g.hud.toast(def.text);
+    g.hud.toast(`In the chest: ${got.join(', ')}`, 'gold');
+    void g.save();
+  }
+
+  // ------------------------------------------------------------------ the kettle on Kettle Isle
+  private takeKettle() {
+    const g = this.g, s = g.state;
+    if (questStatus(s, 'hb-07-kettle') !== 'active') { g.hud.toast('A kettle on a ring of stones, warm to the touch. Somebody ought to hear of it.'); return; }
+    s.flags.push('kettle-taken');
+    if (g.world.kettle) g.world.kettle.visible = false;
+    g.audio.coin(2);
+    g.hud.toast('You take the keeper’s kettle. It is warm, and it stays warm.', 'gold');
+    this.questEvent({ type: 'visit', place: 'keepers-kettle' });
+    void g.save();
+  }
+
+  // ------------------------------------------------------------------ the chart
+  /** Terrain heights for the chart, sampled once: the islands and a margin of sea round them. */
+  private raster(): ChartRaster {
+    if (this.chartRaster) return this.chartRaster;
+    const hf = this.g.world.hf, cell = 3, pad = 48;
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const i of this.region.islands) {
+      const r = Math.max(i.rx, i.rz) * 1.18;
+      x0 = Math.min(x0, i.x - r); x1 = Math.max(x1, i.x + r); z0 = Math.min(z0, i.z - r); z1 = Math.max(z1, i.z + r);
+    }
+    x0 -= pad; z0 -= pad; x1 += pad; z1 += pad;
+    const w = Math.ceil((x1 - x0) / cell) + 1, h = Math.ceil((z1 - z0) / cell) + 1;
+    const height = new Float32Array(w * h);
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) height[j * w + i] = hf.height(x0 + i * cell, z0 + j * cell);
+    return (this.chartRaster = { x0, z0, cell, w, h, height });
+  }
+
+  private chartView(): ChartView {
+    const g = this.g, s = g.state, rc = this.region, sail = g.sailing;
+    const known = (id: string) => s.world.charted.includes(id);
+    const ph = g.session.phase;
+    const goal = this.goalTarget();
+    return {
+      title: `Chart of ${rc.zones.find((z) => z.priority === 0)?.name ?? rc.name}`,
+      raster: this.raster(),
+      islands: rc.islands.map((i) => ({ place: chartPlaceOf(i.id), x: i.x, z: i.z, rx: i.rx, rz: i.rz, rot: i.rot })),
+      places: (rc.chart ?? []).map((c) => ({ id: c.id, name: c.name, kind: c.kind, note: c.note ?? '', known: known(c.id) })),
+      moorings: (rc.moorings ?? []).map((m) => ({ id: m.id, name: m.name, place: m.place, x: m.x, z: m.z, known: known(m.place) })),
+      dock: { x: rc.landmarks.dock.x, z: rc.landmarks.dock.z, rot: rc.landmarks.dock.rot ?? 0, length: rc.landmarks.dock.length ?? 30 },
+      you: { x: g.pos.x, z: g.pos.z, aboard: sail.aboard },
+      boat: sail.owned ? { x: sail.boat.x, z: sail.boat.z, heading: sail.boat.heading } : null,
+      goal: goal ? { x: goal.x, z: goal.z } : null,
+      from: ph === 'idle' || ph === 'landed' || ph === 'lost' ? sail.mooredAt()?.id ?? null : null,
+      hint: rc.edgeHint ?? '',
+    };
+  }
+
+  /** Fast travel: the boat carries the player to a mooring they know. The sail costs a little of the day. */
+  sailTo(id: string) {
+    const g = this.g, s = g.state, sail = g.sailing;
+    const m = (this.region.moorings ?? []).find((x: MooringDef) => x.id === id), from = sail.mooredAt();
+    if (!m || !from || from.id === m.id || !s.world.charted.includes(m.place)) return;
+    this.closeScreens();
+    const hours = (Math.hypot(m.x - sail.boat.x, m.z - sail.boat.z) / sail.def!.speed) * (24 / DAY_LENGTH_S) * 1.5;
+    this.run([
+      { at: 0, run: () => { g.hud.fade(true, `You set the sail for ${m.name}…`); g.audio.sailFlap(); } },
+      { at: 1.5, run: () => { sail.moorAt(m); s.hour = (s.hour + hours) % 24; this.arrive(); } },
+      { at: 2.6, run: () => { g.hud.fade(false); g.input.requestLock(); } },
+      { at: 3.3, run: () => { g.hud.toast(m.name, 'good'); void g.save(); } },
+    ]);
+  }
+
   // ------------------------------------------------------------------ screens
   openScreen(kind: ScreenKind) {
     if (this.dialogue.isOpen) return;
     this.releaseMouse();
-    if (!this.screens.isOpen) this.g.audio.uiOpen();
+    if (kind === 'chart') this.g.audio.chartOpen(); else if (!this.screens.isOpen) this.g.audio.uiOpen();
     this.screens.open(kind);
   }
   closeScreens() {
@@ -351,7 +523,8 @@ export class Town {
       e.stopImmediatePropagation();
       if (e.repeat) return;
       const cur = this.screens.current;
-      if (e.code === 'Escape' || (b.journal.includes(e.code) && cur === 'journal') || (b.inventory.includes(e.code) && cur === 'hold')) { e.preventDefault(); this.closeScreens(); }
+      if (e.code === 'Escape' || (b.journal.includes(e.code) && cur === 'journal') || (b.inventory.includes(e.code) && cur === 'hold') || (b.map.includes(e.code) && cur === 'chart')) { e.preventDefault(); this.closeScreens(); }
+      else if (b.map.includes(e.code) && this.g.sailing.owned) this.openScreen('chart');
       else if (b.journal.includes(e.code)) this.screens.open('journal');
       else if (b.inventory.includes(e.code)) { e.preventDefault(); this.screens.open('hold'); }
     }
@@ -417,7 +590,8 @@ export class Town {
     const w = window.innerWidth, h = window.innerHeight;
     const items: Parameters<typeof g.hud.setMarkers>[0] = [];
     for (const c of this.critters) {
-      c.cat.root.visible = c.island === this.island;
+      // Seen from the boat as well as on their own island, but not from across the bay.
+      c.cat.root.visible = c.island === this.island || c.cat.root.position.distanceTo(g.pos) < 140;
       if (!c.cat.root.visible) continue;
       c.cat.update(dt, g.pos);
       // The cat says hello when you walk up to it.
@@ -440,12 +614,39 @@ export class Town {
       if (!kind && d > 12) continue;
       items.push({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, kind, label: d < 12 && this.talking !== id ? npc(id).name : null, alpha: d > 30 ? 0.6 : 1 });
     }
-    const lamp = this.places.get('lighthouse-lamp');
-    if (lamp && questStatus(s, 'hb-06-relight') === 'active' && !this.lampLit && this.island === 'gull-point') {
-      const v = new Vector3(lamp.x, (g.groundAt(lamp.x, lamp.z) ?? 10) + 3, lamp.z).project(g.camera);
-      if (v.z < 1) items.push({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, kind: 'place', glyph: '✦', label: null, alpha: 1 });
+    // The goal, when it is a place: a star over it. From the boat it shows from any distance, with how far.
+    const goal = this.goalTarget(), aboard = g.sailing.aboard;
+    if (goal && !this.blocking) {
+      const d = Math.hypot(goal.x - g.pos.x, goal.z - g.pos.z);
+      const isPerson = !!currentGoal(s).npc || s.hold.length >= s.holdCapacity;
+      if (aboard ? d > 14 : !isPerson && d < 95) {
+        const v = new Vector3(goal.x, goal.y, goal.z).project(g.camera);
+        if (v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05) items.push({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, kind: 'place', glyph: '✦', label: aboard && d > 40 ? `${Math.round(d / 5) * 5} m` : null, alpha: 1 });
+      }
+    }
+    // On foot with somewhere to sail to: an anchor over the boat, so finding her is never a hunt.
+    const sail = g.sailing;
+    if (goal && !aboard && !this.blocking && sail.owned && !sail.busy && this.islandAt(_v.set(goal.x, 0, goal.z)) !== this.island) {
+      const d = Math.hypot(sail.boat.x - g.pos.x, sail.boat.z - g.pos.z);
+      if (d > 7 && d < 260) {
+        const v = new Vector3(sail.boat.x, 4.4, sail.boat.z).project(g.camera);
+        if (v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05) items.push({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, kind: 'place', glyph: '⚓', label: d > 40 ? sail.def!.name.replace(/^The /, '') : null, alpha: 1 });
+      }
     }
     g.hud.setMarkers(items);
+    // The kettle steams for as long as it sits on its stones.
+    const kettle = g.world.kettle;
+    if (kettle?.visible) {
+      this.steamT -= dt;
+      if (this.steamT <= 0 && kettle.getWorldPosition(_v).distanceTo(g.pos) < 70) {
+        this.steamT = 0.22;
+        g.fx.spray.burst(_v.add(_up), 1, this.white, 0.12, 0.5, 1.8, 0.16, -0.35);
+      }
+    }
     this.dialogue.update(dt);
   }
 }
+
+const _v = new Vector3(), _up = new Vector3(0, 0.32, 0);
+/** The chart place an island belongs to: the three stacks of the Teeth are one place. */
+const chartPlaceOf = (island: string) => (island.startsWith('teeth-') ? 'the-teeth' : island);

@@ -2,6 +2,30 @@
 
 Newest first. Each entry: date, decision, why.
 
+## 2026-11-13 — Sailing is an arcade model with a hard rule about the bottom
+The skiff has a throttle, a rudder that bites with speed, drag, and a set of hull sample points that may never sit in less water than her draft (`core/boat.ts`). She slides along a shore instead of stopping dead, and when a turn is blocked she is worked toward deeper water so the helm alone always gets her off. No wind direction. Why: feel first. Tacking against a true wind would make every errand slower and add nothing a fishing game needs; a boat that wedges in the shallows is the worst thing sailing can do, so the rule that prevents it is a test.
+
+## 2026-11-13 — Places are found by sailing to them; fast travel only between moorings
+A chart place is added (and pays once) when the boat comes inside its circle. From a mooring the chart can carry the boat to any mooring whose place is known, and the passage costs time of day. Why: the directive asks for free sailing and discovery with a clear next goal. Finding a place has to be done by hand once; after that the crossing should not be a chore. Open water cannot start a passage, so the chart is never an escape from the fog or a shortcut past sailing somewhere new.
+
+## 2026-11-13 — Pell's ferry ends when the player has a boat
+With a skiff owned Pell offers no more rides and stands at the Hearthbay dock (flag `pell-home`) once the player has sailed anywhere but Gull Point. Why: two ways to cross the same water would leave the player's boat stranded on the wrong island, and Pell giving up his boat is the story beat.
+
+## 2026-11-13 — One reach for stepping ashore and for climbing back in
+A landing is only offered within 6.4 m of the hull, and boarding reaches 0.6 m further than that, both measured from the hull and not from the middle of the boat. Why: the two used different measures (7.5 m from the middle to land, 6 m from the hull to board), and the fresh reviewer found shelving shores on Kettle Isle and Hearthbay where the player could step off and never get back aboard, with Pell's ferry gone and no mooring near. A test now runs the skiff at every island from all round.
+
+## 2026-11-13 — The Twofold Flounder lives only at the Teeth
+It used to bite anywhere in open water, so "What Bites at the Teeth" could be finished without going there. Why: the errand is the reason to sail to the Teeth, and deep water there should hold what the rest of the bay does not.
+
+## 2026-11-13 — The wake is drawn by the water, not on it
+The skiff's wake is foam computed in the water shader from her recorded track, not a ribbon mesh laid over the surface. Why: the ribbon was depth-tested against water whose real height (depth fade, level of detail, sideways wave motion) the CPU cannot match, so from above most of it was hidden and what showed looked like two rails.
+
+## 2026-11-13 — The region's edge is the Murmur Fog
+Inside the last 110 m of the region the sea hums, a pale violet fog closes in from the horizon up, and the boat is slowed and then pushed back; the chart says a fog lamp is needed. Why: an invisible wall is the cheapest edge and the worst; this one can be seen coming, is part of the mystery and names the next gate (Mossglass Fen).
+
+## 2026-11-13 — The camera comes in beside tall ground instead of climbing it
+If the ground between the player and the camera stands more than 2.5 m above the sight line, the camera moves in along the line. Why: fishing beside the Teeth put the camera on top of a sea stack, looking straight down.
+
 ## 2026-11-13 — The camera looks the way the player faces, not at the player
 The camera sits to one side of the player (0.9 m walking, 1.5 m fishing) and the point it looks at is moved sideways by the same amount, so the view is parallel to the player's facing and to the cast. Why: Lawson reported that casts "tend to go off to the left". Measured: the camera looked back at the player's head from its offset, which turned the view 10 degrees away from the cast; the player stood dead centre and the landing ring sat 12 to 16 percent of the half-screen to the left. Now the difference is 0 degrees and the ring sits within 7 percent of centre. `e2e/play.cjs` fails if the view and the cast differ by more than 1.5 degrees or the landing mark leaves the middle of the screen.
 

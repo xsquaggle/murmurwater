@@ -9,6 +9,10 @@ import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js
 export const MODEL_PATHS = {
   player: 'models/characters/player.glb',
   skiff: 'models/boats/skiff.glb',
+  sailRig: 'models/boats/sail-rig.glb',
+  buoy: 'models/props/buoy.glb',
+  chest: 'models/props/chest.glb',
+  chestOpen: 'models/props/chest-open.glb',
   crate: 'models/props/crate.glb',
   barrel: 'models/props/barrel.glb',
   tackleBox: 'models/props/tackle-box.glb',

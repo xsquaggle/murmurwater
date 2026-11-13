@@ -79,7 +79,8 @@ body.titled .hud { opacity: 0; }
 .cc-lore { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-2); margin-top: 8px; line-height: 1.35; }
 .cc-warn { margin-top: 8px; font-weight: 800; color: #C2493F; font-size: 13px; }
 
-.toasts { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+/* Below the goal card, which a long goal makes two lines tall: a wide toast must not run under its corner. */
+.toasts { position: absolute; left: 50%; top: 108px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .toast { background: rgba(59,42,79,.9); color: var(--bone); padding: 8px 18px; border-radius: 999px; font-weight: 800; font-size: 16px; animation: tin .3s ease-out; transition: opacity .5s, transform .5s; }
 .toast.good { background: rgba(63,143,110,.95); } .toast.bad { background: rgba(178,72,64,.95); } .toast.gold { background: linear-gradient(90deg, #C98E2A, #F0A23A); color: #3B2A4F; }
 .toast.out { opacity: 0; transform: translateY(-10px); }
@@ -91,6 +92,7 @@ body.titled .hud { opacity: 0; }
 .hint kbd, .prompt kbd { display: inline-block; background: var(--bone); color: var(--ink); border-radius: 6px; padding: 0 7px; margin: 0 3px; font: 800 13px/20px var(--sans); box-shadow: 0 2px 0 rgba(59,42,79,.6); }
 .prompt { position: absolute; left: 50%; top: 58%; transform: translateX(-50%); background: rgba(242,227,198,.95); border: 2px solid var(--ink); border-radius: 12px; padding: 6px 14px; font-weight: 800; opacity: 0; transition: opacity .2s; }
 .prompt.on { opacity: 1; }
+.prompt.low { top: 76%; }
 
 .title { position: absolute; inset: 0; pointer-events: auto; cursor: pointer; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(ellipse at 50% 60%, rgba(11,46,54,0) 0%, rgba(11,46,54,.35) 60%, rgba(20,16,40,.75) 100%); transition: opacity .9s; }
@@ -102,6 +104,25 @@ body.titled .hud { opacity: 0; }
 @keyframes breathe { 50% { opacity: .4 } }
 .fatal { position: absolute; inset: 30% 20%; background: var(--bone); border: 2px solid var(--ink); border-radius: 16px; padding: 24px; font-weight: 700; pointer-events: auto; }
 .loading { position: absolute; left: 50%; bottom: 9vh; transform: translateX(-50%); font: 500 15px/1 'Nunito Variable', sans-serif; letter-spacing: .08em; color: #F2E3C6; opacity: .8; z-index: 30; }
+
+.compass { position: absolute; left: 50%; top: 16px; width: 420px; margin-left: -210px; opacity: 0; transform: translateY(-8px); transition: opacity .35s, transform .35s; }
+.compass.on { opacity: 1; transform: none; }
+.cp-win { position: relative; height: 34px; overflow: hidden; border-radius: 999px; background: rgba(242,227,198,.92); border: 2px solid rgba(59,42,79,.85);
+  box-shadow: 0 3px 0 rgba(59,42,79,.35), 0 8px 20px rgba(11,46,54,.25); }
+.cp-fade { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(90deg, transparent 2%, #000 12%, #000 88%, transparent 98%); mask-image: linear-gradient(90deg, transparent 2%, #000 12%, #000 88%, transparent 98%); }
+.cp-strip { position: absolute; left: 0; top: 0; height: 100%; will-change: transform; }
+.cp-tick { position: absolute; top: 0; height: 100%; width: 40px; margin-left: -20px; text-align: center; font: 800 12px/38px var(--sans); color: var(--ink-2); letter-spacing: .04em; }
+.cp-tick::before { content: ''; position: absolute; left: 50%; top: 0; width: 2px; height: 6px; margin-left: -1px; background: rgba(59,42,79,.45); border-radius: 1px; }
+.cp-tick.inter::before { height: 8px; }
+.cp-tick.card { font: 800 17px/40px var(--serif); color: var(--ink); }
+.cp-tick.card::before { height: 9px; background: var(--ink); }
+.cp-marks { position: absolute; inset: 0; }
+.cp-mark { position: absolute; bottom: 1px; width: 18px; height: 18px; margin-left: -9px; text-align: center; font: 900 15px/18px var(--serif); transition: opacity .2s; }
+.cp-mark.cp-goal { color: #E0862A; text-shadow: 0 0 8px rgba(255,179,92,.9), 0 1px 0 rgba(59,42,79,.5); bottom: 14px; font-size: 17px; }
+.cp-mark.cp-mooring::before { content: ''; position: absolute; left: 5px; bottom: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--lagoon); border: 1.5px solid var(--ink); }
+.cp-mark.pinned { opacity: .55; }
+.cp-needle { position: absolute; left: 50%; top: -5px; margin-left: -7px; border: 7px solid transparent; border-top: 9px solid var(--coral); filter: drop-shadow(0 1px 0 rgba(59,42,79,.8)); }
+.cp-kn { text-align: center; margin-top: 5px; font: 800 14px var(--sans); color: var(--bone); text-shadow: 0 2px 6px rgba(0,0,0,.6); letter-spacing: .04em; }
 
 /* ---------------------------------------------------------------- world markers */
 .markers { position: absolute; inset: 0; pointer-events: none; zoom: var(--ui-scale); }
@@ -206,6 +227,17 @@ body.titled .hud { opacity: 0; }
 .keys-btns { display: flex; gap: 6px; }
 .rebind { min-width: 92px; font: 800 13px var(--sans); background: #FFF9EC; border: 2px solid var(--ink); border-radius: 8px; padding: 4px 8px; cursor: pointer; color: var(--ink); }
 .rebind.busy { background: var(--wick); animation: pulse .8s infinite; }
+
+.screen-card.sc-chart { width: min(1010px, 96vw); }
+.chart-wrap { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start; }
+.chart-map { display: block; border: 2px solid var(--ink); border-radius: 8px; box-shadow: 0 3px 0 rgba(59,42,79,.35), inset 0 0 30px rgba(59,42,79,.2); }
+.chart-list { min-width: 0; }
+.chart-list > .muted:first-child { margin-top: 0; }
+.chart-place { border: 2px solid rgba(59,42,79,.25); border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; background: #FFF9EC; }
+.chart-place.here { border-color: var(--lagoon); box-shadow: 0 0 0 3px rgba(63,167,160,.22); }
+.chart-place .item-desc { margin: 3px 0 0; font-size: 13px; }
+.chart-here { font-weight: 800; font-size: 13px; color: #2F8079; }
+.chart-edge { font-family: var(--serif); font-style: italic; border-top: 1px dashed rgba(59,42,79,.3); padding-top: 8px; }
 
 /* ---------------------------------------------------------------- fade */
 .fade { position: absolute; inset: 0; background: #0B2E36; opacity: 0; pointer-events: none; transition: opacity .9s ease; display: flex; align-items: center; justify-content: center; }

@@ -1,4 +1,4 @@
-import { BackSide, Mesh, ShaderMaterial, SphereGeometry, Color, Vector3 } from 'three';
+import { BackSide, Mesh, ShaderMaterial, SphereGeometry, Color, Vector3, Vector4 } from 'three';
 import { NOISE_GLSL, SKY_FN_GLSL, SKY_UNIFORMS_GLSL } from './shaders/common.glsl';
 
 /** Uniforms shared between sky, water and anything that needs the sky. One object, many materials. */
@@ -12,6 +12,8 @@ export function createSkyUniforms() {
     uNight: { value: 0 },
     uTime: { value: 0 },
     uCloudCover: { value: 0.35 },
+    /** The Murmur Fog: its colour, and (w) how far it has closed in, 0..1. */
+    uMurk: { value: new Vector4(0, 0, 0, 0) },
   };
 }
 export type SkyUniforms = ReturnType<typeof createSkyUniforms>;

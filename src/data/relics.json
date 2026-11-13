@@ -1,5 +1,6 @@
 {
   "relics": [
-    { "id": "wicks-drawing", "name": "Wick's Drawing", "effect": { "luck": 0.03 }, "lore": "A crayon fish with too many legs. On the back, in a grown-up's handwriting: 'He draws them before they come.'" }
+    { "id": "wicks-drawing", "name": "Wick's Drawing", "effect": { "luck": 0.03 }, "lore": "A crayon fish with too many legs. On the back, in a grown-up's handwriting: 'He draws them before they come.'" },
+    { "id": "keepers-kettle", "name": "The Keeper's Kettle", "effect": { "biteSpeed": 0.06 }, "lore": "Dented tin, a rope handle. It has sat on a bare rock for twelve winters and it is warm. It is always nearly boiling." }
   ]
 }

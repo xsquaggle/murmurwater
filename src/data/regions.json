@@ -191,6 +191,13 @@
           "x": -162.0,
           "z": -124.6,
           "r": 3.6
+        },
+        {
+          "id": "keepers-kettle",
+          "name": "The kettle on Kettle Isle",
+          "x": -350.0,
+          "z": 31.0,
+          "r": 2.6
         }
       ],
       "critters": [
@@ -335,6 +342,106 @@
           "width": 3.0,
           "soft": 5.0,
           "surface": "dirt"
+        },
+        {
+          "type": "flat",
+          "x": -350.0,
+          "z": 31.0,
+          "r": 2.4,
+          "h": 1.25,
+          "soft": 3.0,
+          "surface": "dirt"
+        }
+      ],
+      "edgeHint": "The Murmur Fog turns the skiff back. She will need a fog lamp to go further.",
+      "chart": [
+        {
+          "id": "hearthbay",
+          "name": "Hearthbay",
+          "kind": "island",
+          "x": -20,
+          "z": 0,
+          "r": 0,
+          "note": "Home. Mara's stall, the dock, the good shelf."
+        },
+        {
+          "id": "gull-point",
+          "name": "Gull Point",
+          "kind": "island",
+          "x": -150,
+          "z": -125,
+          "r": 80,
+          "coins": 20,
+          "note": "The lighthouse stands here."
+        },
+        {
+          "id": "kettle-isle",
+          "name": "Kettle Isle",
+          "kind": "island",
+          "x": -360,
+          "z": 70,
+          "r": 105,
+          "coins": 60,
+          "note": "A quiet isle to the west. Somebody used to take their tea here."
+        },
+        {
+          "id": "the-teeth",
+          "name": "The Teeth",
+          "kind": "rocks",
+          "x": -265,
+          "z": 247,
+          "r": 80,
+          "coins": 60,
+          "note": "Three black rocks over deep water. Big fish. Bad luck, some say."
+        },
+        {
+          "id": "pips-bar",
+          "name": "Pip's Bar",
+          "kind": "bar",
+          "x": -150,
+          "z": 190,
+          "r": 55,
+          "coins": 30,
+          "note": "A spit of sand that is sometimes there."
+        }
+      ],
+      "chests": [
+        {
+          "id": "pips-bar-chest",
+          "x": -155,
+          "z": 187,
+          "yaw": 2.3,
+          "coins": 150,
+          "items": {
+            "glowgrub": 5
+          },
+          "text": "Sand in the hinges, and somebody’s initials scratched out of the lid."
+        }
+      ],
+      "moorings": [
+        {
+          "id": "hearthbay-dock",
+          "name": "Hearthbay dock",
+          "place": "hearthbay",
+          "x": -129.5,
+          "z": 27.6,
+          "heading": -1.5708
+        },
+        {
+          "id": "gull-landing",
+          "name": "Gull Point landing",
+          "place": "gull-point",
+          "x": -108.0,
+          "z": -109.0,
+          "heading": -1.5708
+        },
+        {
+          "id": "kettle-beach",
+          "name": "Kettle Isle beach",
+          "place": "kettle-isle",
+          "x": -319.0,
+          "z": 28.0,
+          "heading": -1.5708
         }
       ]
     }
