@@ -13,7 +13,8 @@ WHAT = {
     'page-turn': 'turning a page of a book', 'quest-accept': 'a short pleasant chime of bells', 'lamp-ignite': 'a flame igniting with a whoosh of fire', 'oars': 'rowing a boat, an oar stroke in water',
     'gulls': 'a seagull calling', 'waves-lap': 'gentle waves lapping at the shore', 'dock-creak': 'old wood creaking', 'cat-meow': 'a cat meowing', 'cat-purr': 'a cat purring',
     'sail-flap': 'a sail flapping in the wind', 'hull-wash': 'water running along the hull of a moving boat', 'boat-bump': 'a wooden boat bumping with a dull hollow thud', 'rope-creak': 'a rope creaking under tension',
-    'boat-board': 'stepping into a small wooden boat, a thump and a slosh', 'chart-open': 'unrolling a paper map', 'murmur': 'a low eerie wordless hum, a drone'}
+    'boat-board': 'stepping into a small wooden boat, a thump and a slosh', 'chart-open': 'unrolling a paper map', 'murmur': 'a low eerie wordless hum, a drone',
+    'chest-open': 'a wooden chest lid creaking open with a clink of coins'}
 names = list(WHAT); T = ears.embed_text([WHAT[n] for n in names]); out = {}
 for f in sorted(os.listdir(D)):
     if not f.endswith('.ogg'): continue

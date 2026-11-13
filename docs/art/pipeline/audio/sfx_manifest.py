@@ -143,6 +143,8 @@ def build(B):
     add('boat-board_1', [dict(src=KR % 'footstep02', speed=0.6), dict(src=MIR % 'oars.d', a=0.2, b=1.3, at=0.10, gain=-8, fi=0.05, fo=0.4)], level=-2, how='a step on wood played slower for weight, with the slosh of an oar stroke behind it')
     add('boat-board_2', [dict(src=WM % 'wood_close_01', speed=0.65), dict(src=TREE, a=3.83, b=4.3, at=0.12, gain=-12, fo=0.15), dict(src=MIR % 'oars.d', a=1.3, b=2.5, at=0.14, gain=-7, fi=0.05, fo=0.4)], level=-2, how='a wooden thump played slower for weight, a short creak and the slosh of an oar stroke behind it')
     one('chart-open', [dict(src=MAP % 'snd_use_map'), dict(src=PAPER % 'paper_sound_-_4', a=1.2, b=2.6, fi=0.05, fo=0.2)], level=-3)
+    add('chest-open_1', [dict(src=KR % 'creak1', a=0.14, b=0.66, speed=0.7, fi=0.005), dict(src=KR % 'handleCoins', b=0.45, at=0.45, gain=-7, fo=0.1)], level=-2, how='a wooden creak played slower, so it is a heavy lid, with a small clink of coins as the lid comes to rest')
+    add('chest-open_2', [dict(src=KR % 'creak3', a=0.015, b=0.34, speed=0.6, fi=0.004), dict(src=KR % 'handleCoins2', at=0.34, gain=8)], level=-2, how='a shorter creak played slower, with a small clink of coins after it')
 
     # ---- loops ----
     add('waves-lap_1', make=lambda: B.loop_cut(VIST, 234.0, 20.0, 2.0), loop=True, lufs=-22, sources=[dict(label(VIST), cut=[234.0, 254.0])], how='20 s cut with a 2 s crossfade into the audio before the loop start')

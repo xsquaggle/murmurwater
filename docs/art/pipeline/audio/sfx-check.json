@@ -483,6 +483,50 @@
    ]
   ]
  },
+ "chest-open_1.ogg": {
+  "rank": 1,
+  "top": "chest-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.28
+   ],
+   [
+    "Coin (dropping)",
+    0.13
+   ],
+   [
+    "Single-lens reflex camera",
+    0.04
+   ],
+   [
+    "Ding",
+    0.03
+   ]
+  ]
+ },
+ "chest-open_2.ogg": {
+  "rank": 1,
+  "top": "chest-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.25
+   ],
+   [
+    "Crunch",
+    0.21
+   ],
+   [
+    "Coin (dropping)",
+    0.06
+   ],
+   [
+    "Single-lens reflex camera",
+    0.06
+   ]
+  ]
+ },
  "coins_1.ogg": {
   "rank": 1,
   "top": "coins",
@@ -1056,7 +1100,7 @@
   ]
  },
  "line-creak_1.ogg": {
-  "rank": 3,
+  "rank": 4,
   "top": "dock-creak",
   "tags": [
    [
@@ -1122,7 +1166,7 @@
   ]
  },
  "line-snap_1.ogg": {
-  "rank": 9,
+  "rank": 10,
   "top": "cast-swish",
   "tags": [
    [
@@ -1166,7 +1210,7 @@
   ]
  },
  "line-snap_3.ogg": {
-  "rank": 22,
+  "rank": 23,
   "top": "cast-swish",
   "tags": [
    [

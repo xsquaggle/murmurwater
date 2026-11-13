@@ -2325,6 +2325,68 @@
   "bytes": 18763
  },
  {
+  "name": "chest-open_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak1.ogg",
+    "cut": [
+     0.14,
+     0.66
+    ],
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "handleCoins.ogg",
+    "cut": [
+     0,
+     0.45
+    ]
+   }
+  ],
+  "how": "a wooden creak played slower, so it is a heavy lid, with a small clink of coins as the lid comes to rest",
+  "file": "chest-open_1.ogg",
+  "seconds": 0.831,
+  "samples": 36654,
+  "decoded": 36526,
+  "peak_db": -7.5,
+  "loud100_db": -19.0,
+  "bytes": 13314
+ },
+ {
+  "name": "chest-open_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak3.ogg",
+    "cut": [
+     0.015,
+     0.34
+    ],
+    "speed": 0.6
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "handleCoins2.ogg"
+   }
+  ],
+  "how": "a shorter creak played slower, with a small clink of coins after it",
+  "file": "chest-open_2.ogg",
+  "seconds": 0.676,
+  "samples": 29790,
+  "decoded": 29662,
+  "peak_db": -9.0,
+  "loud100_db": -19.0,
+  "bytes": 11607
+ },
+ {
   "name": "waves-lap_1",
   "loop": true,
   "sources": [
