@@ -2,6 +2,9 @@
 
 Newest first. Each entry: date, decision, why.
 
+## 2026-11-13 — The camera looks the way the player faces, not at the player
+The camera sits to one side of the player (0.9 m walking, 1.5 m fishing) and the point it looks at is moved sideways by the same amount, so the view is parallel to the player's facing and to the cast. Why: Lawson reported that casts "tend to go off to the left". Measured: the camera looked back at the player's head from its offset, which turned the view 10 degrees away from the cast; the player stood dead centre and the landing ring sat 12 to 16 percent of the half-screen to the left. Now the difference is 0 degrees and the ring sits within 7 percent of centre. `e2e/play.cjs` fails if the view and the cast differ by more than 1.5 degrees or the landing mark leaves the middle of the screen.
+
 ## 2026-11-12 — Recorded sound through a bank with synth stand-ins; the mix is measured
 Every recorded one-shot (`public/audio/sfx/<name>_<n>.ogg`) plays through `AudioEngine.sfx`, which picks a variation other than the last one and drifts the pitch a little; if the file has not loaded the old synth version plays instead, so nothing is ever silent. Values that change every frame (cast charge creak, line hum) stay procedural. Music decodes one track at a time (a 140 s stereo track is about 50 MB decoded) and crossfades; it dips under voice lines. Why measured: nobody on the team can hear, so `e2e/audio.cjs` plays each sound over the music and sea bed and prints peak and RMS at the output; the rule is no clipping and foreground peaks at least 12 dB over the bed's average. Lawson's ear is the final check.
 

@@ -52,6 +52,19 @@ const { chromium } = require('playwright');
     while (g.session.phase === 'charging' && g.session.power < 0.6) g.simulate(1 / 60, () => ({ ...NO, primary: true }));
   });
   await shot('play-1-charging');
+  // The throw must go where the view points: the camera looks along the cast, and the landing marker sits
+  // near the middle of the screen (Lawson, v0.1.0: "it tends to go off to the left").
+  const aim = await page.evaluate(() => {
+    const g = window.__MW__.game; const V = g.pos.constructor;
+    for (let i = 0; i < 30; i++) g.presentOnce(1 / 60);
+    g.camera.updateMatrixWorld(true); g.camera.matrixWorldInverse.copy(g.camera.matrixWorld).invert();
+    const d = new V(); g.camera.getWorldDirection(d);
+    const off = Math.atan2(d.x, d.z) - g.castYaw;
+    const reach = g.session.reachAt(g.session.power);
+    const mark = new V(g.pos.x + Math.sin(g.castYaw) * reach, 0, g.pos.z + Math.cos(g.castYaw) * reach).project(g.camera);
+    return { viewVsCastDeg: +(Math.atan2(Math.sin(off), Math.cos(off)) * 180 / Math.PI).toFixed(2), markX: +mark.x.toFixed(3) };
+  });
+  console.log('aim', JSON.stringify(aim));
   await page.evaluate(() => { const g = window.__MW__.game; const NO = { primary: false, primaryPressed: false, primaryReleased: false, steer: 0, cancel: false };
     g.simulate(1 / 60, () => ({ ...NO, primaryReleased: true })); let k = 0; while (g.session.phase !== 'bite' && k++ < 3000) g.simulate(1 / 60, () => NO); });
   await shot('play-2-bite');
@@ -81,7 +94,9 @@ const { chromium } = require('playwright');
   await shot('play-5-sold');
   if (errors.length) console.log('ERRORS:\n' + errors.join('\n'));
   await browser.close();
-  const ok = result.landed >= 3 && sold.after > sold.before && errors.length === 0 && result.log.every((l) => !l.startsWith('stuck'));
+  const aimed = Math.abs(aim.viewVsCastDeg) < 1.5 && Math.abs(aim.markX) < 0.12;
+  if (!aimed) console.log('AIM OFF: the cast does not go where the camera looks');
+  const ok = aimed && result.landed >= 3 && sold.after > sold.before && errors.length === 0 && result.log.every((l) => !l.startsWith('stuck'));
   console.log(ok ? 'PLAYTHROUGH OK' : 'PLAYTHROUGH FAILED');
   process.exit(ok ? 0 : 1);
 })();

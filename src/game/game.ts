@@ -65,6 +65,7 @@ export class Game {
   /** Bots: step and update everything but skip drawing (for frames between screenshots). */
   skipRender = false;
   private talkSwing = 0;
+  private camShoulder = 0.9;
   private stride = 0.5;
   private talkSwingWant: number | null = null;
   private idleSince = 0;
@@ -144,7 +145,8 @@ export class Game {
     this.camYaw = this.yaw; this.faceYaw = this.yaw;
     this.camTarget.copy(this.pos).add(new Vector3(0, 1.6, 0));
     this.camAim.copy(this.camTarget);
-    const cx = this.pos.x - Math.sin(this.yaw) * this.camDist, cz = this.pos.z - Math.cos(this.yaw) * this.camDist;
+    this.camShoulder = 0.9;
+    const cx = this.pos.x - Math.sin(this.yaw) * this.camDist + Math.cos(this.yaw) * 0.9, cz = this.pos.z - Math.cos(this.yaw) * this.camDist - Math.sin(this.yaw) * 0.9;
     this.camera.position.set(cx, Math.max(this.pos.y + 2.2, this.world.hf.height(cx, cz) + 1.2, 1), cz);
   }
 
@@ -445,11 +447,15 @@ export class Game {
     // on the float, where the fish shadows are.
     const watching = ph === 'waiting' || ph === 'bite';
     const pitch = talk ? Math.max(0.1, Math.min(this.camPitch, 0.2)) : watching ? Math.max(0.46, Math.min(0.75, this.camPitch + 0.12)) : fishingView ? Math.max(0.16, Math.min(0.6, this.camPitch)) : this.camPitch;
-    const shoulder = fishingView ? 1.5 : talk ? 0 : 0.9;
+    // The camera sits to one side of the player and looks the way they face, not at them: the point it
+    // looks at is moved sideways by the same amount. So the view is parallel to the cast, and a throw goes
+    // straight up the screen instead of veering off to one side.
+    this.camShoulder += ((fishingView ? 1.5 : talk ? 0 : 0.9) - this.camShoulder) * Math.min(1, dt * 5);
+    const sideX = Math.cos(camYaw) * this.camShoulder, sideZ = -Math.sin(camYaw) * this.camShoulder;
     const want = new Vector3(
-      this.camTarget.x - Math.sin(camYaw) * Math.cos(pitch) * dist + Math.cos(camYaw) * shoulder,
+      this.camTarget.x - Math.sin(camYaw) * Math.cos(pitch) * dist + sideX,
       this.camTarget.y + Math.sin(pitch) * dist + 0.3,
-      this.camTarget.z - Math.cos(camYaw) * Math.cos(pitch) * dist - Math.sin(camYaw) * shoulder,
+      this.camTarget.z - Math.cos(camYaw) * Math.cos(pitch) * dist + sideZ,
     );
     this.camKick *= Math.exp(-dt * 5); this.fovKick *= Math.exp(-dt * 4);
     want.x += Math.sin(this.castYaw) * this.camKick * this.shakeScale; want.z += Math.cos(this.castYaw) * this.camKick * this.shakeScale;
@@ -459,7 +465,7 @@ export class Game {
     this.shake = Math.max(0, this.shake - dt * 1.5);
     const tension = fs?.tension ?? 0;
     const sh = (this.shake * 0.08 + Math.max(0, tension - 0.8) * 0.03 + (ph === 'charging' ? Math.max(0, this.session.power - 0.75) * 0.05 : 0)) * this.shakeScale;
-    this.camera.lookAt(this.camAim.x + (Math.random() - 0.5) * sh, this.camAim.y + (Math.random() - 0.5) * sh, this.camAim.z);
+    this.camera.lookAt(this.camAim.x + sideX + (Math.random() - 0.5) * sh, this.camAim.y + (Math.random() - 0.5) * sh, this.camAim.z + sideZ);
     if (this.debugCam) { this.camera.position.copy(this.debugCam.pos); this.camera.lookAt(this.debugCam.look); }
     // Field of view: closes in as the cast winds up, punches wide on release, tightens with line tension.
     const fovWant = 55 + (ph === 'fighting' ? -4 * tension : 0) + (ph === 'charging' ? -5 * this.session.power : 0) + (ph === 'waiting' || ph === 'bite' ? -7 : 0);
