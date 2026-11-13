@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-11-13, phase 2 first slice (boats and free sailing), v0.2.0.
+Last updated: 2026-11-13, phase 2 first slice (boats and free sailing). v0.2.0 was released from d8af058 after a fresh reviewer pass and green checks; the next slice is the economy simulator and gear tuning.
 
 ## Start here (new session)
 1. Read `docs/DIRECTIVE.md` (the brief, verbatim) and this file.
@@ -42,7 +42,7 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 
 ## Known issues
 - The sailing sounds, the murmur and the open-water theme were levelled by measurement; nobody has heard them in play.
-- Seated at the tiller, the hem of the coat passes through the thwart (it cannot fold), and a stowed oar lies beside the right hip.
+- Seated at the tiller, the hem of the coat passes through the thwart (it cannot fold). The oars stowed in the skiff model lie beside the helmsman's right hip and at the standing player's knee; the asset thread has offered to move them.
 - The sail bot is slow on SwiftShader (about 10 minutes at medium quality, run alone). Run the Chromium bots one at a time: two at once on this 4-core, 13 GB machine ran 15 to 40 times slower and one was killed for memory.
 - Steep harbour cliff shows large flat facets; Gull Point arrival faces the hillside; some houses float slightly.
 - Nobody has heard the mix: levels are set by measurement (`e2e/audio.cjs`). To check by ear: line snap, bite dunk, hook set, the day theme's instruments, music against voices; Mara's "Your aunt's, it was" and "stall", Pell's "Gull Point".
