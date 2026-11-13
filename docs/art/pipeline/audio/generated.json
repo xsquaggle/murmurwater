@@ -316,5 +316,11 @@
   "model": "mirelo_text_to_audio",
   "prompt": "Wooden boat bumping against a dock",
   "duration": 4
+ },
+ "open-water.a": {
+  "job": "8ea122e8-27ff-4009-8569-aa67e4349ced",
+  "model": "elevenlabs_music_v2_5",
+  "prompt": "Instrumental sailing theme for a cozy fishing and sailing video game: open water on a bright, breezy day. D major, a light rolling 6/8 at a steady 104 BPM. A wooden tin whistle plays an airy, hummable melody built on a rising three-note figure answered by a gentle falling phrase, with long breathy notes like wind; fingerpicked nylon-string guitar ripples underneath in flowing arpeggios like small waves; a concertina holds soft, swelling chords; light upright bass on the downbeats; no drums. Lighter, higher and more open than a village tune, with lots of air and space. Once in a while a slightly detuned music box echoes the end of a phrase and lands on one subtly wrong note. No vocals. The same steady tempo, instrumentation and energy from the very first second to the last: no intro, no build-up, no ritardando, no final chord, because it plays as a seamless loop.",
+  "duration": 140
  }
 }

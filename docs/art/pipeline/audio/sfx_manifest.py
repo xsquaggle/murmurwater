@@ -23,6 +23,9 @@ PACKS = {   # path prefix -> (short name, title, author, page)
     'oga/water-waves/': ('transitking', 'Water Waves', 'transitking', OGA + 'water-waves'),
     'cc0/kenney-rpg/': ('kenney-rpg', '50 RPG sound effects', 'Kenney', OGA + '50-rpg-sound-effects'),
     'cc0/kenney-interface/': ('kenney-ui', 'Interface Sounds', 'Kenney', OGA + 'interface-sounds'),
+    'oga/100-cc0-metal-and-wood-sfx/': ('rubberduck-wood', '100 CC0 metal and wood SFX', 'rubberduck', OGA + '100-cc0-metal-and-wood-sfx'),
+    'oga/opening-and-closing-a-map-sounds/': ('springspring-map', 'Opening and Closing a Map Sounds', 'Spring Spring', OGA + 'opening-and-closing-a-map-sounds'),
+    'oga/various-paper-sound-effects/': ('luckius-paper', 'Various Paper Sound Effects', 'Luckius', OGA + 'various-paper-sound-effects'),
 }
 BAM = 'oga/swish-bamboo-stick-weapon-swhoshes/swoshes.x/swosh-%02d.flac'
 FISH = 'oga/fisheefects/FisheefectsComplete.x/'
@@ -40,6 +43,9 @@ VIST = 'oga/sea-and-river-wave-sounds/VistulaShort_0.mp3'
 TK = 'oga/water-waves/wave_%02d_cc0-11505__transitking__wavesound.flac'
 KR = 'cc0/kenney-rpg/OGG/%s.ogg'
 KU = 'cc0/kenney-interface/Audio/%s.ogg'
+WM = 'oga/100-cc0-metal-and-wood-sfx/100-CC0-wood-metal-SFX.x/%s.ogg'
+MAP = 'oga/opening-and-closing-a-map-sounds/%s.wav'
+PAPER = 'oga/various-paper-sound-effects/%s.mp3'
 MIR = 'sfx/raw/%s.mp3'
 JOBS = {k: v['job'] for k, v in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'generated.json'))).items()}   # generated clips: name -> job id (prompts are in the same file)
 
@@ -128,6 +134,15 @@ def build(B):
 
     # ---- sailing ----
     one('sail-flap', [dict(src=MIR % 'sail-flap.a', a=a, b=b, hp=80, fi=0.03, fo=fo) for a, b, fo in ((0.25, 1.2, 0.2), (1.2, 2.0, 0.2), (2.0, 3.55, 0.25))], trim=False, how='one gust of a generated take, with the wind rumble below 80 Hz removed')
+    add('boat-bump_1', [dict(src=WM % 'wood_misc_07', speed=0.6), dict(src=PEL + 'sand_footsteps_0.mp3', a=0.83, b=1.5, gain=-10, at=0.02, fi=0.01, fo=0.12, lp=5000)], how='a wooden knock played slower, so it is heavy and hollow, with a scrape of sand under it')
+    add('boat-bump_2', [dict(src=MIR % 'boat-bump.a', a=1.10, b=1.79, fi=0.01, fo=0.2)], how='one thud of a generated take')
+    add('boat-bump_3', [dict(src=WM % 'wood_hit_05', speed=0.5), dict(src=WM % 'wood_hit_09', speed=0.6, at=0.16, gain=-7)], how='two wooden knocks played slower, the second softer: the hull touches and settles')
+    add('rope-creak_1', [dict(src=TREE, a=3.78, b=4.86, fi=0.01, fo=0.15)], level=-3, how='a cut of a creaking tree')
+    add('rope-creak_2', [dict(src=TREE, a=2.0, b=3.6, fi=0.01, fo=0.15)], level=-3, how='a cut of a creaking tree')
+    add('rope-creak_3', [dict(src=TREE, a=0.08, b=1.9, speed=1.5, fi=0.01, fo=0.15)], level=-3, how='the stretch that the dock creak slows down, played faster here, so it is tighter and higher')
+    add('boat-board_1', [dict(src=KR % 'footstep02', speed=0.6), dict(src=MIR % 'oars.d', a=0.2, b=1.3, at=0.10, gain=-8, fi=0.05, fo=0.4)], level=-2, how='a step on wood played slower for weight, with the slosh of an oar stroke behind it')
+    add('boat-board_2', [dict(src=WM % 'wood_close_01', speed=0.65), dict(src=TREE, a=3.83, b=4.3, at=0.12, gain=-12, fo=0.15), dict(src=MIR % 'oars.d', a=1.3, b=2.5, at=0.14, gain=-7, fi=0.05, fo=0.4)], level=-2, how='a wooden thump played slower for weight, a short creak and the slosh of an oar stroke behind it')
+    one('chart-open', [dict(src=MAP % 'snd_use_map'), dict(src=PAPER % 'paper_sound_-_4', a=1.2, b=2.6, fi=0.05, fo=0.2)], level=-3)
 
     # ---- loops ----
     add('waves-lap_1', make=lambda: B.loop_cut(VIST, 234.0, 20.0, 2.0), loop=True, lufs=-22, sources=[dict(label(VIST), cut=[234.0, 254.0])], how='20 s cut with a 2 s crossfade into the audio before the loop start')

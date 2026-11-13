@@ -65,6 +65,116 @@
    ]
   ]
  },
+ "boat-board_1.ogg": {
+  "rank": 1,
+  "top": "boat-board",
+  "tags": [
+   [
+    "Slam",
+    0.11
+   ],
+   [
+    "Slosh",
+    0.06
+   ],
+   [
+    "Speech",
+    0.05
+   ],
+   [
+    "Trickle, dribble",
+    0.04
+   ]
+  ]
+ },
+ "boat-board_2.ogg": {
+  "rank": 2,
+  "top": "boat-bump",
+  "tags": [
+   [
+    "Sound effect",
+    0.1
+   ],
+   [
+    "Door",
+    0.08
+   ],
+   [
+    "Water",
+    0.08
+   ],
+   [
+    "Slam",
+    0.05
+   ]
+  ]
+ },
+ "boat-bump_1.ogg": {
+  "rank": 1,
+  "top": "boat-bump",
+  "tags": [
+   [
+    "Door",
+    0.1
+   ],
+   [
+    "Music",
+    0.1
+   ],
+   [
+    "Drum",
+    0.07
+   ],
+   [
+    "Sound effect",
+    0.06
+   ]
+  ]
+ },
+ "boat-bump_2.ogg": {
+  "rank": 1,
+  "top": "boat-bump",
+  "tags": [
+   [
+    "Sound effect",
+    0.12
+   ],
+   [
+    "Roar",
+    0.04
+   ],
+   [
+    "Grunt",
+    0.03
+   ],
+   [
+    "Stomach rumble",
+    0.03
+   ]
+  ]
+ },
+ "boat-bump_3.ogg": {
+  "rank": 1,
+  "top": "boat-bump",
+  "tags": [
+   [
+    "Knock",
+    0.38
+   ],
+   [
+    "Door",
+    0.1
+   ],
+   [
+    "Slam",
+    0.02
+   ],
+   [
+    "Thunk",
+    0.01
+   ]
+  ]
+ },
  "bobber-plop_1.ogg": {
   "rank": 1,
   "top": "bobber-plop",
@@ -326,6 +436,50 @@
    [
     "Domestic animals, pets",
     0.16
+   ]
+  ]
+ },
+ "chart-open_1.ogg": {
+  "rank": 1,
+  "top": "chart-open",
+  "tags": [
+   [
+    "Crack",
+    0.07
+   ],
+   [
+    "Crunch",
+    0.05
+   ],
+   [
+    "Crackle",
+    0.05
+   ],
+   [
+    "Breaking",
+    0.03
+   ]
+  ]
+ },
+ "chart-open_2.ogg": {
+  "rank": 1,
+  "top": "chart-open",
+  "tags": [
+   [
+    "Crackle",
+    0.06
+   ],
+   [
+    "Breaking",
+    0.05
+   ],
+   [
+    "Crack",
+    0.04
+   ],
+   [
+    "Scrape",
+    0.04
    ]
   ]
  },
@@ -1470,6 +1624,72 @@
    [
     "Maraca",
     0.04
+   ]
+  ]
+ },
+ "rope-creak_1.ogg": {
+  "rank": 2,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Coin (dropping)",
+    0.09
+   ],
+   [
+    "Sound effect",
+    0.07
+   ],
+   [
+    "Rattle",
+    0.06
+   ],
+   [
+    "Speech",
+    0.03
+   ]
+  ]
+ },
+ "rope-creak_2.ogg": {
+  "rank": 5,
+  "top": "hook-set",
+  "tags": [
+   [
+    "Coin (dropping)",
+    0.05
+   ],
+   [
+    "Single-lens reflex camera",
+    0.04
+   ],
+   [
+    "Sound effect",
+    0.04
+   ],
+   [
+    "Speech",
+    0.03
+   ]
+  ]
+ },
+ "rope-creak_3.ogg": {
+  "rank": 3,
+  "top": "reel-spin",
+  "tags": [
+   [
+    "Sound effect",
+    0.1
+   ],
+   [
+    "Speech",
+    0.06
+   ],
+   [
+    "Music",
+    0.02
+   ],
+   [
+    "Bird",
+    0.02
    ]
   ]
  },

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """sfx_check.py [dir] : what each finished effect sounds like to two listeners that are not people:
-AudioSet tags (AST) and, with CLAP, where the sound's own description ranks among the descriptions of all 28 sounds."""
+AudioSet tags (AST) and, with CLAP, where the sound's own description ranks among the descriptions of all the sounds."""
 import json, os, sys, numpy as np, soundfile as sf
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import ears
 D = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'sfx', 'out')

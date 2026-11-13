@@ -28,7 +28,7 @@ def sting(src, name, end, fade, semitones=0):
     finish(x, sr, name)
 if __name__ == '__main__':
     only = sys.argv[1:]
-    for n in ('hearthbay-day', 'hearthbay-night', 'gull-point'):
+    for n in ('hearthbay-day', 'hearthbay-night', 'gull-point', 'open-water'):
         if only and n not in only: continue
         x, sr = sf.read(os.path.join(M, n + '.loop.wav'), dtype='float32'); finish(x, sr, n)
     for name, take, end, fade, semi in (('sting-quest', 'a', 3.6, 0.6, 0), ('sting-rare', 'a', 4.0, 1.6, 0),

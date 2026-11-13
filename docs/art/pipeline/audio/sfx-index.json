@@ -2068,6 +2068,263 @@
   "bytes": 18107
  },
  {
+  "name": "boat-bump_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_misc_07.ogg",
+    "speed": 0.6
+   },
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "sand_footsteps_0.mp3",
+    "cut": [
+     0.83,
+     1.5
+    ]
+   }
+  ],
+  "how": "a wooden knock played slower, so it is heavy and hollow, with a scrape of sand under it",
+  "file": "boat-bump_1.ogg",
+  "seconds": 0.681,
+  "samples": 30054,
+  "decoded": 31040,
+  "peak_db": -8.1,
+  "loud100_db": -17.1,
+  "bytes": 9842
+ },
+ {
+  "name": "boat-bump_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "boat-bump.a",
+    "job": "5d7799d2-ede2-4a93-a289-700dc5521340",
+    "cut": [
+     1.1,
+     1.79
+    ]
+   }
+  ],
+  "how": "one thud of a generated take",
+  "file": "boat-bump_2.ogg",
+  "seconds": 0.694,
+  "samples": 30605,
+  "decoded": 30477,
+  "peak_db": -7.6,
+  "loud100_db": -17.2,
+  "bytes": 9869
+ },
+ {
+  "name": "boat-bump_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_hit_05.ogg",
+    "speed": 0.5
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_hit_09.ogg",
+    "speed": 0.6
+   }
+  ],
+  "how": "two wooden knocks played slower, the second softer: the hull touches and settles",
+  "file": "boat-bump_3.ogg",
+  "seconds": 0.376,
+  "samples": 16590,
+  "decoded": 17600,
+  "peak_db": -0.7,
+  "loud100_db": -17.0,
+  "bytes": 7166
+ },
+ {
+  "name": "rope-creak_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     3.78,
+     4.86
+    ]
+   }
+  ],
+  "how": "a cut of a creaking tree",
+  "file": "rope-creak_1.ogg",
+  "seconds": 1.084,
+  "samples": 47804,
+  "decoded": 47804,
+  "peak_db": -8.1,
+  "loud100_db": -21.6,
+  "bytes": 18057
+ },
+ {
+  "name": "rope-creak_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     2.0,
+     3.6
+    ]
+   }
+  ],
+  "how": "a cut of a creaking tree",
+  "file": "rope-creak_2.ogg",
+  "seconds": 1.571,
+  "samples": 69302,
+  "decoded": 69302,
+  "peak_db": -2.9,
+  "loud100_db": -21.5,
+  "bytes": 19341
+ },
+ {
+  "name": "rope-creak_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     0.08,
+     1.9
+    ],
+    "speed": 1.5
+   }
+  ],
+  "how": "the stretch that the dock creak slows down, played faster here, so it is tighter and higher",
+  "file": "rope-creak_3.ogg",
+  "seconds": 1.204,
+  "samples": 53110,
+  "decoded": 53110,
+  "peak_db": -1.1,
+  "loud100_db": -21.8,
+  "bytes": 19481
+ },
+ {
+  "name": "boat-board_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep02.ogg",
+    "speed": 0.6
+   },
+   {
+    "kind": "generated",
+    "name": "oars.d",
+    "job": "f8bd08b2-0b41-48e9-947a-e83a78420486",
+    "cut": [
+     0.2,
+     1.3
+    ]
+   }
+  ],
+  "how": "a step on wood played slower for weight, with the slosh of an oar stroke behind it",
+  "file": "boat-board_1.ogg",
+  "seconds": 1.168,
+  "samples": 51526,
+  "decoded": 51526,
+  "peak_db": -1.3,
+  "loud100_db": -19.0,
+  "bytes": 14446
+ },
+ {
+  "name": "boat-board_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_close_01.ogg",
+    "speed": 0.65
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     3.83,
+     4.3
+    ]
+   },
+   {
+    "kind": "generated",
+    "name": "oars.d",
+    "job": "f8bd08b2-0b41-48e9-947a-e83a78420486",
+    "cut": [
+     1.3,
+     2.5
+    ]
+   }
+  ],
+  "how": "a wooden thump played slower for weight, a short creak and the slosh of an oar stroke behind it",
+  "file": "boat-board_2.ogg",
+  "seconds": 1.201,
+  "samples": 52978,
+  "decoded": 52978,
+  "peak_db": -4.4,
+  "loud100_db": -18.9,
+  "bytes": 14456
+ },
+ {
+  "name": "chart-open_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "springspring-map",
+    "file": "snd_use_map.wav"
+   }
+  ],
+  "how": "",
+  "file": "chart-open_1.ogg",
+  "seconds": 1.053,
+  "samples": 46422,
+  "decoded": 46422,
+  "peak_db": -5.0,
+  "loud100_db": -20.2,
+  "bytes": 14986
+ },
+ {
+  "name": "chart-open_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "luckius-paper",
+    "file": "paper_sound_-_4.mp3",
+    "cut": [
+     1.2,
+     2.6
+    ]
+   }
+  ],
+  "how": "",
+  "file": "chart-open_2.ogg",
+  "seconds": 1.39,
+  "samples": 61294,
+  "decoded": 61294,
+  "peak_db": -2.9,
+  "loud100_db": -20.1,
+  "bytes": 18763
+ },
+ {
   "name": "waves-lap_1",
   "loop": true,
   "sources": [
