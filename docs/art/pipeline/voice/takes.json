@@ -239,6 +239,102 @@
   "hash": "c8c124f2",
   "prompt": "[slow, dry, gentle] Good. Then you're the keeper now. Nobody chooses it. Take the skiff, it was hers."
  },
+ "pell/hb-07-kettle.intro.0": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "5fa62bcb-74a2-4aab-a092-eab69f9839a9",
+  "voice_id": "30fc8796-ceb6-4a66-b3a7-4a145ef7f346",
+  "hash": "48c29cf5",
+  "prompt": "[slow, steady, instructive] She's light on the helm. Push her on and she goes, let her be and she glides. Never cast till she's settled."
+ },
+ "pell/hb-07-kettle.intro.1": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "578edcee-1f29-4d40-8bae-824b7e428cdf",
+  "voice_id": "30fc8796-ceb6-4a66-b3a7-4a145ef7f346",
+  "hash": "8a8c0f80",
+  "prompt": "[slow, low, fond] South-west of here there's an isle with a kettle on it. The keeper took her tea there, tides she wanted quiet."
+ },
+ "pell/hb-07-kettle.intro.2": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "a067a61b-29c7-43b1-9377-b4c161aee754",
+  "voice_id": "30fc8796-ceb6-4a66-b3a7-4a145ef7f346",
+  "hash": "e369c95a",
+  "prompt": "[slow, low, uneasy] Go and see if it's still warm. It will be. That's the part I don't care for."
+ },
+ "pell/hb-07-kettle.reminder": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "cf0f7a80-5586-4de7-9097-8262389ecf30",
+  "voice_id": "30fc8796-ceb6-4a66-b3a7-4a145ef7f346",
+  "hash": "82cfd6a9",
+  "prompt": "[slow, dry] Kettle Isle. West of the cove, out past its mouth. You'll know the beach."
+ },
+ "pell/hb-07-kettle.outro.0": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "fde5a4e7-7333-4c38-a226-7c7e0a08f39f",
+  "voice_id": "30fc8796-ceb6-4a66-b3a7-4a145ef7f346",
+  "hash": "583e463e",
+  "prompt": "[slow, low, grave] Warm, was it. Twelve winters on a bare rock, and warm."
+ },
+ "pell/hb-07-kettle.outro.1": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "2e899bc3-6124-4757-a332-e4c9152e0d28",
+  "voice_id": "30fc8796-ceb6-4a66-b3a7-4a145ef7f346",
+  "hash": "d6146be9",
+  "prompt": "[slow, gentle, unhurried] Keep it. Her things go to whoever keeps the light."
+ },
+ "mara/hb-08-teeth.intro.0": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "7f848565-6611-4409-b802-b6eebb9be512",
+  "voice_id": "57ccb351-84d7-54ba-afd4-26b566ca6023",
+  "hash": "299b3040",
+  "prompt": "[warm, brisk] So he's given you the skiff. Good. It's sat at that dock like a held breath."
+ },
+ "mara/hb-08-teeth.intro.1": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "9dc58889-8f29-4c8b-ad7e-40c0a4f332c7",
+  "voice_id": "57ccb351-84d7-54ba-afd4-26b566ca6023",
+  "hash": "8a5ce1d6",
+  "prompt": "[warm, concerned] South-west there's three black rocks, the Teeth. Deep water. Nothing off them has reached my stall in a long while."
+ },
+ "mara/hb-08-teeth.intro.2": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "9f9556a4-a40c-41fe-9492-0d53de6391a7",
+  "voice_id": "57ccb351-84d7-54ba-afd4-26b566ca6023",
+  "hash": "eec2bf11",
+  "prompt": "[brisk] Bring me a Twofold Flounder. [dryly] And don't let it look at you with both faces at once."
+ },
+ "mara/hb-08-teeth.reminder": {
+  "take": 3,
+  "takes_recorded": 3,
+  "job": "d942ff35-f5df-4fc5-a322-2008768fdef9",
+  "voice_id": "57ccb351-84d7-54ba-afd4-26b566ca6023",
+  "hash": "e082e4f4",
+  "prompt": "[warm, matter-of-fact] The Teeth, south-west past the sandbar. Flounder sit deep, so give it line."
+ },
+ "mara/hb-08-teeth.outro.0": {
+  "take": 2,
+  "takes_recorded": 3,
+  "job": "8bcdf383-43f0-4ea0-9359-23bea7e48754",
+  "voice_id": "57ccb351-84d7-54ba-afd4-26b566ca6023",
+  "hash": "eec0bcc3",
+  "prompt": "[warm, approving] Oh, that's the one. Look at it. [wary] Looking at us."
+ },
+ "mara/hb-08-teeth.outro.1": {
+  "take": 1,
+  "takes_recorded": 1,
+  "job": "daf30e8e-612e-4ed3-b8ca-0e538fb267e2",
+  "voice_id": "57ccb351-84d7-54ba-afd4-26b566ca6023",
+  "hash": "51a7f1dc",
+  "prompt": "[warm, fond] My sister brought these in by the basket. [puzzled, unsettled] I don't know why I said that. I haven't got a sister."
+ },
  "mara/bark.0": {
   "take": 1,
   "takes_recorded": 1,

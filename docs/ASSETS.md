@@ -158,7 +158,7 @@ The auto-rigger only handles bipeds, so `rig-cat.mjs` builds the cat's skeleton,
 
 ## Voice lines (`public/audio/voice/`)
 
-The 40 spoken lines listed in `docs/voice/voice-lines.json`, one file per line at `public/audio/voice/<key>.mp3` (mono, 44.1 kHz, 128 kbps MP3, 204 s in total), with `voiced.json` recording the text hash each file was made for. All: Higgsfield `generate_audio`, model `elevenlabs_v4` (ElevenLabs text to speech), preset voices from the Higgsfield voice library, 2026-11-12, generated for this project. Each character has one voice, used for every line:
+The 52 spoken lines listed in `docs/voice/voice-lines.json`, one file per line at `public/audio/voice/<key>.mp3` (mono, 44.1 kHz, 128 kbps MP3, 282 s in total), with `voiced.json` recording the text hash each file was made for. All: Higgsfield `generate_audio`, model `elevenlabs_v4` (ElevenLabs text to speech), preset voices from the Higgsfield voice library, generated for this project: the first 40 lines on 2026-11-12, the 12 lines of the sailing quests (`pell/hb-07-kettle`, `mara/hb-08-teeth`) on 2026-11-13 with the same voices and tuning. Each character has one voice, used for every line:
 
 | Character | Preset voice | Voice id | Tuning after generation |
 |---|---|---|---|
@@ -166,11 +166,11 @@ The 40 spoken lines listed in `docs/voice/voice-lines.json`, one file per line a
 | Pell | Arthur | `30fc8796-ceb6-4a66-b3a7-4a145ef7f346` | pitch and formants 6 % lower, about 10 % slower (older, deeper) |
 | Wick | Raina | `1c3a4775-9afb-52c1-a2bf-b6543231a9a1` | pitch and formants 10 % higher at 3 % faster tempo (an adult voice nudged toward a nine-year-old's; first delivered at 25 %, lowered after Lawson found it too high, with the four quest lines re-recorded in a calmer delivery) |
 
-The voices were cast from trial takes of 14 library voices, measured for perceived age, accent and pace. Each line is sent with a short delivery direction in square brackets ahead of the text (the model acts on it and does not speak it); the exact prompt of every kept take is in `docs/art/pipeline/voice/takes.json`. 71 takes were recorded for the 40 lines: 31 were retakes or alternates, for a repeated word, a word two recognisers both misheard, quiet directions that pulled Mara's voice away from her other lines, second options for the lines heard first, and calmer, lower-pitched deliveries of Wick's lines.
+The voices were cast from trial takes of 14 library voices, measured for perceived age, accent and pace. Each line is sent with a short delivery direction in square brackets ahead of the text (the model acts on it and does not speak it); the exact prompt of every kept take is in `docs/art/pipeline/voice/takes.json`. 87 takes were recorded for the 52 lines: 35 were retakes or alternates, for a repeated word, a word two recognisers both misheard, quiet directions that pulled Mara's voice away from her other lines, second options for the lines heard first, calmer, lower-pitched deliveries of Wick's lines, two calmer takes of `mara/hb-08-teeth.outro.0`, whose first take ("[pleased]") drifted from her voice, and two of `mara/hb-08-teeth.reminder`, where one recogniser heard "Flounder sit" as "flown to sit".
 
 Processing (`docs/art/pipeline/voice/process.py`): high-pass, the speaker tuning above, cut to the speech with 0.03 s before and 0.08 s after (clicks after the speech are dropped), limiter at -1.5 dBFS, gain set so the encoded file measures -16 LUFS.
 
-Checks on the 40 finished files (`check.py`, `second.py`, `spk.py`, `browser-check.cjs` in the same folder): all decode in Chromium with at most 0.04 s of silence before and 0.08 s after the speech; loudness -15.9 to -16.1 LUFS, peaks at or below -1.2 dBFS; two speech recognisers transcribe every line as written apart from spellings of numbers and names; the age estimator hears Mara as 60 to 68 and Pell as 62 to 71, and hears Wick at the lower pitch as 18 to 23 (a 0.74 to 1.0 probability of being a child at the first, higher setting; his lines now sit at a median of 267 to 320 Hz); every take sits close to its own character's average voice (speaker similarity at least 0.72) and far from the other two (0.2 or less).
+Checks on the 52 finished files (`check.py`, `second.py`, `spk.py`, `browser-check.cjs` in the same folder): all decode in Chromium with at most 0.04 s of silence before and 0.08 s after the speech; loudness -15.9 to -16.1 LUFS, peaks at or below -1.2 dBFS; two speech recognisers transcribe every line as written apart from spellings of numbers and names and one homophone ("aisle" for "isle"); the age estimator hears Mara as 60 to 69 and Pell as 62 to 71, and hears Wick at the lower pitch as 18 to 23 (a 0.74 to 1.0 probability of being a child at the first, higher setting; his lines now sit at a median of 267 to 320 Hz); every take sits close to its own character's average voice (speaker similarity at least 0.72) and far from the other two (0.21 or less).
 
 | Key | Take kept | Job id |
 |---|---|---|
@@ -204,6 +204,18 @@ Checks on the 40 finished files (`check.py`, `second.py`, `spk.py`, `browser-che
 | `pell/hb-06-relight.outro.0` | 1 of 1 | `0310ec7e-b389-429b-95fe-70c4482e0e1d` |
 | `pell/hb-06-relight.outro.1` | 1 of 1 | `d9479568-fab1-487d-82c4-40195f526564` |
 | `pell/hb-06-relight.outro.2` | 1 of 1 | `6a7cbb93-2ca6-44be-af0b-cd79577ce481` |
+| `pell/hb-07-kettle.intro.0` | 1 of 1 | `5fa62bcb-74a2-4aab-a092-eab69f9839a9` |
+| `pell/hb-07-kettle.intro.1` | 1 of 1 | `578edcee-1f29-4d40-8bae-824b7e428cdf` |
+| `pell/hb-07-kettle.intro.2` | 1 of 1 | `a067a61b-29c7-43b1-9377-b4c161aee754` |
+| `pell/hb-07-kettle.reminder` | 1 of 1 | `cf0f7a80-5586-4de7-9097-8262389ecf30` |
+| `pell/hb-07-kettle.outro.0` | 1 of 1 | `fde5a4e7-7333-4c38-a226-7c7e0a08f39f` |
+| `pell/hb-07-kettle.outro.1` | 1 of 1 | `2e899bc3-6124-4757-a332-e4c9152e0d28` |
+| `mara/hb-08-teeth.intro.0` | 1 of 1 | `7f848565-6611-4409-b802-b6eebb9be512` |
+| `mara/hb-08-teeth.intro.1` | 1 of 1 | `9dc58889-8f29-4c8b-ad7e-40c0a4f332c7` |
+| `mara/hb-08-teeth.intro.2` | 1 of 1 | `9f9556a4-a40c-41fe-9492-0d53de6391a7` |
+| `mara/hb-08-teeth.reminder` | 3 of 3 | `d942ff35-f5df-4fc5-a322-2008768fdef9` |
+| `mara/hb-08-teeth.outro.0` | 2 of 3 | `8bcdf383-43f0-4ea0-9359-23bea7e48754` |
+| `mara/hb-08-teeth.outro.1` | 1 of 1 | `daf30e8e-612e-4ed3-b8ca-0e538fb267e2` |
 | `mara/bark.0` | 1 of 1 | `96dffe35-2807-4627-b126-912edf4da1b8` |
 | `mara/bark.1` | 1 of 1 | `2da9586a-90e3-440b-a1d3-0f6db986b432` |
 | `mara/bark.2` | 2 of 2 | `e978b504-08c7-4170-b4d8-981f2c1f49ea` |
