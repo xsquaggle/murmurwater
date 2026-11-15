@@ -64,9 +64,16 @@ Consecutive successful catches with no snaps build Rhythm (up to ×1.5 value at 
 
 ## 4. Automation (unlocks ~45 min in)
 Earns only while the game is open. Nothing accrues while closed (no offline earnings, by design).
-- **Lantern Pots:** placeable traps at discovered zones. Each pot rolls a catch from the zone's table every N seconds at reduced rarity and value (×0.25 baseline). Upgrades: speed, capacity, quality. Slots per region.
-- **Deckhands:** odd crew recruited through quests (a cat named Biscuit, a fog-person called Mister Hollis, etc.). Each fishes passively from the boat or dock, with a specialty (a species family or a rarity nudge).
-- Automation catches go to a separate **Pot Hold** that the player collects and sells. Automation is roughly 15–30% of active earn rate at matched progress, tuned by the simulator.
+
+**Lantern Pots (built, v0.3.0).** A pot is a wicker trap under a cork float with a small lantern on it. The player sets it by hand (F) in open water from a shore, a dock or over the side of the skiff, and it fishes on the game's own clock while the player does something else.
+- A pot only traps fish that are **already in the journal** and that live in the zone it sits in, so automation follows active play and never gets ahead of it. Set where the journal knows nothing, its lantern stays dim and the game says so.
+- One fish about every 50 s, rarer fish half as likely per tier as on a rod, worth 50% of a hand-caught one. No Strange traits, no Rhythm.
+- It holds 3 and **stops when it is full**, so it pays for coming back, not for waiting. A full pot beats slowly, shows on the compass, the chart and as a marker, and the HUD counts fish over room.
+- Hauling (F again, in reach on foot or from the boat) puts the fish in a separate pot basket that sells at the stall with the rest. An empty pot can be taken up and set somewhere else.
+- The first pot is a gift from Mara for a job (about 42 minutes in); two more can be bought (3 in all, a fourth through an Echo). Upgrades on her shelf: Brighter wicks (10% faster, 6 levels), Deeper baskets (+1 fish, 4 levels), Sweeter bait (+15% value, 4 levels).
+- Tuned by the simulator so pots are 10 to 25% of income for a player who keeps fishing.
+
+**Later:** Deckhands, odd crew recruited through quests (a cat named Biscuit, a fog-person called Mister Hollis). Each fishes passively from the boat or dock with a specialty.
 
 ## 5. Gear
 Rarity colours for gear: Common (driftwood grey), Fine (moss green), Rare (lagoon blue), Heirloom (lantern amber), Uncanny (violet).
@@ -79,6 +86,15 @@ Rarity colours for gear: Common (driftwood grey), Fine (moss green), Rare (lagoo
 | Wearables | Hat, Coat, Boots, Charm | Chests, quests, relic sets | Stat boosts; 2-piece and 4-piece set bonuses. |
 
 Rods reset on prestige? **No** — see 8.2. Rod *upgrade levels* do reset.
+
+**As built (v0.3.0).** Every number a piece of gear changes goes through one fold, `stats()` in `core/gear.ts`, which the game, the satchel's Gear page and the simulator all read.
+- **Rod tuning** 0 to 10 at Mara's: each level adds power, control, a little reach, grace and luck; the price starts at 15% of the rod's price and grows 1.9 times a level.
+- **Bait** has a ground: Sandworm for bottom feeders, Brine Shrimp for reef fish, Glowgrub for night fish and rare ones. Breadcrumbs are free and endless.
+- **Lures** ride the line above the bait, one at a time, and never wear out: Brass Spinner (bigger fish), Paper Moth (faster bites after dark), Tin Minnow (rarer fish; found, not sold).
+- **Creel**: five steps from the aunt's basket (12 slots) to the Keeper's Ice Chest (40), each also raising what fish sell for by 10%. The hold is the creel plus the boat plus a coat's pockets.
+- **Wearables**: hat, coat, boots, charm. Four plain ones on the shelf; four of **the keeper's own things** are found (Mara's job, the belfry chest, Pell, Wick's journal page) and count as a set: 2 worn, fish sell for 5% more; 4 worn, rarer fish and two more Rhythm stacks.
+- Luck compounds by tier, `(1 + luck)^tier`, so it matters most for the rarest fish.
+
 
 ## 6. Boats and the sea
 - The sea is one continuous 3D map: five regions arranged around the center, the Still Eye.
@@ -102,17 +118,26 @@ Rods reset on prestige? **No** — see 8.2. Rod *upgrade levels* do reset.
 - **Echoes** — prestige meta-currency, permanent.
 
 ### 8.2 The Drowned Bell (prestige)
-Unlocks after the region 1 story beat (~1.5 h). Ringing it turns the tide: the islands forget.
+Unlocks after the region 1 story beat. Ringing it turns the tide: the islands forget.
 - **Reset:** coins, rod upgrade levels, bait, Lantern Pot upgrades, boat upgrades, rotating quests.
 - **Kept:** Echoes, owned rods/lures/wearables, boats owned (but boat upgrades reset), relics, journal, story progress, discovered regions and fast travel, deckhands.
-- **Echoes earned:** `floor( k × (lifetime coins this run)^0.5 )` plus bonuses for new species and story beats. The formula is tuned in the simulator.
-- **Echo tree** (permanent): value multipliers, faster reel, longer bite window, more pot slots, starting coins, auto-sell, extra Rhythm cap, etc.
+- **Echoes earned:** `floor( k × (lifetime coins)^0.5 )` less the Echoes already given, so waiting never loses any. Bonuses for new species and story beats come later.
+- **Echo tree** (permanent): value multipliers, faster reel, longer bite window, more pot slots, starting coins, extra Rhythm cap, etc.
 - **Narrative:** people greet you as if you are new (with growing déjà vu lines each Turning). Some NPC dialogue and some fish exist only after N Turnings. The player is the only one who remembers — that is the point.
+
+**As built (v0.3.0).**
+- The Bell hangs in the Drowned Belfry, a church tower standing in the sea on a shoal north-west of Gull Point. Pell sends the player to find it (hb-09), explains it, then asks them to ring it (hb-10). Nothing about Echoes is shown before Pell has explained the Bell.
+- `k = 0.15`, power 0.5, on **lifetime** coins. The first ring, at about 75 minutes and 9,000 coins earned, gives about 14.
+- Taking the rope opens a page that says exactly what the tide takes, what stays, and how many Echoes the Bell will give. Ringing sells the catch on hand first, tolls twice, and the keeper wakes on the Hearthbay dock at first light with the skiff on her mooring.
+- **Taken:** coins, rod tuning, the creel, bait, pot upgrades (pots in the water come home), boat upgrades, notice board jobs, Rhythm. **Kept:** rods, lures, wearables, boats, pots owned, relics, Moonpearls, journal, chart, story, Echoes and what they bought.
+- Ten Echo upgrades in the satchel: Tidewise (fish sell for 15% more, 10 ranks), Quick Hands, Steady Line, Patient Float, Second Sight, Old Habits, Deep Pockets (coins at the start of each tide), Mara's Ledger (cheaper tuning), Lamp Minder (one more pot), Warm Lanterns (faster pots).
+- After a Turning each of Mara, Pell and Wick has a line about nearly knowing the keeper, said once per tide.
+- The fog lamp that opens Mossglass Fen will be bought with Echoes: the first Turning is the gate to region 2.
 
 ### 8.3 Target arc (simulator-verified)
 | Phase | Hours | Content |
 |---|---|---|
-| Hearthbay (R1) | 0–1.5 | Tutorial, lighthouse relit, first boat, first Bell |
+| Hearthbay (R1) | 0–1.5 | Tutorial, lighthouse relit, first boat (about 23 min), Lantern Pots (about 42 min), first Bell (about 75 min) |
 | Mossglass Fen (R2) | 1.5–4 | Fog lamp, Dr. Calloway, deckhands |
 | Saltbone Reach (R3) | 4–7 | Rough seas, whale-bone isles, storms |
 | The Hush (R4) | 7–10 | Silent pale isles, aurora, the Choir |

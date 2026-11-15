@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-11-13, phase 2 first slice (boats and free sailing). v0.2.0 was released from d8af058 after a fresh reviewer pass and green checks; the next slice is the economy simulator and gear tuning.
+Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the Drowned Bell), built for v0.3.0. The next slice is Mossglass Fen behind the Murmur Fog.
 
 ## Start here (new session)
 1. Read `docs/DIRECTIVE.md` (the brief, verbatim) and this file.
@@ -13,12 +13,16 @@ Last updated: 2026-11-13, phase 2 first slice (boats and free sailing). v0.2.0 w
 - Generated models are in for the player, NPCs, Biscuit the cat, fish, skiff and harbour props (see `docs/ASSETS.md`); stand-ins remain only where a file is missing.
 - Sound: 112 recorded effect files, 4 looping themes and 3 stings are wired in (`src/audio/audio.ts`); each one-shot keeps a synth stand-in for a missing file. All 52 voice lines are recorded.
 - Sailing (v0.2.0): Pell gives the Keeper's Skiff when the lamp is relit. The player boards it from any shore, sails it freely inside Hearthbay Waters (Kettle Isle, the Teeth, Pip's Bar), fishes from it when it is still, finds places for the chart, travels between known moorings from the chart, and is turned back by the Murmur Fog at the edge. Two more story quests (hb-07 the kettle, hb-08 the Teeth flounder) use it; a sea chest waits on Pip's Bar.
+- Economy and gear (v0.3.0): Mara's shelf has four pages (rods and bait with rod tuning, lures and creel, clothes, Lantern Pots); the satchel has a Gear page that totals everything and an Echoes page once the Bell is known. Hearthbay is tuned by the simulator: the skiff at about 23 minutes, pots at 42, the first ring of the Bell at 75.
+- Lantern Pots (v0.3.0): set and hauled with F from shore, dock or the skiff; they trap journal fish on play time only, hold three and stop.
+- The Drowned Bell (v0.3.0): the belfry stands on a shoal north-west of Gull Point. Pell's hb-09 finds it, hb-10 rings it; ringing turns the tide (coins and what they bought are taken, Echoes are paid on lifetime coins, the keeper wakes on the dock). Four more quests in all: hb-p1-pots, hb-08b-stall, hb-09-bell, hb-10-turning.
 - Settings are separate from the save (Electron `userData/settings.json`, browser localStorage). An unreadable save is quarantined, never overwritten.
 
 ## Code map
-- `src/core`: pure logic (fishing, economy, quests, saves, world heightfield, dock, `boat.ts` handling, `seaways.ts` route finding, `landing.ts` where a boat floats and a person can step off). Tested in Node.
+- `src/core`: pure logic (fishing, economy, quests, saves, world heightfield, dock, `boat.ts` handling, `seaways.ts` route finding, `landing.ts` where a boat floats and a person can step off, `gear.ts` the one fold of every bonus into `stats()`, `pots.ts`, `bell.ts`). Tested in Node.
 - `src/data`: JSON content (fish, rods, baits, boats, relics, quests, NPCs, regions with places, NPC spots, critters, ferry points, chart places, moorings, chests).
-- `src/game`: glue (game loop, camera, input, town: NPCs, talk, screens, cutscenes; `sailing.ts`: the player's boat, boarding, the helm, discovery, fast travel; settings).
+- `src/game`: glue (game loop, camera, input, town: NPCs, talk, screens, cutscenes; `sailing.ts`: the player's boat, boarding, the helm, discovery, fast travel; `potfield.ts`: pots in the world; `trade.ts`: every buy, tune, wear and Echo button; settings).
+- `tools/sim`: the economy simulator (`npm run sim`).
 - `src/render`: three.js (world scene, terrain, water with fish shadows, sky, avatar, fishing view: lure, line, float, splashes; `boat-rig.ts`: hull, sail, wake, spray, tiller, where the person sits and stands; NPC figures, cat, fish models, assets).
 - `src/audio`: mixer, sound bank, music.
 - `src/ui`: DOM HUD (with the helm compass), dialogue and screens (`chart.ts` paints the chart).
@@ -29,6 +33,7 @@ Last updated: 2026-11-13, phase 2 first slice (boats and free sailing). v0.2.0 w
 |---|---|
 | `story.cjs` | The whole Hearthbay chain through the real game, quest fish really caught, save and reload (STORY OK) |
 | `sail.cjs` | The skiff from Pell, sailed with the real helm keys along routes through the water: Kettle Isle, the kettle, home, the Teeth, a flounder from the boat, the chest on Pip's Bar, the chart and fast travel, running at a beach, the Murmur Fog, a save made at sea (SAIL OK). Helpers in `sail-helpers.cjs` |
+| `tide.cjs` | The second half of Hearthbay: the pot job, F to set and haul from the dock and from the boat, every page of the shelf, the Gear page, the belfry by boat and its chest, the first ring of the Bell, what the tide took and kept, an Echo spent, the lines after a Turning, save and reload (TIDE OK) |
 | `play.cjs` | Core loop: cast, hook, fight, land, sell |
 | `walk.cjs` | Walking with the real keys: props, houses and people are solid, everyone is reachable; shots of the dock, night, lighthouse and conversations |
 | `shadows.cjs` | A shadow reaches the float before the bite; top-down and in-game frames |
@@ -41,6 +46,10 @@ Last updated: 2026-11-13, phase 2 first slice (boats and free sailing). v0.2.0 w
 The asset thread ("Generate and import game assets") makes models, clips, voice, music and sound with Higgsfield, Blender and CC0 sources and pushes them to main. It documents every file in `docs/ASSETS.md`.
 
 ## Known issues
+- 35 lines are not voiced: the four new jobs and the nine lines people say after a Turning. `npm run voice` lists them; the asset thread records them once Lawson has answered about credits (4.84 Higgsfield credits were left on 2026-11-13, a line costs about half a credit).
+- Sounds `pot-set`, `pot-haul`, `bell-toll`, `echo-buy` and `tide-turn` play synth stand-ins until their files land (they are named in `PENDING` in `src/audio/audio.ts`; take a name out when its files are in, or the desktop smoke test will not look for them).
+- No person has played the v0.3.0 slice. Its timings are the simulator's.
+- Echoes have ten upgrades to go on and nothing else until the fog lamp exists.
 - The sailing sounds, the murmur and the open-water theme were levelled by measurement; nobody has heard them in play.
 - Seated at the tiller, the hem of the coat passes through the thwart (it cannot fold). The oars stowed in the skiff model lie beside the helmsman's right hip and at the standing player's knee; the asset thread has offered to move them.
 - The sail bot is slow on SwiftShader (about 10 minutes at medium quality, run alone). Run the Chromium bots one at a time: two at once on this 4-core, 13 GB machine ran 15 to 40 times slower and one was killed for memory.
@@ -62,5 +71,14 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 - Sea chests are data (`regions.json chests`: place, coins, baits, a line of text); `town.ts openChest` pays them once (flag `chest:<id>`), and `world-scene.ts` swaps the shut model for the open one.
 - `Heightfield.shapeAt` and `landing.ts solid` run hundreds of times a frame at sea: keep them free of allocation.
 
+## Gear, pots and the Bell, for whoever touches them next
+- Add a bonus by adding an effect to data (`gear.json`, `echoes.json`, `relics.json`) and, if it is a new kind, one line in `core/gear.ts stats()`. Do not add bonuses anywhere else: the Gear page and the simulator read `stats()`.
+- After any tuning change run `npm run sim` and `npx vitest run tests/sim.test.ts`. The tests are the tuning targets; change a target on purpose or not at all.
+- Pots tick in `Game.step` through `PotField.step` and only there. Nothing may earn outside the fixed step: no offline earnings is a fixed point of the brief.
+- A pot lands further out the higher the keeper stands (`PotField.findSpot`), so it shows past a dock's edge. The prompt sits low while a pot is in reach so it does not cover the float.
+- `ringBell(state)` in `core/bell.ts` is the whole Turning as far as the save goes; `Town.ringBell()` is the cutscene around it and applies the quest event without a toast until the fade lifts. A new thing the tide should take or keep goes in the core function and in `tests/gear.test.ts`.
+- The belfry model leans toward its +X and its bell swings about Z. `world-scene.ts` turns it so its +Z opening faces the rope post, leads the rope from the clapper (`RopeSocket`) over that sill, and re-lays the inside length every frame while the bell moves.
+- Bots that play this slice use `window.tide` helpers defined at the top of `e2e/tide.cjs`.
+
 ## Next steps
-The rest of phase 2 in ROADMAP: economy simulator and gear tuning (baits, lures, wearables), automation that only earns while the game is open, the Drowned Bell (prestige), Mossglass Fen behind the Murmur Fog (the fog lamp is the gate), more chests and crates. Act on Lawson's feedback from v0.2.0 first.
+The rest of phase 2 in ROADMAP: Mossglass Fen behind the Murmur Fog (the fog lamp, bought with Echoes, is the gate), a second boat, deckhands, more chests, crates and relics. Voice the 35 new lines and bring in the six sounds when they arrive. Act on Lawson's feedback from v0.3.0 first.

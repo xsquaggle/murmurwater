@@ -1,5 +1,5 @@
 {
-  "count": 52,
+  "count": 87,
   "lines": [
     {
       "key": "mara/hb-01-salt.intro.0",
@@ -380,6 +380,240 @@
       "hash": "51a7f1dc"
     },
     {
+      "key": "mara/hb-08b-stall.intro.0",
+      "file": "public/audio/voice/mara/hb-08b-stall.intro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Word's got round that there's fish on my stall again. Proper fish, deep-water fish. I've had people at the door before light.",
+      "hash": "1aeea199"
+    },
+    {
+      "key": "mara/hb-08b-stall.intro.1",
+      "file": "public/audio/voice/mara/hb-08b-stall.intro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Keep it full for me. Six thousand coins' worth across this counter, and the village eats well till the cold.",
+      "hash": "63b8af3e"
+    },
+    {
+      "key": "mara/hb-08b-stall.intro.2",
+      "file": "public/audio/voice/mara/hb-08b-stall.intro.2.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "There's a hat in the back that's been waiting for somebody. I'd say whose, if I could think.",
+      "hash": "02a33aa1"
+    },
+    {
+      "key": "mara/hb-08b-stall.reminder",
+      "file": "public/audio/voice/mara/hb-08b-stall.reminder.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Keep the stall full. Deep water pays best, so mind the Teeth.",
+      "hash": "283edd3d"
+    },
+    {
+      "key": "mara/hb-08b-stall.outro.0",
+      "file": "public/audio/voice/mara/hb-08b-stall.outro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Six thousand. I've not written a number like that in this book since... well. There's no since. It's a new book.",
+      "hash": "2dac4c5a"
+    },
+    {
+      "key": "mara/hb-08b-stall.outro.1",
+      "file": "public/audio/voice/mara/hb-08b-stall.outro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Here. It fits you. I knew it would, and I can't think how I knew.",
+      "hash": "c2257c5a"
+    },
+    {
+      "key": "mara/hb-p1-pots.intro.0",
+      "file": "public/audio/voice/mara/hb-p1-pots.intro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Your aunt kept lantern pots off this dock. A light in a basket. Fish swim in to look, and can't think how to leave.",
+      "hash": "e848285e"
+    },
+    {
+      "key": "mara/hb-p1-pots.intro.1",
+      "file": "public/audio/voice/mara/hb-p1-pots.intro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "There's one left in the shed. Set it in the water and it fishes while you do. Only fish it's seen you catch, mind. It learns from you.",
+      "hash": "74ba0112"
+    },
+    {
+      "key": "mara/hb-p1-pots.intro.2",
+      "file": "public/audio/voice/mara/hb-p1-pots.intro.2.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "And it only works while you're about. Leave it a night and you'll find it just as you left it. Don't ask me why.",
+      "hash": "f327fb9c"
+    },
+    {
+      "key": "mara/hb-p1-pots.reminder",
+      "file": "public/audio/voice/mara/hb-p1-pots.reminder.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Set the pot in the water, give it a while, then go and haul it up. It won't come to you.",
+      "hash": "d571b840"
+    },
+    {
+      "key": "mara/hb-p1-pots.outro.0",
+      "file": "public/audio/voice/mara/hb-p1-pots.outro.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "There. Small fish, pot fish. But they sell, and you never lifted a rod.",
+      "hash": "7b0f560a"
+    },
+    {
+      "key": "mara/hb-p1-pots.outro.1",
+      "file": "public/audio/voice/mara/hb-p1-pots.outro.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "I've more pots if you want them, and brighter wicks. I'll put them out on the stall.",
+      "hash": "b5ce8b7f"
+    },
+    {
+      "key": "pell/hb-09-bell.intro.0",
+      "file": "public/audio/voice/pell/hb-09-bell.intro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "You've the kettle, and Mara's had her flounder. That's the bay, as far as coins will take you.",
+      "hash": "cef4cfe2"
+    },
+    {
+      "key": "pell/hb-09-bell.intro.1",
+      "file": "public/audio/voice/pell/hb-09-bell.intro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "North-west, past Gull Point, a belfry stands in the sea with its bell still in it. The water took the church. It left the bell.",
+      "hash": "3ebf4bed"
+    },
+    {
+      "key": "pell/hb-09-bell.intro.2",
+      "file": "public/audio/voice/pell/hb-09-bell.intro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Go and look at it. Only look. I'll tell you the rest when you've seen it's real.",
+      "hash": "145e451a"
+    },
+    {
+      "key": "pell/hb-09-bell.reminder",
+      "file": "public/audio/voice/pell/hb-09-bell.reminder.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "North-west, past Gull Point. A belfry standing in the sea. You can't miss it. I've tried.",
+      "hash": "ee0b3844"
+    },
+    {
+      "key": "pell/hb-09-bell.outro.0",
+      "file": "public/audio/voice/pell/hb-09-bell.outro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "So it's still there. Good. Some tides it isn't.",
+      "hash": "ba1010c8"
+    },
+    {
+      "key": "pell/hb-09-bell.outro.1",
+      "file": "public/audio/voice/pell/hb-09-bell.outro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The keepers ring it when the bay has given all it has. The tide turns. The islands forget, and start again kinder.",
+      "hash": "1916f3db"
+    },
+    {
+      "key": "pell/hb-09-bell.outro.2",
+      "file": "public/audio/voice/pell/hb-09-bell.outro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "You won't forget. That's the keeper's share. Here, this was hers. It makes no sound, so mind who you blow it at.",
+      "hash": "804e3af1"
+    },
+    {
+      "key": "pell/hb-10-turning.intro.0",
+      "file": "public/audio/voice/pell/hb-10-turning.intro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "When you're ready, ring it. Your catch is sold, your coins go out with the tide, and the islands forget what you bought with them.",
+      "hash": "fb5846cb"
+    },
+    {
+      "key": "pell/hb-10-turning.intro.1",
+      "file": "public/audio/voice/pell/hb-10-turning.intro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "What you keep: your rods, her things, your boat, your journal. And the Echoes. The more the tide carried, the more of them come back.",
+      "hash": "21759413"
+    },
+    {
+      "key": "pell/hb-10-turning.intro.2",
+      "file": "public/audio/voice/pell/hb-10-turning.intro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "No hurry. You'll know the day. It's the day the stall has nothing left you want.",
+      "hash": "190c2d16"
+    },
+    {
+      "key": "pell/hb-10-turning.reminder",
+      "file": "public/audio/voice/pell/hb-10-turning.reminder.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The bell's where you left it, north-west past Gull Point. Ring it when the stall has nothing left you want.",
+      "hash": "bac16c05"
+    },
+    {
+      "key": "pell/hb-10-turning.outro.0",
+      "file": "public/audio/voice/pell/hb-10-turning.outro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Morning. First time out here? No. No, I know you. I nearly always do.",
+      "hash": "bc8b149a"
+    },
+    {
+      "key": "pell/hb-10-turning.outro.1",
+      "file": "public/audio/voice/pell/hb-10-turning.outro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Those are Echoes in your satchel. Spend them. They're the only coin that stays spent.",
+      "hash": "808a699c"
+    },
+    {
+      "key": "pell/hb-10-turning.outro.2",
+      "file": "public/audio/voice/pell/hb-10-turning.outro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The fog's thinner on the far side of a Turning. Not thin enough. Ask me again when you've rung her a few more times.",
+      "hash": "7bc99960"
+    },
+    {
       "key": "mara/bark.0",
       "file": "public/audio/voice/mara/bark.0.mp3",
       "npc": "mara",
@@ -416,6 +650,33 @@
       "hash": "dc5d1359"
     },
     {
+      "key": "mara/turned.0",
+      "file": "public/audio/voice/mara/turned.0.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "You've the look of someone I've sold a rod to. I haven't, have I? No. Never mind me.",
+      "hash": "b72b951c"
+    },
+    {
+      "key": "mara/turned.1",
+      "file": "public/audio/voice/mara/turned.1.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "I wrote your name in the book this morning, before you'd said it. Odd, that.",
+      "hash": "f030f807"
+    },
+    {
+      "key": "mara/turned.2",
+      "file": "public/audio/voice/mara/turned.2.mp3",
+      "npc": "mara",
+      "speaker": "Mara Thimble",
+      "voiceStyle": "warm, brisk, middle-aged woman with a soft coastal accent",
+      "text": "Somebody's been at my prices in the night. Everything's back where it started.",
+      "hash": "7c0c234f"
+    },
+    {
       "key": "wick/bark.0",
       "file": "public/audio/voice/wick/bark.0.mp3",
       "npc": "wick",
@@ -443,6 +704,33 @@
       "hash": "ec89303e"
     },
     {
+      "key": "wick/turned.0",
+      "file": "public/audio/voice/wick/turned.0.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "I drew you yesterday. But I only met you today. Look, it's even got your hat.",
+      "hash": "e353bae7"
+    },
+    {
+      "key": "wick/turned.1",
+      "file": "public/audio/voice/wick/turned.1.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "Biscuit knows you. Biscuit doesn't know anybody.",
+      "hash": "8d7c40b7"
+    },
+    {
+      "key": "wick/turned.2",
+      "file": "public/audio/voice/wick/turned.2.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "Everything's new again. I like new. I think I've liked it lots of times.",
+      "hash": "871ae001"
+    },
+    {
       "key": "pell/bark.0",
       "file": "public/audio/voice/pell/bark.0.mp3",
       "npc": "pell",
@@ -468,6 +756,33 @@
       "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
       "text": "Mind the second moon. It minds you.",
       "hash": "42f18078"
+    },
+    {
+      "key": "pell/turned.0",
+      "file": "public/audio/voice/pell/turned.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Tide's turned. You'll have noticed. Nobody else will.",
+      "hash": "7e9cd6ef"
+    },
+    {
+      "key": "pell/turned.1",
+      "file": "public/audio/voice/pell/turned.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "You again. For the first time.",
+      "hash": "5ee8e009"
+    },
+    {
+      "key": "pell/turned.2",
+      "file": "public/audio/voice/pell/turned.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The bell's quiet this morning. That's how you know it rang.",
+      "hash": "66b62d7d"
     }
   ]
 }

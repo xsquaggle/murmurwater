@@ -2,6 +2,21 @@
 
 Newest first. Each entry: date, decision, why.
 
+## 2026-11-15 — Pots copy the journal, stop when full, and are set by hand
+Automation had to stay behind active play and earn only while the game is open. A Lantern Pot traps only fish the player has already caught and written in the journal, at half the value, with rare fish half as likely per tier; it holds three and stops. So a pot never discovers anything, never out-earns the rod (the simulator holds it to 10 to 25% of income), and pays for coming back to it, not for leaving the game running. Pots tick in the game's fixed step and nowhere else: nothing accrues while closed. Rejected: a rate that runs forever (rewards idling), a pot that rolls the zone's whole table (finds fish for the player), offline catch-up.
+
+## 2026-11-15 — The Bell pays on lifetime coins, less what it has already given
+Echoes are `floor(0.15 × sqrt(lifetime coins))` minus the Echoes already paid. Because the count only ever grows with coins earned, ringing early and often never loses anything and waiting never loses anything: there is no best moment to work out, only a choice about what you want now. The Bell's page says exactly what will be taken, what stays and what it will give before the rope is pulled. Rejected: paying on this run's coins (punishes ringing late, invites spreadsheet play).
+
+## 2026-11-15 — The first Turning is the gate to the next region
+The fog lamp that opens Mossglass Fen will cost Echoes, so every player rings the Bell once before leaving Hearthbay, about 75 minutes in. The Turning takes coins and what coins bought (tuning, creel, bait, pot upgrades) and leaves everything found or owned outright (rods, lures, clothes, pots, boats, relics, journal, chart, story). A second tide is quicker than the first; a test holds that.
+
+## 2026-11-15 — Gear numbers go through one fold
+Every bonus from rod tuning, bait, lure, creel, clothes and their set, relics, Echoes and the boat is added up in `stats()` and nowhere else. The game, the Gear page and the simulator read the same object, so what the page says is what the sea does and what the simulator tuned. Luck compounds by rarity tier, so it matters most where fish are rarest.
+
+## 2026-11-15 — A pot lands where it can be seen
+The first run in a browser showed a pot set from the dock landing under the dock's edge, behind the keeper and under the prompt. The higher the keeper stands the further out the pot now lands, a little to the side away from the rod, and the prompt drops low while a pot is in reach. Pots have their own key (F) so hauling one from the boat never fights with stepping ashore (E).
+
 ## 2026-11-13 — Sailing is an arcade model with a hard rule about the bottom
 The skiff has a throttle, a rudder that bites with speed, drag, and a set of hull sample points that may never sit in less water than her draft (`core/boat.ts`). She slides along a shore instead of stopping dead, and when a turn is blocked she is worked toward deeper water so the helm alone always gets her off. No wind direction. Why: feel first. Tacking against a true wind would make every errand slower and add nothing a fishing game needs; a boat that wedges in the shallows is the worst thing sailing can do, so the rule that prevents it is a test.
 
