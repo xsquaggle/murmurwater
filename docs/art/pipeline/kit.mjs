@@ -121,10 +121,11 @@ export class Part {
       const x = norm(cross(up, t)), y = cross(t, x); frames.push({ x, y, t }); up = y;
     }
     const P = (i, j) => { const a = 2 * Math.PI * (j % sides) / sides + (opt.twist || 0), f = frames[i]; return add(pts[i], add(mul(f.x, R(i) * Math.cos(a)), mul(f.y, R(i) * Math.sin(a)))); };
-    const C = (i, j) => [P(i, j), r.at(j / sides * (opt.wrap || 1), opt.v ? opt.v[i] : acc[i] / (L || 1)), opt.shade ? opt.shade(i, j % sides) : 1];
+    const uv = (s, t) => (opt.lay ? r.at(t * opt.lay, s) : r.at(s, t));                 // opt.lay: the rectangle runs along the tube instead (a rope), `lay` times its width
+    const C = (i, j) => [P(i, j), uv(j / sides * (opt.wrap || 1), opt.v ? opt.v[i] : acc[i] / (L || 1)), opt.shade ? opt.shade(i, j % sides) : 1];
     for (let i = 0; i + 1 < n; i++) for (let j = 0; j < sides; j++) this.quad(C(i, j), C(i, j + 1), C(i + 1, j + 1), C(i + 1, j));
     if (!opt.open) for (const [i, flip] of [[0, false], [n - 1, true]]) {
-      const cp = [pts[i], r.at(0.5, i ? 1 : 0), 1];
+      const cp = [pts[i], uv(0.5, i ? 1 : 0), 1];
       for (let j = 0; j < sides; j++) flip ? this.tri(cp, C(i, j), C(i, j + 1)) : this.tri(cp, C(i, j + 1), C(i, j));
     }
     return this;

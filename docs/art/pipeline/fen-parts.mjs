@@ -1,5 +1,5 @@
 // fen-parts.mjs : pieces that more than one of the Mossglass Fen props is built from.
-import { rotX, rotY, move, compose, rad } from './kit.mjs';
+import { rotX, rotY, move, compose, rad, within } from './kit.mjs';
 
 /** The atlas rectangles a caged lantern needs, for pack(): sizes in pixels for a lantern `px` pixels tall. */
 export const lanternRects = (px, hue, { frame = 'brass', bars = 'iron', pre = 'lan' } = {}) => {
@@ -34,4 +34,32 @@ export const cagedLantern = (frame, glass, R, { at = [0, 0, 0], h = 0.28, r = 0.
   });
   on(glass, (g) => g.lathe(P([[r, g0], [r, g1]]), sides, R[pre + 'Glass']));
   return { glassMid: y0 + (g0 + g1) / 2 * h, ringMid: y0 + (top + 0.045) * h, top: y0 + h };
+};
+
+/** The atlas rectangles a round window needs: `px` is the width of the glass patch in pixels. */
+export const windowRects = (px, hue = 'warm', { frame = 'pale', pre = 'win' } = {}) => ({
+  [pre + 'Frame']: [Math.round(px * 2.4), Math.max(16, Math.round(px * 0.3)), { mat: 'wood', tone: frame, along: 'x', weather: 0.5, edge: 0.4 }],
+  [pre + 'Glass']: [px, px, { mat: 'glass', hue, soft: 0 }],
+});
+
+/**
+ * A round window standing proud of a wall: a frame ring of `sides` pieces with a cross of two glazing bars, and the glass.
+ * `at` is its middle on the wall's face, `yaw` (degrees) the way the wall faces (0 = +Z, 90 = +X), `r` the radius of the
+ * glass, `rim` the width of the frame, `proud` how far it stands out. Geometry goes into the parts `frame` and `glass`.
+ */
+export const roundWindow = (frame, glass, R, { at, yaw = 0, r = 0.34, rim = 0.09, proud = 0.05, sides = 8, pre = 'win' } = {}) => {
+  const xf = compose(move(at), rotY(rad(yaw))), F = R[pre + 'Frame'], G = R[pre + 'Glass'], back = 0.012;
+  const pt = (rr, k, z) => { const a = 2 * Math.PI * (k + 0.5) / sides; return [rr * Math.cos(a), rr * Math.sin(a), z]; };
+  within(frame, xf, (f) => {
+    for (let k = 0; k < sides; k++) {
+      const u0 = k / sides, u1 = (k + 1) / sides, o = r + rim;
+      f.quad([pt(r, k, proud), F.at(u0, 0.15)], [pt(o, k, proud), F.at(u0, 0.85)], [pt(o, k + 1, proud), F.at(u1, 0.85)], [pt(r, k + 1, proud), F.at(u1, 0.15)]);         // the face of the ring
+      f.quad([pt(o, k, 0), F.at(u0, 1), 0.8], [pt(o, k + 1, 0), F.at(u1, 1), 0.8], [pt(o, k + 1, proud), F.at(u1, 0.85)], [pt(o, k, proud), F.at(u0, 0.85)]);       // its outer edge
+      f.quad([pt(r, k, proud), F.at(u0, 0.15)], [pt(r, k + 1, proud), F.at(u1, 0.15)], [pt(r, k + 1, back), F.at(u1, 0), 0.7], [pt(r, k, back), F.at(u0, 0), 0.7]);     // the reveal down to the glass
+    }
+    const w = rim * 0.3, z = proud * 0.55, bar = F.sub(0, 0.3, 0.45, 0.7);
+    f.face([-r, -w, z], [r, -w, z], [r, w, z], [-r, w, z], bar); f.face([w, -r, z], [w, r, z], [-w, r, z], [-w, -r, z], bar);
+  });
+  within(glass, xf, (g) => { const uv = (p) => G.at(0.5 + 0.5 * p[0] / r, 0.5 + 0.5 * p[1] / r);
+    for (let k = 0; k < sides; k++) { const a = pt(r, k, back), b = pt(r, k + 1, back); g.tri([a, uv(a)], [b, uv(b)], [[0, 0, back], G.at(0.5, 0.5)]); } });
 };

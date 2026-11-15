@@ -105,7 +105,8 @@ def tin(H, W, seed=0, colour='#8E979A', tile_x=False, **_):
 
 # ------------------------------------------------------------------------------------------------ wood, cork, rope
 WOODS = {'drift': ('#8A6A4F', '#5E4532', '#B08D68'), 'dark': ('#5A4233', '#3A2A20', '#7A5C46'), 'pale': ('#B79B76', '#8A6F50', '#D8C19A'),
-         'grey': ('#8C8578', '#5F594F', '#AEA795'), 'red': ('#8E4A3A', '#5E2E26', '#B46A55'), 'tar': ('#3B332D', '#221D1A', '#5A4E44')}
+         'grey': ('#8C8578', '#5F594F', '#AEA795'), 'red': ('#8E4A3A', '#5E2E26', '#B46A55'), 'tar': ('#3B332D', '#221D1A', '#5A4E44'),
+         'teal': ('#4F7C78', '#33514F', '#86ABA4'), 'cream': ('#D9CDAE', '#A89C7E', '#EFE6CC')}
 
 
 def wood(H, W, seed=0, planks=0, along='y', tone='drift', weather=0.4, gap=1.6, nails=0, tile_x=False, **_):
@@ -313,6 +314,26 @@ def bud(H, W, seed=0, tone=('#5E8F5A', '#E9E2F0', '#C9B6E6'), tile_x=True, **_):
     return shade(img, 0.9 + 0.12 * stretch(fbm(H, W, 3, 6, seed, tile_x=tile_x)))
 
 
+def thatch(H, W, seed=0, courses=3, tile_x=False, moss=0.45, tone=('#55522F', '#8C854E', '#C4B97C'), **_):
+    """Reed thatch on a roof slope, eave at the bottom of the patch: reeds running down it in `courses` layers, the butt
+    ends of each layer ragged and casting a shadow on the layer below; moss in patches, more of it toward the eave."""
+    lo, mid, hi = [hexc(t) for t in tone]
+    yy, xx, v = grid(H, W)
+    reeds = strokes(H, W, seed, 'y', 3, max(40, W // 3), tile_x=tile_x)
+    img = mix(lo, mid, smooth(reeds, 0.15, 0.6))
+    img = mix(img, hi, 0.65 * smooth(reeds, 0.62, 0.95))
+    img = shade(img, 0.9 + 0.16 * stretch(fbm(H, W, 3, max(3, W // 60), seed + 1, 3, tile_x=tile_x)))             # bundles
+    rag = (fbm(2, W, 1, max(4, W // 12), seed + 2, 3, tile_x=tile_x)[0] - 0.5) * 0.5 / courses
+    c = (yy + rag[None, :]) * courses                                # how many layers down from the ridge
+    f = c - np.floor(c)                                              # 0 at the top of a layer, 1 at its butt ends
+    img = shade(img, 0.80 + 0.28 * f)
+    img = mix(img, hi, 0.35 * smooth(f, 0.86, 1.0))                                           # the cut ends catch the light
+    img = shade(img, 1 - 0.55 * np.exp(-(f / 0.09) ** 2) * (c > 0.6))                          # and shade the layer under them
+    mm = stretch(fbm(H, W, max(2, H / 50), max(2, W / 50), seed + 3, 4, 0.55, tile_x=tile_x)) + 0.4 * (1 - v) - 0.2
+    mk = smooth(mm, 1.0 - 0.75 * moss, 1.2 - 0.75 * moss)
+    return mix(img, mix(PINE, MOSS, stretch(fbm(H, W, max(2, H / 16), max(2, W / 16), seed + 4, 2, tile_x=tile_x))), 0.8 * mk)
+
+
 # ------------------------------------------------------------------------------------------------ cloth, paper, flat
 def cloth(H, W, seed=0, stripes=('#C8473D', '#F2E3C6'), n=6, along='x', worn=0.3, **_):
     """Striped canvas: n stripes that run along x (side by side down the patch) or along y."""
@@ -336,7 +357,67 @@ def flat(H, W, seed=0, colour='#8A6A4F', var=0.12, grain=0.0, along='y', tile_x=
     return img
 
 
-PAINT = {'iron': iron, 'brass': brass, 'copper': copper, 'floats': floats, 'tin': tin, 'bark': bark, 'canopy': canopy, 'strands': strands, 'blade': blade,
+def staff(H, W, seed=0, marks=30, **_):
+    """A tide staff or surveyor's rod, foot at the bottom: white paint with a black block for every mark, on the left and
+    the right in turn, a line across at each, and every tenth mark red."""
+    yy, xx, v = grid(H, W)
+    k = np.minimum((v * marks).astype(int), marks - 1)
+    f = v * marks - k
+    img = hexc('#E6E0CE') * np.ones((H, W, 3))
+    block = ((k % 2 == 0) & (xx < 0.5)) | ((k % 2 == 1) & (xx >= 0.5))
+    img = np.where((block & (f > 0.12) & (f < 0.88))[..., None], hexc('#26262A'), img)
+    img = np.where(((k % 10 == 0) & (f < 0.5))[..., None], hexc('#B33A2E'), img)
+    img = mix(img, hexc('#26262A'), 0.8 * np.exp(-(np.minimum(f, 1 - f) * H / marks / 1.0) ** 2))
+    worn = smooth(stretch(fbm(H, W, max(3, H / 24), 3, seed, 3)), 0.62, 0.8)
+    img = mix(img, hexc('#8A7A62'), 0.7 * worn)                                                  # paint worn back to the wood
+    return shade(img, 0.92 + 0.1 * strokes(H, W, seed + 1, 'y', 4, 30))
+
+
+def ruler(H, W, seed=0, marks=70, **_):
+    """A measuring board, laid along x: pale wood with a tick at every mark along its far edge (the top of the patch),
+    longer at every fifth and longest at every tenth."""
+    yy, xx, v = grid(H, W)
+    img = wood(H, W, seed, tone='pale', along='x', weather=0.25)
+    k = xx * marks
+    idx = np.round(k).astype(int)
+    f = np.abs(k - idx) * W / marks                                   # pixels from the nearest mark
+    length = np.where(idx % 10 == 0, 0.62, np.where(idx % 5 == 0, 0.44, 0.26))
+    return mix(img, hexc('#2A2422'), 0.85 * np.exp(-(f / 0.8) ** 2) * (yy < length))
+
+
+def jar(H, W, seed=0, liquid='#B9D6B0', thing='#6E7F5A', lid=0.82, **_):
+    """A specimen jar, unrolled, foot at the bottom: glass full of pale spirit with something dim hanging in it, a streak
+    of light down one side, and from v = lid up a cork with red wax on top."""
+    yy, xx, v = grid(H, W)
+    c = hexc(liquid)
+    img = mix(c * 0.8, np.minimum(c * 1.1, 1), stretch(fbm(H, W, 3, 3, seed, tile_x=True)))
+    img = shade(img, 0.84 + 0.2 * smooth(v, 0.0, 0.5))                                         # sediment darkens the foot
+    for u0 in (0.3, 0.8):                                                                       # the specimen, seen from both sides
+        blob = np.exp(-(((xx - u0) / 0.11) ** 2 + ((v - 0.44 * lid) / (0.27 * lid)) ** 2) ** 1.5)
+        img = mix(img, hexc(thing), 0.75 * blob)
+    streak = np.exp(-((xx - 0.08) / 0.03) ** 2) + np.exp(-((xx - 0.58) / 0.03) ** 2)
+    img = mix(img, np.ones(3), 0.5 * streak * smooth(v, 0.08, 0.2) * (1 - smooth(v, lid - 0.14, lid - 0.05)))
+    top = mix(hexc('#B5855A'), hexc('#7C5636'), stretch(fbm(H, W, 6, 6, seed + 1, tile_x=True)))
+    top = mix(top, hexc('#8E2F2A'), smooth(v, 0.93, 0.95))
+    return mix(img, top, smooth(v, lid - 0.01, lid + 0.01))
+
+
+def dial(H, W, seed=0, marks=36, metal='#C9CDD0', **_):
+    """A graduated circle seen face on, filling the patch: silvered metal, ticks round the rim, a brass hub."""
+    yy, xx, v = grid(H, W)
+    r = np.hypot(xx - 0.5, yy - 0.5) * 2
+    a = np.arctan2(yy - 0.5, xx - 0.5)
+    img = shade(hexc(metal) * np.ones((H, W, 3)), 0.86 + 0.16 * stretch(fbm(H, W, 3, 3, seed)))
+    k = a / (2 * np.pi) * marks
+    idx = np.round(k).astype(int)
+    f = np.abs(k - idx) * 2 * np.pi * r * (W / 2) / marks                                       # pixels from the nearest tick, along the arc
+    tick = np.exp(-(f / 0.9) ** 2) * (r > np.where(idx % 3 == 0, 0.62, 0.76)) * (r < 0.94)
+    img = mix(img, hexc('#22262A'), 0.85 * tick)
+    img = mix(img, hexc('#22262A'), 0.6 * np.exp(-((r - 0.97) / 0.025) ** 2))
+    return mix(img, BRASS_D, smooth(0.3 - r, 0, 0.04))
+
+
+PAINT = {'iron': iron, 'brass': brass, 'copper': copper, 'floats': floats, 'tin': tin, 'bark': bark, 'canopy': canopy, 'strands': strands, 'blade': blade, 'thatch': thatch, 'staff': staff, 'ruler': ruler, 'jar': jar, 'dial': dial,
          'bulrush': bulrush, 'lilypad': lilypad, 'bud': bud, 'wood': wood, 'endgrain': endgrain, 'cork': cork, 'rope': rope,
          'glass': glass, 'glow': glow, 'cloth': cloth, 'flat': flat}
 
