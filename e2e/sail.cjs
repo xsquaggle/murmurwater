@@ -177,7 +177,9 @@ const { chromium } = require('playwright');
   await ev(() => { window.bot.interact(); window.bot.readAll(); });
   check((await status('hb-08-teeth')) === 'done', 'Mara takes the flounder');
   await shot('13-mara-flounder');
-  await ev(() => { const d = window.__MW__.game.town.dialogue; if (d.isOpen) window.bot.choose('Bye'); });
+  // She goes straight on to offer her next job (A Full Stall): turn it down, then say goodbye.
+  r = await ev(() => { const d = window.__MW__.game.town.dialogue; for (let k = 0; d.isOpen && k < 4; k++) if (!window.bot.choose('Bye')) window.bot.choose('Not just now'); return d.isOpen; });
+  check(!r, 'the talk with Mara is over, her next job turned down for now');
 
   // 10. Shore: full speed at the beach stops her without putting her on the sand.
   r = await ev(() => {
