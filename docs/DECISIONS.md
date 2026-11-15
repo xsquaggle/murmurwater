@@ -14,6 +14,15 @@ The fog lamp that opens Mossglass Fen will cost Echoes, so every player rings th
 ## 2026-11-15 — Gear numbers go through one fold
 Every bonus from rod tuning, bait, lure, creel, clothes and their set, relics, Echoes and the boat is added up in `stats()` and nowhere else. The game, the Gear page and the simulator read the same object, so what the page says is what the sea does and what the simulator tuned. Luck compounds by rarity tier, so it matters most where fish are rarest.
 
+## 2026-11-15 — A press hauls or sets; taking a pot up is a held key
+The reviewer pointed out that right after a haul the same key on the same pot meant "take it out of the water", so a double press undid the player's own work, and a pot in hand could not be set anywhere near an empty one. A press now only ever hauls or sets. An empty pot comes up when F is held for 0.6 s, and the prompt says so.
+
+## 2026-11-15 — Turning a job down never closes the stall
+"Not just now" used to end the conversation. Once Mara had two jobs to offer after the flounder, a player who did not want the pot job could no longer reach "Sell my catch", which also blocked the story. Declining now falls through to whatever else the person does (Mara buys and shows the shelf, Pell rows). Found by the fresh reviewer; `tests/talk.test.ts` and the tide bot hold it.
+
+## 2026-11-15 — A cast keeps what it went out with
+Bait, lure and night-only gear are fixed when the line goes out. A change made while it is out (a bait picked in the satchel, nightfall, a stack running out) takes hold when the line is in again, and the hook spends the bait the cast actually used. Before, a player could cast on Glowgrub, switch to breadcrumbs during the wait, and keep the grub.
+
 ## 2026-11-15 — A pot lands where it can be seen
 The first run in a browser showed a pot set from the dock landing under the dock's edge, behind the keeper and under the prompt. The higher the keeper stands the further out the pot now lands, a little to the side away from the rod, and the prompt drops low while a pot is in reach. Pots have their own key (F) so hauling one from the boat never fights with stepping ashore (E).
 

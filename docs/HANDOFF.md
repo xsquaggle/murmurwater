@@ -50,6 +50,8 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 - Sounds `pot-set`, `pot-haul`, `bell-toll`, `echo-buy` and `tide-turn` play synth stand-ins until their files land (they are named in `PENDING` in `src/audio/audio.ts`; take a name out when its files are in, or the desktop smoke test will not look for them).
 - No person has played the v0.3.0 slice. Its timings are the simulator's.
 - Echoes have ten upgrades to go on and nothing else until the fog lamp exists.
+- In the simulator a clumsy keeper (skill 0.4) earns about what a practised one (0.7) does over three hours, and only the best (0.95) pulls ahead, by 10 to 15%. Either the simulated clumsy keeper fights too well or skill pays too little. Worth a look alongside Lawson's feedback on how the fishing feels; `tests/sim.test.ts` only holds that the best is never behind.
+- The goal line after the story counts all nine Hearthbay fish (the Manyeye among them) while the journal page counts the eight ordinary ones.
 - The sailing sounds, the murmur and the open-water theme were levelled by measurement; nobody has heard them in play.
 - Seated at the tiller, the hem of the coat passes through the thwart (it cannot fold). The oars stowed in the skiff model lie beside the helmsman's right hip and at the standing player's knee; the asset thread has offered to move them.
 - The sail bot is slow on SwiftShader (about 10 minutes at medium quality, run alone). Run the Chromium bots one at a time: two at once on this 4-core, 13 GB machine ran 15 to 40 times slower and one was killed for memory.
@@ -75,7 +77,9 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 - Add a bonus by adding an effect to data (`gear.json`, `echoes.json`, `relics.json`) and, if it is a new kind, one line in `core/gear.ts stats()`. Do not add bonuses anywhere else: the Gear page and the simulator read `stats()`.
 - After any tuning change run `npm run sim` and `npx vitest run tests/sim.test.ts`. The tests are the tuning targets; change a target on purpose or not at all.
 - Pots tick in `Game.step` through `PotField.step` and only there. Nothing may earn outside the fixed step: no offline earnings is a fixed point of the brief.
-- A pot lands further out the higher the keeper stands (`PotField.findSpot`), so it shows past a dock's edge. The prompt sits low while a pot is in reach so it does not cover the float.
+- A pot lands further out the higher the keeper stands (`PotField.findSpot`), so it shows past a dock's edge. The prompt sits low while a pot is in reach so it does not cover the float. A press of F hauls or sets; an empty pot is taken up by holding F (`TAKE_UP_HOLD`).
+- A fishing session keeps the gear it was cast with. `Game.refreshSession()` rebuilds it at once when the rod is idle and otherwise marks it stale, and the step rebuilds it the moment the line is in. The hook spends `session.ctx.bait.id`, not whatever is on the hook now.
+- The v0.3.0 reviewer's proof scripts showed how to test this slice without a browser: small `tsx` scripts against `src/core` and `src/game/talk.ts`.
 - `ringBell(state)` in `core/bell.ts` is the whole Turning as far as the save goes; `Town.ringBell()` is the cutscene around it and applies the quest event without a toast until the fade lifts. A new thing the tide should take or keep goes in the core function and in `tests/gear.test.ts`.
 - The belfry model leans toward its +X and its bell swings about Z. `world-scene.ts` turns it so its +Z opening faces the rope post, leads the rope from the clapper (`RopeSocket`) over that sill, and re-lays the inside length every frame while the bell moves.
 - Bots that play this slice use `window.tide` helpers defined at the top of `e2e/tide.cjs`.
