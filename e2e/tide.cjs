@@ -2,7 +2,7 @@
 // the pot with the pot key, lets it fish, hauls it and sells; buys from every page of the shelf; wears and
 // tunes things from the satchel; finds the Drowned Bell by boat, opens the chest on its shoal, rings the
 // Bell, wakes on the dock with Echoes, spends one, and checks what the tide kept and what it took. Then
-// saves, reloads and checks again. Exits 1 on any failure.
+// saves, reloads and checks again, and last loads a save from the version before. Exits 1 on any failure.
 // Shortcuts: it starts from a granted state (the flounder handed in, the skiff owned), is given the coins a
 // full stall would have earned, and travels home by the chart.
 // Usage: node e2e/tide.cjs [outdir]
@@ -276,6 +276,17 @@ const { chromium } = require('playwright');
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 1, null, { timeout: 180000 });
   r = await ev(() => { const s = window.__MW__.state; return { v: s.version, run: s.run.number, echoes: s.echoes, tidewise: s.echoUpgrades.tidewise, owned: s.pots.owned, done: s.quests.done.length, worn: s.gear.worn }; });
   check(r.v === 4 && r.run === 2 && r.tidewise === 1 && r.owned === 2 && r.done === 12, `the reload keeps the second tide (${JSON.stringify(r)})`);
+
+  // 20. A save from before this slice (version 3) loads into it with nothing lost: the hold comes from gear now,
+  // and there are no pots yet.
+  const old = require('fs').readFileSync(require('path').join(__dirname, '../tests/fixtures/saves/v3.json'), 'utf8');
+  const was = JSON.parse(old).state;
+  await ev((text) => localStorage.setItem('murmurwater.test', text), old);
+  await page.goto(`http://localhost:${port}/?notitle&quality=low&keepfresh`);
+  await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 1, null, { timeout: 180000 });
+  r = await ev(() => { const g = window.__MW__.game, s = g.state; g.town.openScreen('gear'); const sums = document.querySelectorAll('.sum-i').length; g.town.closeScreens(); return { v: s.version, coins: s.coins, rods: s.gear.rods.length, done: s.quests.done.length, journal: Object.keys(s.journal).length, hold: g.holdCapacity, pots: s.pots.owned, creel: s.gear.creel, sums }; });
+  check(r.v === 4 && r.coins === was.coins && r.rods === was.gear.rods.length && r.done === was.quests.done.length && r.journal === Object.keys(was.journal).length && r.pots === 0 && r.creel === 0 && r.hold >= 12 && r.sums >= 7,
+    `a version 3 save loads as version 4 with its coins, rods, journal and story (${JSON.stringify(r)})`);
   check(errors.length === 0, `no page errors (${errors.join(' | ')})`);
 
   if (problems.length) { console.error(`TIDE FAILED: ${problems.length} problem(s)\n - ${problems.join('\n - ')}`); await browser.close(); process.exit(1); }

@@ -2,7 +2,7 @@
 
 A cozy-but-weird fishing incremental for Windows PC. Stylized low-poly 3D, built with three.js and Electron.
 
-> Status: Hearthbay with a boat of your own and free sailing (v0.2.0). See `docs/ROADMAP.md`.
+> Status: Hearthbay with a boat of your own, gear worth choosing, Lantern Pots and the Drowned Bell (v0.3.0). See `docs/ROADMAP.md`.
 
 ## Play it on Windows
 1. Open the [Releases page](https://github.com/xsquaggle/murmurwater/releases) and take the newest release.
@@ -23,8 +23,9 @@ Your save lives in `%APPDATA%\Murmurwater\save.json` (with a `save.bak.json` bac
 | Reel in / cancel | Right mouse or Q |
 | Talk / interact, board the boat, step ashore | E |
 | Sail | W fills the sail, S checks her and backs water, A / D put the tiller over |
+| Set, haul or take up a Lantern Pot | F |
 | Chart (once you have a boat) | M |
-| Satchel (catch, gear, journal, quests) | Tab or I; J opens the journal |
+| Satchel (catch, gear, journal, quests, Echoes) | Tab or I; J opens the journal |
 | Pause and settings | Esc |
 | Performance overlay (fps, frame times) | F3 |
 

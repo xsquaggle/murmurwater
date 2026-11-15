@@ -390,14 +390,19 @@ export class WorldScene {
     (this.terrainMat.userData.uniforms.uCausticStrength as { value: number }).value = 1 - lt.night * 0.85;
 
     // Lights come on at dusk and flicker like flames.
-    const glow = this.glow = Math.min(1, Math.max(0, (lt.night - 0.05) * 1.6 + (lt.hour > 17 || lt.hour < 7 ? 0.35 : 0)));
+    // They stay lit through the long shadows of early morning and come on through the late afternoon, by degrees
+    // rather than on the stroke of the hour.
+    const ramp = (a: number, b: number, x: number) => Math.min(1, Math.max(0, (x - a) / (b - a)));
+    const early = 1 - ramp(6.8, 8.2, lt.hour), late = ramp(16.6, 17.4, lt.hour);
+    const glow = this.glow = Math.min(1, Math.max(0, (lt.night - 0.05) * 1.6 + 0.35 * Math.max(early, late)));
     for (const m of this.propMats) { const un = m.userData.uniforms; if (un) un.uGlow.value = glow; }
     this.lanterns.forEach((l, i) => {
       const flick = 0.85 + 0.15 * Math.sin(this.time * 9.1 + i * 2.3) * Math.sin(this.time * 3.7 + i);
       l.intensity = (1.5 + 9 * glow) * flick;
     });
     this.lighthouseGlass.emissiveIntensity = this.lighthouseLit ? 4 : 0.06 + 0.04 * Math.sin(this.time * 0.7);
-    const dark = Math.min(1, Math.max(0, lt.night * 1.4 + (lt.hour > 18.2 || lt.hour < 6 ? 0.25 : 0)));
+    // The pocket lantern is kept up a while after sunrise: the dock lies in the island's shadow for the first hour.
+    const dark = Math.min(1, Math.max(0, lt.night * 1.4 + Math.max(0.25 * ramp(17.8, 18.4, lt.hour), 0.4 * (1 - ramp(6.4, 7.7, lt.hour)))));
     this.lampLight.intensity = this.lighthouseLit ? 60 + 240 * dark : 0;
     this.beams.visible = this.lighthouseLit && dark > 0.02;
     this.beams.rotation.y = this.time * 0.35;
