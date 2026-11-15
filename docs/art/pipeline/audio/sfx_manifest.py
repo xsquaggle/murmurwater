@@ -26,6 +26,7 @@ PACKS = {   # path prefix -> (short name, title, author, page)
     'oga/100-cc0-metal-and-wood-sfx/': ('rubberduck-wood', '100 CC0 metal and wood SFX', 'rubberduck', OGA + '100-cc0-metal-and-wood-sfx'),
     'oga/opening-and-closing-a-map-sounds/': ('springspring-map', 'Opening and Closing a Map Sounds', 'Spring Spring', OGA + 'opening-and-closing-a-map-sounds'),
     'oga/various-paper-sound-effects/': ('luckius-paper', 'Various Paper Sound Effects', 'Luckius', OGA + 'various-paper-sound-effects'),
+    'oga/beach-ocean-waves/': ('jasinski-waves', 'Beach Ocean Waves', 'jasinski', OGA + 'beach-ocean-waves'),
 }
 BAM = 'oga/swish-bamboo-stick-weapon-swhoshes/swoshes.x/swosh-%02d.flac'
 FISH = 'oga/fisheefects/FisheefectsComplete.x/'
@@ -41,6 +42,7 @@ TREE = 'oga/tree-creaking/tree_creak.flac'
 GULL = 'oga/solo-seagull-sound-effects/Seagull %s.wav'
 VIST = 'oga/sea-and-river-wave-sounds/VistulaShort_0.mp3'
 TK = 'oga/water-waves/wave_%02d_cc0-11505__transitking__wavesound.flac'
+ALK = 'oga/beach-ocean-waves/wave_%02d_cc0-18363__jasinski__alkaibeach.flac'
 KR = 'cc0/kenney-rpg/OGG/%s.ogg'
 KU = 'cc0/kenney-interface/Audio/%s.ogg'
 WM = 'oga/100-cc0-metal-and-wood-sfx/100-CC0-wood-metal-SFX.x/%s.ogg'
@@ -145,6 +147,81 @@ def build(B):
     one('chart-open', [dict(src=MAP % 'snd_use_map'), dict(src=PAPER % 'paper_sound_-_4', a=1.2, b=2.6, fi=0.05, fo=0.2)], level=-3)
     add('chest-open_1', [dict(src=KR % 'creak1', a=0.14, b=0.66, speed=0.7, fi=0.005), dict(src=KR % 'handleCoins', b=0.45, at=0.45, gain=-7, fo=0.1)], level=-2, how='a wooden creak played slower, so it is a heavy lid, with a small clink of coins as the lid comes to rest')
     add('chest-open_2', [dict(src=KR % 'creak3', a=0.015, b=0.34, speed=0.6, fi=0.004), dict(src=KR % 'handleCoins2', at=0.34, gain=8)], level=-2, how='a shorter creak played slower, with a small clink of coins after it')
+
+    # ---- Lantern Pots and the Drowned Bell ----
+    def rope_run(at, gain, n=9, step=0.09):
+        """A rope paying out: cloth rustles in a row, each a little later, faster and quieter than the last."""
+        return [dict(src=KR % f'cloth{1 + k % 4}', at=round(at + step * k, 3), speed=0.75 + 0.03 * k, gain=gain - 1.2 * k) for k in range(n)]
+    add('pot-set_1', make=lambda: B.mix([dict(src=EZWA % 5, speed=0.8)] + rope_run(0.2, -4) + [dict(src=SKIP + 'bubbles.wav', at=1.2, gain=-10)]),
+        sources=[dict(label(EZWA % 5), speed=0.8)] + [label(KR % f'cloth{k}') for k in (1, 2, 3, 4)] + [label(SKIP + 'bubbles.wav')],
+        how='a splash played slower for weight; nine cloth rustles in a row, each a little faster and quieter than the last, for the rope running out; bubbles after it')
+    DRIP = ((5.0, 5.45), (0.28, 0.62), (3.66, 3.97), (1.99, 2.30), (6.53, 6.86))        # the single drops in the recording
+    def drips(at, gaps, gain, first=0):
+        """Drips falling off the basket: single recorded drops in a row, each a little quieter than the last."""
+        out = []; t = at
+        for k, g in enumerate(gaps):
+            a, b = DRIP[(first + k) % len(DRIP)]; out.append(dict(src=DROPS, a=a, b=b, at=round(t, 3), gain=gain - 1.3 * k, speed=(1.0, 1.12, 0.92, 1.06, 0.97)[k % 5], fo=0.08)); t += g
+        return out
+    add('pot-haul_1', make=lambda: B.mix([dict(src=PEL + 'drowning_0.wav', a=0.2, b=2.4, fi=0.02, fo=0.8), dict(src=TREE, a=3.6, b=4.5, at=0.1, gain=4, fo=0.2)] + drips(1.6, (0.19, 0.24, 0.2, 0.33, 0.3), 15)),
+        sources=[dict(label(PEL + 'drowning_0.wav'), cut=[0.2, 2.4]), dict(label(TREE), cut=[3.6, 4.5]), label(DROPS)],
+        how='water churning as the basket breaks the surface, a creak of the rope, and five single drips falling off it, each quieter than the last')
+    add('pot-haul_2', make=lambda: B.mix([dict(src=PEL + 'splash1_0.wav', a=0.5, b=2.4, fo=0.6), dict(src=SKIP + 'swim.wav', at=0.3, gain=-4, fo=0.5), dict(src=KR % 'creak2', at=0.05, gain=-6)] + drips(1.45, (0.18, 0.25, 0.2, 0.3, 0.26, 0.3), 12, first=2)),
+        sources=[dict(label(PEL + 'splash1_0.wav'), cut=[0.5, 2.4]), label(SKIP + 'swim.wav'), label(KR % 'creak2'), label(DROPS)],
+        how='the tail of a big splash with a stroke through water over it, a creak of the rope, and six single drips falling off the basket')
+
+    def tide():
+        """One wave that swells in and pulls back: two recorded waves, the second 1.2 s after the first. The swell opens up from its
+        own rumble (below 700 Hz), and the last 1.7 s thin into the hiss above 1500 Hz, the water draining back down the shore."""
+        a = B.part(dict(src=ALK % 1, fi=1.0, fo=1.0)); b = B.part(dict(src=ALK % 4, fi=0.4, fo=1.0)) * 10 ** (-3 / 20)
+        o = int(1.2 * SR); n = max(len(a), o + len(b)); y = np.zeros(n); y[:len(a)] += a; y[o:o + len(b)] += b
+        t = np.arange(n) / SR; dark = B.filt(y, lp=700); thin = B.filt(y, hp=1500)
+        op = np.clip((t - 0.1) / 1.5, 0, 1) ** 1.5; back = np.clip((t - (n / SR - 1.7)) / 1.5, 0, 1)
+        y = dark * (1 - op) * 1.6 + y * op; y = y * (1 - 0.75 * back) + thin * 1.3 * back
+        return B.fade(y, 0.6, 1.1)
+    add('tide-turn_1', make=tide, sources=[label(ALK % 1), label(ALK % 4)], fo=0.3,
+        how='two waves, the second 1.2 s after the first and 3 dB quieter; the swell opens up from its own low rumble and the last 1.7 s thin into hiss, the water draining back')
+
+    def toll(f0=146.83, seconds=9.5, seed=5, clang=5.0, room=0.15):
+        """One strike of a big church bell whose strike note is f0 (D3). The partials of a tuned bell (the hum an octave below, prime,
+        minor-third tierce, quint, nominal and those above), every one a pair a fraction of a hertz apart, which is the slow beat of
+        a real bell, and every one wavering a little as it rings down, the low ones longest. The strike itself is the clang: sixty
+        short-lived partials scattered between 14 and 70 times the strike note, with the knock of the clapper. A dark tail of room after it."""
+        n = int(seconds * SR); t = np.arange(n) / SR; r = np.random.default_rng(seed); y = np.zeros(n); fr = np.fft.rfftfreq(n, 1 / SR)
+        #          ratio   gain  decay (s)  beat (Hz)
+        P = [(0.5, 0.50, 6.5, 0.31), (1.0, 0.62, 4.0, 0.47), (1.195, 0.85, 3.2, 0.62), (1.5, 0.22, 1.9, 0.80), (2.0, 1.00, 2.3, 0.93),
+             (2.51, 0.34, 1.3, 1.3), (2.66, 0.20, 1.1, 1.4), (3.01, 0.50, 1.15, 1.7), (3.33, 0.16, 0.8, 1.9), (4.16, 0.42, 0.75, 2.3), (4.5, 0.12, 0.6, 2.4),
+             (5.43, 0.30, 0.52, 3.1), (6.8, 0.24, 0.40, 4.0), (8.21, 0.18, 0.31, 5.0), (9.7, 0.14, 0.25, 5.5), (11.3, 0.11, 0.20, 6.0), (13.0, 0.08, 0.16, 6.5)]
+        for ratio, g, d, beat in P:
+            f = f0 * ratio; attack = 1 - np.exp(-t / (0.003 + 0.02 / ratio))
+            for sg, share in ((-0.5, 0.6), (0.5, 0.4)):
+                wv = np.fft.irfft(np.fft.rfft(r.standard_normal(n)) * np.exp(-fr / 2.5), n); w = 1 + 0.11 * wv / np.abs(wv).max()        # a slow random waver of about a decibel
+                y += g * share * attack * w * np.exp(-t / (d * (1 + 0.1 * sg))) * np.sin(2 * np.pi * (f + sg * beat) * t + r.uniform(0, 2 * np.pi))
+        k = int(0.6 * SR); tk = t[:k]; c = np.zeros(k)
+        for _ in range(60):
+            q = 14 * (70 / 14) ** r.uniform(); c += r.uniform(0.3, 1.0) / q ** 0.5 * np.exp(-tk / (r.uniform(0.6, 1.4) * 3.0 / q)) * np.sin(2 * np.pi * f0 * q * tk + r.uniform(0, 2 * np.pi))
+        sp = np.fft.rfft(r.standard_normal(k)); fk = np.fft.rfftfreq(k, 1 / SR); kn = np.fft.irfft(sp * np.exp(-0.5 * (np.log2(np.maximum(fk, 1) / 2600) / 1.1) ** 2), k) * np.exp(-tk / 0.007)
+        y /= np.abs(y).max(); y[:k] += clang * (0.55 * c / np.abs(c).max() + 0.5 * kn / np.abs(kn).max()) + 0.4 * np.sin(2 * np.pi * 88 * tk) * np.exp(-tk / 0.045)
+        m = int(2.2 * SR); ir = r.standard_normal(m) * np.exp(-np.arange(m) / SR / 0.55); ir[:int(0.018 * SR)] = 0
+        ir = np.fft.irfft(np.fft.rfft(ir) / (1 + (np.fft.rfftfreq(m, 1 / SR) / 3000) ** 2), m); wet = np.convolve(y, ir)[:n]; y = y + room * wet / np.abs(wet).max()
+        fo = int(3.0 * SR); y[-fo:] *= np.cos(np.linspace(0, np.pi / 2, fo)) ** 2
+        return y / np.abs(y).max()
+    add('bell-toll_1', make=toll, sources=[{'kind': 'synth', 'what': 'one strike of a church bell with a strike note of D3: seventeen partials of a tuned bell from the hum (D2) up, each a beating pair that wavers as it rings down, a clang of sixty short-lived high partials and the knock of the clapper at the strike, and a dark tail of room'}],
+        how='synthesised in sfx_manifest.py', fo=0.5)
+
+    def glass(notes=(1174.66, 1760.0), seconds=0.95):
+        """A soft glassy chime with two fading echoes: each note a pure tone with the faint upper partials of struck glass and a soft start,
+        and the whole figure heard twice more, quieter and duller."""
+        n = int(seconds * SR); t = np.arange(n) / SR; one = np.zeros(n)
+        for k, f in enumerate(notes):
+            o = int(k * 0.035 * SR); tt = t[:n - o]; a = 1 - np.exp(-tt / 0.006)
+            v = sum(g * np.sin(2 * np.pi * f * m * tt + ph) * np.exp(-tt / d) for m, g, d, ph in ((1, 1.0, 0.28, 0), (2.32, 0.22, 0.123, 1.0), (4.25, 0.08, 0.062, 2.0), (1.003, 0.5, 0.35, 0.5)))
+            one[o:] += a * v * (1.0 if k == 0 else 0.7)
+        y = one.copy()
+        for delay, g, lp in ((0.17, 0.36, 5000), (0.34, 0.15, 3200)):
+            e = np.fft.irfft(np.fft.rfft(one) / (1 + (np.fft.rfftfreq(n, 1 / SR) / lp) ** 4), n); o = int(delay * SR); y[o:] += g * e[:n - o]
+        return y / np.abs(y).max()
+    add('echo-buy_1', make=glass, sources=[{'kind': 'synth', 'what': 'two notes of struck glass (D6, then A6 35 ms later), each a pure tone with faint upper partials, heard twice more as quieter, duller echoes'}],
+        how='synthesised in sfx_manifest.py, in the key of the Hearthbay theme', trim=False, fo=0.25, level=-3)
 
     # ---- loops ----
     add('waves-lap_1', make=lambda: B.loop_cut(VIST, 234.0, 20.0, 2.0), loop=True, lufs=-22, sources=[dict(label(VIST), cut=[234.0, 254.0])], how='20 s cut with a 2 s crossfade into the audio before the loop start')

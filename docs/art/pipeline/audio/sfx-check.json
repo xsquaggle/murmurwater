@@ -1,6 +1,28 @@
 {
+ "bell-toll_1.ogg": {
+  "rank": 1,
+  "top": "bell-toll",
+  "tags": [
+   [
+    "Clang",
+    0.76
+   ],
+   [
+    "Ding",
+    0.67
+   ],
+   [
+    "Music",
+    0.25
+   ],
+   [
+    "Musical instrument",
+    0.04
+   ]
+  ]
+ },
  "bite-dunk_1.ogg": {
-  "rank": 6,
+  "rank": 8,
   "top": "ui-open",
   "tags": [
    [
@@ -703,6 +725,28 @@
    ]
   ]
  },
+ "echo-buy_1.ogg": {
+  "rank": 6,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Ding",
+    0.79
+   ],
+   [
+    "Clang",
+    0.49
+   ],
+   [
+    "Sound effect",
+    0.02
+   ],
+   [
+    "Music",
+    0.02
+   ]
+  ]
+ },
  "fish-splash_1.ogg": {
   "rank": 1,
   "top": "fish-splash",
@@ -726,8 +770,8 @@
   ]
  },
  "fish-splash_2.ogg": {
-  "rank": 2,
-  "top": "oars",
+  "rank": 3,
+  "top": "pot-haul",
   "tags": [
    [
     "Slosh",
@@ -748,8 +792,8 @@
   ]
  },
  "fish-splash_3.ogg": {
-  "rank": 3,
-  "top": "bobber-plop",
+  "rank": 5,
+  "top": "pot-haul",
   "tags": [
    [
     "Water",
@@ -946,7 +990,7 @@
   ]
  },
  "hull-wash_1.ogg": {
-  "rank": 9,
+  "rank": 11,
   "top": "oars",
   "tags": [
    [
@@ -1034,8 +1078,8 @@
   ]
  },
  "land-splash_1.ogg": {
-  "rank": 1,
-  "top": "land-splash",
+  "rank": 2,
+  "top": "pot-set",
   "tags": [
    [
     "Slosh",
@@ -1056,7 +1100,7 @@
   ]
  },
  "land-splash_2.ogg": {
-  "rank": 2,
+  "rank": 3,
   "top": "oars",
   "tags": [
    [
@@ -1078,8 +1122,8 @@
   ]
  },
  "land-splash_3.ogg": {
-  "rank": 1,
-  "top": "land-splash",
+  "rank": 3,
+  "top": "pot-haul",
   "tags": [
    [
     "Slosh",
@@ -1166,7 +1210,7 @@
   ]
  },
  "line-snap_1.ogg": {
-  "rank": 10,
+  "rank": 11,
   "top": "cast-swish",
   "tags": [
    [
@@ -1188,7 +1232,7 @@
   ]
  },
  "line-snap_2.ogg": {
-  "rank": 20,
+  "rank": 24,
   "top": "cast-swish",
   "tags": [
    [
@@ -1210,7 +1254,7 @@
   ]
  },
  "line-snap_3.ogg": {
-  "rank": 23,
+  "rank": 26,
   "top": "cast-swish",
   "tags": [
    [
@@ -1492,6 +1536,72 @@
    [
     "Single-lens reflex camera",
     0.03
+   ]
+  ]
+ },
+ "pot-haul_1.ogg": {
+  "rank": 1,
+  "top": "pot-haul",
+  "tags": [
+   [
+    "Liquid",
+    0.36
+   ],
+   [
+    "Drip",
+    0.35
+   ],
+   [
+    "Water",
+    0.23
+   ],
+   [
+    "Plop",
+    0.1
+   ]
+  ]
+ },
+ "pot-haul_2.ogg": {
+  "rank": 1,
+  "top": "pot-haul",
+  "tags": [
+   [
+    "Liquid",
+    0.19
+   ],
+   [
+    "Chink, clink",
+    0.15
+   ],
+   [
+    "Water",
+    0.12
+   ],
+   [
+    "Drip",
+    0.12
+   ]
+  ]
+ },
+ "pot-set_1.ogg": {
+  "rank": 2,
+  "top": "pot-haul",
+  "tags": [
+   [
+    "Drip",
+    0.1
+   ],
+   [
+    "Sound effect",
+    0.08
+   ],
+   [
+    "Liquid",
+    0.05
+   ],
+   [
+    "Bang",
+    0.04
    ]
   ]
  },
@@ -2152,6 +2262,28 @@
    [
     "Sliding door",
     0.03
+   ]
+  ]
+ },
+ "tide-turn_1.ogg": {
+  "rank": 1,
+  "top": "tide-turn",
+  "tags": [
+   [
+    "Ocean",
+    0.48
+   ],
+   [
+    "Waves, surf",
+    0.47
+   ],
+   [
+    "Wind",
+    0.07
+   ],
+   [
+    "Wind noise (microphone)",
+    0.05
    ]
   ]
  },
