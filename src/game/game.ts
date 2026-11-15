@@ -120,6 +120,8 @@ export class Game {
     this.faceYaw = this.yaw;
     this.town = new Town(this, uiRoot, settings);
     this.pots = new PotField(this);
+    // A journal page that was filled before pages paid anything (an older save) is paid now.
+    this.town.pagesDone(claimCollections(state));
     this.town.applySettings(['volumes', 'sensitivity', 'invertY', 'bindings', 'uiScale', 'subtitles']);
     this.onResize();
     window.addEventListener('resize', () => this.onResize());
@@ -156,8 +158,15 @@ export class Game {
     }, this.stats), new Rng(this.rngSeed++));
   }
 
-  /** Rebuild the fishing session after gear changes (only between casts). */
-  refreshSession() { if (this.session.phase === 'idle') this.session = this.newSession(); else this.refreshStats(); }
+  /**
+   * Rebuild the fishing session after gear changes. A cast in the air or a fish on the line keeps what it was
+   * cast with; the change takes hold as soon as the line is in again.
+   */
+  refreshSession() {
+    if (this.session.phase === 'idle') { this.session = this.newSession(); this.sessionStale = false; }
+    else { this.refreshStats(); this.sessionStale = true; }
+  }
+  private sessionStale = false;
 
   /**
    * The clock was put on by `hours` (a job that brings the dusk): the sky hurries after it over a few seconds
@@ -194,7 +203,7 @@ export class Game {
   /** Is there castable water ahead of the player? */
   private waterAhead(): boolean {
     const dir = new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw));
-    for (let d = 3; d < rod(this.state.gear.rod).reach; d += 1) if (this.world.hf.depth(this.pos.x + dir.x * d, this.pos.z + dir.z * d) >= 0.6) return true;
+    for (let d = 3; d < this.stats.rod.reach; d += 1) if (this.world.hf.depth(this.pos.x + dir.x * d, this.pos.z + dir.z * d) >= 0.6) return true;
     return false;
   }
 
@@ -244,6 +253,7 @@ export class Game {
     // Gear that depends on the hour or on being afloat: look again now and then, and when night falls or lifts.
     this.statsAge += dt;
     if (this.statsAge > 1) { if (isNight(s.hour) !== this.wasNight) this.refreshSession(); else this.refreshStats(); }
+    if (this.sessionStale && this.session.phase === 'idle') this.refreshSession();
 
     // Mouse look / aim.
     const [mdx, mdy] = inp.consumeMouse();
@@ -375,8 +385,9 @@ export class Game {
         case 'nibble': this.audio.nibble(); this.view.nibble(); this.shadows.nibble(); break;
         case 'bite': this.audio.bite(); this.shake = 0.25; break;
         case 'hook': {
-          const out = spendBait(s);
-          if (out) this.hud.toast(`Out of ${bait(out).name}: back to breadcrumbs`);
+          // The bait this cast went out with, whatever has been put on the hook since.
+          const out = spendBait(s, this.session.ctx.bait.id);
+          if (out) { this.hud.toast(`Out of ${bait(out).name}: back to breadcrumbs`); this.sessionStale = true; }
         }
           this.audio.hook(e.grade === 'perfect'); this.hud.toast(e.grade === 'perfect' ? 'Perfect hook!' : 'Hooked!', e.grade === 'perfect' ? 'gold' : 'good'); this.shake = 0.35; break;
         case 'tooEarly': this.shadows.spook(); this.hud.toast(e.spooked ? 'Too early — you spooked it' : 'Wait for the bobber to go under', 'bad'); break;

@@ -115,6 +115,23 @@ describe('gear', () => {
     expect(s.gear.baits.sandworm).toBeUndefined();
   });
 
+  it('a bait changed while the line is out: the hook spends the bait the cast went out with', () => {
+    const s = newGame(1);
+    s.gear.baits.glowgrub = 2; s.gear.bait = 'glowgrub';
+    // Cast with Glowgrub, then breadcrumbs are put on the hook before the fish takes it.
+    s.gear.bait = 'breadcrumb';
+    expect(spendBait(s, 'glowgrub')).toBeNull();
+    expect(s.gear.baits.glowgrub).toBe(1);
+    expect(spendBait(s, 'glowgrub')).toBe('glowgrub');
+    expect(s.gear.baits.glowgrub).toBeUndefined();
+    expect(s.gear.bait).toBe('breadcrumb');
+    // The other way about: cast on breadcrumbs, Sandworm chosen during the wait. No worm is spent.
+    s.gear.baits.sandworm = 3; s.gear.bait = 'sandworm';
+    expect(spendBait(s, 'breadcrumb')).toBeNull();
+    expect(s.gear.baits.sandworm).toBe(3);
+    expect(s.gear.bait).toBe('sandworm');
+  });
+
   it('a full journal page hands over its reward once', () => {
     const s = newGame(1);
     know(s, ...FISH.filter((f) => f.region === 'hearthbay' && f.rarity !== 'uncanny').slice(1).map((f) => f.id));
@@ -294,7 +311,10 @@ describe('the Drowned Bell', () => {
     const st = stats(s);
     expect(st.value).toBeCloseTo(1 + 10 * 0.15);
     expect(st.rhythmCap).toBe(20);
-    expect(st.potCount).toBe(3);
+    // Lamp Minder adds to the pots a keeper has, and hands out none on its own.
+    expect(st.potCount).toBe(0);
+    s.pots.owned = 1;
+    expect(stats(s).potCount).toBe(4);
     expect(st.tuneCost).toBeCloseTo(0.6);
     expect(startCoins(s)).toBe(5000);
     s.lifetime.coins = 1e6;

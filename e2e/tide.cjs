@@ -58,9 +58,16 @@ const { chromium } = require('playwright');
   let r = await ev(() => { const g = window.__MW__.game; g.camYaw = -Math.PI / 2; g.simulate(0.5); const s = g.state; let n = 0; for (let i = 0; i < 8 && Object.keys(s.journal).length < 2; i++) { window.bot.fishFor('nothing', 1, 10); n++; } return { kinds: Object.keys(s.journal), casts: n }; });
   check(r.kinds.length >= 2, `the journal knows ${r.kinds.join(', ')} from the dock`);
 
+  // 2a. Turning a job down is not the end of the conversation: the stall still buys.
+  let choices;
+  await ev(() => { window.tide.talk('mara'); window.bot.readAll(); window.bot.choose('Not just now'); });
+  choices = await ev(() => window.bot.readAll());
+  check(choices.some((c) => /Sell my catch/.test(c)) && choices.some((c) => /Bye/.test(c)), `turned down, Mara still offers to buy the catch (${choices.join(' | ')})`);
+  await ev(() => window.bot.choose('Bye'));
+
   // 2. Mara: a full stall (main), then the pot job (side), which comes with a pot.
   r = await ev(() => window.tide.talk('mara'));
-  let choices = await ev(() => window.bot.readAll());
+  choices = await ev(() => window.bot.readAll());
   check(r && choices.some((c) => c.includes('do it')), `Mara has work (${choices.join(' | ')})`);
   await ev(() => window.bot.choose('do it'));
   check((await status('hb-08b-stall')) === 'active', 'A Full Stall is under way');
@@ -101,6 +108,17 @@ const { chromium } = require('playwright');
   check(/Haul the Lantern Pot \(3 fish\)/.test(r.prompt ?? ''), `in reach the prompt offers to haul it (${r.prompt})`);
   check(r.after.hold === 3 && r.after.placed[0].fish === 0, `hauled: three fish in the pot basket, the pot empty and fishing again (${JSON.stringify(r.after)})`);
   check((await status('hb-p1-pots')) === 'ready', 'hauling three fish finishes the pot job');
+  // A second press does not pull the empty pot out of the water; holding the key does, and a press sets it again.
+  r = await ev(() => {
+    const g = window.__MW__.game;
+    window.bot.tap('KeyF'); window.tide.wait(0.4);
+    const tapped = window.tide.pots();
+    g.input.simulate('KeyF', true); window.tide.wait(0.9); g.input.simulate('KeyF', false);
+    const held = window.tide.pots().placed.length;
+    window.tide.wait(0.4); window.bot.tap('KeyF'); window.tide.wait(0.4);
+    return { tapped: tapped.placed.length, prompt: tapped.prompt, held, again: window.tide.pots().placed.length };
+  });
+  check(r.tapped === 1 && /Hold/.test(r.prompt ?? '') && r.held === 0 && r.again === 1, `a second press leaves the empty pot be, holding F takes it up, a press sets it again (${JSON.stringify(r)})`);
   await shot('04-pot-hauled');
 
   // 6. Mara: the job, then selling. Pot fish sell with the rest.

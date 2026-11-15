@@ -8,7 +8,7 @@ import { NpcFigure } from '../render/npc-figure';
 import { Cat } from '../render/cat';
 import { hashString } from '../core/rng';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
-import { converse, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
+import { converse, afterDecline, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
   BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, count, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
   tickBoard, turnIn, type QuestEvent, type QuestUpdate,
@@ -332,6 +332,12 @@ export class Town {
         void g.save();
         // Back to Mara: a sale can finish a quest she then wants to hear about.
         this.openConversation(npcOffer(s, 'mara').kind === 'turnIn' ? converse(s, 'mara', this.island) : { npc: 'mara', lines: [], choices: [{ label: 'Bye for now.', action: { type: 'bye' } }, ...(s.flags.includes('shop-open') ? [{ label: 'Show me the good shelf.', action: { type: 'shop' as const } }] : [])] });
+        break;
+      }
+      case 'decline': {
+        // Turning a job down is not turning the person down: the stall still buys, the shelf is still there.
+        const rest = this.talking ? afterDecline(s, this.talking, this.island) : null;
+        if (rest) this.openConversation(rest); else this.endConversation();
         break;
       }
       case 'shop': this.endConversation(false); this.openScreen('shop'); break;

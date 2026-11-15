@@ -15,6 +15,8 @@ import type { PotState } from '../core/state';
 
 /** How close a pot has to be to haul it: from the shore or the dock (it comes in on its line), and from the boat. */
 const REACH = { foot: 7.2, aboard: 3.4 };
+/** Seconds the pot key is held to take an empty pot out of the water. */
+const TAKE_UP_HOLD = 0.6;
 
 interface Float { root: Group; setGlow: (v: number) => void; ph: number; flare: number; fish: number; knows: number; knowsAge: number }
 
@@ -22,7 +24,7 @@ export class PotField {
   private floats = new Map<number, Float>();
   private region: RegionContent;
   private scanT = 0;
-  /** The pot in reach, if there is one: the pot key hauls it, or takes it up when it is empty. */
+  /** The pot in reach, if there is one: a press of the pot key hauls it; held, it takes an empty one up. */
   near: PotState | null = null;
   /** Where the pot key would set a pot down right now; null when there is no pot in hand or no water in reach. */
   spot: { x: number; z: number } | null = null;
@@ -53,9 +55,20 @@ export class PotField {
     }
     if (!free) { this.near = null; this.spot = null; return; }
     this.scanT -= dt;
-    if (this.scanT <= 0) { this.scanT = 0.15; this.near = this.findNear(); this.spot = this.near ? null : this.findSpot(); }
-    if (g.input.wasPressed('pot')) this.act();
+    if (this.scanT <= 0) { this.scanT = 0.15; this.near = this.findNear(); this.spot = this.near?.fish.length ? null : this.findSpot(); }
+    // A press hauls or sets. Taking an empty pot out of the water wants the key held, so a second press after a
+    // haul (or a press meant to set another pot beside it) never pulls one up by accident.
+    if (g.input.wasPressed('pot')) {
+      const did = this.act();
+      this.holdId = !did && this.near && !this.near.fish.length ? this.near.id : 0;
+      this.holdT = 0;
+    } else if (this.holdId && g.input.held('pot') && this.near?.id === this.holdId && !this.near.fish.length) {
+      this.holdT += dt;
+      if (this.holdT >= TAKE_UP_HOLD) { this.takeUp(this.near); this.holdId = 0; }
+    } else this.holdId = 0;
   }
+  private holdId = 0;
+  private holdT = 0;
 
   private findNear(): PotState | null {
     const g = this.g, sail = g.sailing;
@@ -99,16 +112,20 @@ export class PotField {
     return null;
   }
 
-  /** The pot key: haul the pot in reach, take it up if it is empty, or set one down. Also used by the bots. */
+  /**
+   * A press of the pot key: haul the pot in reach if it has fish, else set one down if there is one in hand and
+   * water to put it in. Returns whether it did either. (An empty pot in reach is taken up by holding the key.)
+   */
   act(): boolean {
-    const g = this.g, s = g.state, st = g.stats;
-    if (this.near) { if (this.near.fish.length) this.haul(this.near); else this.takeUp(this.near); return true; }
+    const g = this.g, s = g.state, st = g.stats, near = this.near;
+    if (near?.fish.length) { this.haul(near); return true; }
     if (potsInHand(s, st) > 0) {
       const at = this.findSpot();
       if (at) { this.set(at.x, at.z); return true; }
+      if (near) return false;
       const sail = g.sailing;
       g.hud.toast(sail.aboard ? (Math.abs(sail.boat.speed) > 1.2 ? 'Let her settle before you set a pot' : 'No room for a pot here') : 'Face open water to set a Lantern Pot');
-    } else if (st.potCount > 0) g.hud.toast('Every Lantern Pot you have is in the water');
+    } else if (!near && st.potCount > 0) g.hud.toast('Every Lantern Pot you have is in the water');
     return false;
   }
 
@@ -158,7 +175,7 @@ export class PotField {
   get prompt(): string | null {
     const p = this.near;
     if (!p) return null;
-    return p.fish.length ? `Haul the Lantern Pot (${p.fish.length} fish)` : 'Take up the Lantern Pot';
+    return p.fish.length ? `Haul the Lantern Pot (${p.fish.length} fish)` : 'Hold to take up the Lantern Pot';
   }
 
   // ------------------------------------------------------------------ per frame

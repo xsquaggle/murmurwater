@@ -20,7 +20,7 @@ import {
   NPCS, QUESTS, accept, acceptBoard, npcOffer, objectiveProgress, objectiveTarget, onQuestEvent, questStatus, tickBoard, turnIn,
   type ObjectiveDef, type QuestDef,
 } from '../../src/core/quests';
-import { haulPot, placePot, potsInHand, tickPots } from '../../src/core/pots';
+import { haulPot, placePot, potsInHand, takeUpPot, tickPots } from '../../src/core/pots';
 import { BELL_FLAG, buyEcho, echoCost, echoesFor, ringBell } from '../../src/core/bell';
 import { ECHO_UPGRADES } from '../../src/core/gear';
 import { humanFightPolicy } from '../../tests/helpers';
@@ -417,12 +417,29 @@ export class SimPlayer {
     const plan = this.plan();
     this.stock(plan.bait);
     const place = plan.place;
+    // A pot can only be hauled from beside it. Pots left full somewhere the keeper is not going today are
+    // fetched first: out to them, up, and back.
+    if (!this.opts.noPots) for (const other of PLACES) {
+      if (other === place) continue;
+      const there = s.pots.placed.filter((p) => this.potAt.get(p.id) === other);
+      if (!there.length || there.some((p) => p.fish.length < this.st.potCapacity)) continue;
+      this.pass(other.trip, other.afloat);
+      for (const p of there) {
+        const got = haulPot(s, p.id);
+        if (got.length) onQuestEvent(s, { type: 'haul', count: got.length });
+        takeUpPot(s, p.id); this.potAt.delete(p.id);
+        this.pass(COSTS.pot, true);
+      }
+      this.pass(other.trip, other.afloat);
+    }
     this.pass(place.trip, place.afloat);
     if (place.chart) this.chart(place.chart);
     // Pots go in beside the fishing, and come up when it is time to go.
     if (!this.opts.noPots) while (potsInHand(s) > 0) {
       const n = s.pots.placed.length;
-      if (!placePot(s, place.zone(8), n * 6, s.pots.nextId * 6)) break;
+      const pot = placePot(s, place.zone(8), n * 6, s.pots.nextId * 6);
+      if (!pot) break;
+      this.potAt.set(pot.id, place);
       this.pass(COSTS.pot, true);
     }
     const ready = () => QUESTS.filter((q) => q.chain === 'main' && questStatus(s, q.id) === 'ready').length;
@@ -435,16 +452,19 @@ export class SimPlayer {
     while (s.hold.length < this.st.hold && ready() === before && !toSell() && s.playTime < until && s.playTime < this.opts.minutes * 60) {
       if (plan.want && !inHours(s.hour, plan.want.hours) !== !inHours(s.hour - 0.01, plan.want.hours)) break;
       this.cast(place);
-      this.haul(true);
+      this.haul(true, place);
     }
-    this.haul(false);
+    this.haul(false, place);
     this.pass(place.trip, place.afloat);
   }
+  /** Where each pot in the water was set. */
+  private potAt = new Map<number, Place>();
 
-  /** Brings the pots up: the full ones while fishing beside them, all of them before going home. */
-  private haul(fullOnly: boolean) {
+  /** Brings up the pots set here: the full ones while fishing beside them, all of them before going home. */
+  private haul(fullOnly: boolean, place: Place) {
     const s = this.s;
     for (const p of s.pots.placed) {
+      if (this.potAt.get(p.id) !== place) continue;
       if (!p.fish.length || (fullOnly && p.fish.length < this.st.potCapacity)) continue;
       const got = haulPot(s, p.id);
       onQuestEvent(s, { type: 'haul', count: got.length });

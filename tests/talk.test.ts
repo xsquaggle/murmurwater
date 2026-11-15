@@ -4,9 +4,24 @@ import { accept, onQuestEvent, turnIn, QUESTS } from '../src/core/quests';
 import { REGIONS } from '../src/core/content';
 import { Heightfield } from '../src/core/world';
 import { dockDeckAt } from '../src/core/dock';
-import { afterTurnIn, allVoiceLines, converse, textHash } from '../src/game/talk';
+import { afterDecline, afterTurnIn, allVoiceLines, converse, textHash } from '../src/game/talk';
 
 describe('conversations', () => {
+  it('turning a job down leaves the stall open: Mara still buys the catch and shows the shelf', () => {
+    const s = newGame(1);
+    // The flounder is handed in; Mara has two more jobs to offer, and the hold is full of fish to sell.
+    s.quests.done.push('hb-01-salt', 'hb-02-supper', 'hb-03-proper-rod', 'hb-04-sketch', 'hb-05-ferry', 'hb-06-relight', 'hb-07-kettle', 'hb-08-teeth');
+    s.flags.push('shop-open');
+    for (let i = 0; i < 5; i++) s.hold.push({ uid: s.nextUid++, fishId: 'butterperch', weight: 0.4, trait: null, value: 12, perfect: false });
+    const offer = converse(s, 'mara', 'hearthbay');
+    expect(offer.choices.map((c) => c.action.type)).toEqual(['accept', 'decline']);
+    const rest = afterDecline(s, 'mara', 'hearthbay');
+    expect(rest?.choices.map((c) => c.action.type)).toEqual(['sell', 'shop', 'bye']);
+    expect(rest?.lines).toHaveLength(0);
+    // Someone with nothing else to offer just says goodbye.
+    expect(afterDecline(s, 'wick', 'hearthbay')).toBeNull();
+  });
+
   it('Mara opens with the first job, then reminds, then hands in and offers the next', () => {
     const s = newGame(1);
     const c1 = converse(s, 'mara', 'hearthbay');

@@ -428,9 +428,11 @@ export class Screens {
       ['Luck', pct(st.rod.luck + st.luck)], ['Fish sell for', pct(st.value - 1)], ['Hold', `${st.hold} slots`],
       ['Rhythm', `up to ×${(1 + st.rhythmCap * RHYTHM.perStack).toFixed(2)}`],
     ];
-    if (st.biteSpeed !== 1) sums.push(['Bites come', `${pct(st.biteSpeed - 1)} sooner`]);
+    // Waits are divided by the bite speed, so 1.3 is 23% sooner, not 30%.
+    if (st.biteSpeed !== 1) sums.push(['Bites come', `${Math.round((1 - 1 / st.biteSpeed) * 100)}% sooner`]);
     if (st.biteWindow !== 1) sums.push(['Time to hook', pct(st.biteWindow - 1)]);
-    if (st.size > 0) sums.push(['Bigger fish', pct(st.size)]);
+    // The size bonus closes part of the gap between a fish's weight and the heaviest of its kind.
+    if (st.size > 0) sums.push(['Bigger fish', `${Math.round(st.size * 100)}% nearer the biggest`]);
     if (st.strange > 0.031) sums.push(['Strange fish', `${(st.strange * 100).toFixed(0)}% of catches`]);
     this.card.append(el('div', { class: 'sum' }, ...sums.map(([k, v]) => el('div', { class: 'sum-i' }, el('span', {}, k), el('b', {}, v)))));
 
@@ -495,7 +497,7 @@ export class Screens {
   private renderBell() {
     const s = this.host.state, give = echoesFor(s), can = canRing(s), catchWorth = unsoldValue(s);
     this.card.append(this.header('The Drowned Bell'));
-    this.card.append(el('p', { class: 'bell-lead' }, 'Ring it, and the tide turns. The sea takes back what coins bought, the islands forget, and the morning starts over on the Hearthbay dock. What the tide carried comes back to you as Echoes.'));
+    this.card.append(el('p', { class: 'bell-lead' }, 'Ring it, and the tide turns. Your coins go back to the sea, and so does what they did to your gear: the tuning, the creel, the bait. The islands forget, and the morning starts over on the Hearthbay dock. What the tide carried comes back to you as Echoes.'));
     const li = (items: string[]) => el('ul', {}, ...items.map((t) => el('li', {}, t)));
     this.card.append(el('div', { class: 'bell-cols' },
       el('div', { class: 'bell-col takes' }, el('h3', {}, 'The tide takes'), li([

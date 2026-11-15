@@ -69,8 +69,8 @@ Earns only while the game is open. Nothing accrues while closed (no offline earn
 - A pot only traps fish that are **already in the journal** and that live in the zone it sits in, so automation follows active play and never gets ahead of it. Set where the journal knows nothing, its lantern stays dim and the game says so.
 - One fish about every 50 s, rarer fish half as likely per tier as on a rod, worth 50% of a hand-caught one. No Strange traits, no Rhythm.
 - It holds 3 and **stops when it is full**, so it pays for coming back, not for waiting. A full pot beats slowly, shows on the compass, the chart and as a marker, and the HUD counts fish over room.
-- Hauling (F again, in reach on foot or from the boat) puts the fish in a separate pot basket that sells at the stall with the rest. An empty pot can be taken up and set somewhere else.
-- The first pot is a gift from Mara for a job (about 42 minutes in); two more can be bought (3 in all, a fourth through an Echo). Upgrades on her shelf: Brighter wicks (10% faster, 6 levels), Deeper baskets (+1 fish, 4 levels), Sweeter bait (+15% value, 4 levels).
+- Hauling (F again, in reach on foot or from the boat) puts the fish in a separate pot basket that sells at the stall with the rest. An empty pot is taken up by holding F, and set somewhere else.
+- The first pot is a gift from Mara for a job (about 42 minutes in); two more can be bought (3 in all), and each rank of the Echo upgrade Lamp Minder adds one (6 at most). Lamp Minder does nothing until the keeper has a pot. Upgrades on her shelf: Brighter wicks (10% faster, 6 levels), Deeper baskets (+1 fish, 4 levels), Sweeter bait (+15% value, 4 levels).
 - Tuned by the simulator so pots are 10 to 25% of income for a player who keeps fishing.
 
 **Later:** Deckhands, odd crew recruited through quests (a cat named Biscuit, a fog-person called Mister Hollis). Each fishes passively from the boat or dock with a specialty.

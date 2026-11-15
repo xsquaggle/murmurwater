@@ -131,7 +131,8 @@ export function stats(s: GameState, env: Env = {}): Stats {
     potSpeed: 1 + (b.potSpeed ?? 0) + POTS.upgrades.speed.per * up.speed,
     potCapacity: POTS.capacity + POTS.upgrades.size.per * up.size,
     potValue: POTS.value * (1 + POTS.upgrades.quality.per * up.quality),
-    potCount: s.pots.owned + (b.potSlots ?? 0),
+    // Lamp Minder adds to the pots the keeper has; it does not hand out the first one (Mara's job does that).
+    potCount: s.pots.owned > 0 ? s.pots.owned + (b.potSlots ?? 0) : 0,
     tuneCost: Math.max(0.2, 1 + (b.tuneCost ?? 0)),
   };
 }
@@ -175,14 +176,17 @@ export function buyBait(s: GameState, id: string, n: number): boolean {
   return true;
 }
 
-/** Uses up one of the bait on the hook (when a fish takes it). Returns the bait's id if that was the last of it. */
-export function spendBait(s: GameState): string | null {
-  const id = s.gear.bait, have = s.gear.baits[id] ?? 0;
+/**
+ * Uses up one of a bait when a fish takes it: the bait the cast went out with (`id`), which is the one on the
+ * hook unless the keeper has changed it since. Returns the bait's id if that was the last of it.
+ */
+export function spendBait(s: GameState, id: string = s.gear.bait): string | null {
+  const have = s.gear.baits[id] ?? 0;
   if (!isFinite(have)) return null;
   s.gear.baits[id] = Math.max(0, have - 1);
   if (s.gear.baits[id] > 0) return null;
   delete s.gear.baits[id];
-  s.gear.bait = 'breadcrumb';
+  if (s.gear.bait === id) s.gear.bait = 'breadcrumb';
   return id;
 }
 

@@ -23,7 +23,7 @@ Your save lives in `%APPDATA%\Murmurwater\save.json` (with a `save.bak.json` bac
 | Reel in / cancel | Right mouse or Q |
 | Talk / interact, board the boat, step ashore | E |
 | Sail | W fills the sail, S checks her and backs water, A / D put the tiller over |
-| Set, haul or take up a Lantern Pot | F |
+| Set or haul a Lantern Pot (hold to take an empty one up) | F |
 | Chart (once you have a boat) | M |
 | Satchel (catch, gear, journal, quests, Echoes) | Tab or I; J opens the journal |
 | Pause and settings | Esc |

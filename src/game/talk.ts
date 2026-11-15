@@ -116,4 +116,13 @@ export function afterTurnIn(s: GameState, npcId: string, island: string): Conver
   return { npc: npcId, lines: [], choices: hub(s, npcId, island) };
 }
 
+/**
+ * After "Not just now": whatever else this person does. Mara still buys fish and keeps her shelf, Pell still
+ * rows. Null if that is nothing, and the conversation just ends.
+ */
+export function afterDecline(s: GameState, npcId: string, island: string): Conversation | null {
+  const choices = hub(s, npcId, island);
+  return choices.length > 1 ? { npc: npcId, lines: [], choices } : null;
+}
+
 export { q as questById };
