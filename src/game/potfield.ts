@@ -159,12 +159,18 @@ export class PotField {
   private make(pot: PotState): Float {
     const root = new Group();
     let setGlow: (v: number) => void;
-    const model = assets.instance('potFloat', true);
+    const model = assets.instance('potFloat');
     if (model) {
+      // The generated float: a little larger than life so it reads from the dock, and each pot's lantern panes get
+      // their own material so one can burn brighter than its neighbour (0 is out, 1 is lit, 2 to 3 blooms).
+      model.scale.setScalar(1.5);
       root.add(model);
       const glass: MeshStandardMaterial[] = [];
-      model.traverse((o) => { const m = (o as Mesh).material as MeshStandardMaterial | undefined; if (m?.name === 'Glass') glass.push(m); });
-      setGlow = (v) => { for (const m of glass) m.emissiveIntensity = 0.4 + 3.2 * v; };
+      model.traverse((o) => {
+        const m = o as Mesh;
+        if (m.isMesh && (m.material as MeshStandardMaterial).name === 'Glass') { m.material = (m.material as MeshStandardMaterial).clone(); glass.push(m.material as MeshStandardMaterial); }
+      });
+      setGlow = (v) => { for (const m of glass) m.emissiveIntensity = Math.min(3, 0.15 + 2.6 * v); };
     } else {
       const mat = createPropMaterial();
       const mesh = new Mesh((PotField.geo ??= buildPotFloat()), mat);

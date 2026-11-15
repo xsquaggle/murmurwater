@@ -11,6 +11,7 @@ export const MODEL_PATHS = {
   skiff: 'models/boats/skiff.glb',
   sailRig: 'models/boats/sail-rig.glb',
   buoy: 'models/props/buoy.glb',
+  potFloat: 'models/props/pot-float.glb',
   chest: 'models/props/chest.glb',
   chestOpen: 'models/props/chest-open.glb',
   crate: 'models/props/crate.glb',
