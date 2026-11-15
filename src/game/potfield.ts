@@ -14,7 +14,7 @@ import { fmt } from '../core/economy';
 import type { PotState } from '../core/state';
 
 /** How close a pot has to be to haul it: from the shore or the dock (it comes in on its line), and from the boat. */
-const REACH = { foot: 5.2, aboard: 3.4 };
+const REACH = { foot: 7.2, aboard: 3.4 };
 
 interface Float { root: Group; setGlow: (v: number) => void; ph: number; flare: number; fish: number; knows: number; knowsAge: number }
 
@@ -85,9 +85,15 @@ export class PotField {
       }
       return null;
     }
-    const dx = Math.sin(g.yaw), dz = Math.cos(g.yaw);
-    for (let d = 1.8; d <= 4.6; d += 0.4) {
-      const x = g.pos.x + dx * d, z = g.pos.z + dz * d;
+    // Far enough out to be seen over the edge of whatever the keeper is standing on (a pot dropped at the foot of
+    // the dock hides under it): the higher the keeper stands, the further out it lands. And a little to one side,
+    // so it is not behind the keeper's own back either.
+    const first = Math.min(5.4, 2.2 + 2.6 * Math.max(0, g.pos.y - 0.3));
+    const tries: number[] = [];
+    for (let d = first; d <= 6.21; d += 0.4) tries.push(d);
+    for (let d = first - 0.4; d >= 1.79; d -= 0.4) tries.push(d);
+    for (const d of tries) for (const off of [0.45, -0.45, 0]) {
+      const x = g.pos.x + Math.sin(g.yaw + off) * d, z = g.pos.z + Math.cos(g.yaw + off) * d;
       if (ok(x, z)) return { x, z };
     }
     return null;

@@ -60,6 +60,10 @@ export class WorldScene {
   private buoys: { obj: Object3D; x: number; z: number; ph: number }[] = [];
   /** The Drowned Bell, where the region has one: the part that swings, how long since it was struck, and how hard. */
   private bell: { pivot: Object3D; t: number; amp: number } | null = null;
+  private bellMat: MeshStandardMaterial | null = null;
+  private belfryStone: MeshStandardMaterial | null = null;
+  private bellRope: { seg: Mesh; socket: Object3D; to: Vector3; lay: (m: Mesh, p: Vector3, q: Vector3) => void } | null = null;
+  private bellV = new Vector3();
   /** Where the bell hangs, for the camera and for sparks. */
   readonly bellPos = new Vector3();
 
@@ -230,12 +234,39 @@ export class WorldScene {
     if (bf) {
       const g = new Group();
       const model = assets.instance('belfry');
-      let pivot: Object3D | null = model?.getObjectByName('Bell') ?? null;
-      let ropeFrom = new Vector3(-0.95, 6.83, 0);
+      let pivot: Object3D | null = null, socket: Object3D | null = null, size = 1;
+      // Where the rope leaves the tower, in the tower's own space: the stand-in lets it go from under the bell stage.
+      let lead: Vector3 | null = null;
       if (model) {
+        // The delivered tower. It has its own lean (toward its +X), the bell hangs plumb on a headstock that lies
+        // along Z, and the tip of the clapper is marked for the rope. A little larger than drawn, so it reads from
+        // the sea as the landmark it is.
+        size = 1.55;
+        model.scale.setScalar(size);
+        // Its stone gets a material of its own, with a little light of its own by day: the faces the sun has left
+        // would otherwise go as black as the weed on them.
+        let stone: MeshStandardMaterial | null = null;
+        model.traverse((o) => {
+          const m = o as Mesh;
+          if (!m.isMesh) return;
+          m.castShadow = true; m.receiveShadow = true;
+          if (!stone) { stone = (m.material as MeshStandardMaterial).clone(); stone.emissive = new Color('#FFFFFF'); stone.emissiveMap = stone.map; stone.emissiveIntensity = 0; }
+          m.material = stone;
+        });
+        this.belfryStone = stone;
         g.add(model);
-        const socket = model.getObjectByName('RopeSocket');
-        if (socket) ropeFrom = socket.position.clone();
+        pivot = model.getObjectByName('Bell') ?? null;
+        socket = model.getObjectByName('RopeSocket') ?? null;
+        // The bell gets a material of its own: it keeps a little of the sea's light after dark, and flares when struck.
+        const bm = pivot as Mesh | null;
+        if (bm?.isMesh) {
+          const m = (bm.material as MeshStandardMaterial).clone();
+          m.emissive = new Color('#6FE6D2'); m.emissiveMap = m.map; m.emissiveIntensity = 0;
+          bm.material = m; this.bellMat = m;
+        }
+        // Over the sill of the opening that faces the shoal (the tower's +Z), a hand above the stone.
+        lead = new Vector3(0.25, 2.27, 1.66);
+        g.rotation.set(0, bf.rot ?? 0, 0);
       } else {
         const built = buildBelfry();
         const tower = new Mesh(built.tower, createPropMaterial()), bell = new Mesh(built.bell, createPropMaterial());
@@ -243,13 +274,14 @@ export class WorldScene {
         bell.position.set(...built.bellAt);
         g.add(tower, bell);
         pivot = bell;
+        g.rotation.set(-0.035, bf.rot ?? 0, 0.05, 'YXZ');
       }
-      g.position.set(bf.x, 0, bf.z); g.rotation.set(-0.035, bf.rot ?? 0, 0.05, 'YXZ');
+      g.position.set(bf.x, 0, bf.z);
       s.add(g);
       g.updateMatrixWorld(true);
-      this.blockers.push([bf.x, bf.z, 2.6]);
-      this.rocks.push([bf.x, bf.z, 2.9]);
-      if (pivot) { this.bell = { pivot, t: 99, amp: 0 }; pivot.getWorldPosition(this.bellPos); this.bellPos.y -= 0.7; }
+      this.blockers.push([bf.x, bf.z, model ? 2.3 * size + 0.15 : 2.6]);
+      this.rocks.push([bf.x, bf.z, model ? 2.3 * size + 0.45 : 2.9]);
+      if (pivot) { this.bell = { pivot, t: 99, amp: 0 }; pivot.getWorldPosition(this.bellPos); this.bellPos.y -= model ? 0.6 * size : 0.7; }
       // The rope comes ashore to a post on the shoal, where a keeper can reach it.
       const at = rc.places?.find((p) => p.id === 'drowned-bell');
       if (at) {
@@ -260,17 +292,16 @@ export class WorldScene {
         this.propMats.push(post.material as MeshStandardMaterial);
         s.add(post);
         this.blockers.push([px, pz, 0.3]);
-        // Two lengths of rope with a sag between them.
-        const a = ropeFrom.applyMatrix4(g.matrixWorld), b = new Vector3(px, post.position.y + 1.0, pz);
-        const mid = a.clone().lerp(b, 0.55); mid.y -= 0.9;
         const ropeMat = new MeshStandardMaterial({ color: new Color('#B9A27C'), roughness: 0.95, flatShading: true });
-        for (const [p, q] of [[a, mid], [mid, b]]) {
-          const len = p.distanceTo(q), geo = new CylinderGeometry(0.022, 0.022, len, 5, 1);
-          geo.rotateX(Math.PI / 2);
-          const seg = new Mesh(geo, ropeMat);
-          seg.position.copy(p).lerp(q, 0.5); seg.lookAt(q);
-          s.add(seg);
-        }
+        const length = () => { const geo = new CylinderGeometry(0.022, 0.022, 1, 5, 1); geo.rotateX(Math.PI / 2); const m = new Mesh(geo, ropeMat); s.add(m); return m; };
+        const lay = (m: Mesh, p: Vector3, q: Vector3) => { m.position.copy(p).lerp(q, 0.5); m.scale.z = Math.max(0.01, p.distanceTo(q)); m.lookAt(q); };
+        // From the tower to the post in two lengths with a sag between them.
+        const a = lead ? model!.localToWorld(lead.clone()) : new Vector3(-0.95, 6.83, 0).applyMatrix4(g.matrixWorld);
+        const b = new Vector3(px, post.position.y + 1.0, pz);
+        const mid = a.clone().lerp(b, 0.55); mid.y -= lead ? 0.55 : 0.9;
+        lay(length(), a, mid); lay(length(), mid, b);
+        // Inside the tower the rope runs from the clapper to the sill, and goes with the bell when it swings.
+        if (socket) { const seg = length(); this.bellRope = { seg, socket, to: a, lay }; lay(seg, socket.getWorldPosition(new Vector3()), a); }
       }
     }
 
@@ -382,6 +413,9 @@ export class WorldScene {
       // Struck, it swings and dies away; left alone it still stirs a little, as if something had just let go of it.
       const bl = this.bell; bl.t += dt;
       bl.pivot.rotation.z = bl.amp * Math.exp(-bl.t * 0.55) * Math.sin(bl.t * 3.4) + 0.018 * Math.sin(this.time * 0.6);
+      if (this.bellRope) { const r = this.bellRope; r.lay(r.seg, r.socket.getWorldPosition(this.bellV), r.to); }
+      if (this.bellMat) this.bellMat.emissiveIntensity = 0.05 + 0.55 * this.glow + 2.2 * (bl.amp / 0.42) * Math.exp(-bl.t * 0.9);
+      if (this.belfryStone) this.belfryStone.emissiveIntensity = 0.03 + 0.2 * (1 - this.glow);
     }
     if (this.ferryHeld) return;
     const b = this.boatBase;

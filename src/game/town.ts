@@ -729,4 +729,4 @@ export class Town {
 
 const _v = new Vector3(), _up = new Vector3(0, 0.32, 0);
 /** The chart place an island belongs to: the three stacks of the Teeth are one place. */
-const chartPlaceOf = (island: string) => (island.startsWith('teeth-') ? 'the-teeth' : island);
+const chartPlaceOf = (island: string) => (island.startsWith('teeth-') ? 'the-teeth' : island === 'bell-shoal' ? 'drowned-belfry' : island);

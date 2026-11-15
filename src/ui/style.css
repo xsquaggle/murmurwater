@@ -225,6 +225,8 @@ body.titled .hud { opacity: 0; }
 .btn.echo-btn { background: var(--ink); color: var(--cyan); border-color: var(--ink); }
 .btn.echo-btn:hover:not(:disabled) { background: var(--ink-2); }
 .screen-card.sc-bell { width: min(760px, 94vw); }
+/* The shelf and the satchel keep their height from page to page, so the window does not jump under the pointer. */
+.screen-card.sc-shop, .screen-card.sc-hold, .screen-card.sc-gear, .screen-card.sc-journal, .screen-card.sc-quests, .screen-card.sc-echoes { min-height: min(590px, 86vh); }
 .bell-lead { font: italic 600 17px/1.45 var(--serif); margin: 4px 0 12px; }
 .bell-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .bell-col { border-radius: 14px; padding: 4px 14px 8px; border: 2px solid rgba(59,42,79,.25); background: #FFF9EC; }

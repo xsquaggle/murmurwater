@@ -609,7 +609,8 @@ export class Game {
     this.hud.setCompass(sail.aboard && !this.town.blocking ? { yaw: camYaw, knots: sail.made * 1.94, marks: this.town.bearings() } : null);
     const fp = this.town.focusPrompt, pp = this.pots.prompt;
     const prompts = this.town.blocking ? [] : [fp ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '', pp ? `<kbd>${keyName(this.input.bindings.pot[0])}</kbd> ${pp}` : ''].filter(Boolean);
-    this.hud.setPrompt(prompts.join('<br>'), sail.aboard);
+    // Aboard, and with a pot in reach, the prompt sits low: the thing it is about floats where it would otherwise be.
+    this.hud.setPrompt(prompts.join('<br>'), sail.aboard || !!this.pots.near);
 
     const night = this.world.light.night;
     this.audio.update(dt, {

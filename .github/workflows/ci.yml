@@ -31,6 +31,10 @@ jobs:
         run: node e2e/sail.cjs shots/sail
         env:
           MW_QUALITY: low
+      - name: Tide bot (Lantern Pots, every page of the shelf, the satchel, the Drowned Bell and the first Turning)
+        run: node e2e/tide.cjs shots/tide
+        env:
+          MW_QUALITY: low
       - name: Walk bot (solid props and people, everyone reachable on foot)
         run: node e2e/walk.cjs shots/walk
         env:
