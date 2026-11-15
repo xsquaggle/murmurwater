@@ -501,7 +501,7 @@ export class Screens {
     const li = (items: string[]) => el('ul', {}, ...items.map((t) => el('li', {}, t)));
     this.card.append(el('div', { class: 'bell-cols' },
       el('div', { class: 'bell-col takes' }, el('h3', {}, 'The tide takes'), li([
-        `Your coins (◉ ${fmt(s.coins)} now${catchWorth ? `, and ◉ ${fmt(catchWorth)} when your catch is sold first` : ''})`,
+        `Your coins (◉ ${fmt(s.coins)} now${catchWorth ? `, plus ◉ ${fmt(catchWorth)} for the catch in your hold, which is sold first` : ''})`,
         'Rod tuning', 'Your creel, back to the basket', 'Bait', 'Pot upgrades, and pots in the water come home', 'Notice board jobs and your Rhythm'])),
       el('div', { class: 'bell-col keeps' }, el('h3', {}, 'You keep'), li([
         'Rods, lures, clothes and the keeper’s things', 'The skiff', 'Your Lantern Pots', 'Relics and Moonpearls', 'The journal, the chart and the story', 'Echoes, and everything they have bought']))));
