@@ -31,7 +31,7 @@ type Loop = (typeof LOOPS)[number];
  * Sounds that have been asked for but are not recorded yet (see docs/HANDOFF.md). They are not fetched and
  * not counted as missing; their synth stand-ins play instead. Delete a name here when its files land.
  */
-const PENDING: ReadonlySet<string> = new Set<string>(['pot-set', 'pot-haul', 'bell-toll', 'echo-buy', 'tide-turn']);
+const PENDING: ReadonlySet<string> = new Set<string>([]);
 
 interface SfxOpts { gain?: number; rate?: number; at?: number; vary?: number; bus?: Bus; dur?: number }
 export interface AudioState {

@@ -11,7 +11,7 @@ Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the
 - Hearthbay plays end to end: Mara's first jobs, selling at her stall, the shop and notice board, Wick's sketch, Pell's ferry to Gull Point, relighting the lamp, and back. Every quest fish is catchable from the dock.
 - The cast is built to feel thrown (wind-up, whip, lure flight on an arc, line paying out, splash by power, camera kick, aim ring); fish shadows roam and one stalks the float before each bite.
 - Generated models are in for the player, NPCs, Biscuit the cat, fish, skiff and harbour props (see `docs/ASSETS.md`); stand-ins remain only where a file is missing.
-- Sound: 112 recorded effect files, 4 looping themes and 3 stings are wired in (`src/audio/audio.ts`); each one-shot keeps a synth stand-in for a missing file. All 52 voice lines are recorded.
+- Sound: 118 recorded effect files, 4 looping themes and 3 stings are wired in (`src/audio/audio.ts`); each one-shot keeps a synth stand-in for a missing file. All 52 voice lines are recorded.
 - Sailing (v0.2.0): Pell gives the Keeper's Skiff when the lamp is relit. The player boards it from any shore, sails it freely inside Hearthbay Waters (Kettle Isle, the Teeth, Pip's Bar), fishes from it when it is still, finds places for the chart, travels between known moorings from the chart, and is turned back by the Murmur Fog at the edge. Two more story quests (hb-07 the kettle, hb-08 the Teeth flounder) use it; a sea chest waits on Pip's Bar.
 - Economy and gear (v0.3.0): Mara's shelf has four pages (rods and bait with rod tuning, lures and creel, clothes, Lantern Pots); the satchel has a Gear page that totals everything and an Echoes page once the Bell is known. Hearthbay is tuned by the simulator: the skiff at about 23 minutes, pots at 42, the first ring of the Bell at 75.
 - Lantern Pots (v0.3.0): set and hauled with F from shore, dock or the skiff; they trap journal fish on play time only, hold three and stop.
@@ -47,7 +47,7 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 
 ## Known issues
 - 35 lines are not voiced: the four new jobs and the nine lines people say after a Turning. `npm run voice` lists them; the asset thread records them once Lawson has answered about credits (4.84 Higgsfield credits were left on 2026-11-13, a line costs about half a credit).
-- Sounds `pot-set`, `pot-haul`, `bell-toll`, `echo-buy` and `tide-turn` play synth stand-ins until their files land (they are named in `PENDING` in `src/audio/audio.ts`; take a name out when its files are in, or the desktop smoke test will not look for them).
+- The six new sounds (`pot-set`, `pot-haul` x2, `bell-toll`, `echo-buy`, `tide-turn`) are in and levelled by measurement; nobody has heard them in play. A sound asked for but not yet delivered goes in `PENDING` in `src/audio/audio.ts` so its stand-in plays and the smoke test does not look for it.
 - No person has played the v0.3.0 slice. Its timings are the simulator's.
 - Echoes have ten upgrades to go on and nothing else until the fog lamp exists.
 - In the simulator a clumsy keeper (skill 0.4) earns about what a practised one (0.7) does over three hours, and only the best (0.95) pulls ahead, by 10 to 15%. Either the simulated clumsy keeper fights too well or skill pays too little. Worth a look alongside Lawson's feedback on how the fishing feels; `tests/sim.test.ts` only holds that the best is never behind.
@@ -85,4 +85,4 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 - Bots that play this slice use `window.tide` helpers defined at the top of `e2e/tide.cjs`.
 
 ## Next steps
-The rest of phase 2 in ROADMAP: Mossglass Fen behind the Murmur Fog (the fog lamp, bought with Echoes, is the gate), a second boat, deckhands, more chests, crates and relics. Voice the 35 new lines and bring in the six sounds when they arrive. Act on Lawson's feedback from v0.3.0 first.
+The rest of phase 2 in ROADMAP: Mossglass Fen behind the Murmur Fog (the fog lamp, bought with Echoes, is the gate), a second boat, deckhands, more chests, crates and relics. Voice the 35 new lines when credits allow. Act on Lawson's feedback from v0.3.0 first.
