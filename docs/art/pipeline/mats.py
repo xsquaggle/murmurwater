@@ -7,8 +7,10 @@ Options every material takes through paint_spec:
   ao       {"top"|"bottom"|"left"|"right": amount}  darken toward that edge (a part that goes into another)
   edge     amount of painted bevel: light along the top and left edges, dark along the bottom and right
   water    [y at the bottom edge, y at the top edge] in metres: the patch stands in water at y = 0 (algae below,
-           a line of scum and barnacles at the waterline, wet just above)
+           a line of scum and barnacles at the waterline, wet just above); barnacles: 0 leaves the barnacles out
   tile_x   the patch runs round something, so its left and right edges must meet
+  flip     turn the finished patch upside down (a blade whose foot is at the top of the atlas)
+  glow     {"mat": ..., options}: a second patch for the same rectangle, painted into the model's glow map
 Needs paintkit.py beside it.
 """
 import numpy as np
@@ -192,15 +194,123 @@ def glass(H, W, seed=0, hue='cyan', panes=1, flame=0.85, **_):
     return mix(img, rim * 0.8, 0.5 * np.exp(-(e / 4.0) ** 2))
 
 
-def glow(H, W, seed=0, colour='#7FF0D0', dark='#2E6E63', along='y', tip=1.0, tile_x=False, **_):
+def glow(H, W, seed=0, colour='#7FF0D0', dark='#2E6E63', along='y', tip=1.0, pale=0.55, tile_x=False, **_):
     """Something that lights up after dark (moss strands, buds): its colour, paler and brighter toward the tip (v = 1 unless tip = 0)."""
     yy, xx, v = grid(H, W)
     t = v if tip else 1 - v
     c, d = hexc(colour), hexc(dark)
     img = mix(d, c, smooth(t, 0.0, 0.75))
-    img = mix(img, mix(c, np.ones(3), 0.55), smooth(t, 0.6, 1.0) * 0.8)
+    img = mix(img, mix(c, np.ones(3), pale), smooth(t, 0.6, 1.0) * 0.8)
     img = shade(img, 0.86 + 0.2 * strokes(H, W, seed, along, 6, 50, tile_x=tile_x))
     return img
+
+
+# ------------------------------------------------------------------------------------------------ plants
+MOSS, PINE = hexc('#66844C'), hexc('#2F4E3A')
+
+
+def bark(H, W, seed=0, tile_x=False, moss=0.45, tone=('#6E5E50', '#3B3029', '#93826C'), dead=0.0, **_):
+    """Fissured bark: long ridges with dark crevices, moss in patches (more of it low down), pale lichen. dead bleaches it."""
+    c, d, l = [hexc(t) for t in tone]
+    yy, xx, v = grid(H, W)
+    ridge = strokes(H, W, seed, 'y', 3, max(18, W // 9), tile_x=tile_x)
+    img = mix(d, c, smooth(ridge, 0.18, 0.55))
+    img = mix(img, l, 0.55 * smooth(ridge, 0.6, 0.95))
+    img = shade(img, 0.92 + 0.14 * stretch(fbm(H, W, max(2, H / 60), max(2, W / 60), seed + 1, tile_x=tile_x)))
+    if dead:
+        img = mix(img, hexc('#A39C8E'), dead * (0.55 + 0.3 * smooth(ridge, 0.4, 0.9)))
+    m = stretch(fbm(H, W, max(2, H / 70), max(2, W / 50), seed + 2, 4, 0.55, tile_x=tile_x)) + 0.35 * (1 - v) - 0.15
+    mm = smooth(m, 1.0 - 0.75 * moss, 1.15 - 0.75 * moss)
+    img = mix(img, mix(PINE, MOSS, stretch(fbm(H, W, max(2, H / 20), max(2, W / 20), seed + 3, 2, tile_x=tile_x))), 0.85 * mm)
+    img = mix(img, hexc('#B9C2A2'), 0.5 * smooth(speckle(H, W, seed + 4, 0.0016, (2.4, 2.4), tile_x=tile_x), 0.3, 0.6) * (1 - mm))
+    return img
+
+
+def canopy(H, W, seed=0, rim=0.3, tile_x=True, tone=('#2C4A36', '#4F7A45', '#86A85A'), **_):
+    """The pad of a tree's crown, unrolled: v runs from the middle of the underside (0) out to the rim (v = rim) and
+    over the top to the middle (1). Dark underneath; on top, dabs of leaves, lightest where the rim catches the light."""
+    lo, mid, hi = [hexc(t) for t in tone]
+    yy, xx, v = grid(H, W)
+    top = smooth(v, rim - 0.01, rim + 0.01)
+    t = np.clip((v - rim) / (1 - rim), 0, 1)                         # 0 at the rim, 1 at the middle of the top
+    dabs = stretch(fbm(H, W, max(3, H / 14), max(6, W / 14), seed, 3, 0.6, tile_x=tile_x))
+    big = stretch(fbm(H, W, 3, 6, seed + 1, 2, tile_x=tile_x))
+    img = mix(lo, mid, 0.32 + 0.45 * dabs)
+    img = mix(img, hi, smooth(dabs + 0.5 * big - 0.9 * t, 0.7, 1.15) * 0.7)
+    img = mix(img, hi * 1.08, 0.75 * np.exp(-(t / 0.07) ** 2))                               # the rim
+    img = shade(img, 0.86 + 0.2 * big)
+    under = mix(hexc('#3A5340'), hexc('#5F7655'), stretch(fbm(H, W, 3, 8, seed + 2, 3, tile_x=tile_x)))
+    under = mix(under, hexc('#4A3A2E'), 0.5 * smooth(strokes(H, W, seed + 3, 'y', 4, 26, tile_x=tile_x), 0.6, 0.9))      # boughs seen from below
+    under = shade(under, 0.75 + 0.35 * np.clip(v / max(rim, 1e-6), 0, 1))
+    return mix(under, img, top)
+
+
+def strands(H, W, seed=0, n=4, tone=('#3F5A45', '#7FA082', '#B9D3A8'), root='top', **_):
+    """Hanging moss: n ribbons side by side, each darker at its root and paler and frayed toward its tip."""
+    lo, mid, hi = [hexc(t) for t in tone]
+    yy, xx, v = grid(H, W)
+    t = yy if root == 'top' else 1 - yy                               # 0 at the root, 1 at the tip
+    f = (xx * n) % 1.0
+    img = mix(lo, mid, smooth(t, 0.0, 0.6))
+    img = mix(img, hi, smooth(t, 0.55, 1.0) * 0.8)
+    fib = strokes(H, W, seed, 'y', 3, max(24, W // 3))
+    img = shade(img, 0.82 + 0.3 * fib)
+    return shade(img, 1 - 0.3 * np.exp(-(np.minimum(f, 1 - f) * W / n / 2.0) ** 2))
+
+
+def blade(H, W, seed=0, n=1, dry=0.0, tone=('#27483A', '#5F8A4C', '#BFD488'), **_):
+    """Reed blades side by side, foot at the bottom of the patch and tip at the top (flip: true puts the foot on top):
+    dark and wet at the foot, pale at the tip, a rib down the middle. dry browns the upper half."""
+    lo, mid, hi = [hexc(t) for t in tone]
+    yy, xx, v = grid(H, W)
+    f = (xx * n) % 1.0
+    k = np.minimum((xx * n).astype(int), n - 1)
+    rs = np.random.default_rng(seed)
+    tones = rs.uniform(0.88, 1.12, n)[k]
+    img = mix(lo, mid, smooth(v, 0.05, 0.5))
+    img = mix(img, hi, smooth(v, 0.5, 1.0))
+    img = mix(img, hexc('#B9A066'), dry * smooth(v, 0.45, 0.95) * (0.5 + 0.5 * stretch(fbm(H, W, 6, 2 * n, seed + 1))))
+    img = shade(img, tones)
+    img = shade(img, 0.9 + 0.16 * strokes(H, W, seed + 2, 'y', 3, max(16, W // 4)))
+    rib = np.exp(-((f - 0.5) * W / n / 1.6) ** 2)
+    img = mix(img, hi, 0.35 * rib)
+    return shade(img, 1 - 0.28 * np.exp(-(np.minimum(f, 1 - f) * W / n / 1.5) ** 2))
+
+
+def bulrush(H, W, seed=0, head=0.72, tip=0.94, **_):
+    """A bulrush, foot at the bottom: a green stem, from v = head a brown velvet head, and above v = tip a pale spike."""
+    yy, xx, v = grid(H, W)
+    stem = mix(hexc('#2F4E3A'), hexc('#7F9A52'), smooth(v, 0.05, head))
+    stem = shade(stem, 0.9 + 0.14 * strokes(H, W, seed, 'y', 3, max(12, W // 3)))
+    hd = mix(hexc('#4A2E1E'), hexc('#7A4E30'), stretch(fbm(H, W, max(4, H / 10), 3, seed + 1, 3)))
+    hd = mix(hd, hexc('#A9764A'), 0.5 * speckle(H, W, seed + 2, 0.05, (0.9, 0.9)))
+    hd = shade(hd, 0.85 + 0.3 * np.sin(np.pi * xx))
+    img = mix(stem, hd, smooth(v, head - 0.01, head + 0.01))
+    return mix(img, hexc('#CFE2B0'), smooth(v, tip - 0.01, tip + 0.01))
+
+
+def lilypad(H, W, seed=0, tone=('#3F6B45', '#6C9A55', '#A9C777'), **_):
+    """A lily pad seen from above, filling the patch: veins out from the middle, a darker edge, a little yellowing."""
+    lo, mid, hi = [hexc(t) for t in tone]
+    yy, xx, v = grid(H, W)
+    r = np.hypot(xx - 0.5, yy - 0.5) * 2
+    a = np.arctan2(yy - 0.5, xx - 0.5)
+    img = mix(mid, hi, 0.5 * stretch(fbm(H, W, 4, 4, seed)))
+    img = mix(img, lo, 0.55 * smooth(r, 0.72, 1.0))
+    vein = np.abs(np.sin(a * 7 + 0.4 * np.sin(r * 6)))
+    img = mix(img, hi * 1.06, 0.55 * np.exp(-(vein / 0.07) ** 2) * smooth(r, 0.06, 0.25))
+    img = mix(img, hexc('#B9A95A'), 0.22 * smooth(stretch(fbm(H, W, 5, 5, seed + 1, 3)), 0.7, 0.95))
+    return mix(img, lo, 0.6 * np.exp(-(r / 0.07) ** 2))
+
+
+def bud(H, W, seed=0, tone=('#5E8F5A', '#E9E2F0', '#C9B6E6'), tile_x=True, **_):
+    """A closed lily bud, unrolled, foot at the bottom: green sepals low down, pale petals with lilac edges above."""
+    g, w, e = [hexc(t) for t in tone]
+    yy, xx, v = grid(H, W)
+    petal = np.abs(np.sin(np.pi * xx * 5))
+    img = mix(g, w, smooth(v + 0.12 * petal, 0.22, 0.5))
+    img = mix(img, e, 0.55 * np.exp(-(petal / 0.16) ** 2) * smooth(v, 0.3, 0.6))
+    return shade(img, 0.9 + 0.12 * stretch(fbm(H, W, 3, 6, seed, tile_x=tile_x)))
 
 
 # ------------------------------------------------------------------------------------------------ cloth, paper, flat
@@ -226,7 +336,8 @@ def flat(H, W, seed=0, colour='#8A6A4F', var=0.12, grain=0.0, along='y', tile_x=
     return img
 
 
-PAINT = {'iron': iron, 'brass': brass, 'copper': copper, 'floats': floats, 'tin': tin, 'wood': wood, 'endgrain': endgrain, 'cork': cork, 'rope': rope,
+PAINT = {'iron': iron, 'brass': brass, 'copper': copper, 'floats': floats, 'tin': tin, 'bark': bark, 'canopy': canopy, 'strands': strands, 'blade': blade,
+         'bulrush': bulrush, 'lilypad': lilypad, 'bud': bud, 'wood': wood, 'endgrain': endgrain, 'cork': cork, 'rope': rope,
          'glass': glass, 'glow': glow, 'cloth': cloth, 'flat': flat}
 
 
@@ -252,18 +363,19 @@ def waterline(img, y0, y1, seed=0, tile_x=False, barnacles=1.0):
     return shade(img, 1 - 0.14 * smooth(0.22 - Y, 0, 0.22) * (Y > -0.01))               # wet just above the water
 
 
-def finish(img, light=1.0, ao=None, edge=0.0, water=None, seed=0, tile_x=False, soft=3, **_):
+def finish(img, light=1.0, ao=None, edge=0.0, water=None, seed=0, tile_x=False, soft=3, flip=False, barnacles=1.0, **_):
     H, W = img.shape[:2]
     yy, xx, v = grid(H, W)
     if water:
-        img = waterline(img, water[0], water[1], seed + 50, tile_x)
+        img = waterline(img, water[0], water[1], seed + 50, tile_x, barnacles)
     if edge:
         img = bevel(img, edge)
     for side, amount in (ao or {}).items():
         t = {'top': yy, 'bottom': 1 - yy, 'left': xx, 'right': 1 - xx}[side]
         img = shade(img, 1 - amount * np.exp(-(t / 0.22) ** 2))
     img = shade(img, light)
-    return paintify(img, soft, wrap_x=tile_x) if soft and min(H, W) > 8 else img
+    img = paintify(img, soft, wrap_x=tile_x) if soft and min(H, W) > 8 else img
+    return img[::-1] if flip else img
 
 
 def paint_spec(A, skip=(), extra=None):
@@ -278,5 +390,8 @@ def paint_spec(A, skip=(), extra=None):
         H, W = A.size(name)
         img = table[mat](H, W, **spec)
         A.paste(name, finish(img, **spec))
+        if isinstance(spec.get('glow'), dict):                       # what the patch gives off after dark goes into the glow map
+            g = dict(spec['glow'])
+            A.paste_glow(name, finish(table[g.pop('mat')](H, W, **g), **g))
         done.append(name)
     return done

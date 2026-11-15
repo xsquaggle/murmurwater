@@ -31,12 +31,16 @@ export const compose = (...fs) => (p) => fs.reduceRight((q, f) => f(q), p);
 /** A rectangle of the atlas in pixels: x0, y0 (top left), x1, y1. at(s, t) is s across and t up from its bottom edge. */
 export const rect = (x0, y0, x1, y1) => ({ x0, y0, x1, y1, at: (s, t) => [x0 + (x1 - x0) * s, y1 + (y0 - y1) * t], sub: (s0, t0, s1, t1) => rect(x0 + (x1 - x0) * s0, y1 + (y0 - y1) * t1, x0 + (x1 - x0) * s1, y1 + (y0 - y1) * t0) });
 
+/** Run fn(part) with a further transform on the part (applied before the part's own): for a piece built about the origin and then put somewhere. */
+export const within = (part, xf, fn) => { const keep = part.xf; part.xf = compose(keep, xf); try { fn(part); } finally { part.xf = keep; } return part; };
+
 /**
  * Lay rectangles out in an atlas without placing each by hand. items: { name: [width, height, paint] } in pixels, where
  * paint (optional) says how the painter fills it: a material name or { mat, ...options } (see mats.py). Returns
  * { name: rect }, every rect carrying its paint; tallest first, each as high up as it fits, `pad` pixels between rectangles.
+ * `at` moves the whole lot (to pack one corner of an atlas and place the rest by hand, see strip()).
  */
-export const pack = (W, H, items, pad = 8) => {
+export const pack = (W, H, items, pad = 8, at = [0, 0]) => {
   const list = Object.entries(items).map(([name, [w, h, paint]], i) => ({ name, w, h, paint: paint ? { seed: 11 + 7 * i, ...(typeof paint === 'string' ? { mat: paint } : paint) } : null }));
   const out = {}; const sky = new Int32Array(W).fill(pad);                       // the skyline: how far down each column is taken
   for (const it of [...list].sort((a, b) => b.h - a.h || b.w - a.w)) {
@@ -44,20 +48,23 @@ export const pack = (W, H, items, pad = 8) => {
     let best = null;
     for (let x = pad; x + it.w + pad <= W; x += 4) { let y = 0; for (let k = x - pad; k < x + it.w + pad && k < W; k++) y = Math.max(y, sky[Math.max(0, k)]); if (!best || y < best.y) best = { x, y }; }
     if (best.y + it.h + pad > H) throw new Error(`pack: the atlas is full at ${it.name} (${Object.keys(out).length} of ${list.length} placed)`);
-    out[it.name] = Object.assign(rect(best.x, best.y, best.x + it.w, best.y + it.h), { paint: it.paint }); for (let k = best.x; k < best.x + it.w; k++) sky[k] = best.y + it.h + pad;
+    out[it.name] = Object.assign(rect(at[0] + best.x, at[1] + best.y, at[0] + best.x + it.w, at[1] + best.y + it.h), { paint: it.paint }); for (let k = best.x; k < best.x + it.w; k++) sky[k] = best.y + it.h + pad;
   }
   return Object.fromEntries(list.map((it) => [it.name, out[it.name]]));
 };
+/** A rectangle placed by hand, with its paint (as pack() gives them). */
+export const strip = (x0, y0, x1, y1, paint, seed = 5) => Object.assign(rect(x0, y0, x1, y1), { paint: { seed, ...(typeof paint === 'string' ? { mat: paint } : paint) } });
 /** The layout file the painter reads: where every rectangle is, how it is to be painted, and anything else the painter needs. */
 export const layoutOf = (R, atlas, extra = {}) => ({ atlas, rects: Object.fromEntries(Object.entries(R).map(([k, r]) => [k, [r.x0, r.y0, r.x1, r.y1]])), paint: Object.fromEntries(Object.entries(R).filter(([, r]) => r.paint).map(([k, r]) => [k, r.paint])), ...extra });
 
 /** A builder's command line: <out.glb> [texture.png] [--layout layout.json] [--uv uv.svg]. */
 export const cli = (argv = process.argv.slice(2)) => { const a = [...argv]; const flag = (k) => { const i = a.indexOf(k); return i < 0 ? null : a.splice(i, 2)[1]; }; const layout = flag('--layout'), uv = flag('--uv'); return { out: a[0], texture: a[1], layout, uv }; };
 /** Write what the command line asked for: the layout for the painter, the UV outlines, and the model (textured if the texture exists). */
-export const emit = async (m, R, atlas, args, { size = atlas[0], quality = 90, extra = {} } = {}) => {
+export const emit = async (m, R, atlas, args, { size = atlas[0] === atlas[1] ? atlas[0] : atlas, glowSize = null, quality = 90, extra = {} } = {}) => {
   if (args.layout) fs.writeFileSync(args.layout, JSON.stringify(layoutOf(R, atlas, extra), null, 1));
   if (args.uv) fs.writeFileSync(args.uv, m.uvSvg(atlas));
-  const stats = await m.write(args.out, { texture: args.texture && fs.existsSync(args.texture) ? args.texture : null, size, atlas, quality }); console.log(JSON.stringify(stats)); return stats;
+  const tex = args.texture && fs.existsSync(args.texture) ? args.texture : null, glow = tex && fs.existsSync(tex.replace(/\.png$/, '.glow.png')) ? tex.replace(/\.png$/, '.glow.png') : null;      // the painter writes <texture>.glow.png when something has a glow map
+  const stats = await m.write(args.out, { texture: tex, glowTexture: glow, glowSize, size, atlas, quality }); console.log(JSON.stringify(stats)); return stats;
 };
 
 export class Part {
@@ -104,7 +111,7 @@ export class Part {
     return this;
   }
 
-  /** A tube along points with a radius at each (number or list), `sides` round; u round the rectangle, v along it. Ends are capped unless opt.open. */
+  /** A tube along points with a radius at each (number or list), `sides` round; u round the rectangle, v along it (or opt.v: one 0..1 per point). Ends are capped unless opt.open. */
   tube(pts, radius, sides, r, opt = {}) {
     const n = pts.length, R = (i) => (typeof radius === 'number' ? radius : radius[i]); let L = 0; const acc = [0];
     for (let i = 1; i < n; i++) { L += len(sub(pts[i], pts[i - 1])); acc.push(L); }
@@ -114,7 +121,7 @@ export class Part {
       const x = norm(cross(up, t)), y = cross(t, x); frames.push({ x, y, t }); up = y;
     }
     const P = (i, j) => { const a = 2 * Math.PI * (j % sides) / sides + (opt.twist || 0), f = frames[i]; return add(pts[i], add(mul(f.x, R(i) * Math.cos(a)), mul(f.y, R(i) * Math.sin(a)))); };
-    const C = (i, j) => [P(i, j), r.at(j / sides * (opt.wrap || 1), acc[i] / (L || 1)), opt.shade ? opt.shade(i, j % sides) : 1];
+    const C = (i, j) => [P(i, j), r.at(j / sides * (opt.wrap || 1), opt.v ? opt.v[i] : acc[i] / (L || 1)), opt.shade ? opt.shade(i, j % sides) : 1];
     for (let i = 0; i + 1 < n; i++) for (let j = 0; j < sides; j++) this.quad(C(i, j), C(i, j + 1), C(i + 1, j + 1), C(i + 1, j));
     if (!opt.open) for (const [i, flip] of [[0, false], [n - 1, true]]) {
       const cp = [pts[i], r.at(0.5, i ? 1 : 0), 1];
@@ -140,19 +147,22 @@ export class Model {
   node(name, pivot = [0, 0, 0], parent = 'root') { this.nodes.set(name, { pivot, parent }); return this; }
   /** An empty node at a point, child of a node. */
   empty(name, at, parent = 'root') { this.empties.push({ name, at, parent }); return this; }
-  /** kind 'texture' (the atlas) or 'plain' ({ color: [r, g, b] in linear 0..1 }); emissive: [r, g, b] factor; glow: true uses the atlas as the emissive texture too. */
+  /** kind 'texture' (the atlas) or 'plain' ({ color: [r, g, b] in linear 0..1 }); emissive: [r, g, b] factor; glow: true gives it an emissive texture: the model's glow map if write() gets one, else the atlas. */
   material(name, def) { this.materials.set(name, def); return this; }
 
-  async write(out, { texture, size = 1024, atlas = [1024, 1024], quality = 90 } = {}) {
+  async write(out, { texture, glowTexture = null, glowSize = null, size = 1024, atlas = [1024, 1024], quality = 90 } = {}) {
     const doc = new Document(); doc.createExtension(EXTTextureWebP).setRequired(true); const buf = doc.createBuffer();
     const acc = (arr, type, T = Float32Array) => doc.createAccessor().setArray(new T(arr)).setType(type).setBuffer(buf);
     let tex = null, texBytes = 0;
-    if (texture) { const webp = await sharp(texture).removeAlpha().resize(size, size, { fit: 'fill', kernel: 'lanczos3' }).webp({ quality, effort: 6 }).toBuffer(); texBytes = webp.length; tex = doc.createTexture(this.name).setImage(webp).setMimeType('image/webp'); }
+    const [sw, sh] = Array.isArray(size) ? size : [size, size], [gw, gh] = glowSize ? (Array.isArray(glowSize) ? glowSize : [glowSize, glowSize]) : [sw, sh];      // a size is one number (square) or [width, height]
+    if (texture) { const webp = await sharp(texture).removeAlpha().resize(sw, sh, { fit: 'fill', kernel: 'lanczos3' }).webp({ quality, effort: 6 }).toBuffer(); texBytes = webp.length; tex = doc.createTexture(this.name).setImage(webp).setMimeType('image/webp'); }
+    let gtex = null;                                                                   // a glow map of its own (painted black where nothing glows); without one the atlas is the glow map
+    if (glowTexture) { const webp = await sharp(glowTexture).removeAlpha().resize(gw, gh, { fit: 'fill', kernel: 'lanczos3' }).webp({ quality, effort: 6 }).toBuffer(); texBytes += webp.length; gtex = doc.createTexture(this.name + '-glow').setImage(webp).setMimeType('image/webp'); }
     const mats = new Map();
     for (const [name, d] of this.materials) {
       const m = doc.createMaterial(name).setMetallicFactor(d.metallic ?? 0).setRoughnessFactor(d.roughness ?? 0.9);
       if (d.kind === 'texture' && tex) m.setBaseColorTexture(tex); if (d.color) m.setBaseColorFactor([...d.color, 1]); if (d.emissive) m.setEmissiveFactor(d.emissive);
-      if (d.glow && tex) m.setEmissiveTexture(tex);                                     // the atlas is also the glow map: emissive = factor x texture
+      if (d.glow && (gtex || tex)) m.setEmissiveTexture(gtex || tex);                   // emissive = factor x glow map (the atlas itself if the model has no glow map of its own)
       if (d.doubleSided) m.setDoubleSided(true);
       mats.set(name, m);
     }

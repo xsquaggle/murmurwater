@@ -155,6 +155,8 @@ class Atlas:
         self.w, self.h = size or self.layout['atlas']
         self.img = np.ones((self.h, self.w, 3)) * hexc(base)
         self.used = np.zeros((self.h, self.w), bool)
+        self.glow = None                 # a second canvas, black where nothing glows; made when the first glow patch is pasted
+        self.gused = np.zeros((self.h, self.w), bool)
 
     def rect(self, name):
         x0, y0, x1, y1 = [int(round(v)) for v in self.layout['rects'][name]]
@@ -164,12 +166,20 @@ class Atlas:
         x0, y0, x1, y1 = self.rect(name)
         return y1 - y0, x1 - x0
 
-    def paste(self, name, img, bleed=4):
+    def paste_glow(self, name, img, bleed=4):
+        """The same for the glow map (what the patch gives off after dark)."""
+        if self.glow is None:
+            self.glow = np.zeros((self.h, self.w, 3))
+        self.paste(name, img, bleed, self.glow, self.gused)
+
+    def paste(self, name, img, bleed=4, canvas=None, used=None):
         """Put a painted patch into its rectangle and let its border colours run `bleed` pixels beyond it (unless
         another patch is already there), so that no seam shows when the texture is filtered."""
         x0, y0, x1, y1 = self.rect(name)
         h, w = y1 - y0, x1 - x0
         assert img.shape[:2] == (h, w), (name, img.shape, (h, w))
+        canvas = self.img if canvas is None else canvas
+        used = self.used if used is None else used
         pad = np.pad(np.clip(img, 0, 1), ((bleed, bleed), (bleed, bleed), (0, 0)), mode='edge')
         Y0, X0 = y0 - bleed, x0 - bleed
         for yy in range(pad.shape[0]):
@@ -178,12 +188,14 @@ class Atlas:
             xs = np.arange(pad.shape[1]) + X0
             ok = (xs >= 0) & (xs < self.w)
             inside = (ay >= y0) & (ay < y1) & (xs >= x0) & (xs < x1)
-            ok &= inside | ~self.used[ay, np.clip(xs, 0, self.w - 1)]
-            self.img[ay, xs[ok]] = pad[yy, ok]
-        self.used[y0:y1, x0:x1] = True
+            ok &= inside | ~used[ay, np.clip(xs, 0, self.w - 1)]
+            canvas[ay, xs[ok]] = pad[yy, ok]
+        used[y0:y1, x0:x1] = True
 
     def save(self, path):
         Image.fromarray((np.clip(self.img, 0, 1) * 255 + 0.5).astype(np.uint8)).save(path)
+        if self.glow is not None:
+            Image.fromarray((np.clip(self.glow, 0, 1) * 255 + 0.5).astype(np.uint8)).save(path[:-4] + '.glow.png')
         return path
 
 
