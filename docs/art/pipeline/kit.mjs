@@ -1,10 +1,11 @@
-// kit.mjs : a small mesh kit for props that are built in code (build-pot-float.mjs, build-belfry.mjs).
+// kit.mjs : a small mesh kit for props that are built in code (build-pot-float.mjs, build-belfry.mjs, the Fen props).
 // A model is a set of parts. A part is a soup of triangles (corners with a position, a texture coordinate in pixels of
 // the atlas and a shade 0..1 that becomes COLOR_0); it belongs to a node and a material. write() welds the corners,
 // gives them normals (smooth up to the part's crease angle), and writes one GLB with a WebP texture.
 import { Document, NodeIO } from '@gltf-transform/core';
 import { EXTTextureWebP } from '@gltf-transform/extensions';
 import sharp from 'sharp';
+import fs from 'node:fs';
 
 export const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 export const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -29,6 +30,35 @@ export const compose = (...fs) => (p) => fs.reduceRight((q, f) => f(q), p);
 
 /** A rectangle of the atlas in pixels: x0, y0 (top left), x1, y1. at(s, t) is s across and t up from its bottom edge. */
 export const rect = (x0, y0, x1, y1) => ({ x0, y0, x1, y1, at: (s, t) => [x0 + (x1 - x0) * s, y1 + (y0 - y1) * t], sub: (s0, t0, s1, t1) => rect(x0 + (x1 - x0) * s0, y1 + (y0 - y1) * t1, x0 + (x1 - x0) * s1, y1 + (y0 - y1) * t0) });
+
+/**
+ * Lay rectangles out in an atlas without placing each by hand. items: { name: [width, height, paint] } in pixels, where
+ * paint (optional) says how the painter fills it: a material name or { mat, ...options } (see mats.py). Returns
+ * { name: rect }, every rect carrying its paint; tallest first, each as high up as it fits, `pad` pixels between rectangles.
+ */
+export const pack = (W, H, items, pad = 8) => {
+  const list = Object.entries(items).map(([name, [w, h, paint]], i) => ({ name, w, h, paint: paint ? { seed: 11 + 7 * i, ...(typeof paint === 'string' ? { mat: paint } : paint) } : null }));
+  const out = {}; const sky = new Int32Array(W).fill(pad);                       // the skyline: how far down each column is taken
+  for (const it of [...list].sort((a, b) => b.h - a.h || b.w - a.w)) {
+    if (it.w + 2 * pad > W) throw new Error(`pack: ${it.name} is wider than the atlas`);
+    let best = null;
+    for (let x = pad; x + it.w + pad <= W; x += 4) { let y = 0; for (let k = x - pad; k < x + it.w + pad && k < W; k++) y = Math.max(y, sky[Math.max(0, k)]); if (!best || y < best.y) best = { x, y }; }
+    if (best.y + it.h + pad > H) throw new Error(`pack: the atlas is full at ${it.name} (${Object.keys(out).length} of ${list.length} placed)`);
+    out[it.name] = Object.assign(rect(best.x, best.y, best.x + it.w, best.y + it.h), { paint: it.paint }); for (let k = best.x; k < best.x + it.w; k++) sky[k] = best.y + it.h + pad;
+  }
+  return Object.fromEntries(list.map((it) => [it.name, out[it.name]]));
+};
+/** The layout file the painter reads: where every rectangle is, how it is to be painted, and anything else the painter needs. */
+export const layoutOf = (R, atlas, extra = {}) => ({ atlas, rects: Object.fromEntries(Object.entries(R).map(([k, r]) => [k, [r.x0, r.y0, r.x1, r.y1]])), paint: Object.fromEntries(Object.entries(R).filter(([, r]) => r.paint).map(([k, r]) => [k, r.paint])), ...extra });
+
+/** A builder's command line: <out.glb> [texture.png] [--layout layout.json] [--uv uv.svg]. */
+export const cli = (argv = process.argv.slice(2)) => { const a = [...argv]; const flag = (k) => { const i = a.indexOf(k); return i < 0 ? null : a.splice(i, 2)[1]; }; const layout = flag('--layout'), uv = flag('--uv'); return { out: a[0], texture: a[1], layout, uv }; };
+/** Write what the command line asked for: the layout for the painter, the UV outlines, and the model (textured if the texture exists). */
+export const emit = async (m, R, atlas, args, { size = atlas[0], quality = 90, extra = {} } = {}) => {
+  if (args.layout) fs.writeFileSync(args.layout, JSON.stringify(layoutOf(R, atlas, extra), null, 1));
+  if (args.uv) fs.writeFileSync(args.uv, m.uvSvg(atlas));
+  const stats = await m.write(args.out, { texture: args.texture && fs.existsSync(args.texture) ? args.texture : null, size, atlas, quality }); console.log(JSON.stringify(stats)); return stats;
+};
 
 export class Part {
   constructor(name, { node = 'root', material = 'main', crease = 40, shade = 1, xf = ident } = {}) { Object.assign(this, { name, node, material, crease, shade, xf, tris: [] }); }
