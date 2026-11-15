@@ -2387,6 +2387,186 @@
   "bytes": 11607
  },
  {
+  "name": "pot-set_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "ezwa",
+    "file": "water_splash-05.flac",
+    "speed": 0.8
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "cloth1.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "cloth2.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "cloth3.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "cloth4.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "bubbles.wav"
+   }
+  ],
+  "how": "a splash played slower for weight; nine cloth rustles in a row, each a little faster and quieter than the last, for the rope running out; bubbles after it",
+  "file": "pot-set_1.ogg",
+  "seconds": 1.808,
+  "samples": 79720,
+  "decoded": 79720,
+  "peak_db": -1.0,
+  "loud100_db": -18.0,
+  "bytes": 25551
+ },
+ {
+  "name": "pot-haul_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "drowning_0.wav",
+    "cut": [
+     0.2,
+     2.4
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     3.6,
+     4.5
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg"
+   }
+  ],
+  "how": "water churning as the basket breaks the surface, a creak of the rope, and five single drips falling off it, each quieter than the last",
+  "file": "pot-haul_1.ogg",
+  "seconds": 2.789,
+  "samples": 122982,
+  "decoded": 122982,
+  "peak_db": -6.2,
+  "loud100_db": -19.2,
+  "bytes": 35533
+ },
+ {
+  "name": "pot-haul_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "splash1_0.wav",
+    "cut": [
+     0.5,
+     2.4
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "swim.wav"
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak2.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg"
+   }
+  ],
+  "how": "the tail of a big splash with a stroke through water over it, a creak of the rope, and six single drips falling off the basket",
+  "file": "pot-haul_2.ogg",
+  "seconds": 2.896,
+  "samples": 127734,
+  "decoded": 127734,
+  "peak_db": -1.5,
+  "loud100_db": -19.0,
+  "bytes": 39845
+ },
+ {
+  "name": "tide-turn_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_01_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_04_cc0-18363__jasinski__alkaibeach.flac"
+   }
+  ],
+  "how": "two waves, the second 1.2 s after the first and 3 dB quieter; the swell opens up from its own low rumble and the last 1.7 s thin into hiss, the water draining back",
+  "file": "tide-turn_1.ogg",
+  "seconds": 4.188,
+  "samples": 184670,
+  "decoded": 184670,
+  "peak_db": -6.3,
+  "loud100_db": -17.0,
+  "bytes": 40756
+ },
+ {
+  "name": "bell-toll_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "one strike of a church bell with a strike note of D3: seventeen partials of a tuned bell from the hum (D2) up, each a beating pair that wavers as it rings down, a clang of sixty short-lived high partials and the knock of the clapper at the strike, and a dark tail of room"
+   }
+  ],
+  "how": "synthesised in sfx_manifest.py",
+  "file": "bell-toll_1.ogg",
+  "seconds": 8.64,
+  "samples": 381042,
+  "decoded": 381042,
+  "peak_db": -4.3,
+  "loud100_db": -17.2,
+  "bytes": 32313
+ },
+ {
+  "name": "echo-buy_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "two notes of struck glass (D6, then A6 35 ms later), each a pure tone with faint upper partials, heard twice more as quieter, duller echoes"
+   }
+  ],
+  "how": "synthesised in sfx_manifest.py, in the key of the Hearthbay theme",
+  "file": "echo-buy_1.ogg",
+  "seconds": 0.954,
+  "samples": 42071,
+  "decoded": 41943,
+  "peak_db": -11.3,
+  "loud100_db": -19.9,
+  "bytes": 7489
+ },
+ {
   "name": "waves-lap_1",
   "loop": true,
   "sources": [
