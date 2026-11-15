@@ -104,6 +104,12 @@ Rods reset on prestige? **No** — see 8.2. Rod *upgrade levels* do reset.
 - Steering: W/S throttle, A/D rudder, wake and spray, boat bobs on the same wave function the water uses.
 - Fish from the boat anywhere, or from docks/shore.
 
+**Where the regions lie (designed 2026-11-15).** One set of coordinates for the whole sea: north is −z, east is +x, Hearthbay's centre is (0, 0). The Still Eye is at (0, −1200) and the five regions stand on a ring of 1,200 m around it, each 700 m across its radius, so neighbours just touch. Mossglass Fen is the next one round to the west, centred on (−1141, −829), north-west of Hearthbay. The Drowned Bell lies on the line between them.
+- Only the region the player is in is built. The last 110 m of every region is Murmur Fog, so between two regions there are about 230 m of fog, and the change from one to the other is made in the thick of it, where nothing can be seen.
+- **The sea-road.** Without a fog lamp the fog turns a boat back, as before. With one, a double line of old iron lights shows in the fog between two regions, and along that road the murmur lets the boat through. Everywhere else the fog still turns her back: the lamp does not open the sea, it shows the road.
+- **The Fog Lamp** is bought with Echoes (satchel, Echoes page: 8 Echoes, once, kept for good). It stands on the skiff's bow and lights itself in the fog.
+- The chart has a page for each region the player has reached, and "Sail here" works between known moorings of any of them.
+
 ## 7. Loot
 - **Crates** (common, fished up): bait, coins, small materials.
 - **Chests** (rarer, fished up in specific zones; quest rewards): gear, Moonpearls, wearables.
@@ -169,6 +175,14 @@ The last keeper, **Isolde Fenn**, noticed the dream souring (the uncanny fish ar
 - **The Choir** — three sisters in the Hush who speak one sentence between them. (R4)
 - **The Lamplighter** — a figure in the sunken town who only appears reflected. (R5)
 - **Biscuit** the cat and **Mister Hollis** (fog-person) — deckhands with opinions.
+
+### 10.3b Mossglass Fen (region 2, designed 2026-11-15)
+**What it is.** A drowned wood and reed fen in still, shallow water so clear over green moss that it looks like glass. Moss-green haze by day; after dark the hanging moss, the lilies and some of the fish give off a cyan light. In the story it is the Sleeper's ear: everything here listens.
+- **Places** (world coordinates): Sedge Landing (−874, −635), where the sea-road comes in: a jetty, Dr. Calloway's stilt hut and field table, Mara's packet box, a notice board. Glasswater (−1141, −789), a wide clear lagoon. The Reed Maze (−961, −1009), sandbars and channels. The Standing Trees (−1371, −889), lantern trees in the water. The Sump (−1301, −579), a hole with no bottom anyone has found. The Listening Post (−1471, −1129), Isolde's, on the far side.
+- **Selling there.** Mara's packet box on the landing takes the catch at stall prices and opens her shelf. No new shopkeeper.
+- **Fish** (ten): Reedling, Mudlark, Glassfin (common); Sedge Pike, Mossback Tench (uncommon); Glowbelly (rare, night), Stilt Gar (rare); Bottomless Eel (epic, the Sump); Old Mossglass (legendary); the Listener (uncanny, after the Listening Post). Worth five to seven times their Hearthbay rank.
+- **Dr. Ines Calloway** measures everything and the numbers will not agree: the fen is bigger each time she paces it. Her jobs: A Sense of Scale, Clear as Glass, The Tape Runs Out, What Glows, The Sump, The Listening Post. The last gives the second page of Isolde's logbook.
+- **Later in this region:** deckhands (Biscuit, Mister Hollis) and the second boat come in the slice after this one.
 
 ### 10.4 Writing rules
 - Short lines. Never more than three dialogue boxes before control returns.
