@@ -80,7 +80,7 @@ Voice: very old, slow, gentle man; deep, dry, a little amused.
 | `pell/hb-09-bell.outro.0` | ba1010c8 | missing | So it's still there. Good. Some tides it isn't. |
 | `pell/hb-09-bell.outro.1` | 1916f3db | missing | The keepers ring it when the bay has given all it has. The tide turns. The islands forget, and start again kinder. |
 | `pell/hb-09-bell.outro.2` | 804e3af1 | missing | You won't forget. That's the keeper's share. Here, this was hers. It makes no sound, so mind who you blow it at. |
-| `pell/hb-10-turning.intro.0` | fb5846cb | missing | When you're ready, ring it. Your catch is sold, your coins go out with the tide, and the islands forget what you bought with them. |
+| `pell/hb-10-turning.intro.0` | 2d81f7ab | missing | When you're ready, ring it. Your catch is sold and your coins go out with the tide. So does what coins did to your gear: the tuning, the creel, the bait. |
 | `pell/hb-10-turning.intro.1` | 21759413 | missing | What you keep: your rods, her things, your boat, your journal. And the Echoes. The more the tide carried, the more of them come back. |
 | `pell/hb-10-turning.intro.2` | 190c2d16 | missing | No hurry. You'll know the day. It's the day the stall has nothing left you want. |
 | `pell/hb-10-turning.reminder` | bac16c05 | missing | The bell's where you left it, north-west past Gull Point. Ring it when the stall has nothing left you want. |

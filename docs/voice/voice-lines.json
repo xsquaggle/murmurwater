@@ -556,8 +556,8 @@
       "npc": "pell",
       "speaker": "Pell",
       "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
-      "text": "When you're ready, ring it. Your catch is sold, your coins go out with the tide, and the islands forget what you bought with them.",
-      "hash": "fb5846cb"
+      "text": "When you're ready, ring it. Your catch is sold and your coins go out with the tide. So does what coins did to your gear: the tuning, the creel, the bait.",
+      "hash": "2d81f7ab"
     },
     {
       "key": "pell/hb-10-turning.intro.1",

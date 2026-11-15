@@ -299,7 +299,8 @@ const { chromium } = require('playwright');
   // and there are no pots yet.
   const old = require('fs').readFileSync(require('path').join(__dirname, '../tests/fixtures/saves/v3.json'), 'utf8');
   const was = JSON.parse(old).state;
-  await ev((text) => localStorage.setItem('murmurwater.test', text), old);
+  // The game saves as the page leaves, which would put the second tide back over the old save: stop that first.
+  await ev((text) => { window.__MW__.game.save = () => Promise.resolve(); localStorage.removeItem('murmurwater.test.bak'); localStorage.setItem('murmurwater.test', text); }, old);
   await page.goto(`http://localhost:${port}/?notitle&quality=low&keepfresh`);
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 1, null, { timeout: 180000 });
   r = await ev(() => { const g = window.__MW__.game, s = g.state; g.town.openScreen('gear'); const sums = document.querySelectorAll('.sum-i').length; g.town.closeScreens(); return { v: s.version, coins: s.coins, rods: s.gear.rods.length, done: s.quests.done.length, journal: Object.keys(s.journal).length, hold: g.holdCapacity, pots: s.pots.owned, creel: s.gear.creel, sums }; });
