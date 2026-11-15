@@ -185,3 +185,73 @@ class Atlas:
     def save(self, path):
         Image.fromarray((np.clip(self.img, 0, 1) * 255 + 0.5).astype(np.uint8)).save(path)
         return path
+
+
+def masonry(H, W, ppm, seed, course=(0.27, 0.36), block=(0.45, 0.9), corners=None, quoin=(0.62, 0.36), stones=('#9A968C', '#8C8A84', '#A39C8E', '#7F8288', '#8E877C', '#96918A'),
+            mortar='#4A464C', joint=2.0, warp=2.2, bevel=2.6, lit=0.24, shd=0.26, chip=0.22, rnd=5.0, tone=(0.88, 1.10), tile_x=False):
+    """Coursed stonework (or slates, or flags): returns (image, fields). ppm = pixels per metre; course and block are
+    the ranges of course height and block length in metres; corners = pixel columns where a joint must fall, with
+    quoins (long, short, alternating by course) on either side of each. lit and shd shade the upper-left and
+    lower-right edges of every block (negative values turn that round, for slates that lie under the course above).
+    fields: e = pixels to the nearest joint, j = the joints as a 0..1 mask, id = a number per block."""
+    rs = np.random.default_rng(seed)
+    e = np.full((H, W), 99.0)
+    Lf, Sf, tn = np.zeros((H, W)), np.zeros((H, W)), np.ones((H, W))
+    cid, bid = np.zeros((H, W), np.int32), np.zeros((H, W), np.int32)
+    segs = list(zip(corners[:-1], corners[1:])) if corners else [(0, W)]
+    y, ci, n = 0.0, 0, 0
+    while y * ppm < H:
+        h = rs.uniform(*course)
+        r1, r0 = H - int(round(y * ppm)), max(0, H - int(round((y + h) * ppm)))
+        y += h
+        ci += 1
+        if r1 <= r0:
+            continue
+        for a, b in segs:
+            cuts = [a]
+            if corners:
+                cuts.append(a + quoin[ci % 2] * ppm)
+                end = b - quoin[(ci + 1) % 2] * ppm
+            else:
+                cuts.append(a + rs.uniform(0.35, 1.0) * rs.uniform(*block) * ppm)
+                end = b
+            while cuts[-1] < end - block[0] * ppm * 0.6:
+                cuts.append(cuts[-1] + rs.uniform(*block) * ppm)
+            cuts[-1] = end if corners else b
+            if corners:
+                cuts.append(b)
+            cuts = sorted(set(int(round(min(max(c, a), b))) for c in cuts))
+            for c0, c1 in zip(cuts[:-1], cuts[1:]):
+                if c1 - c0 < 2:
+                    continue
+                n += 1
+                yy, xx = np.arange(r0, r1)[:, None], np.arange(c0, c1)[None, :]
+                dl, dr, dt, db = xx - c0 + 0.5, c1 - xx - 0.5, yy - r0 + 0.5, r1 - yy - 0.5
+                ee = np.minimum(np.minimum(dl, dr), np.minimum(dt, db)) * np.ones((r1 - r0, c1 - c0))
+                for dx, dy in ((dl, dt), (dr, dt), (dl, db), (dr, db)):
+                    mk = (dx < rnd) & (dy < rnd)
+                    ee = np.where(mk, np.minimum(ee, rnd - np.hypot(rnd - dx, rnd - dy)), ee)
+                if rs.random() < chip:
+                    dx, dy = [(dl, dt), (dr, dt), (dl, db), (dr, db)][rs.integers(4)]
+                    ee = np.minimum(ee, (dx + dy - rs.uniform(5, 13)) * 0.7)
+                e[r0:r1, c0:c1] = ee
+                Lf[r0:r1, c0:c1] = np.exp(-dt / bevel) + 0.6 * np.exp(-dl / bevel)
+                Sf[r0:r1, c0:c1] = np.exp(-db / bevel) + 0.6 * np.exp(-dr / bevel)
+                tn[r0:r1, c0:c1] = rs.uniform(*tone)
+                cid[r0:r1, c0:c1] = rs.integers(len(stones))
+                bid[r0:r1, c0:c1] = n
+    if warp:
+        dx = (fbm(H, W, max(1, H / 26), max(1, W / 26), seed + 1, 2, tile_x=tile_x) - 0.5) * 2 * warp
+        dy = (fbm(H, W, max(1, H / 26), max(1, W / 26), seed + 2, 2, tile_x=tile_x) - 0.5) * 2 * warp
+        Yc, Xc = np.mgrid[0:H, 0:W].astype(float)
+        co = [Yc + dy, Xc + dx]
+        e, Lf, Sf, tn = [ndi.map_coordinates(f, co, order=1, mode='nearest') for f in (e, Lf, Sf, tn)]
+        cid, bid = [ndi.map_coordinates(f, co, order=0, mode='nearest') for f in (cid, bid)]
+    pal = np.array([hexc(s) for s in stones])
+    j = smooth(joint - e, -0.8, 0.8)
+    face = tn * (0.94 + 0.12 * stretch(fbm(H, W, max(1, H / 40), max(1, W / 40), seed + 3, 3, tile_x=tile_x)))
+    face = face * (1 - 0.10 * speckle(H, W, seed + 4, 0.02, (1.1, 1.1), tile_x=tile_x))
+    img = pal[cid] * face[..., None]
+    img = img * (1 + lit * np.clip(Lf, 0, 1.3) - shd * np.clip(Sf, 0, 1.3))[..., None]
+    img = mix(img, hexc(mortar), j)
+    return img, dict(e=e, j=j, id=bid, tone=tn)
