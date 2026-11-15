@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the Drowned Bell), built for v0.3.0. The next slice is Mossglass Fen behind the Murmur Fog.
+Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the Drowned Bell), released as v0.3.0. The next slice is Mossglass Fen behind the Murmur Fog.
 
 ## Start here (new session)
 1. Read `docs/DIRECTIVE.md` (the brief, verbatim) and this file.
@@ -13,7 +13,7 @@ Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the
 - Generated models are in for the player, NPCs, Biscuit the cat, fish, skiff and harbour props (see `docs/ASSETS.md`); stand-ins remain only where a file is missing.
 - Sound: 118 recorded effect files, 4 looping themes and 3 stings are wired in (`src/audio/audio.ts`); each one-shot keeps a synth stand-in for a missing file. All 52 voice lines are recorded.
 - Sailing (v0.2.0): Pell gives the Keeper's Skiff when the lamp is relit. The player boards it from any shore, sails it freely inside Hearthbay Waters (Kettle Isle, the Teeth, Pip's Bar), fishes from it when it is still, finds places for the chart, travels between known moorings from the chart, and is turned back by the Murmur Fog at the edge. Two more story quests (hb-07 the kettle, hb-08 the Teeth flounder) use it; a sea chest waits on Pip's Bar.
-- Economy and gear (v0.3.0): Mara's shelf has four pages (rods and bait with rod tuning, lures and creel, clothes, Lantern Pots); the satchel has a Gear page that totals everything and an Echoes page once the Bell is known. Hearthbay is tuned by the simulator: the skiff at about 23 minutes, pots at 42, the first ring of the Bell at 75.
+- Economy and gear (v0.3.0): Mara's shelf has four pages (rods and bait with rod tuning, lures and creel, clothes, Lantern Pots); the satchel has a Gear page that totals everything and an Echoes page once the Bell is known. Hearthbay is tuned by the simulator: the skiff at about 23 minutes, pots at 43, the first ring of the Bell between 73 and 79.
 - Lantern Pots (v0.3.0): set and hauled with F from shore, dock or the skiff; they trap journal fish on play time only, hold three and stop.
 - The Drowned Bell (v0.3.0): the belfry stands on a shoal north-west of Gull Point. Pell's hb-09 finds it, hb-10 rings it; ringing turns the tide (coins and what they bought are taken, Echoes are paid on lifetime coins, the keeper wakes on the dock). Four more quests in all: hb-p1-pots, hb-08b-stall, hb-09-bell, hb-10-turning.
 - Settings are separate from the save (Electron `userData/settings.json`, browser localStorage). An unreadable save is quarantined, never overwritten.
@@ -83,6 +83,7 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 - `ringBell(state)` in `core/bell.ts` is the whole Turning as far as the save goes; `Town.ringBell()` is the cutscene around it and applies the quest event without a toast until the fade lifts. A new thing the tide should take or keep goes in the core function and in `tests/gear.test.ts`.
 - The belfry model leans toward its +X and its bell swings about Z. `world-scene.ts` turns it so its +Z opening faces the rope post, leads the rope from the clapper (`RopeSocket`) over that sill, and re-lays the inside length every frame while the bell moves.
 - Bots that play this slice use `window.tide` helpers defined at the top of `e2e/tide.cjs`.
+- Two traps for bots, both met while finishing this slice. The game saves as the page leaves (`beforeunload`), so a bot that plants a save in `localStorage` must stop `game.save` first or its own game lands on top. And a job handed in can run straight on into the giver's next offer, where there is no goodbye to pick: turn the offer down first (`e2e/sail.cjs` after the flounder).
 
 ## Next steps
 The rest of phase 2 in ROADMAP: Mossglass Fen behind the Murmur Fog (the fog lamp, bought with Echoes, is the gate), a second boat, deckhands, more chests, crates and relics. Voice the 35 new lines when credits allow. Act on Lawson's feedback from v0.3.0 first.
