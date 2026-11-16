@@ -154,6 +154,26 @@ function listeningPost(): Part[] {
   return [{ geo: b.build() }, { name: 'LogBox', geo: box.build(), pos: [-0.45, 0.535, 0.25] }];
 }
 
+/** Stores stood about a landing: stand-ins for the library's crate, barrel and tackle box. */
+function crate(): Part[] {
+  const b = new Builder(91, 0.04);
+  b.add(new BoxGeometry(0.8, 0.8, 0.8), C(PALETTE.driftwood), { pos: [0, 0.4, 0] });
+  for (const y of [0.12, 0.68]) b.add(new BoxGeometry(0.84, 0.08, 0.84), C('#5E4634'), { pos: [0, y, 0] });
+  return [{ geo: b.build() }];
+}
+function barrel(): Part[] {
+  const b = new Builder(92, 0.03);
+  b.add(new CylinderGeometry(0.36, 0.33, 0.95, 9), C(PALETTE.driftwood), { pos: [0, 0.475, 0] });
+  for (const y of [0.2, 0.75]) b.add(new CylinderGeometry(0.38, 0.38, 0.06, 9), C('#3A3442'), { pos: [0, y, 0] });
+  return [{ geo: b.build() }];
+}
+function tackleBox(): Part[] {
+  const b = new Builder(93, 0.02);
+  b.add(new BoxGeometry(0.5, 0.26, 0.3), C('#4F7A6A'), { pos: [0, 0.13, 0] });
+  b.add(new BoxGeometry(0.2, 0.04, 0.04), C('#C9A24A'), { pos: [0, 0.3, 0] });
+  return [{ geo: b.build() }];
+}
+
 const SPECS: Record<string, Spec> = {
   packetBox: { asset: 'packetBox', standIn: packetBox },
   noticeBoard: { asset: 'noticeBoard', standIn: () => [{ geo: buildNoticeBoard() }] },
@@ -161,6 +181,9 @@ const SPECS: Record<string, Spec> = {
   fieldKit: { asset: 'fieldKit', standIn: fieldKit },
   surveyStake: { asset: 'surveyStake', standIn: surveyStake },
   listeningPost: { asset: 'listeningPost', standIn: listeningPost },
+  crate: { asset: 'crate', standIn: crate },
+  barrel: { asset: 'barrel', standIn: barrel },
+  tackleBox: { asset: 'tackleBox', standIn: tackleBox },
 };
 export const PROP_MODELS = Object.keys(SPECS);
 

@@ -10,7 +10,7 @@ import { hashString } from '../core/rng';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
 import { converse, afterDecline, afterSale, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
-  BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, count, currentGoal, describeRewards, handsInTo, npc, npcOffer, onQuestEvent, questStatus,
+  BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, count, currentGoal, describeRewards, handsInTo, npc, npcOffer, shortName, onQuestEvent, questStatus,
   readyText, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
 } from '../core/quests';
 import { BAITS_BY_ID, REGIONS, REGIONS_BY_ID, findMooring, placeOfIsland, regionAt, regionOfNpc, regionOfPlace, roadToward, roadsOf, type FerryPoint, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
@@ -337,7 +337,7 @@ export class Town {
           // The tool for the job, handed over with it.
           if (q.gives) {
             g.refreshSession();
-            setTimeout(() => g.hud.toast(`${npc(q.giver).name.split(' ')[0]} hands you: ${describeRewards(q.gives!).join(', ')}`, 'good'), 500);
+            setTimeout(() => g.hud.toast(`${shortName(q.giver)} hands you: ${describeRewards(q.gives!).join(', ')}`, 'good'), 500);
             if (q.gives.pots) setTimeout(() => g.hud.toast(`Stand by open water and press ${keyLabel(g.input.bindings.pot[0] ?? '')} to set it`), 1700);
           }
           // A job that wants the dark brings the dusk on: the sky hurries after the clock.

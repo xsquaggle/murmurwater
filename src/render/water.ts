@@ -78,7 +78,7 @@ export class Water {
         uWaves: { value: waves },
         uSeaState: { value: 0.6 * (opts.look?.swell ?? 1) },
         uShoreFoam: { value: opts.look?.shoreFoam ?? 1 },
-        uMurk: { value: opts.look?.murk ?? 0.45 },
+        uTurbid: { value: opts.look?.murk ?? 0.45 },
         uHeightTex: { value: opts.heightTex },
         uHeightBounds: { value: opts.heightBounds },
         uCamPos: { value: new Vector3() },
@@ -164,7 +164,7 @@ export class Water {
         uniform vec3 uAmbient;
         uniform vec3 uDeep, uMid, uShallow, uFoam;
         uniform float uShoreFoam;
-        uniform float uMurk;
+        uniform float uTurbid;
         uniform float uDetail;
         uniform vec4 uFish[FISH_N];
         uniform vec4 uFishB[FISH_N];
@@ -310,7 +310,7 @@ export class Water {
           col = mix(col, foamCol, clamp(foam, 0.0, 1.0));
 
           // Transparency in the shallows lets the seabed (with caustics) show through.
-          float alpha = clamp(1.0 - exp(-depth * uMurk), 0.25, 1.0);
+          float alpha = clamp(1.0 - exp(-depth * uTurbid), 0.25, 1.0);
           alpha = max(max(alpha, foam), shade);
           alpha = mix(alpha, 1.0, smoothstep(30.0, 140.0, dist) * 0.8 + fres * 0.5);
 

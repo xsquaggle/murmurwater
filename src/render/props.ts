@@ -261,12 +261,15 @@ export function buildDock(hf: Heightfield, start: { x: number; z: number }, yaw:
     const p = new Vector3(start.x, 0, start.z).addScaledVector(dir, (from + length) / 2).addScaledVector(side, (s * width) / 2);
     b.add(new BoxGeometry(0.08, 0.08, length - from), C('#C9B48E'), { pos: [p.x, deckY + 0.75, p.z], rot: [0, yaw, 0] });
   }
-  // Crates, barrel, net pile near the end
-  const prop = (t: number, s: number, geo: BufferGeometry, col: Color, y = 0.35, rot = 0) => {
-    const p = new Vector3(start.x, 0, start.z).addScaledVector(dir, t).addScaledVector(side, s);
-    b.add(geo, col, { pos: [p.x, deckY + y, p.z], rot: [0, yaw + rot, 0] });
-  };
-  prop(10, -0.95, Builder.wobble(new IcosahedronGeometry(0.55, 0), 0.15, 3), C('#C9B48E'), 0.3);
+  // A heap of net by the rail, with its floats lying on it.
+  {
+    const p = new Vector3(start.x, 0, start.z).addScaledVector(dir, 10).addScaledVector(side, -0.72);
+    b.add(Builder.wobble(new IcosahedronGeometry(0.5, 1), 0.1, 3), C('#58786F'), { pos: [p.x, deckY + 0.17, p.z], rot: [0, yaw, 0], scale: [1.15, 0.45, 0.8] });
+    for (const [dt, ds, dy] of [[0.22, 0.1, 0.36], [-0.25, -0.05, 0.33], [0.0, 0.22, 0.3]]) {
+      const f = p.clone().addScaledVector(dir, dt).addScaledVector(side, ds);
+      b.add(new SphereGeometry(0.085, 6, 4), C(PALETTE.coral), { pos: [f.x, deckY + dy, f.z] });
+    }
+  }
 
   const group = new Group();
   const mesh = new Mesh(b.build(), createPropMaterial());

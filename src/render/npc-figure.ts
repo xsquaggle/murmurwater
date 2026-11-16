@@ -10,13 +10,13 @@ import { assets } from './assets';
 
 const mat = (hex: string, rough = 0.85) => new MeshStandardMaterial({ color: new Color(hex), roughness: rough, flatShading: true });
 
-interface Look { height: number; width: number; coat: string; trim: string; skin: string; hair: string; hat?: 'scarf' | 'brim' | 'none'; hatColor?: string; specs?: boolean; beard?: boolean; stoop?: number; prop?: 'book' }
+interface Look { height: number; width: number; coat: string; trim: string; skin: string; hair: string; hat?: 'scarf' | 'brim' | 'none'; hatColor?: string; specs?: boolean; /** Hair drawn back off the face into a knot. */ bun?: boolean; beard?: boolean; stoop?: number; prop?: 'book' }
 const LOOKS: Record<string, Look> = {
   mara: { height: 1.62, width: 1.18, coat: '#C25F55', trim: '#F2E3C6', skin: '#D9A27E', hair: '#5A3A2C', hat: 'scarf' },
   pell: { height: 1.86, width: 0.9, coat: '#4C5A66', trim: '#2F3A44', skin: '#E3B796', hair: '#E9E4DA', hat: 'brim', beard: true, stoop: 0.16 },
   wick: { height: 1.2, width: 0.85, coat: '#E86F6F', trim: '#F2E3C6', skin: '#C98E6A', hair: '#2E2420', hat: 'none', prop: 'book' },
   // A sun hat, round spectacles, a waxed field coat, a notebook always in hand.
-  calloway: { height: 1.7, width: 0.98, coat: '#7C7A4A', trim: '#C9B48E', skin: '#C99872', hair: '#3B2A22', hat: 'brim', hatColor: '#D9C48A', specs: true, prop: 'book' },
+  calloway: { height: 1.7, width: 0.98, coat: '#7C7A4A', trim: '#C9B48E', skin: '#C99872', hair: '#3B2A22', hat: 'brim', hatColor: '#D9C48A', specs: true, bun: true, prop: 'book' },
 };
 
 function standIn(id: string): Group {
@@ -31,7 +31,8 @@ function standIn(id: string): Group {
   const apron = new Mesh(new BoxGeometry(0.34 * L.width, 0.55, 0.04), trim); apron.position.set(0, 0.86, 0.27 * L.width); apron.rotation.x = -0.18; body.add(apron);
   for (const x of [-1, 1]) { const arm = new Mesh(new CapsuleGeometry(0.07, 0.42, 3, 6), coat); arm.position.set(x * 0.3 * L.width, 1.06, 0.02); arm.rotation.z = x * 0.18; body.add(arm); }
   const head = new Mesh(new SphereGeometry(0.25, 10, 8), skin); head.position.y = 1.58; body.add(head);
-  const hairM = new Mesh(new SphereGeometry(0.26, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hair); hairM.position.y = 1.6; hairM.rotation.x = -0.25; body.add(hairM);
+  const hairM = new Mesh(new SphereGeometry(0.26, 10, 8, 0, Math.PI * 2, 0, Math.PI * (L.bun ? 0.46 : 0.55)), hair); hairM.position.y = 1.6; hairM.rotation.x = L.bun ? -0.52 : -0.25; body.add(hairM);
+  if (L.bun) { const knot = new Mesh(new SphereGeometry(0.095, 7, 5), hair); knot.position.set(0, 1.5, -0.25); body.add(knot); }
   for (const x of [-0.08, 0.08]) { const e = new Mesh(new SphereGeometry(0.026, 5, 4), mat('#2A2030')); e.position.set(x, 1.61, 0.23); body.add(e); }
   if (L.hat === 'scarf') { const sc = new Mesh(new SphereGeometry(0.27, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.42), mat('#3FA7A0')); sc.position.y = 1.62; sc.rotation.x = -0.35; body.add(sc); }
   if (L.hat === 'brim') {

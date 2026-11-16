@@ -43,7 +43,7 @@ export interface QuestDef {
   /** Short line the giver says while the quest is in progress. */ reminder?: string;
 }
 export interface NpcDef {
-  id: string; name: string; role: string; region: string; voice: string; barks: string[]; /** Said once after each Turning. */ turned?: string[];
+  id: string; name: string; /** What they are called in passing ("Calloway hands you…"); the first word of the name if not given. */ short?: string; role: string; region: string; voice: string; barks: string[]; /** Said once after each Turning. */ turned?: string[];
   /** Not a person: a box, a sign. It has no voice, and its one line is read the first time only. */ thing?: boolean;
 }
 export interface RelicDef { id: string; name: string; effect: { luck?: number; value?: number; biteSpeed?: number }; lore: string }
@@ -63,6 +63,8 @@ export const RELICS_BY_ID = new Map(RELICS.map((r) => [r.id, r]));
 export const BOATS_BY_ID = new Map(BOATS.map((b) => [b.id, b]));
 
 export function npc(id: string): NpcDef { const n = NPCS_BY_ID.get(id); if (!n) throw new Error(`Unknown npc ${id}`); return n; }
+/** The name to use in passing. */
+export const shortName = (id: string): string => { const n = npc(id); return n.short ?? n.name.split(' ')[0]; };
 /** Who a quest is handed in to. */
 export const handsInTo = (q: QuestDef): string => q.receiver ?? q.giver;
 /** What to say when a quest's objectives are met: where to take it. */

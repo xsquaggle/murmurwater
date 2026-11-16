@@ -454,7 +454,7 @@
           "items": {
             "glowgrub": 5
           },
-          "text": "Sand in the hinges, and somebody\u2019s initials scratched out of the lid."
+          "text": "Sand in the hinges, and somebody’s initials scratched out of the lid."
         },
         {
           "id": "belfry-chest",
@@ -878,7 +878,7 @@
           "z": -635,
           "r": 170,
           "coins": 200,
-          "note": "Where the sea-road comes in. A jetty, a hut on stilts, and a box with Mara\u2019s mark on it."
+          "note": "Where the sea-road comes in. A jetty, a hut on stilts, and a box with Mara’s mark on it."
         },
         {
           "id": "glasswater",
@@ -1046,6 +1046,48 @@
           "z": -1116.2,
           "yaw": 0.735,
           "block": 1.5
+        },
+        {
+          "model": "barrel",
+          "x": -853.0,
+          "z": -623.1,
+          "yaw": 0.4,
+          "block": 0.5
+        },
+        {
+          "model": "crate",
+          "x": -854.5,
+          "z": -622.0,
+          "yaw": 0.3,
+          "block": 0.6
+        },
+        {
+          "model": "crate",
+          "x": -850.9,
+          "z": -625.6,
+          "yaw": 1.1,
+          "block": 0.6
+        },
+        {
+          "model": "crate",
+          "x": -839.6,
+          "z": -614.2,
+          "yaw": 0.75,
+          "block": 0.6
+        },
+        {
+          "model": "barrel",
+          "x": -842.9,
+          "z": -609.4,
+          "yaw": 0.0,
+          "block": 0.5
+        },
+        {
+          "model": "tackleBox",
+          "x": -843.4,
+          "z": -622.6,
+          "yaw": 2.2,
+          "block": 0.35
         }
       ]
     }

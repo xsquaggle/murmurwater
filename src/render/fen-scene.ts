@@ -45,6 +45,10 @@ function swaying(mat: MeshStandardMaterial, time: { value: number }, amount: num
         float mwK = uv.y * uv.y * ${amount.toFixed(3)};
         transformed.x += (sin(uSwayTime * 1.15 + mwPh) + 0.4 * sin(uSwayTime * 2.7 + mwPh * 1.9)) * mwK;
         transformed.z += cos(uSwayTime * 0.85 + mwPh * 1.3) * mwK * 0.7;`);
+    // Thin leaves let the light through: lit mostly as if they faced the sky, so a bed seen against the sun
+    // is not a row of black blades.
+    shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_begin>', `#include <normal_fragment_begin>
+        normal = normalize(mix(normal, (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz, 0.72));`);
   };
   mat.customProgramCacheKey = () => `sway-${amount}`;
   return mat;
@@ -87,8 +91,8 @@ function sheafGeometry(seed: number): BufferGeometry {
     const h = 1.7 + hash(i, seed, 3) * 0.9, yaw = hash(i, seed, 4) * Math.PI;
     const t = hash(i, seed, 5) < 0.3 ? dry : tip;
     // Two strips crossed, so a sheaf has some body from every side.
-    strip(o, Math.cos(a) * r, Math.sin(a) * r, yaw, h, 0.62, 0.1, 0.35 * (hash(i, seed, 6) - 0.3), foot, t);
-    strip(o, Math.cos(a) * r, Math.sin(a) * r, yaw + 1.4, h * 0.9, 0.5, 0.08, 0.3 * (hash(i, seed, 7) - 0.5), foot, t);
+    strip(o, Math.cos(a) * r, Math.sin(a) * r, yaw, h, 0.62, 0.03, 0.35 * (hash(i, seed, 6) - 0.3), foot, t);
+    strip(o, Math.cos(a) * r, Math.sin(a) * r, yaw + 1.4, h * 0.9, 0.5, 0.03, 0.3 * (hash(i, seed, 7) - 0.5), foot, t);
   }
   return toGeometry(o);
 }
