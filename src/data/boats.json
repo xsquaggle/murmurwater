@@ -13,7 +13,28 @@
       "length": 3.6,
       "beam": 1.5,
       "hull": 1,
-      "lamp": 0
+      "lamp": 0,
+      "crew": 1,
+      "crewHold": 8
+    },
+    {
+      "id": "puffin",
+      "name": "The Puffin",
+      "speed": 9.5,
+      "turn": 0.72,
+      "hold": 14,
+      "price": 40000,
+      "needs": "boatyard-open",
+      "desc": "A stout gaff sloop with tanbark sails. She lay forty years on a bar in the Reed Maze with a moorhen in her cockpit, and does not seem to have minded.",
+      "accel": 0.5,
+      "draft": 0.6,
+      "length": 5.4,
+      "beam": 2.0,
+      "hull": 2,
+      "lamp": 0,
+      "crew": 2,
+      "crewHold": 20,
+      "sets": "puffin-afloat"
     }
   ]
 }

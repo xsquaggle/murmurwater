@@ -9,6 +9,7 @@ import * as quests from './core/quests';
 import { findRoute } from './core/seaways';
 import { clearance } from './core/boat';
 import { LANDING, hullDistance, landingSpot } from './core/landing';
+import testerCrew from './data/tester/crew.json';
 import testerFen from './data/tester/fen.json';
 
 declare global {
@@ -37,11 +38,17 @@ const nativeStore = (): SaveStore => ({
 // ?fresh starts a new test game in a separate slot; ?keepfresh reloads that test slot (for the story bot).
 const testSlot = params.has('fresh') || params.has('keepfresh');
 /**
- * ?tester (F8 on the title screen) is a tester's start: a save the simulator's keeper played up to the newest
- * slice (tools/tester-save.ts), for trying it without the play before it. It reads and writes no save at all,
- * so the player's own game is as they left it.
+ * ?tester (F8 on the title screen) is a tester's start: a save the simulator's keeper played up to the doorstep
+ * of a slice (tools/tester-save.ts), for trying it without the play before it. `?tester` is the newest slice,
+ * `?tester=fen` the one before; F8 goes through them and then back to the player's own game. A tester's start
+ * reads and writes no save at all, so the player's own game is as they left it.
  */
-const tester = params.has('tester');
+const TESTERS = [
+  { id: 'crew', save: testerCrew, note: 'Hands aboard: the cat signed on, the wreck of the Puffin found, the price of her refit in your purse (see Pell), and a gentleman waiting on the old sea-road.' },
+  { id: 'fen', save: testerFen, note: 'Mossglass Fen: the Bell rung once, the Fog Lamp on the bow, Pell\'s road job in hand.' },
+];
+const testerAt = params.has('tester') ? Math.max(0, TESTERS.findIndex((t) => t.id === params.get('tester'))) : -1;
+const tester = testerAt >= 0;
 const nowhere = (): SaveStore => ({ read: async () => ({ main: null, backup: null }), write: async () => {} });
 const store: SaveStore = tester ? nowhere() : window.mwNative ? nativeStore() : localStorageStore(testSlot ? 'murmurwater.test' : 'murmurwater.save');
 
@@ -61,7 +68,7 @@ async function boot() {
   ui.appendChild(loading);
   await assets.loadAll((p) => { loading.textContent = `Listening for the tide… ${Math.round(p * 100)}%`; });
   loading.remove();
-  const state = tester ? deserialize(JSON.stringify(testerFen)) : params.has('fresh') ? newGame(1234) : loaded.state;
+  const state = tester ? deserialize(JSON.stringify(TESTERS[testerAt].save)) : params.has('fresh') ? newGame(1234) : loaded.state;
   if (params.has('hour')) state.hour = Number(params.get('hour'));
   const settings = await loadSettings();
   if (params.get('quality')) settings.quality = params.get('quality') as Quality;
@@ -76,11 +83,17 @@ async function boot() {
   // Title card: a click starts audio (browser rule) and captures the mouse.
   const title = document.createElement('div');
   title.className = 'title';
-  title.innerHTML = `<div class="title-inner"><div class="title-name">Murmurwater</div><div class="title-sub">the sea is listening</div><div class="title-go">Click to begin</div>${tester ? '<div class="title-tester">A tester\'s start: the Bell rung once, the Fog Lamp on the bow, Pell\'s road job in hand.<br>Nothing here is saved, and your own game is untouched. F8 goes back to it.</div>' : ''}</div>`;
+  const nextTester = testerAt + 1 < TESTERS.length ? TESTERS[testerAt + 1] : null;
+  const testerNote = tester ? `<div class="title-tester">A tester's start (${testerAt + 1} of ${TESTERS.length}). ${TESTERS[testerAt].note}<br>Nothing here is saved, and your own game is untouched. F8: ${nextTester ? 'the start before this one' : 'back to your own game'}.</div>` : '';
+  title.innerHTML = `<div class="title-inner"><div class="title-name">Murmurwater</div><div class="title-sub">the sea is listening</div><div class="title-go">Click to begin</div>${testerNote}</div>`;
   ui.appendChild(title);
   document.body.classList.add('titled');
-  // F8 on the title screen goes to the tester's start, and back.
-  const toTester = (e: KeyboardEvent) => { if (e.code === 'F8') { e.preventDefault(); location.search = tester ? '' : '?tester'; } };
+  // F8 on the title screen goes to the tester's starts, newest first, and then back.
+  const toTester = (e: KeyboardEvent) => {
+    if (e.code !== 'F8') return;
+    e.preventDefault();
+    location.search = !nextTester ? '' : testerAt + 1 === 0 ? '?tester' : `?tester=${nextTester.id}`;
+  };
   window.addEventListener('keydown', toTester);
   const begin = () => {
     window.removeEventListener('keydown', toTester);
@@ -105,6 +118,7 @@ async function boot() {
     makeFish,
     get assetsMissing() { return [...assets.missing]; },
     tester,
+    testerStart: tester ? TESTERS[testerAt].id : null,
     quests,
     findRoute,
     clearance,

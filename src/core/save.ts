@@ -35,6 +35,15 @@ export const MIGRATIONS: Record<number, Migration> = {
     if (up.value) { up.tidewise = Math.min(10, up.value); delete up.value; }
     return s;
   },
+  // v4 → v5: deckhands. Nobody has signed on in an older save, and the crew basket is empty. A boat that was
+  // "current" without being owned (never written by the game, but cheap to mend) is put right, because the
+  // crew's berths are counted from the current boat.
+  4: (s) => {
+    s.crew = { hired: [], hold: [], clocks: {}, tally: {} };
+    const b = (s.boats ??= { owned: [], current: null, upgrades: {}, at: null });
+    if (b.current && !(b.owned ?? []).includes(b.current)) b.current = (b.owned ?? [])[0] ?? null;
+    return s;
+  },
 };
 
 // JSON can't hold Infinity (the free breadcrumb stack); encode it.

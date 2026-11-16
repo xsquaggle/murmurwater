@@ -82,7 +82,7 @@ describe('world layout', () => {
       const hf = new Heightfield(r);
       const walkable = (x: number, z: number) => dockDeckAt(r.landmarks.dock, x, z) !== null || (hf.height(x, z) >= 0.15 && hf.normal(x, z, 0.8)[1] >= 0.62);
       for (const sp of r.npcSpots ?? []) expect(walkable(sp.x, sp.z), `npc ${sp.npc} on ${sp.island}`).toBe(true);
-      for (const p of r.places ?? []) expect(walkable(p.x, p.z), `place ${p.id}`).toBe(true);
+      for (const p of (r.places ?? []).filter((x) => !x.fromBoat)) expect(walkable(p.x, p.z), `place ${p.id}`).toBe(true);
       for (const [k, f] of Object.entries(r.ferry ?? {})) expect(walkable(f.x, f.z), `ferry landing ${k}`).toBe(true);
       for (const c of r.critters ?? []) expect(walkable(c.x, c.z), `critter ${c.id} home`).toBe(true);
     }

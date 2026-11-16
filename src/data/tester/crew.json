@@ -1,0 +1,404 @@
+{
+ "format": "murmurwater-save",
+ "version": 5,
+ "savedAt": "2026-11-16T00:00:00.000Z",
+ "state": {
+  "version": 5,
+  "seed": 1,
+  "playTime": 13998.050782478902,
+  "hour": 16.5,
+  "coins": 85618,
+  "moonpearls": 2,
+  "echoes": 1,
+  "lifetime": {
+   "coins": 171063,
+   "catches": 239,
+   "perfectHooks": 138,
+   "snaps": 0,
+   "echoes": 40
+  },
+  "run": {
+   "number": 5,
+   "coins": 98630,
+   "startedAt": 10886.4475516047
+  },
+  "nextUid": 801,
+  "hold": [],
+  "journal": {
+   "butterperch": {
+    "caught": 14,
+    "bestWeight": 1.24,
+    "traits": [],
+    "firstAt": 43.56667007085739
+   },
+   "coral-snapper": {
+    "caught": 30,
+    "bestWeight": 2.48,
+    "traits": [
+     "hollow"
+    ],
+    "firstAt": 69.18040055134594
+   },
+   "kettle-carp": {
+    "caught": 10,
+    "bestWeight": 2.99,
+    "traits": [],
+    "firstAt": 94.01714974666194
+   },
+   "moss-eel": {
+    "caught": 4,
+    "bestWeight": 2.82,
+    "traits": [],
+    "firstAt": 241.850655933703
+   },
+   "pebble-goby": {
+    "caught": 8,
+    "bestWeight": 0.33,
+    "traits": [],
+    "firstAt": 307.1240664396293
+   },
+   "lampjaw": {
+    "caught": 11,
+    "bestWeight": 1.96,
+    "traits": [],
+    "firstAt": 1366.2659951459987
+   },
+   "twofold-flounder": {
+    "caught": 14,
+    "bestWeight": 5.42,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 2050.0033773196833
+   },
+   "hollow-lantern": {
+    "caught": 2,
+    "bestWeight": 5.91,
+    "traits": [],
+    "firstAt": 2538.843798625646
+   },
+   "mossback-tench": {
+    "caught": 35,
+    "bestWeight": 3.96,
+    "traits": [
+     "glimmering",
+     "two-faced"
+    ],
+    "firstAt": 4938.1944260677665
+   },
+   "reedling": {
+    "caught": 41,
+    "bestWeight": 0.5,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 4957.246612196403
+   },
+   "glassfin": {
+    "caught": 36,
+    "bestWeight": 0.52,
+    "traits": [
+     "two-faced",
+     "inverted"
+    ],
+    "firstAt": 5327.4561375255935
+   },
+   "mudlark": {
+    "caught": 17,
+    "bestWeight": 1.04,
+    "traits": [],
+    "firstAt": 6251.490504027035
+   },
+   "stilt-gar": {
+    "caught": 6,
+    "bestWeight": 6.6,
+    "traits": [],
+    "firstAt": 6303.459003763801
+   },
+   "glowbelly": {
+    "caught": 1,
+    "bestWeight": 1.52,
+    "traits": [],
+    "firstAt": 7955.08188841381
+   },
+   "bottomless-eel": {
+    "caught": 1,
+    "bestWeight": 12.52,
+    "traits": [],
+    "firstAt": 8361.782111465289
+   },
+   "sedge-pike": {
+    "caught": 1,
+    "bestWeight": 4.34,
+    "traits": [],
+    "firstAt": 9472.859145922188
+   },
+   "old-mossglass": {
+    "caught": 7,
+    "bestWeight": 15.11,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 9703.42712207052
+   },
+   "the-listener": {
+    "caught": 1,
+    "bestWeight": 9.49,
+    "traits": [],
+    "firstAt": 12141.826161820902
+   }
+  },
+  "gear": {
+   "rods": [
+    "driftwood-rod",
+    "harbour-rod",
+    "gullwing-rod",
+    "fenwood-rod"
+   ],
+   "rodLevels": {
+    "driftwood-rod": 0,
+    "harbour-rod": 0,
+    "gullwing-rod": 0,
+    "fenwood-rod": 1
+   },
+   "rod": "fenwood-rod",
+   "baits": {
+    "breadcrumb": "__inf__",
+    "sandworm": 19,
+    "marsh-worm": 40,
+    "glass-mayfly": 27,
+    "glowgrub": 20
+   },
+   "bait": "glowgrub",
+   "lures": [
+    "tin-minnow",
+    "brass-spinner",
+    "moth-lure"
+   ],
+   "lure": "tin-minnow",
+   "wearables": [
+    "keepers-boots",
+    "wool-cap",
+    "gull-feather",
+    "keepers-oilskin",
+    "keepers-souwester",
+    "keepers-whistle",
+    "fen-waders",
+    "field-hat"
+   ],
+   "worn": {
+    "hat": "wool-cap",
+    "coat": "keepers-oilskin",
+    "boots": "keepers-boots",
+    "charm": "gull-feather"
+   },
+   "creel": 3
+  },
+  "pots": {
+   "owned": 3,
+   "placed": [],
+   "hold": [],
+   "levels": {
+    "speed": 3,
+    "size": 3,
+    "quality": 3
+   },
+   "nextId": 20
+  },
+  "crew": {
+   "hired": [
+    "biscuit"
+   ],
+   "hold": [],
+   "clocks": {
+    "biscuit": {
+     "t": 9.933265873594022,
+     "n": 165
+    }
+   },
+   "tally": {
+    "biscuit": {
+     "fish": 124,
+     "coins": 4387,
+     "eaten": 41
+    }
+   }
+  },
+  "boats": {
+   "owned": [
+    "skiff"
+   ],
+   "current": "skiff",
+   "upgrades": {},
+   "at": null
+  },
+  "world": {
+   "region": "hearthbay",
+   "pos": [
+    -118,
+    1.4,
+    22
+   ],
+   "yaw": -1.5707963267948966,
+   "discovered": [
+    "hearthbay",
+    "mossglass-fen"
+   ],
+   "charted": [
+    "hearthbay",
+    "gull-point",
+    "kettle-isle",
+    "pips-bar",
+    "the-teeth",
+    "drowned-belfry",
+    "sedge-landing",
+    "glasswater",
+    "reed-maze",
+    "standing-trees",
+    "the-sump",
+    "listening-post"
+   ],
+   "onBoat": false
+  },
+  "quests": {
+   "active": {
+    "hb-13-refit": {},
+    "fen-s1-gentleman": {}
+   },
+   "done": [
+    "hb-01-salt",
+    "hb-04-drawing",
+    "hb-02-supper",
+    "hb-03-proper-rod",
+    "hb-05-dark-lamp",
+    "hb-06-relight",
+    "hb-07-kettle",
+    "hb-08-teeth",
+    "hb-p1-pots",
+    "hb-s1-cat",
+    "hb-08b-stall",
+    "hb-09-bell",
+    "hb-10-turning",
+    "hb-11-lamp",
+    "hb-12-road",
+    "fen-01-scale",
+    "fen-02-glass",
+    "fen-03-tape",
+    "fen-03b-wreck",
+    "fen-04-glows",
+    "fen-05-sump",
+    "fen-06-post"
+   ],
+   "board": {
+    "quests": [
+     {
+      "id": "board-23",
+      "title": "Wanted: Pebble Goby",
+      "objective": {
+       "type": "catch",
+       "fish": "pebble-goby",
+       "count": 4,
+       "label": "Catch 4 Pebble Goby"
+      },
+      "reward": {
+       "coins": 25,
+       "items": {
+        "sandworm": 5
+       }
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-24",
+      "title": "Wanted: Pebble Goby",
+      "objective": {
+       "type": "catch",
+       "fish": "pebble-goby",
+       "count": 3,
+       "label": "Catch 3 Pebble Goby"
+      },
+      "reward": {
+       "coins": 20
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-25",
+      "title": "Wanted: Kettle Carp",
+      "objective": {
+       "type": "catch",
+       "fish": "kettle-carp",
+       "count": 4,
+       "label": "Catch 4 Kettle Carp"
+      },
+      "reward": {
+       "coins": 60
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     }
+    ],
+    "timer": 326.40000000000003,
+    "serial": 25
+   }
+  },
+  "flags": [
+   "shop-open",
+   "board-open",
+   "has-lampjaw-light",
+   "lamp-lit",
+   "seen:lighthouse-lamp",
+   "hb-lighthouse-lit",
+   "seen:keepers-kettle",
+   "chest:pips-bar-chest",
+   "chest:belfry-chest",
+   "chest:kettle-west-chest",
+   "page:hearthbay-page",
+   "pots-open",
+   "seen:drowned-bell",
+   "bell-found",
+   "tide-turned",
+   "reached:mossglass-fen",
+   "chest:glass-bar-chest",
+   "seen:survey-stake",
+   "seen:puffin-wreck",
+   "puffin-found",
+   "reached:hearthbay",
+   "boatyard-open",
+   "chest:grove-chest",
+   "chest:sump-chest",
+   "seen:ear-trumpet",
+   "fen-heard",
+   "page:fen-page",
+   "met-mara",
+   "met-wick",
+   "met-pell",
+   "met-calloway",
+   "kettle-taken"
+  ],
+  "relics": [
+   "wicks-drawing",
+   "keepers-kettle",
+   "isolde-log-fen",
+   "calloway-tape"
+  ],
+  "echoUpgrades": {
+   "fog-lamp": 1,
+   "tidewise": 3,
+   "quick-hands": 2,
+   "steady-line": 2,
+   "patient-float": 3,
+   "deep-pockets": 2,
+   "maras-ledger": 1,
+   "second-sight": 2,
+   "old-habits": 1,
+   "warm-lanterns": 1
+  },
+  "rhythm": 12
+ }
+}

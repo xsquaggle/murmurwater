@@ -1,4 +1,4 @@
-// The economy simulator. `npm run sim -- [--minutes 180] [--seeds 5] [--skills 0.4,0.7,0.95] [--log] [--rates] [--first 10] [--nopots]`
+// The economy simulator. `npm run sim -- [--minutes 180] [--seeds 5] [--skills 0.4,0.7,0.95] [--log] [--rates] [--first 10] [--nopots] [--nocrew]`
 // Plays whole sessions with the real rules (see player.ts) and prints when things happen and what the sea pays.
 import { BUCKET_S, PLACES, SimPlayer, simulate, when, type SimReport } from './player';
 import { BAITS } from '../../src/core/content';
@@ -18,6 +18,7 @@ export const KEY_MARKS: [string, string][] = [
   ['RANG THE BELL', 'first ringing'], ['done: The Turning', 'the Turning told'], ['journal page: The Hearthbay', 'Hearthbay page'],
   ['echo: The Fog Lamp', 'Fog Lamp'], ['reached Mossglass Fen', 'the Fen reached'], ['done: The Old Sea-Road', 'met Calloway'], ['done: A Sense of Scale', 'six weighed'],
   ['done: Clear as Glass', 'glassfin'], ['done: The Tape Runs Out', 'the tape'], ['done: What Glows', 'glowbelly'], ['bought Fenwood Rod', 'Fenwood Rod'],
+  ['aboard: Biscuit', 'Biscuit aboard'], ['done: A Boat in the Reeds', 'the Puffin found'], ['bought The Puffin', 'the Puffin afloat'], ['aboard: Mister Hollis', 'Hollis aboard'],
   ['done: The Sump', 'the eel'], ['done: The Listening Post', 'the post'], ['first Old Mossglass', 'Old Mossglass'], ['first The Listener', 'the Listener'], ['journal page: The Mossglass', 'Mossglass page'],
 ];
 
@@ -40,21 +41,23 @@ if (has('rates')) {
 
 for (const skill of skills) {
   const runs: SimReport[] = [];
-  for (let seed = 1; seed <= seeds; seed++) runs.push(simulate({ seed, skill, minutes, firstRing: first, patience, noPots: has('nopots') }));
+  for (let seed = 1; seed <= seeds; seed++) runs.push(simulate({ seed, skill, minutes, firstRing: first, patience, noPots: has('nopots'), noCrew: has('nocrew') }));
   console.log(`\n=== skill ${skill}, ${seeds} seeds, ${minutes} minutes ===`);
   console.log('minute of (median / earliest / latest):');
   for (const [key, label] of KEY_MARKS) {
     const ts = runs.map((r) => when(r, key) ?? Infinity);
     console.log(`  ${label.padEnd(18)} ${mm(median(ts))} ${mm(Math.min(...ts))} ${mm(Math.max(...ts.filter(isFinite)))}`);
   }
-  console.log('coins a minute by ten minutes (median), and the share from pots:');
+  console.log('coins a minute by ten minutes (median), the share from pots, and the share from the crew:');
   const n = Math.ceil((minutes * 60) / BUCKET_S);
-  let line = '  ', share = '  ';
+  let line = '  ', share = '  ', crew = '  ';
   for (let i = 0; i < n; i++) {
     line += String(Math.round(median(runs.map((r) => (r.buckets[i]?.coins ?? 0) / (BUCKET_S / 60))))).padStart(5);
     share += `${Math.round(median(runs.map((r) => (r.buckets[i]?.coins ? (100 * r.buckets[i].pot) / r.buckets[i].coins : 0))))}%`.padStart(5);
+    crew += `${Math.round(median(runs.map((r) => (r.buckets[i]?.coins ? (100 * r.buckets[i].crew) / r.buckets[i].coins : 0))))}%`.padStart(5);
   }
-  console.log(line); console.log(share);
+  console.log(line); console.log(share); console.log(crew);
+  console.log(`of all coins: pots ${runs.map((r) => `${Math.round((100 * r.totals.potCoins) / r.totals.coins)}%`).join(' ')}, crew ${runs.map((r) => `${Math.round((100 * r.totals.crewCoins) / r.totals.coins)}%`).join(' ')}; total ${runs.map((r) => Math.round(r.totals.coins / 1000) + 'K').join(' ')}`);
   const t = runs.map((r) => r.totals);
   console.log(`catches ${median(t.map((x) => x.catches))}, snaps ${median(t.map((x) => x.snaps))}, slack ${median(t.map((x) => x.slack))}, missed bites ${median(t.map((x) => x.missed))}, away from the water ${Math.round(median(t.map((x) => (100 * x.away) / (x.away + x.fishing))))}%`);
   console.log(`ringings: ${runs.map((r) => r.rings.map((x) => `${(x.t / 60).toFixed(0)}m +${x.echoes}`).join(', ') || 'none').join(' | ')}`);

@@ -866,6 +866,20 @@
             "It stops. It has heard you listening."
           ],
           "dark": true
+        },
+        {
+          "id": "puffin-wreck",
+          "name": "The wreck of the Puffin",
+          "x": -1030,
+          "z": -997,
+          "r": 6.5,
+          "prompt": "Look over the wreck",
+          "flag": "puffin-found",
+          "fromBoat": true,
+          "text": [
+            "A sloop on the flats, heeled over, her mast lying along her. PUFFIN, on the transom, in paint the colour of old tea.",
+            "Her planks are sound under the weed. In the cockpit a moorhen sits on three eggs and regards you without enthusiasm."
+          ]
         }
       ],
       "npcSpots": [
@@ -875,6 +889,15 @@
           "x": -847.6,
           "z": -619.6,
           "yaw": 0.94
+        }
+      ],
+      "hails": [
+        {
+          "npc": "hollis",
+          "x": -622.1,
+          "z": -421.0,
+          "yaw": 0.94,
+          "r": 9
         }
       ],
       "critters": [],
@@ -1099,6 +1122,13 @@
           "z": -622.6,
           "yaw": 2.2,
           "block": 0.35
+        },
+        {
+          "model": "puffinWreck",
+          "x": -1030,
+          "z": -997,
+          "yaw": 2,
+          "until": "puffin-afloat"
         }
       ]
     }

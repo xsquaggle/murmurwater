@@ -15,14 +15,15 @@ import {
   BAITS, FISH, RARITIES, REGIONS, REGIONS_BY_ID, RODS, bait as baitDef, fish as fishDef, inHours, onShelf, regionAt, regionOfNpc, regionOfPlace, zoneAt, type ChestDef, type FishDef,
 } from '../../src/core/content';
 import {
-  LURES, WEARABLES, buyBait, buyCreel, buyLure, buyPot, buyRod, buyWearable, claimCollections, creelNext, fishingContext,
+  LURES, WEARABLES, boatOnOffer, buyBait, buyBoat, buyCreel, buyLure, buyPot, buyRod, buyWearable, claimCollections, creelNext, fishingContext,
   grantLure, grantWearable, hasFogLamp, isNight, potPrice, potUpgradeCost, spendBait, stats, tuneCost, tuneRod, upgradePots, type PotUpgrade, type Stats,
 } from '../../src/core/gear';
 import {
-  NPCS, QUESTS, accept, acceptBoard, arriveIn, handsInTo, npcOffer, objectiveProgress, objectiveTarget, onQuestEvent, questStatus, tickBoard, turnIn,
+  BOATS, BOATS_BY_ID, NPCS, QUESTS, accept, acceptBoard, arriveIn, handsInTo, npcOffer, objectiveProgress, objectiveTarget, onQuestEvent, questStatus, tickBoard, turnIn,
   type ObjectiveDef, type QuestDef,
 } from '../../src/core/quests';
 import { haulPot, placePot, potsInHand, takeUpPot, tickPots } from '../../src/core/pots';
+import { CREW_BY_ID, crewKit, tickCrew } from '../../src/core/crew';
 import { BELL_FLAG, buyEcho, echoCost, echoesFor, ringBell } from '../../src/core/bell';
 import { ECHO_UPGRADES } from '../../src/core/gear';
 import { humanFightPolicy } from '../../tests/helpers';
@@ -47,14 +48,18 @@ export const PLACES: Place[] = [
 export const COSTS = {
   sell: 4, talk: 14, board: 5, buy: 4, aim: 0.6, landed: 2.0, lost: 1.6, pot: 6,
   /** Errands, there and back: the ferry and the lighthouse stair, a sail to a place and a walk on it. */
-  visit: { 'lighthouse-lamp': 150, 'keepers-kettle': 115, 'drowned-bell': 110, 'survey-stake': 125, 'ear-trumpet': 250 } as Record<string, number>,
+  visit: { 'lighthouse-lamp': 150, 'keepers-kettle': 115, 'drowned-bell': 110, 'survey-stake': 125, 'ear-trumpet': 250, 'puffin-wreck': 150 } as Record<string, number>,
+  /** Out along the sea-road from the landing to somebody who waits by a light, and back. */
+  hail: 85,
   /** A look at Pip's Bar and its chest on the way home, once the skiff is there. */
   explore: 95, ring: 75, echoes: 20,
   /** Between regions: the first time by the sea-road, lamp lit, from one landing to the other; after that the chart does it. */
   cross: 150, fastTravel: 12,
 };
 /** The chart place a quest's place lies at (reaching the one puts the other on the chart). */
-const CHART_OF: Record<string, string> = { 'lighthouse-lamp': 'gull-point', 'keepers-kettle': 'kettle-isle', 'drowned-bell': 'drowned-belfry', 'survey-stake': 'reed-maze', 'ear-trumpet': 'listening-post' };
+const CHART_OF: Record<string, string> = { 'lighthouse-lamp': 'gull-point', 'keepers-kettle': 'kettle-isle', 'drowned-bell': 'drowned-belfry', 'survey-stake': 'reed-maze', 'ear-trumpet': 'listening-post', 'puffin-wreck': 'reed-maze' };
+/** The speed the places table's sailing times were reckoned at (the skiff's). */
+const TABLE_SPEED = 7;
 
 export interface SimOptions {
   seed: number;
@@ -71,18 +76,24 @@ export interface SimOptions {
   maxRings?: number;
   /** Leave the pots in the shed (to measure what they add). */
   noPots?: boolean;
+  /** Sign nobody on (to measure what a crew adds). */
+  noCrew?: boolean;
+  /** Save for a boat as usual, but leave the buying of her undone (the tester's start stops with the price in the purse). */
+  noBoat?: boolean;
 }
 export interface Mark { t: number; what: string }
-export interface Bucket { coins: number; pot: number; catches: number; lost: number }
+export interface Bucket { coins: number; pot: number; crew: number; catches: number; lost: number }
 export interface SimReport {
   marks: Mark[]; buckets: Bucket[]; state: GameState;
-  totals: { casts: number; catches: number; snaps: number; slack: number; missed: number; coins: number; potCoins: number; fishing: number; away: number };
+  totals: { casts: number; catches: number; snaps: number; slack: number; missed: number; coins: number; potCoins: number; crewCoins: number; fishing: number; away: number };
   /** Seconds of play at each ringing of the Bell, and what it gave. */
   rings: { t: number; echoes: number; coins: number }[];
 }
 
 export const BUCKET_S = 600;
-interface Wish { name: string; price: number; buy: () => boolean; /** the next rod */ goal?: boolean; /** a job asks for it */ asked?: boolean; /** tinkering */ small?: boolean }
+interface Wish { name: string; price: number; buy: () => boolean; /** the next rod */ goal?: boolean; /** a job asks for it */ asked?: boolean; /** tinkering */ small?: boolean; /** a boat: the one thing a keeper saves up for across a whole tide */ boat?: boolean }
+/** Minutes of earning away at which a keeper starts saving for a boat in earnest: spending little else, and leaving the Bell alone. */
+const SAVE_FOR_BOAT = 20;
 
 export class SimPlayer {
   s: GameState;
@@ -91,7 +102,9 @@ export class SimPlayer {
   marks: Mark[] = [];
   buckets: Bucket[] = [];
   rings: { t: number; echoes: number; coins: number }[] = [];
-  totals = { casts: 0, catches: 0, snaps: 0, slack: 0, missed: 0, coins: 0, potCoins: 0, fishing: 0, away: 0 };
+  totals = { casts: 0, catches: 0, snaps: 0, slack: 0, missed: 0, coins: 0, potCoins: 0, crewCoins: 0, fishing: 0, away: 0 };
+  /** The water the boat lies in while she lies still (the crew fish it); null while she is under way. */
+  private lying: string | null = null;
   private castSeed: number;
   private idle = 0;
   private acc = 0;
@@ -107,10 +120,11 @@ export class SimPlayer {
     this.rng = new Rng(opts.seed * 2654435761);
     this.castSeed = opts.seed * 7919 + 1;
     this.st = stats(this.s, { hour: this.s.hour });
+    this.lying = this.mooringZone();
   }
 
   private mark(what: string) { if (!this.trial) this.marks.push({ t: this.s.playTime, what }); }
-  private bucket(): Bucket { const i = Math.floor(this.s.playTime / BUCKET_S); return (this.buckets[i] ??= { coins: 0, pot: 0, catches: 0, lost: 0 }); }
+  private bucket(): Bucket { const i = Math.floor(this.s.playTime / BUCKET_S); return (this.buckets[i] ??= { coins: 0, pot: 0, crew: 0, catches: 0, lost: 0 }); }
   private refresh(afloat = false) { this.st = stats(this.s, { hour: this.s.hour, afloat }); }
 
   /** Lets `dt` seconds of play go by. `busy` is fishing or sailing: Rhythm holds while the keeper is at it. */
@@ -122,8 +136,23 @@ export class SimPlayer {
     s.hour = (s.hour + (dt * 24) / DAY_LENGTH_S) % 24;
     if (busy) { this.idle = 0; this.totals.fishing += dt; } else { this.idle += dt; this.totals.away += dt; if (this.idle > RHYTHM.decayAfter) s.rhythm = 0; }
     this.acc += dt;
-    if (this.acc >= 1) { tickBoard(s, this.acc); tickPots(s, this.acc, s.hour, this.st); this.acc = 0; }
+    if (this.acc >= 1) {
+      tickBoard(s, this.acc); tickPots(s, this.acc, s.hour, this.st);
+      // The crew fish while the boat lies still, wherever the keeper is. (She does not go looking for fog to lie in.)
+      if (this.lying && s.crew.hired.length) tickCrew(s, this.acc, { region: s.world.region, zone: this.lying, hour: s.hour, fog: 0, still: true }, crewKit(this.st));
+      this.acc = 0;
+    }
   }
+
+  /** Seconds to sail to a place and back as far as the landing, in the boat she has now. */
+  private trip(place: Place): number { const b = this.s.boats.current ? BOATS_BY_ID.get(this.s.boats.current) : null; return place.needsBoat && b ? (place.trip * TABLE_SPEED) / b.speed : place.trip; }
+  /** The water at the landing of the region she is in, where the boat lies while the keeper is ashore. */
+  private mooringZone(): string | null {
+    const r = REGIONS_BY_ID.get(this.s.world.region)!, m = r.moorings?.[0];
+    return this.s.boats.current && m ? zoneAt(r, m.x, m.z)?.id ?? null : null;
+  }
+  /** Sails for `secs` (the crew do nothing under way), and leaves her lying in `then` (null: still under way). */
+  private sail(secs: number, then: string | null) { this.lying = null; this.pass(secs, true); this.lying = then; }
 
   // ------------------------------------------------------------------ one cast
 
@@ -195,7 +224,7 @@ export class SimPlayer {
   /** Coins a second this place pays with this bait and today's gear, sell trips and bait included. Measured by fishing it. */
   rate(place: Place, baitId: string, casts = 36): number {
     const s = this.s, lvl = s.gear.rodLevels[s.gear.rod] ?? 0;
-    const key = [place.id, baitId, s.gear.rod, lvl >> 1, s.gear.lure, isNight(s.hour), s.gear.creel, Object.keys(s.journal).length >> 1, s.flags.includes('hb-lighthouse-lit'), s.flags.includes('fen-heard'), Math.floor(s.hour / 3), s.echoes ? JSON.stringify(s.echoUpgrades) : ''].join('|');
+    const key = [place.id, baitId, s.gear.rod, lvl >> 1, s.gear.lure, isNight(s.hour), s.gear.creel, s.boats.current, s.crew.hired.length, Object.keys(s.journal).length >> 1, s.flags.includes('hb-lighthouse-lit'), s.flags.includes('fen-heard'), Math.floor(s.hour / 3), s.echoes ? JSON.stringify(s.echoUpgrades) : ''].join('|');
     const hit = this.rates.get(key);
     if (hit !== undefined && casts <= 36) return hit;
     const t = new SimPlayer({ ...this.opts, seed: hashString(key) % 100000 }, structuredClone(s));
@@ -207,7 +236,7 @@ export class SimPlayer {
     const empty = () => { coins += t.s.hold.reduce((a, c) => a + c.value, 0); trips += t.s.hold.length / t.st.hold; t.s.hold = []; };
     for (let i = 0; i < casts; i++) { t.cast(place); if (t.s.hold.length >= t.st.hold) empty(); }
     empty();
-    const secs = t.s.playTime - t0 + trips * (2 * place.trip + COSTS.sell);
+    const secs = t.s.playTime - t0 + trips * (2 * this.trip(place) + COSTS.sell);
     const r = (coins - t.hooks * baitDef(baitId).price) / secs;
     this.rates.set(key, r);
     return r;
@@ -280,19 +309,20 @@ export class SimPlayer {
     if (!this.opts.noPots) for (const other of this.places(from)) {
       const there = s.pots.placed.filter((p) => this.potAt.get(p.id) === other);
       if (!there.length) continue;
-      this.pass(other.trip, other.afloat);
+      this.lying = null; this.pass(this.trip(other), other.afloat);
       for (const p of there) {
         const got = haulPot(s, p.id);
         if (got.length) onQuestEvent(s, { type: 'haul', count: got.length });
         takeUpPot(s, p.id); this.potAt.delete(p.id);
         this.pass(COSTS.pot, true);
       }
-      this.pass(other.trip, other.afloat);
+      this.pass(this.trip(other), other.afloat); this.lying = this.mooringZone();
     }
     this.sell();
     const first = !s.world.discovered.includes(region);
-    this.pass(first ? COSTS.cross : COSTS.fastTravel, true);
+    this.sail(first ? COSTS.cross : COSTS.fastTravel, null);
     arriveIn(s, region);
+    this.lying = this.mooringZone();
     if (first) this.mark(`reached ${REGIONS_BY_ID.get(region)!.name}`);
     // The landing she comes in at goes on the chart as she arrives.
     const landing = REGIONS_BY_ID.get(region)!.moorings?.[0]?.place;
@@ -340,11 +370,11 @@ export class SimPlayer {
 
   private sell() {
     const s = this.s;
-    if (!s.hold.length && !s.pots.hold.length) return;
-    const n = s.hold.length + s.pots.hold.length, pot = s.pots.hold.reduce((a, c) => a + c.value, 0);
+    if (!s.hold.length && !s.pots.hold.length && !s.crew.hold.length) return;
+    const n = s.hold.length + s.pots.hold.length + s.crew.hold.length, pot = s.pots.hold.reduce((a, c) => a + c.value, 0), crew = s.crew.hold.reduce((a, c) => a + c.value, 0);
     const total = sellAll(s);
-    this.totals.coins += total; this.totals.potCoins += pot;
-    const b = this.bucket(); b.coins += total; b.pot += pot;
+    this.totals.coins += total; this.totals.potCoins += pot; this.totals.crewCoins += crew;
+    const b = this.bucket(); b.coins += total; b.pot += pot; b.crew += crew;
     onQuestEvent(s, { type: 'sell', count: n, coins: total });
     this.pass(COSTS.sell);
   }
@@ -358,7 +388,14 @@ export class SimPlayer {
       for (const n of NPCS) {
         if (n.region !== s.world.region) continue; // only the people who are here
         const offer = npcOffer(s, n.id);
-        if (offer.kind === 'turnIn') { turnIn(s, offer.quest.id); this.mark(`done: ${offer.quest.title}`); this.pass(COSTS.talk); again = any = true; }
+        // Somebody who signs on is not taken on by a keeper told to sail alone.
+        if (this.opts.noCrew && offer.kind !== 'none' && offer.quest.rewards.crew) continue;
+        if (offer.kind === 'turnIn') {
+          // Somebody who waits out on the sea-road is sailed out to.
+          if (this.region().hails?.some((h) => h.npc === n.id)) { this.sail(COSTS.hail / 2, null); this.sail(COSTS.hail / 2, this.mooringZone()); }
+          const r = turnIn(s, offer.quest.id); this.mark(`done: ${offer.quest.title}`); this.pass(COSTS.talk); again = any = true;
+          for (const id of r?.crew ?? []) { this.mark(`aboard: ${CREW_BY_ID.get(id)!.name}`); this.rates.clear(); }
+        }
         else if (offer.kind === 'offer') { accept(s, offer.quest.id); this.mark(`took: ${offer.quest.title}`); this.pass(COSTS.talk); again = any = true; }
       }
     }
@@ -384,6 +421,7 @@ export class SimPlayer {
       if (p !== null) out.push({ name: 'another Lantern Pot', price: p, buy: () => buyPot(s) });
       for (const k of ['speed', 'size', 'quality'] as PotUpgrade[]) { const c = potUpgradeCost(s, k); if (c !== null) out.push({ name: `pots: ${k} ${s.pots.levels[k] + 1}`, price: c, buy: () => upgradePots(s, k), small: true }); }
     }
+    for (const b of BOATS) if (boatOnOffer(s, b.id)) out.push({ name: b.name, price: b.price, buy: () => !this.opts.noBoat && buyBoat(s, b.id), boat: true });
     const tune = tuneCost(s, s.gear.rod);
     if (tune !== null) out.push({ name: `tune ${s.gear.rod} to ${(s.gear.rodLevels[s.gear.rod] ?? 0) + 1}`, price: tune, buy: () => tuneRod(s, s.gear.rod), small: true });
     return out.sort((a, b) => a.price - b.price);
@@ -394,15 +432,23 @@ export class SimPlayer {
     for (let bought = true; bought;) {
       bought = false;
       const list = this.wishlist();
-      const goal = list.find((w) => w.goal);
+      const goal = list.find((w) => w.goal), boat = this.savingFor(list);
       for (const w of list) {
         // With a better rod still to buy, do not pour coins into the one in hand, and keep other things modest.
-        const limit = w.goal ? s.coins : goal ? Math.min(s.coins, goal.price * (goal.asked || w.small ? 0.1 : 0.35)) : w.small ? s.coins * 0.6 : s.coins;
+        let limit = w.goal ? s.coins : goal ? Math.min(s.coins, goal.price * (goal.asked || w.small ? 0.1 : 0.35)) : w.small ? s.coins * 0.6 : s.coins;
+        // Saving for a boat: nothing else that would set her back much.
+        if (boat && w !== boat && !w.goal) limit = Math.min(limit, boat.price * 0.04);
         if (w.price > limit) continue;
         if (w.buy()) { this.mark(`bought ${w.name} (${w.price})`); this.pass(COSTS.buy); this.rates.clear(); bought = true; break; }
       }
     }
     this.refresh();
+  }
+
+  /** The boat the keeper is saving for, once it is near enough to be worth going without for. */
+  private savingFor(list = this.wishlist()): Wish | null {
+    const boat = list.find((w) => w.boat);
+    return boat && (boat.price - this.s.coins) / Math.max(1, this.income()) < SAVE_FOR_BOAT ? boat : null;
   }
 
   private stock(baitId: string) {
@@ -437,7 +483,9 @@ export class SimPlayer {
     const v = this.activeObjectives().find((x) => x.o.type === 'visit' && regionOfPlace(x.o.place!) === s.world.region);
     if (v) {
       const place = v.o.place!, def = this.region().places!.find((p) => p.id === place)!;
+      this.lying = def.fromBoat ? null : this.lying; // a place looked at from the boat takes the boat with it
       this.pass(COSTS.visit[place] ?? 120, place !== 'lighthouse-lamp');
+      this.lying = this.mooringZone();
       if (place === 'lighthouse-lamp' && !s.flags.includes('lamp-lit')) s.flags.push('lamp-lit');
       if (CHART_OF[place]) this.chart(CHART_OF[place]);
       if (!s.flags.includes(`seen:${place}`)) s.flags.push(`seen:${place}`);
@@ -448,7 +496,7 @@ export class SimPlayer {
     }
     if (s.world.region === HB && !this.explored && s.boats.owned.length) {
       this.explored = true;
-      this.pass(COSTS.explore, true);
+      this.sail(COSTS.explore, this.mooringZone());
       this.chart('pips-bar');
       for (const c of this.region().chests ?? []) this.open(c);
       return true;
@@ -493,9 +541,11 @@ export class SimPlayer {
       // Nobody turns the tide a few minutes short of a new rod.
       const rod = this.wishlist().find((w) => w.goal);
       if (rod && (rod.price - s.coins) / Math.max(1, income) < 2 * (this.opts.patience ?? 6)) return false;
+      // Nor with a boat half paid for: the Bell would take the coins and leave the wreck where she lies.
+      if (this.savingFor()) return false;
     }
     if (!this.goTo(HB)) return false; // the Bell hangs in Hearthbay
-    this.pass(COSTS.ring, true);
+    this.sail(COSTS.ring, this.mooringZone());
     const coins = s.run.coins;
     const t = ringBell(s);
     if (!t) return false;
@@ -525,6 +575,9 @@ export class SimPlayer {
     this.talk(); // a job that wanted something bought is handed in on the spot
   }
 
+  /** Sells what she has and sails for the home dock of Hearthbay, if she is not there. */
+  home() { this.sell(); this.goTo(HB); }
+
   /** One outing: town business, then out to fish until the hold is full or a job is done, then home. */
   outing() {
     const s = this.s;
@@ -543,16 +596,19 @@ export class SimPlayer {
       if (other === place) continue;
       const there = s.pots.placed.filter((p) => this.potAt.get(p.id) === other);
       if (!there.length || there.some((p) => p.fish.length < this.st.potCapacity)) continue;
-      this.pass(other.trip, other.afloat);
+      this.lying = null; this.pass(this.trip(other), other.afloat);
       for (const p of there) {
         const got = haulPot(s, p.id);
         if (got.length) onQuestEvent(s, { type: 'haul', count: got.length });
         takeUpPot(s, p.id); this.potAt.delete(p.id);
         this.pass(COSTS.pot, true);
       }
-      this.pass(other.trip, other.afloat);
+      this.pass(this.trip(other), other.afloat); this.lying = this.mooringZone();
     }
-    this.pass(place.trip, place.afloat);
+    // Out to the place: by boat she comes too (and lies there while the keeper fishes); on foot she stays at the landing.
+    if (place.needsBoat) this.lying = null;
+    this.pass(this.trip(place), place.afloat);
+    this.lying = place.needsBoat ? place.zone(8) : this.mooringZone();
     if (place.chart) this.chart(place.chart);
     // Pots go in beside the fishing, and come up when it is time to go.
     if (!this.opts.noPots) while (potsInHand(s) > 0) {
@@ -566,17 +622,21 @@ export class SimPlayer {
     const before = ready(), until = s.playTime + 12 * 60;
     // Home early when the hold would pay for the next thing wanted (and is worth the walk).
     const next = this.wishlist().find((w) => w.price > s.coins && w.price >= 100);
-    const least = place.trip > 20 ? Math.max(6, this.st.hold * 0.6) : 6; // nobody sails home from the Teeth with six fish
+    const least = this.trip(place) > 20 ? Math.max(6, this.st.hold * 0.6) : 6; // nobody sails home from the Teeth with six fish
     const worth = () => !!next && s.hold.length >= least && s.coins + s.hold.reduce((a, c) => a + c.value, 0) >= next.price;
     const toSell = () => worth() || this.activeObjectives().some((x) => x.o.type === 'sell' && s.hold.length >= objectiveTarget(x.o) - objectiveProgress(s, x.q, x.q.objectives.indexOf(x.o)));
     while (s.hold.length < this.st.hold && ready() === before && !toSell() && s.playTime < until && s.playTime < this.opts.minutes * 60) {
       if (plan.want && !inHours(s.hour, plan.want.hours) !== !inHours(s.hour - 0.01, plan.want.hours)) break;
-      if (this.hunting && this.wantedFish() !== plan.want) break; // a fish that keeps hours: time to go to it, or it has gone
+      // The fish she came here for is in the hold (or, hunting for the journal, has gone off the bite): nobody
+      // fishes on at the dock for the cat's sake once the cat has her fish.
+      if ((this.hunting || plan.want) && this.wantedFish() !== plan.want) break;
       this.cast(place);
       this.haul(true, place);
     }
     this.haul(false, place);
-    this.pass(place.trip, place.afloat);
+    if (place.needsBoat) this.lying = null;
+    this.pass(this.trip(place), place.afloat);
+    this.lying = this.mooringZone();
   }
   /** Where each pot in the water was set. */
   private potAt = new Map<number, Place>();

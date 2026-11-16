@@ -14,11 +14,13 @@ import boatsJson from '../data/boats.json';
 import { BAITS, BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, REGIONS, REGIONS_BY_ID, RODS_BY_ID, fish, inHours, regionOfNpc } from './content';
 import { ECHOES_BY_ID, LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable } from './gear';
 import { earn } from './economy';
+import { CREW_BY_ID, freeBerths, hire } from './crew';
 import { Rng, hashString } from './rng';
 import type { GameState } from './state';
 
-export type ObjectiveType = 'catch' | 'sell' | 'earn' | 'perfect' | 'own' | 'visit' | 'haul' | 'ring';
-const OBJECTIVE_TYPES: ObjectiveType[] = ['catch', 'sell', 'earn', 'perfect', 'own', 'visit', 'haul', 'ring'];
+/** `berth`: the boat has a berth free for one more hand (read live from the state, as `own` is). */
+export type ObjectiveType = 'catch' | 'sell' | 'earn' | 'perfect' | 'own' | 'visit' | 'haul' | 'ring' | 'berth';
+const OBJECTIVE_TYPES: ObjectiveType[] = ['catch', 'sell', 'earn', 'perfect', 'own', 'visit', 'haul', 'ring', 'berth'];
 export interface ObjectiveDef {
   type: ObjectiveType; label: string; count?: number;
   /** catch: a specific species, a minimum rarity, a minimum weight, a strange trait. */
@@ -32,6 +34,7 @@ export interface Rewards {
   coins?: number; moonpearls?: number; items?: Record<string, number>; rods?: string[];
   flags?: string[]; relics?: string[]; boats?: string[];
   lures?: string[]; wearables?: string[]; /** Lantern Pots to add to the ones owned. */ pots?: number;
+  /** Deckhands who sign on. */ crew?: string[];
 }
 export interface QuestDef {
   id: string; chain: 'main' | 'side'; giver: string; title: string; summary: string;
@@ -48,7 +51,11 @@ export interface NpcDef {
 }
 export interface RelicDef { id: string; name: string; effect: { luck?: number; value?: number; biteSpeed?: number }; lore: string }
 /** speed m/s, turn rad/s, accel 1/s, draft/length/beam m (see core/boat.ts); hull and lamp are the ratings that open rougher and foggier seas. */
-export interface BoatDef { id: string; name: string; speed: number; turn: number; accel: number; draft: number; length: number; beam: number; hull: number; lamp: number; hold: number; price: number; desc: string }
+export interface BoatDef {
+  id: string; name: string; speed: number; turn: number; accel: number; draft: number; length: number; beam: number; hull: number; lamp: number; hold: number; price: number; desc: string;
+  /** Berths for deckhands, and how many fish her crew basket holds. */ crew: number; crewHold: number;
+  /** A flag that must be set before she can be bought, and one that buying her sets. */ needs?: string; sets?: string;
+}
 
 /** The hours the sun comes up and goes down, for jobs that bring the dusk on. */
 export const DAWN = 6, DUSK = 17;
@@ -94,9 +101,10 @@ export function questStatus(s: GameState, id: string): QuestStatus {
 export function objectiveProgress(s: GameState, q: QuestDef, i: number): number {
   const o = q.objectives[i];
   if (o.type === 'own') return owns(s, o.item!) ? 1 : 0;
+  if (o.type === 'berth') return s.quests.done.includes(q.id) || freeBerths(s) > 0 ? 1 : 0;
   return Math.min(objectiveTarget(o), s.quests.active[q.id]?.[i] ?? (s.quests.done.includes(q.id) ? objectiveTarget(o) : 0));
 }
-export function objectiveTarget(o: ObjectiveDef): number { return o.type === 'own' || o.type === 'visit' ? 1 : o.count ?? 1; }
+export function objectiveTarget(o: ObjectiveDef): number { return o.type === 'own' || o.type === 'visit' || o.type === 'berth' ? 1 : o.count ?? 1; }
 export function isComplete(s: GameState, q: QuestDef): boolean {
   return q.objectives.every((o, i) => objectiveProgress(s, q, i) >= objectiveTarget(o));
 }
@@ -136,6 +144,7 @@ export function applyRewards(s: GameState, r: Rewards) {
   for (const id of r.lures ?? []) grantLure(s, id);
   for (const id of r.wearables ?? []) grantWearable(s, id);
   if (r.pots) s.pots.owned += r.pots;
+  for (const id of r.crew ?? []) hire(s, id);
 }
 
 export function describeRewards(r: Rewards): string[] {
@@ -149,6 +158,7 @@ export function describeRewards(r: Rewards): string[] {
   for (const id of r.lures ?? []) out.push(`Lure: ${LURES_BY_ID.get(id)?.name ?? id}`);
   for (const id of r.wearables ?? []) out.push(WEARABLES_BY_ID.get(id)?.name ?? id);
   if (r.pots) out.push(r.pots > 1 ? `${r.pots} Lantern Pots` : 'A Lantern Pot');
+  for (const id of r.crew ?? []) out.push(`Aboard: ${CREW_BY_ID.get(id)?.name ?? id}`);
   return out;
 }
 
@@ -415,6 +425,7 @@ export function validateQuests(placeIds: Set<string>): string[] {
     for (const id of r.boats ?? []) if (!BOATS_BY_ID.has(id)) errs.push(`${q.id}: unknown boat ${id}`);
     for (const id of r.lures ?? []) if (!LURES_BY_ID.has(id)) errs.push(`${q.id}: unknown lure ${id}`);
     for (const id of r.wearables ?? []) if (!WEARABLES_BY_ID.has(id)) errs.push(`${q.id}: unknown wearable ${id}`);
+    for (const id of r.crew ?? []) if (!CREW_BY_ID.has(id)) errs.push(`${q.id}: unknown deckhand ${id}`);
     }
   }
   for (const q of QUESTS) for (const r of q.requires) if (!ids.has(r)) errs.push(`${q.id}: requires unknown quest ${r}`);
@@ -426,5 +437,6 @@ export function validateQuests(placeIds: Set<string>): string[] {
   for (const n of NPCS) if (!n.barks.length) errs.push(`npc ${n.id}: no barks`);
   for (const f of FISH) if (f.requires && !flags.has(f.requires)) errs.push(`fish ${f.id}: nothing sets the flag ${f.requires}`);
   for (const n of NPCS) if (!REGIONS_BY_ID.has(n.region)) errs.push(`npc ${n.id}: unknown region ${n.region}`);
+  for (const b of BOATS) if (b.needs && !flags.has(b.needs)) errs.push(`boat ${b.id}: nothing sets the flag ${b.needs}`);
   return errs;
 }

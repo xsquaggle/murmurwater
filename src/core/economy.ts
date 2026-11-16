@@ -47,10 +47,11 @@ export function breakRhythm(s: GameState) { s.rhythm = 0; }
 /** Coins that were earned (sales, rewards, finds): they count toward the tide's total and the lifetime's. */
 export function earn(s: GameState, coins: number) { s.coins += coins; s.lifetime.coins += coins; s.run.coins += coins; }
 
-/** Sells the hold and everything hauled from the pots. */
+/** Sells the hold, everything hauled from the pots and what is in the crew basket. */
 export function sellAll(s: GameState): number {
-  const total = s.hold.reduce((a, c) => a + c.value, 0) + s.pots.hold.reduce((a, c) => a + c.value, 0);
-  s.hold = []; s.pots.hold = [];
+  const sum = (a: number, c: CatchItem) => a + c.value;
+  const total = s.hold.reduce(sum, 0) + s.pots.hold.reduce(sum, 0) + s.crew.hold.reduce(sum, 0);
+  s.hold = []; s.pots.hold = []; s.crew.hold = [];
   earn(s, total);
   return total;
 }

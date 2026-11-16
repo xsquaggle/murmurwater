@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { validateContent, zoneAt, REGIONS, REGIONS_BY_ID, BAITS, FISH, fishHint, inHours, regionAt, regionOfPlace } from '../src/core/content';
+import { validateContent, zoneAt, REGIONS, REGIONS_BY_ID, ROADS, BAITS, FISH, fishHint, inHours, regionAt, regionOfNpc, regionOfPlace, roadLights, roadOpen } from '../src/core/content';
 import { Heightfield } from '../src/core/world';
-import { clearance, murmurAt, newBoat, stepBoat } from '../src/core/boat';
+import { clearance, fogAt, murmurAt, nearestFloat, newBoat, stepBoat } from '../src/core/boat';
+import { CREW_BY_ID, FOG_ENOUGH } from '../src/core/crew';
 import { LANDING, boatEnv, hullDistance, landingSpot, walkableHeight } from '../src/core/landing';
-import { BOATS, QUESTS } from '../src/core/quests';
+import { BOATS, BOATS_BY_ID, NPCS_BY_ID, QUESTS } from '../src/core/quests';
 import { findRoute, routeLength } from '../src/core/seaways';
 
 describe('content', () => {
@@ -50,12 +51,18 @@ describe.each(REGIONS.map((r) => [r.name, r] as const))('the sea of %s', (_name,
   const hf = new Heightfield(region);
   const env = boatEnv(hf);
   const ground = (x: number, z: number) => walkableHeight(hf, x, z);
-  it('every boat floats at every mooring, with somewhere to step ashore', () => {
+  it('every boat floats at every mooring or within a few yards of it, with somewhere to step ashore', () => {
     for (const boat of BOATS) for (const m of region.moorings ?? []) {
-      expect(clearance(env, boat, m.x, m.z, m.heading), `${boat.id} at ${m.id}`).toBeGreaterThanOrEqual(0.1);
-      expect(landingSpot(ground, m), `landing at ${m.id}`).not.toBeNull();
+      // As the game brings her in (Sailing.moorAt): at the mooring if she floats there, else the nearest place she does.
+      const at = clearance(env, boat, m.x, m.z, m.heading) >= 0 ? m : nearestFloat(env, boat, m.x, m.z, m.heading);
+      expect(at, `${boat.id} at ${m.id}`).not.toBeNull();
+      expect(clearance(env, boat, at!.x, at!.z, at!.heading), `${boat.id} at ${m.id}`).toBeGreaterThanOrEqual(0.1);
+      expect(Math.hypot(at!.x - m.x, at!.z - m.z), `${boat.id} lies close to ${m.id}`).toBeLessThan(12);
+      expect(landingSpot(ground, at!), `${boat.id}: landing at ${m.id}`).not.toBeNull();
       expect(murmurAt(env, m.x, m.z), `${m.id} is in quiet water`).toBe(0);
     }
+    // The boat the moorings were laid out for lies exactly on each of them.
+    for (const m of region.moorings ?? []) expect(clearance(env, BOATS_BY_ID.get('skiff')!, m.x, m.z, m.heading), `skiff at ${m.id}`).toBeGreaterThanOrEqual(0.1);
   });
   it('every chart place and zone is inside the quiet water, and found places are reachable by boat', () => {
     for (const c of region.chart ?? []) expect(Math.hypot(c.x - region.center[0], c.z - region.center[1]) + c.r, c.id).toBeLessThan(region.radius - 110);
@@ -156,9 +163,47 @@ describe.each(REGIONS.map((r) => [r.name, r] as const))('the sea of %s', (_name,
   });
   it('the places a quest sends you to on foot can be stood on', () => {
     for (const p of region.places ?? []) {
+      if (p.fromBoat) continue;
       let ok = false;
       for (let a = 0; a < 12 && !ok; a++) ok = ground(p.x + Math.cos(a) * p.r * 0.7, p.z + Math.sin(a) * p.r * 0.7) !== null;
       expect(ok, p.id).toBe(true);
     }
+  });
+  it('a place looked at from a boat lies in water too thin to sail over, with room for the smallest boat alongside and a way there from the dock', () => {
+    const skiff = BOATS_BY_ID.get('skiff')!, home = region.moorings![0];
+    for (const p of (region.places ?? []).filter((x) => x.fromBoat)) {
+      expect(p.prompt && p.text?.length, `${p.id} has something to read`).toBeTruthy();
+      expect(hf.depth(p.x, p.z), `${p.id} is not afloat itself`).toBeLessThan(skiff.draft);
+      expect(ground(p.x, p.z), `${p.id} is not on dry land`).toBeNull();
+      let berth: [number, number] | null = null;
+      for (let r = 2; r <= p.r + 2 && !berth; r += 0.5) for (let a = 0; a < 24 && !berth; a++) {
+        const x = p.x + Math.sin((a / 24) * Math.PI * 2) * r, z = p.z + Math.cos((a / 24) * Math.PI * 2) * r;
+        for (const h of [0, 0.8, 1.6, 2.4]) if (clearance(env, skiff, x, z, h) >= 0.1 && hullDistance({ x, z, heading: h }, p.x, p.z) <= p.r - 1.5) { berth = [x, z]; break; }
+      }
+      expect(berth, `${p.id}: somewhere for the skiff to lie within reach of it`).not.toBeNull();
+      const route = findRoute(env, skiff, [home.x, home.z], berth!);
+      expect(route, `${p.id}: a way there from the dock`).not.toBeNull();
+      const end = route![route!.length - 1];
+      expect(Math.hypot(end[0] - berth![0], end[1] - berth![1]), `${p.id}: the way ends beside it`).toBeLessThan(12);
+    }
+  });
+  it('somebody hailed from a boat stands in deep water by a light of a sea-road, in fog thick enough to keep them', () => {
+    for (const h of region.hails ?? []) {
+      expect(NPCS_BY_ID.has(h.npc), `${h.npc} is somebody`).toBe(true);
+      expect(CREW_BY_ID.has(h.npc), `${h.npc} can sign on`).toBe(true);
+      expect(regionOfNpc(h.npc)).toBe(region.id);
+      expect(NPCS_BY_ID.get(h.npc)!.region).toBe(region.id);
+      // Every boat can lie beside them.
+      for (const boat of BOATS) expect(hf.depth(h.x, h.z), `${boat.id} floats where ${h.npc} stands`).toBeGreaterThan(boat.draft + 1);
+      const lights = ROADS.filter((r) => r.between.includes(region.id)).flatMap((r) => roadLights(r));
+      expect(Math.min(...lights.map((l) => Math.hypot(l.x - h.x, l.z - h.z))), `${h.npc} is by a light`).toBeLessThan(8);
+      expect(ROADS.some((r) => roadOpen(r, h.x, h.z) > 0.9), `${h.npc} is on the open part of the road`).toBe(true);
+      expect(regionAt(h.x, h.z), `${h.npc} is on this side of the crossing`).toBe(region.id);
+      expect(fogAt(env, h.x, h.z), `${h.npc} stands in the fog`).toBeGreaterThan(FOG_ENOUGH + 0.2);
+    }
+  });
+  it('a prop that goes away waits on something that can happen', () => {
+    const set = new Set(BOATS.flatMap((b) => (b.sets ? [b.sets] : [])).concat(QUESTS.flatMap((q) => q.rewards.flags ?? [])));
+    for (const p of region.props ?? []) if (p.until) expect(set.has(p.until), `${p.model} waits on ${p.until}`).toBe(true);
   });
 });

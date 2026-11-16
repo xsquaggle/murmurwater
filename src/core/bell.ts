@@ -1,11 +1,12 @@
 /**
  * The Drowned Bell: the prestige. Ringing it turns the tide: the catch is sold, what the keeper has earned comes
  * back as Echoes, and the islands forget what coins bought (tuning, the creel, bait, pot upgrades, boat parts, the
- * board). Things, the journal, the chart, relics and the story stay. Echoes buy permanent upgrades.
+ * board). Things (rods, pots, boats), the crew, the journal, the chart, relics and the story stay. Echoes buy permanent upgrades.
  */
 import echoesJson from '../data/echoes.json';
 import { sellAll } from './economy';
 import { ECHOES_BY_ID } from './gear';
+import { turnCrew } from './crew';
 import { START, type GameState } from './state';
 
 export const BELL = echoesJson.bell;
@@ -15,7 +16,7 @@ export const BELL_FLAG = 'bell-found';
 /** Coins the catch still on hand would add to this tide if sold now (ringing sells it first). */
 function unsold(s: GameState): number {
   const sum = (a: number, c: { value: number }) => a + c.value;
-  return s.hold.reduce(sum, 0) + s.pots.hold.reduce(sum, 0) + s.pots.placed.reduce((a, p) => a + p.fish.reduce(sum, 0), 0);
+  return s.hold.reduce(sum, 0) + s.pots.hold.reduce(sum, 0) + s.crew.hold.reduce(sum, 0) + s.pots.placed.reduce((a, p) => a + p.fish.reduce(sum, 0), 0);
 }
 
 /**
@@ -61,6 +62,7 @@ export function ringBell(s: GameState): Turning | null {
   s.gear.creel = 0;
   s.pots.placed = []; s.pots.hold = []; s.pots.levels = { speed: 0, size: 0, quality: 0 };
   s.boats.upgrades = {}; s.boats.at = null;
+  turnCrew(s); // the hands stay, and so do the boats: they are not things coins can be made to forget
   s.quests.board = { quests: [], timer: 0, serial: s.quests.board.serial };
   s.rhythm = 0;
   // Everyone gets to nearly remember the keeper once more.

@@ -6,6 +6,7 @@ import {
 } from '../src/core/quests';
 import { FISH, REGIONS, inHours } from '../src/core/content';
 import { buyEcho } from '../src/core/bell';
+import { buyBoat } from '../src/core/gear';
 import { Rng } from '../src/core/rng';
 
 const places = new Set(REGIONS.flatMap((r) => (r.places ?? []).map((p) => p.id)));
@@ -108,6 +109,7 @@ describe('story quests', () => {
       'hb-08-teeth': () => onQuestEvent(s, catchEv('twofold-flounder')),
       'hb-08b-stall': () => onQuestEvent(s, { type: 'sell', count: 30, coins: 6000 }),
       'hb-p1-pots': () => { expect(s.pots.owned).toBe(1); onQuestEvent(s, { type: 'haul', count: 3 }); },
+      'hb-s1-cat': () => { for (const f of ['butterperch', 'pebble-goby', 'coral-snapper']) onQuestEvent(s, catchEv(f)); },
       'hb-09-bell': () => onQuestEvent(s, { type: 'visit', place: 'drowned-bell' }),
       'hb-10-turning': () => onQuestEvent(s, { type: 'ring' }),
       'hb-11-lamp': () => { s.echoes = 8; expect(buyEcho(s, 'fog-lamp')).toBe(true); },
@@ -116,6 +118,10 @@ describe('story quests', () => {
       'fen-01-scale': () => { onQuestEvent(s, catchEv('butterperch')); expect(s.quests.active['fen-01-scale'][0] ?? 0).toBe(0); for (const f of ['reedling', 'mudlark', 'glassfin', 'reedling', 'sedge-pike', 'mudlark']) onQuestEvent(s, catchEv(f)); },
       'fen-02-glass': () => onQuestEvent(s, catchEv('glassfin')),
       'fen-03-tape': () => onQuestEvent(s, { type: 'visit', place: 'survey-stake' }),
+      'fen-03b-wreck': () => onQuestEvent(s, { type: 'visit', place: 'puffin-wreck' }),
+      'hb-13-refit': () => { s.coins += 40000; expect(buyBoat(s, 'puffin')).toBe(true); },
+      // The skiff's one berth is the cat's, so the gentleman waits for the Puffin: whichever order the jobs come in, he has his seat by the end.
+      'fen-s1-gentleman': () => { if (!s.boats.owned.includes('puffin')) { s.coins += 40000; expect(buyBoat(s, 'puffin')).toBe(true); } },
       'fen-04-glows': () => onQuestEvent(s, catchEv('glowbelly')),
       'fen-05-sump': () => onQuestEvent(s, catchEv('bottomless-eel')),
       'fen-06-post': () => onQuestEvent(s, { type: 'visit', place: 'ear-trumpet' }),
@@ -130,6 +136,9 @@ describe('story quests', () => {
     expect(s.flags).toEqual(expect.arrayContaining(['pots-open', 'bell-found', 'tide-turned']));
     expect(s.gear.wearables).toEqual(expect.arrayContaining(['keepers-souwester', 'keepers-whistle', 'field-hat']));
     expect(s.relics).toContain('isolde-log-fen');
+    // Both hands aboard, in the Puffin, with the skiff kept.
+    expect(s.crew.hired).toEqual(expect.arrayContaining(['biscuit', 'hollis']));
+    expect(s.boats.owned).toEqual(['skiff', 'puffin']);
   });
 
   it('a job for somebody else is handed in to them: Pell sends the keeper to the doctor', () => {

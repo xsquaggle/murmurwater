@@ -1,0 +1,34 @@
+{
+  "crew": [
+    {
+      "id": "biscuit",
+      "name": "Biscuit",
+      "role": "Ship's cat",
+      "interval": 30,
+      "maxRarity": "uncommon",
+      "rarityFalloff": 1,
+      "luck": 0,
+      "value": 0.5,
+      "sizePow": 2.4,
+      "eatsEvery": 4,
+      "spots": 0.15,
+      "blurb": "Hooks out small fish and eats every fourth. Warns of a bite.",
+      "desc": "The dock cat, signed on for fish. She hooks the small ones out with a paw while the boat lies still, eats every fourth, and stares at the water just before your float goes under."
+    },
+    {
+      "id": "hollis",
+      "name": "Mister Hollis",
+      "role": "Passenger",
+      "interval": 45,
+      "maxRarity": "epic",
+      "rarityFalloff": 1,
+      "luck": 1,
+      "value": 0.7,
+      "sizePow": 1.7,
+      "eatsEvery": 0,
+      "when": "dark",
+      "blurb": "Fishes a hand line after dark or in fog. Thin by day.",
+      "desc": "A gentleman made of fog, forty years early for the packet boat. After dark, or wherever the fog lies, he fishes a hand line over the side and is very correct about it. By day there is not enough of him to hold one."
+    }
+  ]
+}

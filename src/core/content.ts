@@ -34,13 +34,21 @@ export interface ZoneDef { id: string; name: string; x: number; z: number; r: nu
  * something to look at: doing so shows its `text` a line at a time, sets `flag` if it has one, and counts as a visit.
  * `dark`: the lines are read with the eyes shut, over a darkened screen.
  */
-export interface PlaceDef { id: string; name: string; x: number; z: number; r: number; prompt?: string; text?: string[]; flag?: string; dark?: boolean }
+export interface PlaceDef {
+  id: string; name: string; x: number; z: number; r: number; prompt?: string; text?: string[]; flag?: string; dark?: boolean;
+  /** Looked at from a boat lying within `r` of it, not on foot (it stands in the water). */ fromBoat?: boolean;
+}
 /** Something standing in the world: `model` names a builder in render/props (which uses the made model when there is one); `block` is the radius the player walks round. */
-export interface PropDef { model: string; x: number; z: number; yaw: number; block?: number }
+export interface PropDef { model: string; x: number; z: number; yaw: number; block?: number; /** A flag: once it is set the thing is gone. */ until?: string }
 /** Where an NPC stands; an NPC can have one spot per island (Pell follows the ferry). */
 export interface NpcSpot { npc: string; island: string; x: number; z: number; yaw: number }
 /** An ambient animal that wanders within `r` of (x, z). */
 export interface CritterDef { id: string; kind: 'cat'; island: string; x: number; z: number; r: number }
+/**
+ * Somebody met from the water: they stand at (x, z), on the sea, and a boat lying still within `r` of them can
+ * hail them. They are there until they have signed on as a deckhand (an NPC and a deckhand share an id).
+ */
+export interface HailDef { npc: string; x: number; z: number; yaw: number; r: number }
 export interface FerryPoint { x: number; z: number; yaw: number; boat: [number, number, number] }
 /**
  * A place that goes on the chart when the player first comes within `r` of it (r 0 = known from the start).
@@ -54,6 +62,8 @@ export interface ChestDef { id: string; x: number; z: number; yaw: number; coins
 export interface RegionContent extends RegionDef {
   zones: ZoneDef[]; places?: PlaceDef[]; npcSpots?: NpcSpot[]; critters?: CritterDef[]; ferry?: Record<string, FerryPoint>;
   chart?: ChartPlace[]; moorings?: MooringDef[]; chests?: ChestDef[];
+  /** People met from a boat. */
+  hails?: HailDef[];
   /** What turns a boat back at the edge of the region (shown while the sea murmurs). */
   edgeHint?: string;
   /** A line under the region's name when the player sails into it. */
@@ -71,6 +81,23 @@ export interface RegionContent extends RegionDef {
  * between them, `halfWidth` to either side.
  */
 export interface RoadDef { id: string; name: string; between: [string, string]; a: [number, number]; b: [number, number]; halfWidth: number }
+
+/** Metres between one light of a sea-road and the next on the same side, and how far inside the road's edge each line stands. */
+export const ROAD_LIGHTS = { spacing: 44, inset: 12 };
+/**
+ * Where the lights of a sea-road stand: two staggered lines of them, alternating sides, numbered from end `a`.
+ * (The scene leaves one out where its spar would stand in the ground.)
+ */
+export function roadLights(r: RoadDef): { i: number; x: number; z: number; along: number }[] {
+  const vx = r.b[0] - r.a[0], vz = r.b[1] - r.a[1], L = Math.hypot(vx, vz), ux = vx / L, uz = vz / L;
+  const off = r.halfWidth - ROAD_LIGHTS.inset, n = Math.floor(L / (ROAD_LIGHTS.spacing / 2));
+  const out: { i: number; x: number; z: number; along: number }[] = [];
+  for (let i = 0; i <= n; i++) {
+    const side = i % 2 ? 1 : -1, t = (i / n) * L;
+    out.push({ i, x: r.a[0] + ux * t + uz * off * side, z: r.a[1] + uz * t - ux * off * side, along: i / n });
+  }
+  return out;
+}
 
 export const FISH: FishDef[] = fishJson.fish as FishDef[];
 export const RODS: RodDef[] = rodsJson.rods as RodDef[];
@@ -218,7 +245,7 @@ export function regionAt(x: number, z: number): string | null {
   return null;
 }
 /** The region an NPC stands in (the first that has a spot for them). */
-export function regionOfNpc(id: string): string | null { return REGIONS.find((r) => (r.npcSpots ?? []).some((n) => n.npc === id))?.id ?? null; }
+export function regionOfNpc(id: string): string | null { return REGIONS.find((r) => (r.npcSpots ?? []).some((n) => n.npc === id) || (r.hails ?? []).some((n) => n.npc === id))?.id ?? null; }
 /** The region a named place lies in: somewhere to look at, or a place on the chart. */
 export function regionOfPlace(id: string): string | null {
   return REGIONS.find((r) => (r.places ?? []).some((p) => p.id === id) || (r.chart ?? []).some((c) => c.id === id))?.id ?? null;
@@ -302,6 +329,9 @@ export function validateContent(): string[] {
   }
   return errs;
 }
+
+/** After dark: from half past six in the evening to half past five in the morning. */
+export function isNight(hour: number): boolean { return hour >= 18.5 || hour < 5.5; }
 
 /** True when the hour falls inside [start, end), wrapping past midnight. */
 export function inHours(h: number, range?: [number, number]): boolean {

@@ -70,6 +70,22 @@
       ]
     },
     {
+      "id": "hollis",
+      "name": "Mister Hollis",
+      "short": "Mister Hollis",
+      "role": "Passenger",
+      "region": "mossglass-fen",
+      "voice": "elderly gentleman, slow and courteous, soft and a little far away, as if heard through fog",
+      "barks": [
+        "Good evening. I am waiting for the packet. She is a little behind her time. Forty years, I am told, but one does not like to fuss.",
+        "I should be glad of a seat, when there is one going. I do not take up much room. Less by day.",
+        "Is that the packet's light? No. It is yours. Forgive me. One hopes."
+      ],
+      "turned": [
+        "Have we been introduced? I feel sure I have declined your kind offer before. More than once. How tiresome for you."
+      ]
+    },
+    {
       "id": "packet-box",
       "name": "Mara's packet box",
       "role": "A box",

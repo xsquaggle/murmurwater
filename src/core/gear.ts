@@ -7,7 +7,8 @@ import gearJson from '../data/gear.json';
 import echoesJson from '../data/echoes.json';
 import relicsJson from '../data/relics.json';
 import boatsJson from '../data/boats.json';
-import { BAITS_BY_ID, FISH, REGIONS_BY_ID, RODS_BY_ID, bait, onShelf, rod, type RodDef } from './content';
+import { BAITS_BY_ID, FISH, REGIONS_BY_ID, RODS_BY_ID, bait, isNight, onShelf, rod, type RodDef } from './content';
+import { spotting } from './crew';
 import type { FishingContext } from './fishing';
 import type { GameState } from './state';
 
@@ -42,12 +43,12 @@ export const ECHOES_BY_ID = new Map(ECHO_UPGRADES.map((u) => [u.id, u]));
 /** The boat carries the Fog Lamp: the sea-roads through the Murmur Fog are open to her. */
 export function hasFogLamp(s: GameState): boolean { return (s.echoUpgrades['fog-lamp'] ?? 0) > 0; }
 const RELIC_EFFECTS = new Map((relicsJson.relics as { id: string; effect: Effect }[]).map((r) => [r.id, r.effect]));
-const BOAT_HOLD = new Map((boatsJson.boats as { id: string; hold: number }[]).map((b) => [b.id, b.hold]));
+const BOAT_DEFS = new Map((boatsJson.boats as { id: string; hold: number; price: number; needs?: string; sets?: string }[]).map((b) => [b.id, b]));
 
 export const RHYTHM_CAP = 10;
 
 export interface Env { hour?: number; afloat?: boolean }
-export function isNight(hour: number): boolean { return hour >= 18.5 || hour < 5.5; }
+export { isNight };
 function applies(when: When | undefined, env: Env): boolean {
   switch (when) {
     case undefined: return true;
@@ -111,7 +112,7 @@ export function creel(s: GameState): { slots: number; value: number; name: strin
 export function stats(s: GameState, env: Env = {}): Stats {
   const b = bonuses(s, env);
   const base = rod(s.gear.rod), lvl = s.gear.rodLevels[base.id] ?? 0, t = TUNING.perLevel;
-  const boat = s.boats.current ? BOAT_HOLD.get(s.boats.current) ?? 0 : 0;
+  const boat = s.boats.current ? BOAT_DEFS.get(s.boats.current)?.hold ?? 0 : 0;
   const up = s.pots.levels, kept = creel(s);
   return {
     rod: {
@@ -124,7 +125,8 @@ export function stats(s: GameState, env: Env = {}): Stats {
     },
     biteSpeed: 1 + (b.biteSpeed ?? 0),
     luck: b.luck ?? 0,
-    biteWindow: 1 + (b.biteWindow ?? 0),
+    // A deckhand who watches the water gives warning of a bite, to a keeper fishing from the boat beside them.
+    biteWindow: 1 + (b.biteWindow ?? 0) + (env.afloat ? spotting(s) : 0),
     strange: 0.03 + (b.strange ?? 0),
     value: 1 + (b.value ?? 0) + kept.value,
     size: Math.min(0.6, b.size ?? 0),
@@ -267,6 +269,27 @@ export function upgradePots(s: GameState, k: PotUpgrade): boolean {
   const c = potUpgradeCost(s, k);
   if (c === null || s.pots.owned < 1 || !pay(s, c)) return false;
   s.pots.levels[k]++;
+  return true;
+}
+
+/** Is this boat for sale to the keeper now? (Not owned, and whatever it waits on has happened.) */
+export function boatOnOffer(s: GameState, id: string): boolean {
+  const b = BOAT_DEFS.get(id);
+  return !!b && b.price > 0 && !s.boats.owned.includes(id) && (!b.needs || s.flags.includes(b.needs));
+}
+/** Buys a boat and puts the keeper in her: the one she replaces stays owned, ashore. */
+export function buyBoat(s: GameState, id: string): boolean {
+  const b = BOAT_DEFS.get(id);
+  if (!b || !boatOnOffer(s, id) || !pay(s, b.price)) return false;
+  s.boats.owned.push(id);
+  if (b.sets && !s.flags.includes(b.sets)) s.flags.push(b.sets);
+  s.boats.current = id; s.boats.at = null;
+  return true;
+}
+/** Changes to another boat the keeper owns. She has no place in the water yet (the game puts her at the mooring). */
+export function takeBoat(s: GameState, id: string): boolean {
+  if (!s.boats.owned.includes(id) || s.boats.current === id) return false;
+  s.boats.current = id; s.boats.at = null;
   return true;
 }
 

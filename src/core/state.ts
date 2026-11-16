@@ -4,7 +4,7 @@
  */
 import type { BoardQuest } from './quests';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 /** One in-game day lasts this many seconds of play. */
 export const DAY_LENGTH_S = 24 * 60;
 
@@ -39,6 +39,11 @@ export interface GameState {
   };
   /** Lantern Pots (v4): how many are owned, the ones in the water, the fish hauled from them, and their upgrade levels. */
   pots: { owned: number; placed: PotState[]; hold: CatchItem[]; levels: { speed: number; size: number; quality: number }; nextId: number };
+  /**
+   * Deckhands (v5): who has signed on (kept through a Turning), the crew basket on the boat, each hand's clock
+   * (t seconds toward the next fish, n fish so far, for their dice) and what each has brought in over all time.
+   */
+  crew: { hired: string[]; hold: CatchItem[]; clocks: Record<string, { t: number; n: number }>; tally: Record<string, { fish: number; coins: number; eaten: number }> };
   /** at: where the current boat floats (null until it is first put in the water) (v3). */
   boats: { owned: string[]; current: string | null; upgrades: Record<string, number>; at: { x: number; z: number; heading: number } | null };
   /** discovered: regions reached. charted: places found and marked on the chart (v3). onBoat: the player is aboard. */
@@ -76,6 +81,7 @@ export function newGame(seed = Date.now() % 1_000_000): GameState {
       creel: 0,
     },
     pots: { owned: 0, placed: [], hold: [], levels: { speed: 0, size: 0, quality: 0 }, nextId: 1 },
+    crew: { hired: [], hold: [], clocks: {}, tally: {} },
     boats: { owned: [], current: null, upgrades: {}, at: null },
     world: { region: START.region, pos: [...START.pos], yaw: START.yaw, discovered: ['hearthbay'], charted: ['hearthbay'], onBoat: false },
     quests: { active: {}, done: [], board: { quests: [], timer: 0, serial: 0 } },

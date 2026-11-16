@@ -1,60 +1,59 @@
 {
  "format": "murmurwater-save",
- "version": 4,
+ "version": 5,
  "savedAt": "2026-11-16T00:00:00.000Z",
  "state": {
-  "version": 4,
+  "version": 5,
   "seed": 1,
-  "playTime": 4398.144418169997,
+  "playTime": 4565.378919149049,
   "hour": 8.5,
   "coins": 0,
   "moonpearls": 2,
-  "echoes": 0,
+  "echoes": 1,
   "lifetime": {
-   "coins": 12270,
-   "catches": 88,
-   "perfectHooks": 19,
+   "coins": 10687,
+   "catches": 93,
+   "perfectHooks": 29,
    "snaps": 0,
-   "echoes": 16
+   "echoes": 15
   },
   "run": {
    "number": 2,
    "coins": 0,
-   "startedAt": 4300.944418169996
+   "startedAt": 4468.178919149048
   },
-  "nextUid": 154,
+  "nextUid": 176,
   "hold": [],
   "journal": {
    "butterperch": {
     "caught": 14,
-    "bestWeight": 1.37,
+    "bestWeight": 1.24,
     "traits": [],
     "firstAt": 43.56667007085739
    },
    "coral-snapper": {
-    "caught": 31,
+    "caught": 30,
     "bestWeight": 2.48,
     "traits": [
-     "hollow",
-     "glimmering"
+     "hollow"
     ],
     "firstAt": 69.18040055134594
    },
    "kettle-carp": {
-    "caught": 7,
+    "caught": 10,
     "bestWeight": 2.99,
     "traits": [],
     "firstAt": 94.01714974666194
    },
    "moss-eel": {
-    "caught": 3,
-    "bestWeight": 2.19,
+    "caught": 4,
+    "bestWeight": 2.82,
     "traits": [],
     "firstAt": 241.850655933703
    },
    "pebble-goby": {
-    "caught": 6,
-    "bestWeight": 0.25,
+    "caught": 8,
+    "bestWeight": 0.33,
     "traits": [],
     "firstAt": 307.1240664396293
    },
@@ -62,21 +61,21 @@
     "caught": 11,
     "bestWeight": 1.96,
     "traits": [],
-    "firstAt": 1217.4676827686942
+    "firstAt": 1366.2659951459987
    },
    "twofold-flounder": {
-    "caught": 12,
-    "bestWeight": 5.83,
+    "caught": 14,
+    "bestWeight": 5.42,
     "traits": [
      "glimmering"
     ],
-    "firstAt": 2007.2036167373071
+    "firstAt": 2050.0033773196833
    },
    "hollow-lantern": {
-    "caught": 4,
+    "caught": 2,
     "bestWeight": 5.91,
     "traits": [],
-    "firstAt": 2319.5333956618497
+    "firstAt": 2538.843798625646
    }
   },
   "gear": {
@@ -98,7 +97,8 @@
    "bait": "breadcrumb",
    "lures": [
     "tin-minnow",
-    "brass-spinner"
+    "brass-spinner",
+    "moth-lure"
    ],
    "lure": "tin-minnow",
    "wearables": [
@@ -126,7 +126,43 @@
     "size": 0,
     "quality": 0
    },
-   "nextId": 3
+   "nextId": 4
+  },
+  "crew": {
+   "hired": [
+    "biscuit"
+   ],
+   "hold": [
+    {
+     "uid": 174,
+     "fishId": "pebble-goby",
+     "weight": 0.25,
+     "trait": null,
+     "value": 3,
+     "perfect": false
+    },
+    {
+     "uid": 175,
+     "fishId": "butterperch",
+     "weight": 0.44,
+     "trait": null,
+     "value": 3,
+     "perfect": false
+    }
+   ],
+   "clocks": {
+    "biscuit": {
+     "t": 7.199999999999999,
+     "n": 32
+    }
+   },
+   "tally": {
+    "biscuit": {
+     "fish": 24,
+     "coins": 280,
+     "eaten": 8
+    }
+   }
   },
   "boats": {
    "owned": [
@@ -171,6 +207,7 @@
     "hb-07-kettle",
     "hb-08-teeth",
     "hb-p1-pots",
+    "hb-s1-cat",
     "hb-08b-stall",
     "hb-09-bell",
     "hb-10-turning",
@@ -179,45 +216,54 @@
    "board": {
     "quests": [
      {
-      "id": "board-9",
-      "title": "Steady Hands",
+      "id": "board-14",
+      "title": "Wanted: Kettle Carp",
       "objective": {
-       "type": "perfect",
-       "count": 2,
-       "label": "Land 2 perfect hooks"
+       "type": "catch",
+       "fish": "kettle-carp",
+       "count": 5,
+       "label": "Catch 5 Kettle Carp"
       },
       "reward": {
-       "coins": 60
+       "coins": 70,
+       "items": {
+        "sandworm": 5
+       }
       },
       "accepted": true,
       "progress": 0,
       "done": false
      },
      {
-      "id": "board-10",
-      "title": "Steady Hands",
+      "id": "board-15",
+      "title": "Wanted: Moss Eel",
       "objective": {
-       "type": "perfect",
-       "count": 2,
-       "label": "Land 2 perfect hooks"
+       "type": "catch",
+       "fish": "moss-eel",
+       "count": 1,
+       "label": "Catch 1 Moss Eel"
       },
       "reward": {
-       "coins": 60
+       "coins": 95,
+       "items": {
+        "sandworm": 5
+       }
       },
       "accepted": true,
       "progress": 0,
       "done": false
      },
      {
-      "id": "board-11",
-      "title": "Market Day",
+      "id": "board-16",
+      "title": "Wanted: Butterperch",
       "objective": {
-       "type": "sell",
-       "count": 7,
-       "label": "Sell 7 fish"
+       "type": "catch",
+       "fish": "butterperch",
+       "count": 5,
+       "label": "Catch 5 Butterperch"
       },
       "reward": {
-       "coins": 75
+       "coins": 50
       },
       "accepted": true,
       "progress": 0,
@@ -225,7 +271,7 @@
      }
     ],
     "timer": 406.79999999999995,
-    "serial": 11
+    "serial": 16
    }
   },
   "flags": [
@@ -255,7 +301,7 @@
   ],
   "echoUpgrades": {
    "fog-lamp": 1,
-   "tidewise": 2,
+   "tidewise": 1,
    "quick-hands": 1,
    "steady-line": 1,
    "patient-float": 1,

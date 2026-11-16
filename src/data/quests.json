@@ -332,6 +332,53 @@
       }
     },
     {
+      "id": "hb-s1-cat",
+      "chain": "side",
+      "giver": "wick",
+      "title": "Whose Cat",
+      "summary": "Catch Biscuit one each of the three fish she has asked for, all to be had off the Hearthbay dock, and she will sign on aboard your boat.",
+      "requires": [
+        "hb-p1-pots"
+      ],
+      "intro": [
+        "Biscuit isn't anybody's. I asked. She said she'd think about it if there was fish.",
+        "She wants one of each. A butterperch, a pebble goby and a coral snapper. The ones off her own dock. I drew them so you'd know. She sat on the drawing.",
+        "She keeps looking at your boat. She's never been on a boat. I think she's been on yours, though. Before."
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "fish": "butterperch",
+          "count": 1,
+          "label": "Catch a Butterperch for Biscuit"
+        },
+        {
+          "type": "catch",
+          "fish": "pebble-goby",
+          "count": 1,
+          "label": "Catch a Pebble Goby for Biscuit"
+        },
+        {
+          "type": "catch",
+          "fish": "coral-snapper",
+          "count": 1,
+          "label": "Catch a Coral Snapper for Biscuit"
+        }
+      ],
+      "reminder": "One of each! Butterperch, pebble goby, coral snapper. Off the dock. She's counting. She can count to three.",
+      "outro": [
+        "She ate the butterperch first. That means yes. The goby's for later and the snapper's for looking at.",
+        "She's your boat's cat now. When the boat's stopped she'll hook fish out for you. She eats some. That's her wages.",
+        "Watch her tail when you're fishing. It goes before the float does. She knows already. She always knows already."
+      ],
+      "rewards": {
+        "coins": 40,
+        "crew": [
+          "biscuit"
+        ]
+      }
+    },
+    {
       "id": "hb-09-bell",
       "chain": "main",
       "giver": "pell",
@@ -472,6 +519,36 @@
       }
     },
     {
+      "id": "hb-13-refit",
+      "chain": "side",
+      "giver": "pell",
+      "title": "Fitted Out",
+      "summary": "Pay Pell 40,000 coins to float the Puffin off the flats and fit her out. Ask him about the boatyard.",
+      "requires": [
+        "fen-03b-wreck"
+      ],
+      "intro": [
+        "She wants a mast, a suit of sails and a great deal of paint. I want forty thousand. One of us will be disappointed, and it won't be her.",
+        "She'll carry more than the skiff and go quicker, and there's room aboard for two besides you. She draws more water, mind. The reeds will tell you where."
+      ],
+      "objectives": [
+        {
+          "type": "own",
+          "item": "puffin",
+          "label": "Pay Pell ◉ 40,000 to refit the Puffin (talk to Pell, then: the boatyard)"
+        }
+      ],
+      "reminder": "Forty thousand for the Puffin. Ask me about the boatyard. The skiff stays yours. I'll mind whichever you're not sailing.",
+      "outro": [
+        "There. She floats. She's a little surprised, I think. So am I.",
+        "I put the moorhen's nest back on the bar. She watched me do it. She'll be telling the reeds.",
+        "My brother's name is on the tiller still, underneath. Don't sand it. I can't read it either."
+      ],
+      "rewards": {
+        "moonpearls": 1
+      }
+    },
+    {
       "id": "fen-01-scale",
       "chain": "main",
       "giver": "calloway",
@@ -572,6 +649,41 @@
       "rewards": {
         "wearables": [
           "field-hat"
+        ]
+      }
+    },
+    {
+      "id": "fen-03b-wreck",
+      "chain": "main",
+      "giver": "calloway",
+      "receiver": "pell",
+      "title": "A Boat in the Reeds",
+      "summary": "Look over the sloop that lies on the flats west of Calloway's stake, then ask Pell at Hearthbay whose she was.",
+      "requires": [
+        "fen-03-tape"
+      ],
+      "intro": [
+        "While you were at the stake, did you see a boat? West of it, on the flats. A fat little sloop with her mast down. I take bearings off her.",
+        "She has PUFFIN on the transom and a moorhen in the cockpit. She has not moved in my time, which is more than I can say for the fen.",
+        "Your ferryman would know whose she was. Look her over, and ask him. I should like one thing out here to have an explanation."
+      ],
+      "objectives": [
+        {
+          "type": "visit",
+          "place": "puffin-wreck",
+          "label": "Look over the wreck on the flats, west of the stake in the Reed Maze"
+        }
+      ],
+      "reminder": "The sloop on the flats, west of my stake in the Reed Maze. Bring the skiff alongside and look her over. Then ask your ferryman.",
+      "outro": [
+        "The Puffin. My brother's. He took her into the Fen for eels the autumn the fog came down, and he walked home. He never said how.",
+        "A moorhen in the cockpit? Good. They won't nest in a boat that's finished. I can float her off and fit her out.",
+        "Forty thousand, and that's a brother's price. Ask me about the boatyard. I haven't got one. I shall have by the time you ask."
+      ],
+      "rewards": {
+        "coins": 400,
+        "flags": [
+          "boatyard-open"
         ]
       }
     },
@@ -679,6 +791,39 @@
         "coins": 3000,
         "relics": [
           "isolde-log-fen"
+        ]
+      }
+    },
+    {
+      "id": "fen-s1-gentleman",
+      "chain": "side",
+      "giver": "calloway",
+      "receiver": "hollis",
+      "title": "A Gentleman on the Road",
+      "summary": "A gentleman waits by the eighth light of the sea-road, out from the Fen. Bring a boat with a berth to spare and offer it to him.",
+      "requires": [
+        "fen-04-glows"
+      ],
+      "intro": [
+        "There is a gentleman on the sea-road. By the eighth light out from this end, standing on the water, with a bag. I have counted him four nights running.",
+        "He is waiting for the packet. I had not the heart to tell him, and I rather think he would not hear it. He is mostly fog.",
+        "Offer him a berth, would you? One of his own. He will not sit where a cat has sat. He was most particular, and I have not got a cat."
+      ],
+      "objectives": [
+        {
+          "type": "berth",
+          "label": "Have a berth to spare aboard (the Puffin has two)"
+        }
+      ],
+      "reminder": "The eighth light out along the sea-road, on your right hand as you leave. He wants a berth of his own. He was most particular.",
+      "outro": [
+        "Good evening. You are not the packet. No. But you have a seat, and I have been standing some time.",
+        "Hollis. I shall pay my passage in fish, if fish are acceptable. I keep a line in the bag. After dark, you understand. By day I am not at my best.",
+        "Pray do not trouble about the hour. It was a quarter past when I arrived, and I see it is a quarter past still."
+      ],
+      "rewards": {
+        "crew": [
+          "hollis"
         ]
       }
     }
