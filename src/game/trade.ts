@@ -10,7 +10,7 @@ import {
   type PotUpgrade,
 } from '../core/gear';
 import { buyEcho, echoRank } from '../core/bell';
-import { QUESTS_BY_ID, newlyReady, npc, readySet } from '../core/quests';
+import { QUESTS_BY_ID, newlyReady, readySet, readyText } from '../core/quests';
 
 export type GearAction =
   | { type: 'buyRod' | 'equipRod' | 'tune' | 'equipBait' | 'buyLure' | 'buyWearable' | 'wear' | 'buyEcho'; id: string }
@@ -39,14 +39,19 @@ export function trade(g: Game, a: GearAction): boolean {
     case 'buyCreel': { const n = creelNext(s); ok = buyCreel(s); said = n ? `${n.name}: your hold is bigger, and fish keep better` : ''; coins = 5; break; }
     case 'buyPot': ok = buyPot(s); said = 'Another Lantern Pot for the water'; coins = 5; break;
     case 'potUpgrade': ok = upgradePots(s, a.k); said = `${POTS.upgrades[a.k].name}: ${POTS.upgrades[a.k].blurb.toLowerCase()}`; coins = 3; break;
-    case 'buyEcho': ok = buyEcho(s, a.id); said = `${ECHOES_BY_ID.get(a.id)?.name} ${roman(echoRank(s, a.id))}`; break;
+    case 'buyEcho': {
+      const u = ECHOES_BY_ID.get(a.id);
+      ok = buyEcho(s, a.id);
+      said = u?.thing ? `${u.name} is on the bow of your boat` : `${u?.name} ${roman(echoRank(s, a.id))}`;
+      break;
+    }
   }
   if (!ok) return false;
   g.refreshSession();
   if (a.type === 'buyEcho') g.audio.echoBuy(); else if (coins) g.audio.coin(coins);
   if (said) g.hud.toast(said, 'gold');
   // Owning the thing can be what a job was waiting for.
-  for (const id of newlyReady(s, before)) { const q = QUESTS_BY_ID.get(id)!; g.hud.toast(`${q.title}: done! Return to ${npc(q.giver).name}`, 'gold'); }
+  for (const id of newlyReady(s, before)) { const q = QUESTS_BY_ID.get(id)!; g.hud.toast(readyText(q), 'gold'); }
   void g.save();
   return true;
 }

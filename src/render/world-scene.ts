@@ -1,6 +1,6 @@
 /** Assembles a region's 3D scene: sky, water, terrain, landmarks, scatter, lighting, time of day. */
 import {
-  AdditiveBlending, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, FogExp2, Group, HemisphereLight, Mesh, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Scene, ShaderMaterial, Vector3,
+  AdditiveBlending, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, FogExp2, Group, HemisphereLight, InstancedMesh, Mesh, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Scene, ShaderMaterial, Texture, Vector3,
 } from 'three';
 import { Heightfield, type RegionDef } from '../core/world';
 import { createSky, createSkyUniforms, type SkyUniforms } from './sky';
@@ -11,15 +11,34 @@ import { assets } from './assets';
 import { buildHullMask } from './boat-rig';
 import { dockDeckAt } from '../core/dock';
 import { waveHeight, CALM_WAVES } from '../core/waves';
+import { SeaRoadLights } from './sea-road';
+import { lookOf } from './looks';
+import { FenDressing } from './fen-scene';
+import { groveTrees } from '../core/flora';
+import { buildProp } from './fen-props';
+import { roadsOf } from '../core/content';
 import type { RegionContent } from '../core/content';
-import { sample, type Lighting } from './daycycle';
+import { GRADES, sample, type Grade, type Lighting } from './daycycle';
 import type { QualityProfile } from './renderer';
 
 /** The Murmur Fog by day. */
 const MURK = new Color('#B4A6CE');
 
 export class WorldScene {
-  readonly scene = new Scene();
+  /** The scene everything is drawn in. It outlives a region: the player, the boat and the people are added to it by their owners. */
+  readonly scene: Scene;
+  /** Everything this region put into the scene, so that leaving the region takes all of it out again. */
+  readonly root = new Group();
+  /** How much of the usual swell this region's water has (1 = Hearthbay). */
+  readonly swell: number;
+  /** The height of the sea's surface at (x, z) now. */
+  waveY(x: number, z: number): number { return waveHeight(CALM_WAVES, x, z, this.time, 0.36 * this.swell); }
+  /** Reeds, drowned trees and lilies, in a region that has them. */
+  fen: FenDressing | null = null;
+  /** The lights of the sea-roads that leave this region, if any. */
+  seaRoad: SeaRoadLights | null = null;
+  /** Where the boat that carries the Fog Lamp is (the game sets it); null when there is none. */
+  lampAt: { x: number; z: number } | null = null;
   readonly sky: SkyUniforms = createSkyUniforms();
   readonly hf: Heightfield;
   readonly water: Water;
@@ -29,7 +48,7 @@ export class WorldScene {
   private terrainMat: MeshStandardMaterial;
   private propMats: MeshStandardMaterial[] = [];
   private lanterns: PointLight[] = [];
-  private lighthouseGlass: MeshStandardMaterial;
+  private lighthouseGlass: MeshStandardMaterial | null = null;
   lighthouseLit = false;
   /** 0..1: how lit the lanterns and windows are (they come on at dusk). */
   glow = 0;
@@ -58,6 +77,10 @@ export class WorldScene {
   /** Sea chests by id: the shut one and the open one stand in the same place and one of them shows. */
   readonly chests = new Map<string, { shut: Object3D; open: Object3D }>();
   private buoys: { obj: Object3D; x: number; z: number; ph: number }[] = [];
+  /** Lamps and lit windows of delivered props, and pennants that stir. */
+  private glassMats: MeshStandardMaterial[] = [];
+  private pennants: Object3D[] = [];
+  private vanes: Object3D[] = [];
   /** The Drowned Bell, where the region has one: the part that swings, how long since it was struck, and how hard. */
   private bell: { pivot: Object3D; t: number; amp: number } | null = null;
   private bellMat: MeshStandardMaterial | null = null;
@@ -67,20 +90,41 @@ export class WorldScene {
   /** Where the bell hangs, for the camera and for sparks. */
   readonly bellPos = new Vector3();
 
-  constructor(readonly region: RegionDef, profile: QualityProfile) {
+  constructor(readonly region: RegionDef, profile: QualityProfile, scene: Scene = new Scene()) {
     this.hf = new Heightfield(region);
-    const s = this.scene;
-    s.fog = new FogExp2(new Color(), 0.001);
+    this.scene = scene;
+    this.grade = GRADES[region.grade] ?? null;
+    const s = this.root;
+    scene.add(s);
+    scene.fog = new FogExp2(new Color(), 0.001);
     s.add(createSky(this.sky));
 
-    const terrain = buildTerrain(this.hf, profile.terrainCell);
+    const look = lookOf(region.grade);
+    this.swell = look.water.swell;
+    const terrain = buildTerrain(this.hf, profile.terrainCell, look.terrain);
     this.terrainMat = terrain.material;
+    this.heightTex = terrain.heightTex;
     s.add(terrain.mesh);
 
-    this.water = new Water({ heightTex: terrain.heightTex, heightBounds: terrain.heightBounds, sky: this.sky, segments: profile.waterSegments });
+    this.water = new Water({ heightTex: terrain.heightTex, heightBounds: terrain.heightBounds, sky: this.sky, segments: profile.waterSegments, look: look.water });
     s.add(this.water.mesh);
 
+    const roads = roadsOf(region.id);
+    if (roads.length) { this.seaRoad = new SeaRoadLights(roads, (x, z) => this.hf.height(x, z)); s.add(this.seaRoad.root); }
+
+    // A region with reed beds is a fen: reeds on every shoal, drowned trees in its groves, lilies on its still water.
+    if (region.shoals) {
+      const rcx = region as RegionContent, trees = groveTrees(rcx, this.hf), dock = region.landmarks.dock;
+      for (const t of trees) this.rocks.push([t.x, t.z, t.r]);
+      const clear: [number, number, number][] = (rcx.moorings ?? []).map((m) => [m.x, m.z, 9]);
+      if (dock) clear.push([dock.x + Math.sin(dock.rot ?? 0) * (dock.length ?? 30) / 2, dock.z + Math.cos(dock.rot ?? 0) * (dock.length ?? 30) / 2, (dock.length ?? 30) / 2 + 7]);
+      this.fen = new FenDressing({ center: region.center, within: region.shoals.within, heightAt: terrain.heightAt, trees, lilies: rcx.lilies ?? [], clear });
+      s.add(this.fen.root);
+    }
+
     const L = region.landmarks;
+    const rc = region as RegionContent;
+    if (L.lighthouse) {
     const lh = buildLighthouse();
     const lhY = this.hf.height(L.lighthouse.x, L.lighthouse.z);
     lh.group.position.set(L.lighthouse.x, lhY - 0.6, L.lighthouse.z);
@@ -118,6 +162,7 @@ export class WorldScene {
     this.beams.position.set(0, lh.lampY, 0); this.beams.visible = false;
     lh.group.add(this.beams);
     this.propMats.push(lh.body.material as MeshStandardMaterial);
+    }
 
     const dock = buildDock(this.hf, { x: L.dock.x, z: L.dock.z }, L.dock.rot ?? 0, L.dock.length ?? 30);
     s.add(dock.group);
@@ -130,6 +175,7 @@ export class WorldScene {
     for (const p of dock.lanternPositions) this.lanterns.push(addLanternLight(s, p, 7, 18));
 
     // Harbour: the stall and notice board on the landing, generated crates and tackle along the dock.
+    if (region.id === 'hearthbay') {
     const dir = new Vector3(Math.sin(this.dockYaw), 0, Math.cos(this.dockYaw));
     const side = new Vector3(dir.z, 0, -dir.x);
     const at = (t: number, sd: number) => new Vector3(L.dock.x, this.deckY + 0.07, L.dock.z).addScaledVector(dir, t).addScaledVector(side, sd);
@@ -157,6 +203,7 @@ export class WorldScene {
     place('tackleBox', at(this.dockLength - 6, -0.85), this.dockYaw + 1.2);
     place('crate', at(5.7, 3.35), this.dockYaw - 0.2);
     place('barrel', at(5.9, -3.5), 1.1);
+    }
 
     const skiff = assets.instance('skiff');
     const boat = skiff ?? new Mesh(buildRowboat(), createPropMaterial());
@@ -168,14 +215,16 @@ export class WorldScene {
     this.ferryBoat = boat;
     this.ferryIsModel = !!skiff;
     this.boat = boat;
-    this.placeFerry('hearthbay');
+    // Until the player has a boat of their own she is Pell's ferry, and lies at a ferry landing.
+    boat.visible = !!rc.ferry;
+    this.placeFerry(Object.keys(rc.ferry ?? {})[0] ?? '');
 
+    if (region.id === 'hearthbay') {
     const village = new Vector3(L.dock.x + 40, 0, L.dock.z);
     const scatter = scatterIsland(this.hf, { villageCenter: village, villageRadius: 55, avoid: [new Vector3(L.lighthouse.x, 0, L.lighthouse.z), new Vector3(L.dock.x, 0, L.dock.z)], seed: 5 });
     s.add(scatter.group);
     for (const h of scatter.houses) this.blockers.push([h.x, h.z, 3.4]);
     // Shore boulders: boats go around them, and so do feet, except where someone has to stand or land.
-    const rc = region as RegionContent;
     const keep = [...(rc.places ?? []), ...(rc.npcSpots ?? []), ...Object.values(rc.ferry ?? {}), ...(rc.moorings ?? []), L.spawn];
     for (const [x, z, sc, y] of scatter.rocks) {
       if (y < 0.6) this.rocks.push([x, z, sc * 1.0]);
@@ -189,6 +238,7 @@ export class WorldScene {
     arch.castShadow = true; arch.receiveShadow = true;
     this.propMats.push(arch.material as MeshStandardMaterial);
     s.add(arch);
+    }
 
     this.spawn = new Vector3(L.spawn.x, this.deckY, L.spawn.z);
 
@@ -227,6 +277,21 @@ export class WorldScene {
       open.visible = false;
       this.chests.set(c.id, { shut, open });
       this.blockers.push([c.x, c.z, 0.6]);
+    }
+
+    // The things the region's data stands about: a hut, a box, a board (see fen-props.ts).
+    for (const p of rc.props ?? []) {
+      const built = buildProp(p.model);
+      if (!built) continue;
+      const o = built.object;
+      // On the ground, or on the deck where there is one, and never under the waterline (a thing on piles stands in the shallows).
+      o.position.set(p.x, Math.max(0, this.hf.height(p.x, p.z), dockDeckAt(L.dock, p.x, p.z) ?? 0), p.z); o.rotation.y = p.yaw;
+      s.add(o); o.updateMatrixWorld(true);
+      this.propMats.push(...built.mats); this.glassMats.push(...built.glass);
+      if (built.pennant) { built.pennant.userData.rest = built.pennant.rotation.y; this.pennants.push(built.pennant); }
+      if (built.vane) { built.vane.userData.rest = built.vane.rotation.y; this.vanes.push(built.vane); }
+      if (built.lamp) this.lanterns.push(addLanternLight(s, o.localToWorld(built.lamp.clone()), 7, 16));
+      if (p.block) this.blockers.push([p.x, p.z, p.block]);
     }
 
     // The Drowned Belfry: a church tower standing in the sea off its shoal, leaning a little, the bell still hung.
@@ -322,17 +387,27 @@ export class WorldScene {
   }
   private boat: Object3D;
   private pocket: PointLight;
+  private heightTex: Texture;
+  /** What this region does to the light of the day (the Fen's green haze); null leaves it as the clock has it. */
+  private grade: Grade | null;
   /** Turns the pocket lantern down (in the boat, where the sail and the stern lamp are an arm's length away). */
   pocketScale = 1;
   /** 0..1: how far into the Murmur Fog at the region's edge the player is. Set by the game each frame. */
   murk = 0;
   private murkNow = 0;
   private murkColor = new Color();
-  private lampLight: PointLight;
+  private lampLight: PointLight | null = null;
   private beams = new Group();
-  private beamMat: ShaderMaterial;
+  private beamMat: ShaderMaterial | null = null;
   private boatBase = new Vector3();
   private boatYaw = 0;
+
+  /** Takes up the clock, the waves and the fog where the region just left had them, so nothing jumps at a crossing. */
+  carryFrom(old: WorldScene) {
+    this.time = old.time; this.hour = old.hour; this.murk = old.murk; this.murkNow = old.murkNow; this.pocketScale = old.pocketScale;
+    this.lampAt = old.lampAt;
+    if (old.seaRoad) this.seaRoad?.carryFrom(old.seaRoad);
+  }
 
   /** Strikes the bell: it swings and settles (the sound is the game's business). */
   tollBell(strength = 1) { if (this.bell) { this.bell.t = 0; this.bell.amp = 0.42 * strength; } }
@@ -351,6 +426,7 @@ export class WorldScene {
   update(dt: number, camera: PerspectiveCamera, focus: Vector3) {
     this.time += dt;
     const lt = sample(this.hour, this.lighting);
+    this.grade?.(lt);
     const u = this.sky;
     u.uTime.value = this.time;
     u.uSunDir.value.copy(lt.sunDir);
@@ -400,18 +476,25 @@ export class WorldScene {
       const flick = 0.85 + 0.15 * Math.sin(this.time * 9.1 + i * 2.3) * Math.sin(this.time * 3.7 + i);
       l.intensity = (1.5 + 9 * glow) * flick;
     });
-    this.lighthouseGlass.emissiveIntensity = this.lighthouseLit ? 4 : 0.06 + 0.04 * Math.sin(this.time * 0.7);
+    for (const m of this.glassMats) m.emissiveIntensity = 0.12 + 2.6 * glow * (0.9 + 0.1 * Math.sin(this.time * 7.3));
+    this.pennants.forEach((p, i) => { p.rotation.y = (p.userData.rest as number) + 0.3 * Math.sin(this.time * 1.7 + i) + 0.1 * Math.sin(this.time * 4.3 + i * 2); });
+    for (const v of this.vanes) v.rotation.y = (v.userData.rest as number) + 0.7 * Math.sin(this.time * 0.19) + 0.07 * Math.sin(this.time * 2.3);
+    if (this.lighthouseGlass) this.lighthouseGlass.emissiveIntensity = this.lighthouseLit ? 4 : 0.06 + 0.04 * Math.sin(this.time * 0.7);
     // The pocket lantern is kept up a while after sunrise: the dock lies in the island's shadow for the first hour.
     const dark = Math.min(1, Math.max(0, lt.night * 1.4 + Math.max(0.25 * ramp(17.8, 18.4, lt.hour), 0.4 * (1 - ramp(6.4, 7.7, lt.hour)))));
-    this.lampLight.intensity = this.lighthouseLit ? 60 + 240 * dark : 0;
-    this.beams.visible = this.lighthouseLit && dark > 0.02;
-    this.beams.rotation.y = this.time * 0.35;
-    this.beamMat.uniforms.uOpacity.value = 0.08 + 0.34 * dark;
+    if (this.lampLight && this.beamMat) {
+      this.lampLight.intensity = this.lighthouseLit ? 60 + 240 * dark : 0;
+      this.beams.visible = this.lighthouseLit && dark > 0.02;
+      this.beams.rotation.y = this.time * 0.35;
+      this.beamMat.uniforms.uOpacity.value = 0.08 + 0.34 * dark;
+    }
     this.pocket.position.set(focus.x, focus.y + 2.3, focus.z);
     this.pocket.intensity = 22 * dark * this.pocketScale;
 
+    this.seaRoad?.update(dt, this.time, this.lampAt, (x, z) => this.waveY(x, z));
+    this.fen?.update(dt, focus, lt.night);
     for (const bu of this.buoys) {
-      bu.obj.position.set(bu.x, waveHeight(CALM_WAVES, bu.x, bu.z, this.time, 0.36) + 0.02, bu.z);
+      bu.obj.position.set(bu.x, this.waveY(bu.x, bu.z) + 0.02, bu.z);
       bu.obj.rotation.set(Math.sin(this.time * 1.1 + bu.ph) * 0.09, bu.ph, Math.sin(this.time * 0.8 + bu.ph * 2) * 0.09);
     }
     if (this.bell) {
@@ -422,12 +505,35 @@ export class WorldScene {
       if (this.bellMat) this.bellMat.emissiveIntensity = 0.05 + 0.55 * this.glow + 2.2 * (bl.amp / 0.42) * Math.exp(-bl.t * 0.9);
       if (this.belfryStone) this.belfryStone.emissiveIntensity = 0.03 + 0.2 * (1 - this.glow);
     }
-    if (this.ferryHeld) return;
+    if (this.ferryHeld || !this.boat.visible) return;
     const b = this.boatBase;
     const isModel = this.ferryIsModel;
     if (this.ferryBeached) this.boat.position.set(b.x, b.y, b.z);
-    else this.boat.position.set(b.x, waveHeight(CALM_WAVES, b.x, b.z, this.time, 0.36) + (isModel ? -0.32 : 0.42) + Math.sin(this.time * 1.3) * 0.04, b.z);
+    else this.boat.position.set(b.x, this.waveY(b.x, b.z) + (isModel ? -0.32 : 0.42) + Math.sin(this.time * 1.3) * 0.04, b.z);
     this.boat.rotation.set(this.ferryBeached ? 0.04 : Math.sin(this.time * 0.9) * 0.025, this.boatYaw, this.ferryBeached ? 0.09 : Math.sin(this.time * 1.1) * 0.04, 'YXZ');
+  }
+
+  /**
+   * Takes this region out of the scene and frees what it built. Models from the library are shared with
+   * every other copy of them and are left alone.
+   */
+  dispose() {
+    this.scene.remove(this.root);
+    const shared = assets.shared, done = new Set<object>();
+    const free = (o: { dispose(): void } | null | undefined) => { if (o && !shared.has(o) && !done.has(o)) { done.add(o); o.dispose(); } };
+    this.root.traverse((o) => {
+      const m = o as Mesh;
+      if (!m.geometry || !m.material) return;
+      if ((o as InstancedMesh).isInstancedMesh) (o as InstancedMesh).dispose();
+      free(m.geometry);
+      for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
+        if (!mat || shared.has(mat)) continue;
+        for (const v of Object.values(mat)) if (v && (v as Texture).isTexture) free(v as Texture);
+        free(mat);
+      }
+    });
+    free(this.heightTex);
+    for (const l of [this.key]) l.shadow.map?.dispose();
   }
 
   /** Deck height if (x, z) is on the dock, else null. */

@@ -22,6 +22,8 @@ const SFX = {
   'chest-open': [2, 0.8],
   // Lantern Pots and the Drowned Bell
   'pot-set': [1, 0.8], 'pot-haul': [2, 0.85], 'bell-toll': [1, 1], 'echo-buy': [1, 0.8], 'tide-turn': [1, 0.9],
+  // The sea-road and Mossglass Fen
+  'fog-lamp-light': [1, 0.9], 'sea-road-chime': [3, 0.7], 'fog-cross': [1, 0.9], 'packet-box': [1, 0.8], 'reed-brush': [2, 0.6],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
@@ -31,7 +33,7 @@ type Loop = (typeof LOOPS)[number];
  * Sounds that have been asked for but are not recorded yet (see docs/HANDOFF.md). They are not fetched and
  * not counted as missing; their synth stand-ins play instead. Delete a name here when its files land.
  */
-const PENDING: ReadonlySet<string> = new Set<string>([]);
+const PENDING: ReadonlySet<string> = new Set<string>(['fog-lamp-light', 'sea-road-chime', 'fog-cross', 'packet-box', 'reed-brush']);
 
 interface SfxOpts { gain?: number; rate?: number; at?: number; vary?: number; bus?: Bus; dur?: number }
 export interface AudioState {
@@ -349,6 +351,32 @@ export class AudioEngine {
     if (this.sfx('echo-buy')) return;
     [880, 659.25, 783.99, 1174.66].forEach((fr, i) => { this.tone(fr, 0.7, 0.1, 'sine', i * 0.09); this.tone(fr * 1.003, 0.9, 0.05, 'triangle', i * 0.09 + 0.22); });
   }
+
+  // ---- the sea-road and Mossglass Fen ----
+  /** The Fog Lamp lighting itself: a soft whoomp and a glassy ring. */
+  fogLampLight() {
+    if (this.sfx('fog-lamp-light', { vary: 0 })) return;
+    this.noise(0.35, 260, 0.7, 0.3, 'lowpass', 90); this.tone(110, 0.3, 0.16, 'sine', 0, 70);
+    this.tone(1567.98, 1.1, 0.07, 'sine', 0.08); this.tone(2349.32, 0.8, 0.04, 'sine', 0.1); this.tone(3135.96, 0.5, 0.02, 'sine', 0.12);
+  }
+  /** A light of the sea-road answering as the boat passes: one far, glassy bell note. `i` picks the note. */
+  roadChime(i = 0, gain = 1) {
+    if (this.sfx('sea-road-chime', { gain, vary: 0.01 })) return;
+    const f = [1046.5, 1174.66, 1396.91][((i % 3) + 3) % 3];
+    this.tone(f, 1.5, 0.075 * gain, 'sine'); this.tone(f * 2.76, 0.5, 0.022 * gain, 'sine'); this.tone(f * 0.5, 1.2, 0.03 * gain, 'sine', 0.02);
+  }
+  /** The middle of the crossing: a low breath of wind with the murmur under it, swelling and falling. */
+  fogCross() {
+    if (this.sfx('fog-cross', { vary: 0 })) return;
+    this.noise(4.2, 240, 0.5, 0.26, 'lowpass', 520); this.tone(65.4, 4.2, 0.12, 'sine', 0.3, 61); this.tone(98, 3.6, 0.07, 'sine', 0.6, 92);
+  }
+  /** Mara's packet box taking a catch: lid, rope, coins. */
+  packetBox(n = 3) {
+    if (this.sfx('packet-box')) return;
+    this.tone(120, 0.12, 0.22, 'sine', 0, 80); this.noise(0.3, 700, 0.8, 0.08, 'bandpass', 500, 0.1); this.coin(n);
+  }
+  /** A hull pushing through reeds. */
+  reedBrush(gain = 1) { if (!this.sfx('reed-brush', { gain, vary: 0.12 })) this.noise(0.7, 2600, 0.6, 0.1 * gain, 'bandpass', 1500); }
 
   /** A new place on the chart: a short rising figure (the recorded sting once it exists). */
   discover() {

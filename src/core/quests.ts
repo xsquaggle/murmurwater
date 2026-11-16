@@ -2,7 +2,8 @@
  * Quests: the authored story chain (src/data/quests.json) and the rotating notice board.
  * Pure functions over GameState so the bot, tests and the game all share one rule set.
  *
- * Story quests are offered by an NPC, accepted in dialogue and handed in to the same NPC.
+ * Story quests are offered by an NPC, accepted in dialogue and handed in to the same NPC (or to the quest's
+ * `receiver`, when the job is to go and find somebody).
  * Board quests are generated from templates on a play-time timer (no offline progress) and
  * pay out as soon as they are complete.
  */
@@ -10,8 +11,8 @@ import questsJson from '../data/quests.json';
 import npcsJson from '../data/npcs.json';
 import relicsJson from '../data/relics.json';
 import boatsJson from '../data/boats.json';
-import { BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, RODS_BY_ID, fish, inHours } from './content';
-import { LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable } from './gear';
+import { BAITS, BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, REGIONS, REGIONS_BY_ID, RODS_BY_ID, fish, inHours } from './content';
+import { ECHOES_BY_ID, LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable } from './gear';
 import { earn } from './economy';
 import { Rng, hashString } from './rng';
 import type { GameState } from './state';
@@ -22,8 +23,9 @@ export interface ObjectiveDef {
   type: ObjectiveType; label: string; count?: number;
   /** catch: a specific species, a minimum rarity, a minimum weight, a strange trait. */
   fish?: string; rarity?: string; minWeight?: number; strange?: boolean;
-  /** own: a rod, bait or boat id. */ item?: string;
-  /** visit: a place id from the region's places. */ place?: string;
+  /** catch: only fish of this region count. */ region?: string;
+  /** own: a rod, bait, boat, lure or wearable id, or a thing bought with Echoes. */ item?: string;
+  /** visit: a place id from a region's places, or a place on a chart (found by sailing close). */ place?: string;
   /** Where to go for it, as [x, z], when it is not a place (a fishing ground): for the compass and the chart. */ at?: [number, number];
 }
 export interface Rewards {
@@ -33,13 +35,17 @@ export interface Rewards {
 }
 export interface QuestDef {
   id: string; chain: 'main' | 'side'; giver: string; title: string; summary: string;
+  /** Who the job is handed in to, when that is not the giver: they speak the outro. */ receiver?: string;
   requires: string[]; requiresFlags?: string[];
   intro: string[]; objectives: ObjectiveDef[]; outro: string[]; rewards: Rewards;
   /** Handed over when the quest is accepted (the tool the job is about). */ gives?: Rewards;
   /** Taking the job brings the dusk on if the sun is still up (a job that needs the dark should not mean a wait). */ dusk?: boolean;
   /** Short line the giver says while the quest is in progress. */ reminder?: string;
 }
-export interface NpcDef { id: string; name: string; role: string; region: string; voice: string; barks: string[]; /** Said once after each Turning. */ turned?: string[] }
+export interface NpcDef {
+  id: string; name: string; role: string; region: string; voice: string; barks: string[]; /** Said once after each Turning. */ turned?: string[];
+  /** Not a person: a box, a sign. It has no voice, and its one line is read the first time only. */ thing?: boolean;
+}
 export interface RelicDef { id: string; name: string; effect: { luck?: number; value?: number; biteSpeed?: number }; lore: string }
 /** speed m/s, turn rad/s, accel 1/s, draft/length/beam m (see core/boat.ts); hull and lamp are the ratings that open rougher and foggier seas. */
 export interface BoatDef { id: string; name: string; speed: number; turn: number; accel: number; draft: number; length: number; beam: number; hull: number; lamp: number; hold: number; price: number; desc: string }
@@ -57,6 +63,10 @@ export const RELICS_BY_ID = new Map(RELICS.map((r) => [r.id, r]));
 export const BOATS_BY_ID = new Map(BOATS.map((b) => [b.id, b]));
 
 export function npc(id: string): NpcDef { const n = NPCS_BY_ID.get(id); if (!n) throw new Error(`Unknown npc ${id}`); return n; }
+/** Who a quest is handed in to. */
+export const handsInTo = (q: QuestDef): string => q.receiver ?? q.giver;
+/** What to say when a quest's objectives are met: where to take it. */
+export const readyText = (q: QuestDef): string => (q.receiver ? `${q.title}: now talk to ${npc(q.receiver).name}` : `${q.title}: done! Return to ${npc(q.giver).name}`);
 
 export type QuestEvent =
   | { type: 'catch'; fishId: string; weight: number; trait: string | null; perfect: boolean }
@@ -90,7 +100,8 @@ export function isComplete(s: GameState, q: QuestDef): boolean {
 }
 
 export function owns(s: GameState, item: string): boolean {
-  return s.gear.rods.includes(item) || (s.gear.baits[item] ?? 0) > 0 || s.boats.owned.includes(item) || s.gear.lures.includes(item) || s.gear.wearables.includes(item);
+  return s.gear.rods.includes(item) || (s.gear.baits[item] ?? 0) > 0 || s.boats.owned.includes(item) || s.gear.lures.includes(item) || s.gear.wearables.includes(item)
+    || (s.echoUpgrades[item] ?? 0) > 0;
 }
 
 export function accept(s: GameState, id: string): boolean {
@@ -141,6 +152,7 @@ export function describeRewards(r: Rewards): string[] {
 
 function matchesCatch(o: ObjectiveDef, ev: Extract<QuestEvent, { type: 'catch' }>): boolean {
   if (o.fish && o.fish !== ev.fishId) return false;
+  if (o.region && fish(ev.fishId).region !== o.region) return false;
   if (o.rarity && RARITIES.indexOf(fish(ev.fishId).rarity) < RARITIES.indexOf(o.rarity as (typeof RARITIES)[number])) return false;
   if (o.minWeight && ev.weight < o.minWeight) return false;
   if (o.strange && !ev.trait) return false;
@@ -211,12 +223,13 @@ export type NpcOffer =
   | { kind: 'active'; quest: QuestDef }
   | { kind: 'none' };
 export function npcOffer(s: GameState, npcId: string): NpcOffer {
-  const mine = QUESTS.filter((q) => q.giver === npcId);
-  const turn = mine.find((q) => questStatus(s, q.id) === 'ready');
+  const turn = QUESTS.find((q) => handsInTo(q) === npcId && questStatus(s, q.id) === 'ready');
   if (turn) return { kind: 'turnIn', quest: turn };
+  const mine = QUESTS.filter((q) => q.giver === npcId);
   const offer = mine.find((q) => questStatus(s, q.id) === 'available');
   if (offer) return { kind: 'offer', quest: offer };
-  const act = mine.find((q) => questStatus(s, q.id) === 'active');
+  // A job that is to be handed to somebody else is still in hand, as far as its giver knows.
+  const act = mine.find((q) => { const st = questStatus(s, q.id); return st === 'active' || (st === 'ready' && handsInTo(q) !== npcId); });
   if (act) return { kind: 'active', quest: act };
   return { kind: 'none' };
 }
@@ -229,7 +242,7 @@ export interface Goal { text: string; npc?: string; place?: string; at?: [number
 export function currentGoal(s: GameState): Goal {
   // 1. Anything ready to hand in (main chain first).
   const story = [...QUESTS].sort((a, b) => (a.chain === b.chain ? 0 : a.chain === 'main' ? -1 : 1));
-  for (const q of story) if (questStatus(s, q.id) === 'ready') return { text: `Return to ${npc(q.giver).name}: ${q.title}`, npc: q.giver };
+  for (const q of story) if (questStatus(s, q.id) === 'ready') return { text: q.receiver ? `${q.title}: talk to ${npc(q.receiver).name}` : `Return to ${npc(q.giver).name}: ${q.title}`, npc: handsInTo(q) };
   // 2. The first active main quest's first unfinished objective.
   for (const q of story) {
     if (questStatus(s, q.id) !== 'active') continue;
@@ -244,7 +257,7 @@ export function currentGoal(s: GameState): Goal {
   // 4. Postgame of this slice: the journal.
   const regionFish = FISH.filter((f) => f.region === s.world.region);
   const found = regionFish.filter((f) => s.journal[f.id]).length;
-  return { text: `Fill the journal: ${found}/${regionFish.length} ${s.world.region === 'hearthbay' ? 'Hearthbay' : ''} fish found`.replace('  ', ' ') };
+  return { text: `Fill the journal: ${found}/${regionFish.length} ${REGIONS_BY_ID.get(s.world.region)?.name ?? ''} fish found`.replace('  ', ' ') };
 }
 
 // ---------------------------------------------------------------- notice board
@@ -310,20 +323,23 @@ export function generateBoardQuest(s: GameState, rng: Rng, id: string): BoardQue
     const f = rng.weighted(pool, (x) => (x.rarity === 'common' ? 3 : x.rarity === 'uncommon' ? 2 : 1));
     const n = f.rarity === 'common' ? rng.int(3, 5) : f.rarity === 'uncommon' ? rng.int(2, 3) : 1;
     const night = f.hours && !inHours(12, f.hours) ? ' (after dark)' : '';
+    // Now and then a little of the local bait is thrown in.
+    const local = BAITS.find((b) => b.from === `reached:${s.world.region}`)?.id ?? 'sandworm';
     return mk(`Wanted: ${f.name}`, { type: 'catch', fish: f.id, count: n, label: `Catch ${n} ${f.name}${night}` }, f.baseValue * n * 1.6,
-      rng.chance(0.3) ? { items: { sandworm: 5 } } : {});
+      rng.chance(0.3) ? { items: { [local]: 5 } } : {});
   }
   if (kind === 'heavy' && pool.length) {
     const f = rng.pick(pool);
     const w = Math.round((f.weight[0] + (f.weight[1] - f.weight[0]) * 0.65) * 10) / 10;
     return mk(`A Big One`, { type: 'catch', fish: f.id, minWeight: w, count: 1, label: `Catch a ${f.name} over ${w} kg` }, f.baseValue * 4);
   }
+  // Jobs that name no fish pay by what the fish of these waters are worth.
+  const avg = pool.length ? pool.reduce((a, f) => a + f.baseValue, 0) / pool.length : 10;
   if (kind === 'perfect') {
     const n = rng.int(2, 4);
-    return mk(`Steady Hands`, { type: 'perfect', count: n, label: `Land ${n} perfect hooks` }, 30 * n);
+    return mk(`Steady Hands`, { type: 'perfect', count: n, label: `Land ${n} perfect hooks` }, Math.max(30, avg * 1.4) * n);
   }
   const n = rng.int(6, 12);
-  const avg = pool.length ? pool.reduce((a, f) => a + f.baseValue, 0) / pool.length : 10;
   return mk(`Market Day`, { type: 'sell', count: n, label: `Sell ${n} fish` }, avg * n * 0.5);
 }
 
@@ -335,20 +351,27 @@ export function relicBonus(s: GameState, key: keyof RelicDef['effect']): number 
 
 // ---------------------------------------------------------------- validation
 
+/** `placeIds`: the places a `visit` may name, on top of the places on the regions' charts. */
 export function validateQuests(placeIds: Set<string>): string[] {
   const errs: string[] = [];
+  const charted = new Set(REGIONS.flatMap((r) => (r.chart ?? []).map((c) => c.id)));
+  const flags = new Set(REGIONS.map((r) => `reached:${r.id}`).concat(QUESTS.flatMap((q) => [...(q.rewards.flags ?? []), ...(q.gives?.flags ?? [])]), REGIONS.flatMap((r) => (r.places ?? []).flatMap((p) => (p.flag ? [p.flag] : [])))));
   const ids = new Set<string>();
   for (const q of QUESTS) {
     if (ids.has(q.id)) errs.push(`duplicate quest ${q.id}`);
     ids.add(q.id);
     if (!NPCS_BY_ID.has(q.giver)) errs.push(`${q.id}: unknown giver ${q.giver}`);
+    if (q.receiver && !NPCS_BY_ID.has(q.receiver)) errs.push(`${q.id}: unknown receiver ${q.receiver}`);
+    for (const f of q.requiresFlags ?? []) if (!flags.has(f)) errs.push(`${q.id}: nothing sets the flag ${f}`);
     if (!q.intro.length || !q.outro.length) errs.push(`${q.id}: needs intro and outro lines`);
     if (!q.objectives.length) errs.push(`${q.id}: no objectives`);
     for (const o of q.objectives) {
       if (!OBJECTIVE_TYPES.includes(o.type)) errs.push(`${q.id}: bad objective type ${o.type}`);
       if (o.fish && !FISH_BY_ID.has(o.fish)) errs.push(`${q.id}: unknown fish ${o.fish}`);
-      if (o.type === 'own' && !(RODS_BY_ID.has(o.item!) || BAITS_BY_ID.has(o.item!) || BOATS_BY_ID.has(o.item!) || LURES_BY_ID.has(o.item!) || WEARABLES_BY_ID.has(o.item!))) errs.push(`${q.id}: unknown item ${o.item}`);
-      if (o.type === 'visit' && !placeIds.has(o.place!)) errs.push(`${q.id}: unknown place ${o.place}`);
+      if (o.region && !REGIONS_BY_ID.has(o.region)) errs.push(`${q.id}: unknown region ${o.region}`);
+      if (o.fish && o.region && fish(o.fish).region !== o.region) errs.push(`${q.id}: ${o.fish} does not live in ${o.region}`);
+      if (o.type === 'own' && !(RODS_BY_ID.has(o.item!) || BAITS_BY_ID.has(o.item!) || BOATS_BY_ID.has(o.item!) || LURES_BY_ID.has(o.item!) || WEARABLES_BY_ID.has(o.item!) || ECHOES_BY_ID.get(o.item!)?.thing)) errs.push(`${q.id}: unknown item ${o.item}`);
+      if (o.type === 'visit' && !placeIds.has(o.place!) && !charted.has(o.place!)) errs.push(`${q.id}: unknown place ${o.place}`);
     }
     for (const r of [q.rewards, q.gives ?? {}]) {
     for (const id of Object.keys(r.items ?? {})) if (!BAITS_BY_ID.has(id)) errs.push(`${q.id}: unknown reward bait ${id}`);
@@ -366,5 +389,7 @@ export function validateQuests(placeIds: Set<string>): string[] {
   while (grew) { grew = false; for (const q of QUESTS) if (!done.has(q.id) && q.requires.every((r) => done.has(r))) { done.add(q.id); grew = true; } }
   for (const q of QUESTS) if (!done.has(q.id)) errs.push(`${q.id}: unreachable (cycle in requires)`);
   for (const n of NPCS) if (!n.barks.length) errs.push(`npc ${n.id}: no barks`);
+  for (const f of FISH) if (f.requires && !flags.has(f.requires)) errs.push(`fish ${f.id}: nothing sets the flag ${f.requires}`);
+  for (const n of NPCS) if (!REGIONS_BY_ID.has(n.region)) errs.push(`npc ${n.id}: unknown region ${n.region}`);
   return errs;
 }

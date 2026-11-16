@@ -1,10 +1,11 @@
-// Prints fight win rates and durations per fish × rod for a human-ish player. `npx tsx tools/sim/fight-stats.ts [skill]`
-import { FISH } from '../../src/core/content';
+// Prints fight win rates and durations per fish × rod for a human-ish player. `npx tsx tools/sim/fight-stats.ts [skill] [region]`
+import { FISH, RODS } from '../../src/core/content';
 import { playFightHuman } from '../../tests/helpers';
-const skill = Number(process.argv[2] ?? 0.7);
-for (const rodId of ['driftwood-rod', 'harbour-rod', 'gullwing-rod']) {
+const skill = Number(process.argv[2] ?? 0.7), region = process.argv[3];
+for (const rodId of RODS.map((r) => r.id)) {
   console.log(`\n${rodId} (skill ${skill})`);
   for (const f of FISH) {
+    if (region && f.region !== region) continue;
     let win = 0; const t: number[] = []; const why: Record<string, number> = {};
     const N = 60;
     for (let seed = 1; seed <= N; seed++) {

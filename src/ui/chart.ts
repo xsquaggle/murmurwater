@@ -27,6 +27,10 @@ export interface ChartView {
   from: string | null;
   /** What lies past the edge of the chart. */
   hint: string;
+  /** Sea-roads out of these waters, shown once the boat carries the Fog Lamp: where each begins and where it heads. */
+  roads?: { x: number; z: number; tx: number; tz: number; label: string }[];
+  /** Other waters the player has reached, and the moorings known there. */
+  elsewhere?: { id: string; name: string; moorings: { id: string; name: string }[] }[];
 }
 
 const INK = [59, 42, 79] as const;
@@ -52,7 +56,7 @@ let cache: { key: string; image: ImageData } | null = null;
 
 /** The land and sea layer, W×H device pixels. */
 function base(v: ChartView, W: number, H: number, known: Set<string>): ImageData {
-  const key = `${W}x${H}:${[...known].sort().join(',')}`;
+  const key = `${v.title}:${W}x${H}:${[...known].sort().join(',')}`;
   if (cache?.key === key) return cache.image;
   const r = v.raster, spanX = (r.w - 1) * r.cell, spanZ = (r.h - 1) * r.cell;
   const hs = new Float32Array(W * H), faint = new Float32Array(W * H);
@@ -161,6 +165,30 @@ export function drawChart(canvas: HTMLCanvasElement, v: ChartView, cssW: number)
   // Keeps a marker on the sheet when what it marks lies off it.
   const pin = (x: number, z: number): [number, number] => [Math.min(W - 14 * u, Math.max(14 * u, X(x))), Math.min(H - 14 * u, Math.max(14 * u, Z(z)))];
 
+  // Sea-roads: a dotted line of lights running off the sheet, and a lamp where each begins.
+  for (const rd of v.roads ?? []) {
+    const L = Math.hypot(rd.tx - rd.x, rd.tz - rd.z), ux = (rd.tx - rd.x) / L, uz = (rd.tz - rd.z) / L;
+    // Start the line on the sheet even when the road's end lies off it.
+    let t0 = 0;
+    while (t0 > -400 && (X(rd.x + ux * t0) < 0 || X(rd.x + ux * t0) > W || Z(rd.z + uz * t0) < 0 || Z(rd.z + uz * t0) > H)) t0 -= 10;
+    g.fillStyle = '#2F8079';
+    for (let t = t0; t < 260; t += 16) {
+      const x = X(rd.x + ux * t), y = Z(rd.z + uz * t);
+      if (x < 4 * u || x > W - 4 * u || y < 4 * u || y > H - 4 * u) continue;
+      g.beginPath(); g.arc(x, y, (t < 0 ? 1.3 : 1.9) * u, 0, Math.PI * 2); g.fill();
+    }
+    const [x, y] = pin(rd.x, rd.z);
+    g.beginPath(); g.arc(x, y, 7.5 * u, 0, Math.PI * 2);
+    g.fillStyle = '#BFF6FF'; g.shadowColor = 'rgba(127,240,224,.95)'; g.shadowBlur = 9 * u; g.fill(); g.shadowBlur = 0;
+    g.lineWidth = 1.6 * u; g.strokeStyle = ink(); g.stroke();
+    g.beginPath(); g.moveTo(x, y - 3.4 * u); g.lineTo(x + 2.6 * u, y + 0.8 * u); g.lineTo(x - 2.6 * u, y + 0.8 * u); g.closePath(); g.moveTo(x - 2.6 * u, y + 3 * u); g.lineTo(x + 2.6 * u, y + 3 * u);
+    g.lineWidth = 1.3 * u; g.lineJoin = 'round'; g.stroke();
+    g.font = `italic 700 ${Math.round(13 * u)}px "Fraunces Variable", Georgia, serif`;
+    const tw = g.measureText(rd.label).width, lx = Math.min(W - tw / 2 - 6 * u, Math.max(tw / 2 + 6 * u, x)), ly = y > H - 40 * u ? y - 17 * u : y + 18 * u;
+    g.lineWidth = 4 * u; g.strokeStyle = 'rgba(240,226,190,.85)'; g.strokeText(rd.label, lx, ly);
+    g.fillStyle = '#1F5E59'; g.fillText(rd.label, lx, ly);
+  }
+
   // Moorings: a ringed anchor.
   for (const m of v.moorings) {
     if (!m.known) continue;
@@ -235,7 +263,9 @@ export function drawChart(canvas: HTMLCanvasElement, v: ChartView, cssW: number)
     }
     g.font = `800 ${Math.round(13 * u)}px "Fraunces Variable", Georgia, serif`; g.fillStyle = ink(); g.textAlign = 'center';
     g.fillText('N', x, y - rad - 9 * u);
-    const sw = (100 / spanX) * W, sx = W - 26 * u - sw, sy = H - 24 * u;
+    // The scale sits in the bottom right corner, unless a sea-road comes in there: then beside the rose.
+    const crowded = (v.roads ?? []).some((rd) => X(rd.x) > W * 0.6 && Z(rd.z) > H * 0.78);
+    const sw = (100 / spanX) * W, sx = crowded ? x + rad + 22 * u : W - 26 * u - sw, sy = H - 24 * u;
     g.lineWidth = 2 * u; g.strokeStyle = ink(0.85);
     g.beginPath(); g.moveTo(sx, sy - 4 * u); g.lineTo(sx, sy); g.lineTo(sx + sw, sy); g.lineTo(sx + sw, sy - 4 * u); g.stroke();
     g.font = `800 ${Math.round(11 * u)}px "Nunito Variable", system-ui, sans-serif`;

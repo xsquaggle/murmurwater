@@ -2,7 +2,7 @@
  * Menus and conversations: dialogue box, Mara's shop, the notice board, the satchel (hold, gear,
  * journal, quests), pause and settings. Plain DOM; the game supplies a UiHost to act on choices.
  */
-import { BAITS, FISH, RODS, fish as fishDef } from '../core/content';
+import { BAITS, FISH, RODS, fish as fishDef, onShelf } from '../core/content';
 import { RHYTHM, fmt, rarityIndex } from '../core/economy';
 import {
   COLLECTIONS, CREEL, ECHO_UPGRADES, LURES, LURES_BY_ID, POTS, SETS, SLOTS, TUNING, WEARABLES, WEARABLES_BY_ID, collectionProgress, creel, creelNext, potPrice, potUpgradeCost,
@@ -34,7 +34,7 @@ export function el(tag: string, attrs: Attrs = {}, ...kids: (Node | string | nul
 }
 
 const RARITY_NAMES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Uncanny'];
-const NPC_COLORS: Record<string, string> = { mara: '#C25F55', pell: '#4C5A66', wick: '#E86F6F' };
+const NPC_COLORS: Record<string, string> = { mara: '#C25F55', pell: '#4C5A66', wick: '#E86F6F', calloway: '#8E8A4E', 'packet-box': '#8A6A42' };
 
 // ------------------------------------------------------------------ dialogue
 
@@ -234,6 +234,10 @@ export class Screens {
           el('div', { class: 'item-desc' }, p.note + (m ? '' : ' No mooring: sail her there yourself.')));
       }),
       hidden ? el('p', { class: 'muted chart-unknown' }, `${hidden} place${hidden === 1 ? '' : 's'} still uncharted. Sail close and they go on the chart.`) : el('p', { class: 'muted chart-unknown' }, 'Every place in these waters is on the chart.'),
+      ...(v.elsewhere ?? []).map((r) => el('div', { class: 'chart-place far' },
+        el('div', { class: 'item-top' }, el('b', {}, r.name), el('span', { class: 'chart-far' }, 'Across the fog')),
+        ...r.moorings.map((m) => el('div', { class: 'item-top chart-far-row' }, el('span', {}, m.name),
+          el('button', { class: 'btn gold', disabled: !v.from, onclick: () => this.host.sailTo(m.id) }, 'Sail there'))))),
       el('p', { class: 'muted chart-edge' }, v.hint));
     this.card.append(el('div', { class: 'chart-wrap' }, canvas, list));
   }
@@ -259,7 +263,7 @@ export class Screens {
     let left: HTMLElement, right: HTMLElement;
 
     if (this.shopTab === 'rods') {
-      left = el('div', { class: 'shop-col' }, el('h3', {}, 'Rods'), ...RODS.map((r) => {
+      left = el('div', { class: 'shop-col' }, el('h3', {}, 'Rods'), ...RODS.filter((r) => onShelf(s.flags, r) || s.gear.rods.includes(r.id)).map((r) => {
         const owned = s.gear.rods.includes(r.id), equipped = s.gear.rod === r.id, lvl = s.gear.rodLevels[r.id] ?? 0, t = owned ? tunedRod(s, r.id) : r;
         const main = equipped ? el('button', { class: 'btn ghost', disabled: true }, 'In hand')
           : owned ? this.btn('Use this', { type: 'equipRod', id: r.id })
@@ -272,7 +276,7 @@ export class Screens {
           owned ? el('div', { class: 'tune' }, el('span', {}, 'Tuning'), this.pips(lvl, TUNING.maxLevel),
             cost !== null ? this.btn(`Tune ◉ ${fmt(cost)}`, { type: 'tune', id: r.id }, { gold: true, disabled: s.coins < cost, cls: 'small' }) : el('span', { class: 'muted' }, 'As good as she gets')) : null);
       }));
-      right = el('div', { class: 'shop-col' }, el('h3', {}, 'Bait'), ...BAITS.map((b) => {
+      right = el('div', { class: 'shop-col' }, el('h3', {}, 'Bait'), ...BAITS.filter((b) => onShelf(s.flags, b) || (s.gear.baits[b.id] ?? 0) > 0).map((b) => {
         const have = s.gear.baits[b.id] ?? 0, equipped = s.gear.bait === b.id;
         const likes = Object.keys(b.affinity).map((id) => fishDef(id).name).join(', ');
         return el('div', { class: 'item' + (equipped ? ' sel' : '') },
@@ -287,7 +291,7 @@ export class Screens {
     } else if (this.shopTab === 'tackle') {
       left = el('div', { class: 'shop-col' }, el('h3', {}, 'Lures'),
         el('p', { class: 'muted' }, 'A lure rides the line above the bait. One at a time, and it never wears out.'),
-        ...LURES.filter((l) => l.price !== undefined || s.gear.lures.includes(l.id)).map((l) => {
+        ...LURES.filter((l) => (l.price !== undefined && onShelf(s.flags, l)) || s.gear.lures.includes(l.id)).map((l) => {
           const owned = s.gear.lures.includes(l.id), on = s.gear.lure === l.id;
           return el('div', { class: 'item' + (on ? ' sel' : '') },
             el('div', { class: 'item-top' }, el('b', {}, l.name), on ? el('button', { class: 'btn ghost', disabled: true }, 'On the line') : owned ? this.btn('Use this', { type: 'equipLure', id: l.id }) : buy(l.price!, { type: 'buyLure', id: l.id })),
@@ -303,7 +307,7 @@ export class Screens {
           el('div', { class: 'item-desc' }, `${CREEL.levels.length - s.gear.creel - 1 ? `${CREEL.levels.length - s.gear.creel - 1} better still after this one.` : 'The best there is.'}`))
           : el('p', { class: 'muted' }, 'There is no better creel than the one you have.'));
     } else if (this.shopTab === 'clothes') {
-      const cards = WEARABLES.filter((w) => w.price !== undefined).map((w) => {
+      const cards = WEARABLES.filter((w) => w.price !== undefined && (onShelf(s.flags, w) || s.gear.wearables.includes(w.id))).map((w) => {
         const owned = s.gear.wearables.includes(w.id), on = s.gear.worn[w.slot] === w.id;
         return el('div', { class: 'item' + (on ? ' sel' : '') },
           el('div', { class: 'item-top' }, el('b', {}, w.name, el('span', { class: 'slot-tag' }, w.slot)), on ? el('button', { class: 'btn ghost', disabled: true }, 'Wearing') : owned ? this.btn('Put on', { type: 'wear', id: w.id }) : buy(w.price!, { type: 'buyWearable', id: w.id })),
@@ -484,12 +488,13 @@ export class Screens {
     this.card.append(el('div', { class: 'echo-grid' }, ...ECHO_UPGRADES.map((u) => {
       const rank = echoRank(s, u.id), cost = echoCost(s, u.id), max = u.cost.length;
       const blurb = u.startCoins ? (cost !== null ? `Begin each tide with ◉ ${fmt(u.startCoins[rank])}` + (rank ? ` (now ◉ ${fmt(startCoins(s))})` : '') : `Begin each tide with ◉ ${fmt(startCoins(s))}`) : u.blurb;
-      return el('div', { class: 'item echo' + (rank ? ' has' : '') },
+      // A thing (the Fog Lamp) is bought once and is then simply there: no ranks to count.
+      return el('div', { class: 'item echo' + (rank ? ' has' : '') + (u.thing ? ' thing' : '') },
         el('div', { class: 'item-top' }, el('b', {}, u.name), cost !== null
           ? this.btn(`✺ ${cost}`, { type: 'buyEcho', id: u.id }, { cls: 'echo-btn', disabled: s.echoes < cost })
-          : el('span', { class: 'muted' }, 'Whole')),
-        el('div', { class: 'item-blurb' }, blurb + (rank && !u.startCoins ? ` · ${rank} time${rank === 1 ? '' : 's'} over` : '')),
-        el('div', { class: 'item-desc' }, u.desc), this.pips(rank, max));
+          : el('span', { class: 'muted' }, u.thing ? 'On the bow' : 'Whole')),
+        el('div', { class: 'item-blurb' }, blurb + (rank && !u.startCoins && !u.thing ? ` · ${rank} time${rank === 1 ? '' : 's'} over` : '')),
+        el('div', { class: 'item-desc' }, u.desc), ...(u.thing ? [] : [this.pips(rank, max)]));
     })));
   }
 

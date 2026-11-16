@@ -61,6 +61,7 @@ describe('bite and hook', () => {
 describe('fight', () => {
   it('a skilled player lands every Hearthbay fish with the starter rod most of the time', () => {
     for (const f of FISH) {
+      if (f.region !== 'hearthbay') continue;
       let wins = 0, total = 0, times: number[] = [];
       for (let seed = 1; seed <= 30; seed++) {
         const r = playFight(f, { seed });
@@ -72,6 +73,23 @@ describe('fight', () => {
       const floor = f.rarity === 'common' ? 0.95 : f.rarity === 'uncommon' ? 0.85 : f.rarity === 'rare' ? 0.6 : 0.25;
       expect(rate, `${f.id} win rate ${rate}`).toBeGreaterThanOrEqual(floor);
     }
+  });
+  it('the Fen asks for the rod a keeper comes with, and its three great fish for a better one', () => {
+    const rate = (id: string, rodId: string, skill = 0.7) => { let w = 0; for (let seed = 1; seed <= 40; seed++) if (playFightHuman(fish(id), { seed, rodId, skill }).phase === 'landed') w++; return w / 40; };
+    // The Gullwing lands everything up to the rares, in practised hands and clumsy ones.
+    for (const f of FISH) {
+      if (f.region !== 'mossglass-fen' || ['epic', 'legendary', 'uncanny'].includes(f.rarity)) continue;
+      expect(rate(f.id, 'gullwing-rod'), f.id).toBeGreaterThanOrEqual(0.9);
+      expect(rate(f.id, 'gullwing-rod', 0.4), `${f.id}, clumsy`).toBeGreaterThanOrEqual(0.8);
+    }
+    // The eel of the Sump is a fight with the Gullwing as bought and a fair one with the Fenwood.
+    expect(rate('bottomless-eel', 'gullwing-rod')).toBeLessThan(0.6);
+    expect(rate('bottomless-eel', 'gullwing-rod')).toBeGreaterThan(0.15);
+    expect(rate('bottomless-eel', 'fenwood-rod')).toBeGreaterThanOrEqual(0.9);
+    // Old Mossglass wants the Fenwood; the Listener wants it tuned (it is all but hopeless as bought).
+    expect(rate('old-mossglass', 'gullwing-rod')).toBeLessThan(0.3);
+    expect(rate('old-mossglass', 'fenwood-rod')).toBeGreaterThan(0.35);
+    expect(rate('the-listener', 'fenwood-rod')).toBeLessThan(0.35);
   });
   it('mashing the reel snaps the line on strong fish', () => {
     const r = playFight(fish('moss-eel'), { seed: 2, policy: 'mash' });

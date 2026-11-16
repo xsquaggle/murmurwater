@@ -2,7 +2,7 @@
  * Conversations: what an NPC says and offers right now, built from the quest state.
  * Pure (no DOM, no three.js) so tests and the voice-line manifest share it with the game.
  */
-import { QUESTS, npc, npcOffer, questStatus, type QuestDef } from '../core/quests';
+import { NPCS, QUESTS, handsInTo, npc, npcOffer, questStatus, type QuestDef } from '../core/quests';
 import type { GameState } from '../core/state';
 import { hashString } from '../core/rng';
 
@@ -27,7 +27,8 @@ export interface Conversation {
 
 const q = (id: string) => QUESTS.find((x) => x.id === id)!;
 export const introLines = (quest: QuestDef): Line[] => quest.intro.map((text, i) => ({ npc: quest.giver, text, voice: `${quest.giver}/${quest.id}.intro.${i}` }));
-export const outroLines = (quest: QuestDef): Line[] => quest.outro.map((text, i) => ({ npc: quest.giver, text, voice: `${quest.giver}/${quest.id}.outro.${i}` }));
+/** The outro is spoken by whoever the job is handed in to. */
+export const outroLines = (quest: QuestDef): Line[] => quest.outro.map((text, i) => ({ npc: handsInTo(quest), text, voice: `${handsInTo(quest)}/${quest.id}.outro.${i}` }));
 export const reminderLine = (quest: QuestDef): Line => ({ npc: quest.giver, text: quest.reminder ?? quest.summary, voice: `${quest.giver}/${quest.id}.reminder` });
 export const barkLine = (npcId: string, i: number): Line => {
   const barks = npc(npcId).barks;
@@ -53,9 +54,10 @@ export const textHash = (text: string): string => hashString(text).toString(16).
 export function allVoiceLines(): (Line & { speaker: string; voiceStyle: string })[] {
   const out: Line[] = [];
   for (const quest of QUESTS) out.push(...introLines(quest), ...(quest.reminder ? [reminderLine(quest)] : []), ...outroLines(quest));
-  for (const id of new Set(QUESTS.map((x) => x.giver).concat(['mara', 'pell', 'wick']))) {
-    npc(id).barks.forEach((_, i) => out.push(barkLine(id, i)));
-    (npc(id).turned ?? []).forEach((_, i) => out.push(turnedLine(id, i)!));
+  for (const n of NPCS) {
+    if (n.thing) continue; // a box has no voice
+    n.barks.forEach((_, i) => out.push(barkLine(n.id, i)));
+    (n.turned ?? []).forEach((_, i) => out.push(turnedLine(n.id, i)!));
   }
   return out.map((l) => ({ ...l, speaker: npc(l.npc).name, voiceStyle: npc(l.npc).voice }));
 }
@@ -68,10 +70,11 @@ export const FERRY_ROUTE: Record<string, { to: string; label: string }> = {
 
 function hub(s: GameState, npcId: string, island: string): Choice[] {
   const c: Choice[] = [];
-  if (npcId === 'mara') {
+  // Mara buys at her stall, and through the boxes she keeps on other landings: the same prices, the same shelf.
+  if (npcId === 'mara' || npcId === 'packet-box') {
     const n = s.hold.length + s.pots.hold.length;
     if (n) c.push({ label: `Sell my catch (${n} fish)`, action: { type: 'sell' } });
-    if (s.flags.includes('shop-open')) c.push({ label: 'Show me the good shelf.', action: { type: 'shop' } });
+    if (s.flags.includes('shop-open')) c.push({ label: npcId === 'mara' ? 'Show me the good shelf.' : 'Look through the shelf in the lid.', action: { type: 'shop' } });
   }
   if (npcId === 'pell') {
     // Pell rows the player about only until they have a boat of their own.
@@ -81,7 +84,7 @@ function hub(s: GameState, npcId: string, island: string): Choice[] {
       if (r) c.push({ label: r.label, action: { type: 'ferry', to: r.to } });
     }
   }
-  c.push({ label: 'Bye for now.', action: { type: 'bye' } });
+  c.push({ label: npc(npcId).thing ? 'Shut the lid.' : 'Bye for now.', action: { type: 'bye' } });
   return c;
 }
 
@@ -89,8 +92,11 @@ function hub(s: GameState, npcId: string, island: string): Choice[] {
  * The conversation an NPC starts when the player talks to them. `seq` picks a bark so they don't repeat.
  * `deja`: how many times the Bell has been rung, if this is the first chat with them since: they open with
  * a line about it instead of a bark (story lines come first; the caller marks it said when `deja` comes back set).
+ * `met`: the keeper has been here before (a thing's one line is not read twice).
  */
-export function converse(s: GameState, npcId: string, island: string, seq = 0, deja = 0): Conversation {
+export function converse(s: GameState, npcId: string, island: string, seq = 0, deja = 0, met = false): Conversation {
+  // A thing is read once; after that it is only what it does.
+  if (npc(npcId).thing) return { npc: npcId, lines: met ? [] : [barkLine(npcId, 0)], choices: hub(s, npcId, island) };
   const offer = npcOffer(s, npcId);
   switch (offer.kind) {
     case 'turnIn':
@@ -113,6 +119,12 @@ export function converse(s: GameState, npcId: string, island: string, seq = 0, d
 export function afterTurnIn(s: GameState, npcId: string, island: string): Conversation {
   const offer = npcOffer(s, npcId);
   if (offer.kind === 'offer' || offer.kind === 'turnIn') return converse(s, npcId, island);
+  return { npc: npcId, lines: [], choices: hub(s, npcId, island) };
+}
+
+/** After a sale: a quest the sale finished if they are the one to hear of it, else whatever else they do. */
+export function afterSale(s: GameState, npcId: string, island: string): Conversation {
+  if (npcOffer(s, npcId).kind === 'turnIn') return converse(s, npcId, island);
   return { npc: npcId, lines: [], choices: hub(s, npcId, island) };
 }
 

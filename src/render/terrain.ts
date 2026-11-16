@@ -9,7 +9,7 @@ import {
 } from 'three';
 import { Heightfield } from '../core/world';
 import { Noise2D } from '../core/noise';
-import { PALETTE } from './palette';
+import { lookOf, type TerrainLook } from './looks';
 import { NOISE_GLSL } from './shaders/common.glsl';
 
 export interface TerrainBuild {
@@ -17,6 +17,8 @@ export interface TerrainBuild {
   heightTex: DataTexture;
   heightBounds: Vector4;
   material: MeshStandardMaterial;
+  /** Ground height from the seabed grid: quick, and good to about a metre and a half. */
+  heightAt: (x: number, z: number) => number;
 }
 
 /**
@@ -63,7 +65,7 @@ const hash2 = (x: number, z: number) => {
   return s - Math.floor(s);
 };
 
-export function buildTerrain(hf: Heightfield, cell = 4): TerrainBuild {
+export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = lookOf('amber').terrain): TerrainBuild {
   const r = hf.region;
   const half = r.radius;
   const minX = r.center[0] - half, minZ = r.center[1] - half;
@@ -98,17 +100,18 @@ export function buildTerrain(hf: Heightfield, cell = 4): TerrainBuild {
     }
   }
 
-  const sand = new Color(PALETTE.bone).lerp(new Color('#E2C796'), 0.55);
-  const wetSand = new Color('#C9AE82');
-  const seaSand = new Color('#B8A27C');
-  const deepFloor = new Color(PALETTE.murmur).lerp(new Color(PALETTE.abyss), 0.4);
-  const moss = new Color(PALETTE.moss).lerp(new Color('#5E9A48'), 0.45);
-  const mossLight = new Color('#94BC5C');
-  const pine = new Color(PALETTE.pine);
-  const rock = new Color(PALETTE.slate);
-  const rockDark = new Color('#4A505E');
-  const rockWarm = new Color('#7A7068');
-  const rockLight = new Color('#8E8A86');
+  const sand = new Color(look.sand);
+  const wetSand = new Color(look.wetSand);
+  const seaSand = new Color(look.seaSand);
+  const deepFloor = new Color(look.deepFloor);
+  const moss = new Color(look.moss);
+  const mossLight = new Color(look.mossLight);
+  const pine = new Color(look.pine);
+  const rock = new Color(look.rock);
+  const rockDark = new Color(look.rockDark);
+  const rockWarm = new Color(look.rockWarm);
+  const rockLight = new Color(look.rockLight);
+  const reedBed = look.reedBed ? new Color(look.reedBed) : null;
   const cobble = new Color('#A99E8C'), cobbleDark = new Color('#8C8272');
   const dirt = new Color('#A88A66'), dirtLight = new Color('#BFA27A');
 
@@ -139,6 +142,11 @@ export function buildTerrain(hf: Heightfield, cell = 4): TerrainBuild {
       const depth = -cy;
       c.copy(seaSand).lerp(deepFloor, Math.min(1, Math.max(0, (depth - 1.5) / 14)));
       if (ny < 0.75) c.lerp(rockDark, 0.5);
+      // The flanks of a reed bed take its colour as they rise to it.
+      if (reedBed && depth < 1.6) c.lerp(reedBed, 1 - (depth - 0.4) / 1.2);
+    } else if (reedBed && cy < 0.05) {
+      // A reed bed: a mat of roots and old stems just under the water, mottled.
+      c.copy(reedBed).lerp(wetSand, Math.max(0, v) * 0.5).lerp(pine, Math.max(0, -v) * 0.35);
     } else if (cy < 1.1) {
       c.copy(wetSand).lerp(sand, Math.min(1, (cy + 0.4) / 1.5));
     } else if (cy < 2.4 && ny > 0.82) {
@@ -210,18 +218,27 @@ export function buildTerrain(hf: Heightfield, cell = 4): TerrainBuild {
 
   // Seabed heightmap for the water shader.
   const res = 512;
-  const data = new Uint16Array(res * res);
+  const data = new Uint16Array(res * res), heights = new Float32Array(res * res);
   for (let j = 0; j < res; j++) {
     for (let i = 0; i < res; i++) {
       const x = minX + ((i + 0.5) / res) * half * 2;
       const z = minZ + ((j + 0.5) / res) * half * 2;
-      data[j * res + i] = DataUtils.toHalfFloat(hf.height(x, z));
+      const h = hf.height(x, z);
+      heights[j * res + i] = h;
+      data[j * res + i] = DataUtils.toHalfFloat(h);
     }
   }
+  const size = half * 2;
+  /** The same grid for the CPU: quick enough to ask thousands of times a frame, good to about a metre and a half. */
+  const heightAt = (x: number, z: number) => {
+    const fx = Math.min(res - 1.001, Math.max(0, ((x - minX) / size) * res - 0.5)), fz = Math.min(res - 1.001, Math.max(0, ((z - minZ) / size) * res - 0.5));
+    const i = Math.floor(fx), j = Math.floor(fz), tx = fx - i, tz = fz - j, k = j * res + i;
+    return (heights[k] * (1 - tx) + heights[k + 1] * tx) * (1 - tz) + (heights[k + res] * (1 - tx) + heights[k + res + 1] * tx) * tz;
+  };
   const heightTex = new DataTexture(data, res, res, RedFormat, HalfFloatType);
   heightTex.magFilter = LinearFilter; heightTex.minFilter = LinearFilter;
   heightTex.wrapS = heightTex.wrapT = ClampToEdgeWrapping;
   heightTex.needsUpdate = true;
 
-  return { mesh, heightTex, heightBounds: new Vector4(minX, minZ, half * 2, half * 2), material };
+  return { mesh, heightTex, heightBounds: new Vector4(minX, minZ, half * 2, half * 2), material, heightAt };
 }

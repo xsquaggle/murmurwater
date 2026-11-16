@@ -9,6 +9,7 @@ import { NOISE_GLSL, SKY_FN_GLSL, SKY_UNIFORMS_GLSL } from './shaders/common.gls
 import type { SkyUniforms } from './sky';
 import { CALM_WAVES, packWaves, type Wave } from '../core/waves';
 import { PALETTE } from './palette';
+import type { WaterLook } from './looks';
 import { SHADOW_N } from './fish-shadows';
 
 /** How many points of a boat's wake the water can draw. */
@@ -20,6 +21,8 @@ export interface WaterOptions {
   sky: SkyUniforms;
   segments: number;      // grid resolution (quality setting)
   waves?: Wave[];
+  /** The region's water: its colours, swell, shore foam and clearness. */
+  look?: WaterLook;
 }
 
 /** A square grid whose vertices are densely packed near the centre (camera) and sparse far away. */
@@ -73,7 +76,9 @@ export class Water {
       uniforms: {
         ...opts.sky,
         uWaves: { value: waves },
-        uSeaState: { value: 0.6 },
+        uSeaState: { value: 0.6 * (opts.look?.swell ?? 1) },
+        uShoreFoam: { value: opts.look?.shoreFoam ?? 1 },
+        uMurk: { value: opts.look?.murk ?? 0.45 },
         uHeightTex: { value: opts.heightTex },
         uHeightBounds: { value: opts.heightBounds },
         uCamPos: { value: new Vector3() },
@@ -83,10 +88,10 @@ export class Water {
         uKeyColor: { value: new Color(1, 1, 1) },
         uKeyIntensity: { value: 1 },
         uAmbient: { value: new Color(0.3, 0.3, 0.4) },
-        uDeep: { value: c(PALETTE.abyss) },
-        uMid: { value: c(PALETTE.murmur) },
-        uShallow: { value: c(PALETTE.lagoon) },
-        uFoam: { value: c(PALETTE.seafoam) },
+        uDeep: { value: c(opts.look?.deep ?? PALETTE.abyss) },
+        uMid: { value: c(opts.look?.mid ?? PALETTE.murmur) },
+        uShallow: { value: c(opts.look?.shallow ?? PALETTE.lagoon) },
+        uFoam: { value: c(opts.look?.foam ?? PALETTE.seafoam) },
         uDetail: { value: 1 },
         uWindOffset: { value: new Vector2() },
         uFish: { value: this.fishA },
@@ -158,6 +163,8 @@ export class Water {
         uniform float uKeyIntensity;
         uniform vec3 uAmbient;
         uniform vec3 uDeep, uMid, uShallow, uFoam;
+        uniform float uShoreFoam;
+        uniform float uMurk;
         uniform float uDetail;
         uniform vec4 uFish[FISH_N];
         uniform vec4 uFishB[FISH_N];
@@ -289,7 +296,7 @@ export class Water {
           float shore = 1.0 - smoothstep(0.0, 2.6, depth);
           float bands = step(0.55, fract(depth * 0.9 - uTime * 0.22 + n * 0.6)) * shore * shore;
           float edge = 1.0 - smoothstep(0.05, 0.45 + 0.25 * n, depth);
-          float foam = max(bands * 0.85, edge);
+          float foam = max(bands * 0.85, edge) * uShoreFoam;
           // Crest foam on the tallest waves.
           float streak = smoothstep(0.62, 0.8, mw_vnoise(vWorld.xz * vec2(0.9, 0.35) + uTime * 0.3));
           float crest = smoothstep(0.55, 0.8, vCrest) * streak * (1.0 - smoothstep(30.0, 90.0, dist));
@@ -303,7 +310,7 @@ export class Water {
           col = mix(col, foamCol, clamp(foam, 0.0, 1.0));
 
           // Transparency in the shallows lets the seabed (with caustics) show through.
-          float alpha = clamp(1.0 - exp(-depth * 0.45), 0.25, 1.0);
+          float alpha = clamp(1.0 - exp(-depth * uMurk), 0.25, 1.0);
           alpha = max(max(alpha, foam), shade);
           alpha = mix(alpha, 1.0, smoothstep(30.0, 140.0, dist) * 0.8 + fres * 0.5);
 

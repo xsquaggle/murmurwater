@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { newGame, type GameState } from '../src/core/state';
 import {
-  CREEL, ECHO_UPGRADES, LURES, POTS, TUNING, WEARABLES, bonuses, buyCreel, buyLure, buyPot, buyRod, buyWearable, claimCollections, creelNext,
+  CREEL, ECHO_UPGRADES, LURES, POTS, TUNING, WEARABLES, bonuses, buyBait, buyCreel, buyLure, buyPot, buyRod, buyWearable, claimCollections, creelNext,
   equipLure, fishingContext, potPrice, potUpgradeCost, spendBait, stats, tuneCost, tuneRod, upgradePots, validateGear, wear,
 } from '../src/core/gear';
 import { FISH, rod } from '../src/core/content';
@@ -98,6 +98,14 @@ describe('gear', () => {
 
   it('every priced thing can be bought and every stat it names is real', () => {
     const s = rich();
+    // Goods from further waters are not on the shelf until the keeper has been there.
+    const far = [...LURES, ...WEARABLES].filter((x) => x.from);
+    expect(far.length).toBeGreaterThan(0);
+    for (const x of far) expect('slot' in x ? buyWearable(s, x.id) : buyLure(s, x.id), x.id).toBe(false);
+    expect(buyRod(s, 'fenwood-rod')).toBe(false);
+    expect(buyBait(s, 'marsh-worm', 5)).toBe(false);
+    s.flags.push('reached:mossglass-fen');
+    expect(buyBait(s, 'marsh-worm', 5)).toBe(true);
     for (const l of LURES) if (l.price !== undefined) expect(buyLure(s, l.id), l.id).toBe(true);
     for (const w of WEARABLES) if (w.price !== undefined) expect(buyWearable(s, w.id), w.id).toBe(true);
     expect(buyRod(s, 'harbour-rod')).toBe(true);

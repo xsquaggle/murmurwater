@@ -7,7 +7,7 @@ import gearJson from '../data/gear.json';
 import echoesJson from '../data/echoes.json';
 import relicsJson from '../data/relics.json';
 import boatsJson from '../data/boats.json';
-import { BAITS_BY_ID, FISH, RODS_BY_ID, bait, rod, type RodDef } from './content';
+import { BAITS_BY_ID, FISH, REGIONS_BY_ID, RODS_BY_ID, bait, onShelf, rod, type RodDef } from './content';
 import type { FishingContext } from './fishing';
 import type { GameState } from './state';
 
@@ -20,11 +20,11 @@ export type When = 'night' | 'day' | 'afloat' | 'ashore';
 export type Slot = 'hat' | 'coat' | 'boots' | 'charm';
 export const SLOTS: Slot[] = ['hat', 'coat', 'boots', 'charm'];
 
-export interface LureDef { id: string; name: string; price?: number; when?: When; effect: Effect; blurb: string; desc: string }
-export interface WearableDef { id: string; name: string; slot: Slot; set?: string; price?: number; effect: Effect; blurb: string; desc: string }
+export interface LureDef { id: string; name: string; price?: number; when?: When; effect: Effect; blurb: string; desc: string; /** A flag the shelf waits for. */ from?: string }
+export interface WearableDef { id: string; name: string; slot: Slot; set?: string; price?: number; effect: Effect; blurb: string; desc: string; /** A flag the shelf waits for. */ from?: string }
 export interface SetDef { id: string; name: string; bonuses: { pieces: number; effect: Effect; blurb: string }[] }
 export interface CollectionDef { id: string; name: string; region: string; skipRarity?: string; rewards: { wearables?: string[]; lures?: string[]; relics?: string[] }; text: string }
-export interface EchoDef { id: string; name: string; blurb: string; desc: string; cost: number[]; effect?: Effect; startCoins?: number[] }
+export interface EchoDef { id: string; name: string; blurb: string; desc: string; cost: number[]; effect?: Effect; startCoins?: number[]; /** A thing bought once, not a rank of something. */ thing?: boolean }
 export interface PotUpgradeDef { name: string; blurb: string; max: number; base: number; growth: number; per: number }
 export type PotUpgrade = 'speed' | 'size' | 'quality';
 
@@ -39,6 +39,8 @@ export const ECHO_UPGRADES = echoesJson.upgrades as EchoDef[];
 export const LURES_BY_ID = new Map(LURES.map((l) => [l.id, l]));
 export const WEARABLES_BY_ID = new Map(WEARABLES.map((w) => [w.id, w]));
 export const ECHOES_BY_ID = new Map(ECHO_UPGRADES.map((u) => [u.id, u]));
+/** The boat carries the Fog Lamp: the sea-roads through the Murmur Fog are open to her. */
+export function hasFogLamp(s: GameState): boolean { return (s.echoUpgrades['fog-lamp'] ?? 0) > 0; }
 const RELIC_EFFECTS = new Map((relicsJson.relics as { id: string; effect: Effect }[]).map((r) => [r.id, r.effect]));
 const BOAT_HOLD = new Map((boatsJson.boats as { id: string; hold: number }[]).map((b) => [b.id, b.hold]));
 
@@ -164,14 +166,14 @@ const round5 = (n: number) => Math.max(5, Math.round(n / 5) * 5);
 
 export function buyRod(s: GameState, id: string): boolean {
   const r = RODS_BY_ID.get(id);
-  if (!r || s.gear.rods.includes(id) || !pay(s, r.price)) return false;
+  if (!r || s.gear.rods.includes(id) || !onShelf(s.flags, r) || !pay(s, r.price)) return false;
   s.gear.rods.push(id); s.gear.rodLevels[id] = 0; s.gear.rod = id;
   return true;
 }
 
 export function buyBait(s: GameState, id: string, n: number): boolean {
   const b = BAITS_BY_ID.get(id);
-  if (!b || n <= 0 || !pay(s, b.price * n)) return false;
+  if (!b || n <= 0 || !onShelf(s.flags, b) || !pay(s, b.price * n)) return false;
   s.gear.baits[id] = (s.gear.baits[id] ?? 0) + n;
   return true;
 }
@@ -213,7 +215,7 @@ export function buyCreel(s: GameState): boolean {
 
 export function buyLure(s: GameState, id: string): boolean {
   const l = LURES_BY_ID.get(id);
-  if (!l || l.price === undefined || s.gear.lures.includes(id) || !pay(s, l.price)) return false;
+  if (!l || l.price === undefined || s.gear.lures.includes(id) || !onShelf(s.flags, l) || !pay(s, l.price)) return false;
   s.gear.lures.push(id); s.gear.lure ??= id;
   return true;
 }
@@ -225,7 +227,7 @@ export function equipLure(s: GameState, id: string | null): boolean {
 
 export function buyWearable(s: GameState, id: string): boolean {
   const w = WEARABLES_BY_ID.get(id);
-  if (!w || w.price === undefined || s.gear.wearables.includes(id) || !pay(s, w.price)) return false;
+  if (!w || w.price === undefined || s.gear.wearables.includes(id) || !onShelf(s.flags, w) || !pay(s, w.price)) return false;
   s.gear.wearables.push(id);
   if (!s.gear.worn[w.slot]) s.gear.worn[w.slot] = id;
   return true;
@@ -300,10 +302,11 @@ export function validateGear(): string[] {
   const effect = (who: string, e: Effect | undefined) => { for (const k of Object.keys(e ?? {})) if (!STAT_KEYS.includes(k as StatKey)) errs.push(`${who}: unknown stat ${k}`); };
   const ids = new Set<string>();
   const unique = (id: string) => { if (ids.has(id) || RODS_BY_ID.has(id) || BAITS_BY_ID.has(id)) errs.push(`duplicate gear id ${id}`); ids.add(id); };
-  for (const l of LURES) { unique(l.id); effect(l.id, l.effect); if (!l.blurb || !l.desc) errs.push(`${l.id}: needs a blurb and a description`); }
+  const stocked = (who: string, from?: string) => { if (from && !(from.startsWith('reached:') && REGIONS_BY_ID.has(from.slice(8)))) errs.push(`${who}: stocked from an unknown place (${from})`); };
+  for (const l of LURES) { unique(l.id); effect(l.id, l.effect); stocked(l.id, l.from); if (!l.blurb || !l.desc) errs.push(`${l.id}: needs a blurb and a description`); }
   const sets = new Set(SETS.map((x) => x.id));
   for (const w of WEARABLES) {
-    unique(w.id); effect(w.id, w.effect);
+    unique(w.id); effect(w.id, w.effect); stocked(w.id, w.from);
     if (!SLOTS.includes(w.slot)) errs.push(`${w.id}: bad slot ${w.slot}`);
     if (w.set && !sets.has(w.set)) errs.push(`${w.id}: unknown set ${w.set}`);
   }
@@ -315,13 +318,15 @@ export function validateGear(): string[] {
   for (const c of COLLECTIONS) {
     for (const id of c.rewards.wearables ?? []) if (!WEARABLES_BY_ID.has(id)) errs.push(`${c.id}: unknown wearable ${id}`);
     for (const id of c.rewards.lures ?? []) if (!LURES_BY_ID.has(id)) errs.push(`${c.id}: unknown lure ${id}`);
+    for (const id of c.rewards.relics ?? []) if (!RELIC_EFFECTS.has(id)) errs.push(`${c.id}: unknown relic ${id}`);
     if (!FISH.some((f) => f.region === c.region)) errs.push(`${c.id}: no fish in region ${c.region}`);
   }
   for (const u of ECHO_UPGRADES) {
     effect(u.id, u.effect);
     if (!u.cost.length || u.cost.some((c, i) => c <= 0 || (i > 0 && c < u.cost[i - 1]))) errs.push(`echo ${u.id}: costs must rise`);
     if (u.startCoins && u.startCoins.length !== u.cost.length) errs.push(`echo ${u.id}: one starting purse per rank`);
-    if (!u.effect && !u.startCoins) errs.push(`echo ${u.id}: does nothing`);
+    if (!u.effect && !u.startCoins && !u.thing) errs.push(`echo ${u.id}: does nothing`);
+    if (u.thing && u.cost.length !== 1) errs.push(`echo ${u.id}: a thing is bought once`);
   }
   if (CREEL.levels.some((l, i) => l.slots <= (i ? CREEL.levels[i - 1].slots : CREEL.base))) errs.push('creel: slots must grow');
   if (POTS.prices.length !== POTS.maxOwned - 1) errs.push('pots: one price for each pot after the first');

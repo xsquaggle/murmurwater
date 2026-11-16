@@ -19,20 +19,19 @@ import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
 import { Rng } from '../core/rng';
 import { FishingSession, type FishingInput, type SpotInfo } from '../core/fishing';
-import { REGIONS_BY_ID, bait, rod, zoneAt } from '../core/content';
+import { REGIONS_BY_ID, bait, crossingAt, regionAcross, rod, zoneAt } from '../core/content';
 import { addCatch, breakRhythm, rarityIndex, RHYTHM } from '../core/economy';
 import { claimCollections, fishingContext, isNight, spendBait, stats, type Stats } from '../core/gear';
 import { type GameState } from '../core/state';
 import { serialize, type SaveStore } from '../core/save';
 import { walkableHeight } from '../core/landing';
-import { waveHeight, CALM_WAVES } from '../core/waves';
 
 const STEP = 1 / 60;
-const SEA_STATE = 0.6;
 
 export class Game {
   readonly camera = new PerspectiveCamera(55, 16 / 9, 0.2, 9000);
-  readonly world: WorldScene;
+  /** The region the player is in, built; it is replaced when they cross into another (see enterRegion). */
+  world: WorldScene;
   readonly renderer: Renderer;
   readonly input: Input;
   readonly hud: Hud;
@@ -133,7 +132,7 @@ export class Game {
     this.view.setResolution(window.innerWidth, window.innerHeight);
   }
 
-  waveY(x: number, z: number) { return waveHeight(CALM_WAVES, x, z, this.world.time, SEA_STATE * 0.6); }
+  waveY(x: number, z: number) { return this.world.waveY(x, z); }
 
   /** What the player's gear adds up to here and now (refreshed with the session and once a second). */
   stats!: Stats;
@@ -173,6 +172,31 @@ export class Game {
    * instead of jumping. Fishing goes by the clock at once.
    */
   rushSky(hours: number) { this.skyLag = Math.max(0, Math.min(23, hours)); }
+
+  /**
+   * The player has crossed into another region: this one is taken down and that one built in its place, in
+   * the same scene and the same coordinates, so the boat, the player and the camera carry straight on. It is
+   * only ever done where nothing can be seen: in the thick of the Murmur Fog, or behind a faded screen.
+   */
+  enterRegion(id: string, save = true): boolean {
+    const s = this.state, region = REGIONS_BY_ID.get(id);
+    if (!region || id === s.world.region) return false;
+    const old = this.world;
+    s.world.region = id;
+    const first = !s.world.discovered.includes(id);
+    if (first) s.world.discovered.push(id);
+    // What the shelf and the people of the place wait on (see `from` on goods, `requiresFlags` on quests).
+    if (!s.flags.includes(`reached:${id}`)) s.flags.push(`reached:${id}`);
+    old.dispose();
+    this.world = new WorldScene(region, this.renderer.profile, old.scene);
+    this.world.carryFrom(old);
+    this.sailing.enterRegion();
+    this.town.enterRegion(first);
+    this.pots.enterRegion();
+    this.refreshSession();
+    if (save) void this.save();
+    return true;
+  }
 
   /** Put the camera straight behind the player (after a teleport). */
   snapCamera() {
@@ -271,6 +295,8 @@ export class Game {
     const rodIdle = ph === 'idle' || ph === 'landed' || ph === 'lost';
     const canMove = rodIdle && !ui && !sail.busy;
     sail.step(dt, canMove, !rodIdle, ph === 'idle' || ph === 'lost');
+    // Half way along a sea-road, in the thick of the fog, one region gives way to the next.
+    if (sail.aboard) { const next = regionAcross(s.world.region, sail.boat.x, sail.boat.z); if (next && this.enterRegion(next)) this.audio.fogCross(); }
     let mx = 0, mz = 0;
     if (canMove && !sail.riding) {
       if (inp.held('forward')) mz += 1; if (inp.held('back')) mz -= 1;
@@ -603,8 +629,11 @@ export class Game {
     }
     this.fx.update(dt, (x, z) => this.waveY(x, z));
     this.world.pocketScale += ((sail.aboard ? 0.22 : 1) - this.world.pocketScale) * Math.min(1, dt * 3);
-    this.world.murk = sail.murmur;
+    this.world.murk = sail.fog;
     this.world.update(dt, this.camera, this.pos);
+    // In the middle of a crossing the fog closes right in for a breath; the regions change behind it.
+    const veil = sail.aboard ? crossingAt(this.state.world.region, sail.boat.x, sail.boat.z) : 0;
+    this.hud.veil(veil * 0.94, veil > 0 ? `#${(this.world.scene.fog as { color: Color }).color.getHexString()}` : '');
     this.pots.present(dt);
 
     // HUD

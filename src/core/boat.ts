@@ -39,6 +39,8 @@ export interface BoatEnv {
   radius: number;
   /** Width of the band inside the radius where the murmur pushes back (default 110 m). */
   edge?: number;
+  /** 0..1: how far the murmur is lifted at (x, z): a sea-road, for a boat that carries a fog lamp. */
+  open?(x: number, z: number): number;
 }
 
 export interface BoatStep {
@@ -100,12 +102,18 @@ export function clearance(env: BoatEnv, spec: BoatSpec, x: number, z: number, he
   return least;
 }
 
-/** Strength of the murmur at (x, z): 0 inside, rising to 1 at the region's edge. */
-export function murmurAt(env: BoatEnv, x: number, z: number): number {
+/** How deep in the fog at the region's edge (x, z) lies: 0 inside, rising to 1 at the edge itself. */
+export function fogAt(env: BoatEnv, x: number, z: number): number {
   const edge = env.edge ?? 110;
   const r = Math.hypot(x - env.centre[0], z - env.centre[1]);
   const t = clamp((r - (env.radius - edge)) / edge, 0, 1);
   return t * t * (3 - 2 * t);
+}
+
+/** Strength of the murmur at (x, z): the fog's push, less whatever a sea-road lifts of it. */
+export function murmurAt(env: BoatEnv, x: number, z: number): number {
+  const fog = fogAt(env, x, z);
+  return fog > 0 && env.open ? fog * (1 - env.open(x, z)) : fog;
 }
 
 /** Advances the boat by dt seconds. Mutates and returns nothing but the step report. */

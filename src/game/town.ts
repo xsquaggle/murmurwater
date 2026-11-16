@@ -8,24 +8,24 @@ import { NpcFigure } from '../render/npc-figure';
 import { Cat } from '../render/cat';
 import { hashString } from '../core/rng';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
-import { converse, afterDecline, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
+import { converse, afterDecline, afterSale, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
-  BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, count, currentGoal, describeRewards, npc, npcOffer, onQuestEvent, questStatus,
-  tickBoard, turnIn, type QuestEvent, type QuestUpdate,
+  BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, count, currentGoal, describeRewards, handsInTo, npc, npcOffer, onQuestEvent, questStatus,
+  readyText, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
 } from '../core/quests';
-import { BAITS_BY_ID, type FerryPoint, type MooringDef, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
+import { BAITS_BY_ID, REGIONS, REGIONS_BY_ID, findMooring, placeOfIsland, regionAt, regionOfNpc, regionOfPlace, roadToward, roadsOf, type FerryPoint, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
 import { LANDING } from '../core/landing';
 import { DAY_LENGTH_S } from '../render/daycycle';
 import type { ChartRaster, ChartView } from '../ui/chart';
 import { earn, fmt, sellAll } from '../core/economy';
-import { LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable, type CollectionDef } from '../core/gear';
+import { LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable, hasFogLamp, type CollectionDef } from '../core/gear';
 import { BELL_FLAG, canRing, echoesFor, ringBell, turnings } from '../core/bell';
 import { trade } from './trade';
 import { keyLabel, saveSettings, type Settings } from './settings';
 import { QUALITY } from '../render/renderer';
 
 interface Interactable {
-  kind: 'npc' | 'board' | 'lamp' | 'boat' | 'ashore' | 'kettle' | 'chest' | 'bell'; id: string; pos: Vector3; r: number; prompt: string;
+  kind: 'npc' | 'board' | 'lamp' | 'boat' | 'ashore' | 'kettle' | 'chest' | 'bell' | 'place'; id: string; pos: Vector3; r: number; prompt: string;
   /** How far away it counts as being, when that is not simply the distance to `pos` (the boat's hull). */ dist?: number;
 }
 interface Step { at: number; run: () => void }
@@ -53,22 +53,7 @@ export class Town {
 
   constructor(private g: Game, uiRoot: HTMLElement, public settings: Settings) {
     this.region = g.world.region as RegionContent;
-    for (const p of this.region.places ?? []) this.places.set(p.id, p);
-    for (const sp of this.region.npcSpots ?? []) {
-      let e = this.npcs.get(sp.npc);
-      if (!e) { e = { fig: new NpcFigure(sp.npc, sp.yaw), spots: [] }; this.npcs.set(sp.npc, e); g.world.scene.add(e.fig.root); }
-      e.spots.push(sp);
-    }
-    for (const c of this.region.critters ?? []) {
-      if (c.kind !== 'cat' || !Cat.available()) continue;
-      const cat = new Cat(new Vector3(c.x, 0, c.z), c.r, (x, z) => g.groundAt(x, z), hashString(c.id));
-      this.critters.push({ island: c.island, cat }); g.world.scene.add(cat.root);
-    }
-    this.arrive();
-    g.world.placeFerry(this.island);
-    g.world.lighthouseLit = this.lampLit;
-    if (g.world.kettle) g.world.kettle.visible = !g.state.flags.includes('kettle-taken');
-    this.showChests();
+    this.populate();
 
     this.dialogue = new Dialogue(uiRoot, (line) => this.playVoice(line));
     // Which lines have a recording that matches their current text (see tools/voice-manifest.ts).
@@ -105,6 +90,44 @@ export class Town {
     });
   }
 
+  /** Puts the region's people, animals and places where they belong, and shows its fixtures as the save has them. */
+  private populate() {
+    const g = this.g;
+    for (const p of this.region.places ?? []) this.places.set(p.id, p);
+    for (const sp of this.region.npcSpots ?? []) {
+      let e = this.npcs.get(sp.npc);
+      if (!e) { e = { fig: new NpcFigure(sp.npc, sp.yaw), spots: [] }; this.npcs.set(sp.npc, e); g.world.scene.add(e.fig.root); }
+      e.spots.push(sp);
+    }
+    for (const c of this.region.critters ?? []) {
+      if (c.kind !== 'cat' || !Cat.available()) continue;
+      const cat = new Cat(new Vector3(c.x, 0, c.z), c.r, (x, z) => g.groundAt(x, z), hashString(c.id));
+      this.critters.push({ island: c.island, cat }); g.world.scene.add(cat.root);
+    }
+    this.arrive();
+    g.world.placeFerry(this.island);
+    g.world.lighthouseLit = this.lampLit;
+    if (g.world.kettle) g.world.kettle.visible = !g.state.flags.includes('kettle-taken');
+    this.showChests();
+  }
+
+  /**
+   * The game has crossed into another region (see Game.enterRegion): the people and places of the one left
+   * behind go, and this one's take their places. `first`: the player has never been here before.
+   */
+  enterRegion(first: boolean) {
+    const g = this.g;
+    for (const [, e] of this.npcs) e.fig.root.removeFromParent();
+    for (const c of this.critters) c.cat.root.removeFromParent();
+    this.npcs.clear(); this.critters.length = 0; this.places.clear(); this.spots.clear();
+    this.chartRaster = null; this.focus = null; this.talking = null;
+    this.region = g.world.region as RegionContent;
+    this.populate();
+    this.arrived = { name: this.region.name, first, t: 0 };
+  }
+  /** A region just entered, waiting to be named once the fog has thinned enough to see it. */
+  private arrived: { name: string; first: boolean; t: number } | null = null;
+
   get lampLit() { return this.g.state.flags.includes('lamp-lit') || this.g.state.flags.includes('hb-lighthouse-lit'); }
   /** True while a conversation, screen or cutscene has the player's attention. */
   get blocking() { return this.dialogue.isOpen || this.screens.isOpen || this.seq.length > 0; }
@@ -114,14 +137,14 @@ export class Town {
   // ------------------------------------------------------------------ where things are
   /** The island nearest a point (the Teeth count as one place). */
   islandAt(p: Vector3): string {
-    let best = 'hearthbay', bd = Infinity;
+    let best = this.region.islands[0], bd = Infinity;
     for (const isl of this.region.islands) {
       const dx = p.x - isl.x, dz = p.z - isl.z;
       const c = Math.cos(isl.rot), s = Math.sin(isl.rot);
       const d = Math.hypot((dx * c - dz * s) / isl.rx, (dx * s + dz * c) / isl.rz);
-      if (d < bd) { bd = d; best = isl.id; }
+      if (d < bd) { bd = d; best = isl; }
     }
-    return chartPlaceOf(best);
+    return placeOfIsland(best);
   }
 
   /** The player has come ashore somewhere (or the game has just loaded): work out who is where. */
@@ -186,6 +209,11 @@ export class Town {
     const v = (p: PlaceDef) => this.spot(p);
     const stall = this.places.get('mara-stall');
     if (stall && this.npcs.get('mara')?.fig.root.visible) out.push({ kind: 'npc', id: 'mara', pos: v(stall), r: stall.r, prompt: 'Talk to Mara' });
+    // Mara's box on a far landing: it buys and sells as she does.
+    const box = this.places.get('packet-box');
+    if (box) out.push({ kind: 'npc', id: 'packet-box', pos: v(box), r: box.r, prompt: 'Open Mara’s packet box' });
+    // Things to look at.
+    for (const p of this.region.places ?? []) if (p.prompt) out.push({ kind: 'place', id: p.id, pos: v(p), r: p.r, prompt: p.prompt });
     const board = this.places.get('notice-board');
     if (board) out.push({ kind: 'board', id: 'notice-board', pos: v(board), r: board.r, prompt: 'Read the notice board' });
     const lamp = this.places.get('lighthouse-lamp');
@@ -236,6 +264,7 @@ export class Town {
     else if (it.kind === 'kettle') this.takeKettle();
     else if (it.kind === 'chest') this.openChest(it.id);
     else if (it.kind === 'bell') this.atBell();
+    else if (it.kind === 'place') this.lookAt(it.id);
     return true;
   }
   get focusPrompt() { return this.focus?.prompt ?? null; }
@@ -256,12 +285,13 @@ export class Town {
 
   // ------------------------------------------------------------------ talking
   talkTo(npcId: string) {
-    const s = this.g.state;
-    if (!s.flags.includes(`met-${npcId}`)) s.flags.push(`met-${npcId}`);
+    const s = this.g.state, met = s.flags.includes(`met-${npcId}`);
+    if (!met) s.flags.push(`met-${npcId}`);
+    if (npc(npcId).thing) this.g.audio.packetBox(0);
     const seq = (this.barkSeq[npcId] = (this.barkSeq[npcId] ?? Math.floor(s.playTime)) + 1);
     // The first word with each of them after a Turning: they very nearly know the keeper.
     const deja = `deja:${npcId}`, turned = turnings(s);
-    const conv = converse(s, npcId, this.island, seq, turned > 0 && !s.flags.includes(deja) ? turned : 0);
+    const conv = converse(s, npcId, this.island, seq, turned > 0 && !s.flags.includes(deja) ? turned : 0, met);
     if (conv.deja) s.flags.push(deja);
     this.openConversation(conv);
   }
@@ -314,24 +344,24 @@ export class Town {
           const jump = (((s.hour - hour) % 24) + 24) % 24;
           if (jump > 0.2) { g.rushSky(jump); setTimeout(() => g.hud.toast('The afternoon goes by in a breath. Dusk already.'), 900); }
           // Somewhere the keeper has already been counts as found.
-          for (const o of q.objectives) if (o.type === 'visit' && o.place && s.flags.includes(`seen:${o.place}`)) onQuestEvent(s, { type: 'visit', place: o.place });
+          for (const o of q.objectives) if (o.type === 'visit' && o.place && (s.flags.includes(`seen:${o.place}`) || s.world.charted.includes(o.place))) onQuestEvent(s, { type: 'visit', place: o.place });
           // And a bell already rung does not need ringing again to prove it.
           if (turnings(s) > 0 && q.objectives.some((o) => o.type === 'ring')) onQuestEvent(s, { type: 'ring' });
           // Some objectives may already be met (e.g. you already own the rod).
-          if (questStatus(s, a.quest) === 'ready') setTimeout(() => g.hud.toast(`Already done! Talk to ${npc(QUESTS_BY_ID.get(a.quest)!.giver).name}`, 'good'), 500);
+          if (questStatus(s, a.quest) === 'ready') setTimeout(() => g.hud.toast(`Already done! Talk to ${npc(handsInTo(q)).name}`, 'good'), 500);
         }
         this.endConversation();
         break;
       }
       case 'sell': {
-        const n = s.hold.length + s.pots.hold.length;
+        const n = s.hold.length + s.pots.hold.length, to = this.talking ?? 'mara';
         const total = sellAll(s);
-        g.audio.coin(n);
+        if (npc(to).thing) g.audio.packetBox(n); else g.audio.coin(n);
         g.hud.toast(`Sold ${n} fish for ◉ ${fmt(total)}`, 'gold');
         this.questEvent({ type: 'sell', count: n, coins: total });
         void g.save();
-        // Back to Mara: a sale can finish a quest she then wants to hear about.
-        this.openConversation(npcOffer(s, 'mara').kind === 'turnIn' ? converse(s, 'mara', this.island) : { npc: 'mara', lines: [], choices: [{ label: 'Bye for now.', action: { type: 'bye' } }, ...(s.flags.includes('shop-open') ? [{ label: 'Show me the good shelf.', action: { type: 'shop' as const } }] : [])] });
+        // Back to whoever bought it: a sale can finish a quest Mara then wants to hear about.
+        this.openConversation(afterSale(s, to, this.island));
         break;
       }
       case 'decline': {
@@ -369,7 +399,7 @@ export class Town {
     for (const id of u.ready) {
       const q = QUESTS_BY_ID.get(id)!;
       g.audio.questReady();
-      g.hud.toast(`${q.title}: done! Return to ${npc(q.giver).name}`, 'gold');
+      g.hud.toast(readyText(q), 'gold');
     }
     for (const id of u.advanced) {
       if (u.ready.includes(id)) continue;
@@ -391,7 +421,10 @@ export class Town {
   /** The goal line: the story's next step, with a couple of practical overrides. */
   goal(): string {
     const g = this.g, s = g.state;
-    if (s.hold.length >= g.holdCapacity) return 'Your hold is full: sell your catch to Mara at the stall';
+    if (s.hold.length >= g.holdCapacity) {
+      if (this.places.has('packet-box')) return 'Your hold is full: sell your catch at Mara’s packet box on the landing';
+      return this.npcs.has('mara') ? 'Your hold is full: sell your catch to Mara at the stall' : 'Your hold is full: find somewhere to sell your catch';
+    }
     // The lamp is on Gull Point, and the only way over is Pell's boat.
     if (questStatus(s, 'hb-06-relight') === 'active' && !this.lampLit) {
       return this.island === 'gull-point' ? 'Relight: climb the lighthouse stair and light the lamp' : 'Relight: ask Pell at the dock to row you out to Gull Point';
@@ -403,13 +436,30 @@ export class Town {
   goalTarget(): { x: number; z: number; y: number } | null {
     const g = this.g, s = g.state;
     const at = (x: number, z: number, lift: number) => ({ x, z, y: Math.max(g.groundAt(x, z) ?? 0, g.world.hf.height(x, z), 0) + lift });
-    const person = (id: string) => { const p = this.npcs.get(id)?.fig.root; return p?.visible ? { x: p.position.x, z: p.position.z, y: p.position.y + 2.6 } : null; };
-    if (s.hold.length >= g.holdCapacity) return person('mara');
+    // Something in another region: steer for the sea-road that leads toward it.
+    const away = (region: string | null) => {
+      const way = region ? roadToward(s.world.region, region) : null;
+      return way ? at(way.x, way.z, 6) : null;
+    };
+    const person = (id: string) => {
+      const e = this.npcs.get(id);
+      if (!e) return away(regionOfNpc(id));
+      const p = e.fig.root;
+      return p.visible ? { x: p.position.x, z: p.position.z, y: p.position.y + 2.6 } : null;
+    };
+    if (s.hold.length >= g.holdCapacity) {
+      const box = this.places.get('packet-box');
+      return box ? at(box.x, box.z, 3) : person('mara');
+    }
     const goal = currentGoal(s);
     if (goal.npc) return person(goal.npc);
-    if (goal.at) return at(goal.at[0], goal.at[1], 5);
-    const place = goal.place ? this.places.get(goal.place) : null;
-    return place ? at(place.x, place.z, 3) : null;
+    if (goal.at) {
+      const r = regionAt(goal.at[0], goal.at[1]);
+      return r && r !== s.world.region ? away(r) : at(goal.at[0], goal.at[1], 5);
+    }
+    if (!goal.place) return null;
+    const place = this.places.get(goal.place);
+    return place ? at(place.x, place.z, 3) : away(regionOfPlace(goal.place));
   }
 
   /** Compass marks for the helm: the goal, and the moorings the player knows. */
@@ -450,6 +500,31 @@ export class Town {
     g.hud.toast(def.text);
     g.hud.toast(`In the chest: ${got.join(', ')}`, 'gold');
     void g.save();
+  }
+
+  // ------------------------------------------------------------------ things to look at
+  /** Reads a place's lines (see PlaceDef): it is marked seen, sets its flag, and counts as a visit. */
+  private lookAt(id: string) {
+    const g = this.g, s = g.state, p = this.places.get(id);
+    if (!p || this.seq.length) return;
+    const lines = p.text ?? [], first = !s.flags.includes(`seen:${id}`);
+    const seen = () => {
+      if (first) s.flags.push(`seen:${id}`);
+      if (p.flag && !s.flags.includes(p.flag)) { s.flags.push(p.flag); g.refreshSession(); }
+      this.questEvent({ type: 'visit', place: id });
+      void g.save();
+    };
+    if (!p.dark) {
+      if (first) g.audio.discover();
+      lines.forEach((t, i) => setTimeout(() => g.hud.toast(t), i * 2800));
+      seen();
+      return;
+    }
+    // With the eyes shut: each line by itself in the dark, and the world again after the last.
+    const gap = 4.2, steps: Step[] = lines.map((t, i) => ({ at: i * gap, run: () => { g.hud.fade(true, t); if (i === 1) g.audio.fogCross(); } }));
+    steps.push({ at: lines.length * gap, run: () => { seen(); g.hud.fade(false); g.input.requestLock(); } });
+    if (first) steps.push({ at: lines.length * gap + 1.2, run: () => g.audio.discover() });
+    this.run(steps);
   }
 
   // ------------------------------------------------------------------ the kettle on Kettle Isle
@@ -509,7 +584,7 @@ export class Town {
         g.hud.toast(`The tide has turned. ✺ ${t?.echoes ?? echoes} Echoes came back with it.`, 'gold');
         if (t?.sold) setTimeout(() => g.hud.toast(`Your catch went with the tide for ◉ ${fmt(t.sold)}`), 1200);
         setTimeout(() => g.hud.toast(`Spend Echoes in your satchel (${keyLabel(g.input.bindings.inventory[0] ?? '')}), on the Echoes page`), 2600);
-        for (const id of t?.ready ?? []) { const q = QUESTS_BY_ID.get(id)!; setTimeout(() => { g.audio.questReady(); g.hud.toast(`${q.title}: done! Return to ${npc(q.giver).name}`, 'gold'); }, 4200); }
+        for (const id of t?.ready ?? []) { const q = QUESTS_BY_ID.get(id)!; setTimeout(() => { g.audio.questReady(); g.hud.toast(readyText(q), 'gold'); }, 4200); }
       } },
     ]);
   }
@@ -537,11 +612,11 @@ export class Town {
     const g = this.g, s = g.state, rc = this.region, sail = g.sailing;
     const known = (id: string) => s.world.charted.includes(id);
     const ph = g.session.phase;
-    const goal = this.goalTarget();
+    const goal = this.goalTarget(), lamp = hasFogLamp(s);
     return {
       title: `Chart of ${rc.zones.find((z) => z.priority === 0)?.name ?? rc.name}`,
       raster: this.raster(),
-      islands: rc.islands.map((i) => ({ place: chartPlaceOf(i.id), x: i.x, z: i.z, rx: i.rx, rz: i.rz, rot: i.rot })),
+      islands: rc.islands.map((i) => ({ place: placeOfIsland(i), x: i.x, z: i.z, rx: i.rx, rz: i.rz, rot: i.rot })),
       places: (rc.chart ?? []).map((c) => ({ id: c.id, name: c.name, kind: c.kind, note: c.note ?? '', known: known(c.id) })),
       moorings: (rc.moorings ?? []).map((m) => ({ id: m.id, name: m.name, place: m.place, x: m.x, z: m.z, known: known(m.place) })),
       dock: { x: rc.landmarks.dock.x, z: rc.landmarks.dock.z, rot: rc.landmarks.dock.rot ?? 0, length: rc.landmarks.dock.length ?? 30 },
@@ -550,20 +625,36 @@ export class Town {
       goal: goal ? { x: goal.x, z: goal.z } : null,
       pots: s.pots.placed.filter((p) => p.region === s.world.region).map((p) => ({ x: p.x, z: p.z, fish: p.fish.length, full: p.fish.length >= g.stats.potCapacity })),
       from: ph === 'idle' || ph === 'landed' || ph === 'lost' ? sail.mooredAt()?.id ?? null : null,
-      hint: rc.edgeHint ?? '',
+      hint: lamp ? 'The Fog Lamp shows the old sea-roads through the Murmur Fog.' : rc.edgeHint ?? '',
+      roads: lamp ? roadsOf(rc.id).map((r) => {
+        const i = r.between.indexOf(rc.id), near = i === 0 ? r.a : r.b, far = i === 0 ? r.b : r.a, other = r.between[1 - i];
+        return { x: near[0], z: near[1], tx: far[0], tz: far[1], label: s.world.discovered.includes(other) ? `to ${REGIONS_BY_ID.get(other)!.name}` : r.name };
+      }) : [],
+      elsewhere: lamp ? REGIONS.filter((r) => r.id !== rc.id && s.world.discovered.includes(r.id)).map((r) => ({
+        id: r.id, name: r.name, moorings: (r.moorings ?? []).filter((m) => known(m.place)).map((m) => ({ id: m.id, name: m.name })),
+      })) : [],
     };
   }
 
-  /** Fast travel: the boat carries the player to a mooring they know. The sail costs a little of the day. */
+  /**
+   * Fast travel: the boat carries the player to a mooring they know. The sail costs a little of the day. A
+   * mooring in another region can be sailed for too, once the boat carries the Fog Lamp and has been there.
+   */
   sailTo(id: string) {
     const g = this.g, s = g.state, sail = g.sailing;
-    const m = (this.region.moorings ?? []).find((x: MooringDef) => x.id === id), from = sail.mooredAt();
-    if (!m || !from || from.id === m.id || !s.world.charted.includes(m.place)) return;
+    const hit = findMooring(id), from = sail.mooredAt();
+    if (!hit || !from || from.id === id || !s.world.charted.includes(hit.mooring.place)) return;
+    const m = hit.mooring, far = hit.region.id !== s.world.region;
+    if (far && !(hasFogLamp(s) && s.world.discovered.includes(hit.region.id))) return;
     this.closeScreens();
     const hours = (Math.hypot(m.x - sail.boat.x, m.z - sail.boat.z) / sail.def!.speed) * (24 / DAY_LENGTH_S) * 1.5;
     this.run([
-      { at: 0, run: () => { g.hud.fade(true, `You set the sail for ${m.name}…`); g.audio.sailFlap(); } },
-      { at: 1.5, run: () => { sail.moorAt(m); s.hour = (s.hour + hours) % 24; this.arrive(); } },
+      { at: 0, run: () => { g.hud.fade(true, far ? `The Fog Lamp finds the sea-road to ${hit.region.name}…` : `You set the sail for ${m.name}…`); g.audio.sailFlap(); } },
+      { at: 1.5, run: () => {
+        // The save waits until she lies at the mooring: half way, the boat is still in the waters she left.
+        if (far) g.enterRegion(hit.region.id, false);
+        sail.moorAt(m); s.hour = (s.hour + hours) % 24; this.arrive();
+      } },
       { at: 2.6, run: () => { g.hud.fade(false); g.input.requestLock(); } },
       { at: 3.3, run: () => { g.hud.toast(m.name, 'good'); void g.save(); } },
     ]);
@@ -729,10 +820,15 @@ export class Town {
         g.fx.spray.burst(_v.add(_up), 1, this.white, 0.12, 0.5, 1.8, 0.16, -0.35);
       }
     }
+    // A region just crossed into is named once the fog has thinned enough to see it by.
+    const a = this.arrived;
+    if (a && (a.t += dt) > 1 && g.sailing.fog < 0.45 && !this.blocking) {
+      this.arrived = null;
+      g.hud.banner(a.name, this.region.tagline ?? '');
+      if (a.first) g.audio.discover();
+    }
     this.dialogue.update(dt);
   }
 }
 
 const _v = new Vector3(), _up = new Vector3(0, 0.32, 0);
-/** The chart place an island belongs to: the three stacks of the Teeth are one place. */
-const chartPlaceOf = (island: string) => (island.startsWith('teeth-') ? 'the-teeth' : island === 'bell-shoal' ? 'drowned-belfry' : island);

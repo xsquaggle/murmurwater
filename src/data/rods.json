@@ -8,6 +8,9 @@
       "desc": "Mara's shop standard. Varnished, reliable, smells faintly of tar." },
     { "id": "gullwing-rod", "name": "Gullwing Rod", "tier": 2, "rarity": "rare", "price": 2600,
       "reach": 30, "power": 3.7, "control": 1.45, "luck": 0.5, "grace": 0.75,
-      "desc": "Light as a feather because it is mostly feathers." }
+      "desc": "Light as a feather because it is mostly feathers." },
+    { "id": "fenwood-rod", "name": "Fenwood Rod", "tier": 3, "rarity": "epic", "price": 14000, "from": "reached:mossglass-fen",
+      "reach": 34, "power": 4.5, "control": 1.75, "luck": 0.75, "grace": 0.82,
+      "desc": "Cut from a lantern tree that was asked first. It hums a little in fog." }
   ]
 }

@@ -7,8 +7,9 @@
  */
 import {
   BufferAttribute, BufferGeometry, Color, CylinderGeometry, DoubleSide, DynamicDrawUsage, Group, Mesh, MeshBasicMaterial,
-  Object3D, PointLight, Shape, ShapeGeometry, Vector3, BoxGeometry,
+  AdditiveBlending, MeshStandardMaterial, Object3D, PointLight, Shape, ShapeGeometry, Sprite, SpriteMaterial, Vector3, BoxGeometry,
 } from 'three';
+import { haloTexture } from './sea-road';
 import { Builder } from './builder';
 import { createPropMaterial } from './props';
 import { PALETTE } from './palette';
@@ -189,7 +190,7 @@ export class Wake {
 
 // ------------------------------------------------------------------ the rig
 
-export interface RigFrame { time: number; waveY: WaveY; /** 0 (day) .. 1 (night) */ night: number; /** the helm: −1..1 each */ throttle: number; rudder: number; /** the sea the wake is drawn on */ water: Water | null; /** the sail should be down on the boom: she is left, or lies still */ furl: boolean }
+export interface RigFrame { time: number; waveY: WaveY; /** 0 (day) .. 1 (night) */ night: number; /** the helm: −1..1 each */ throttle: number; rudder: number; /** the sea the wake is drawn on */ water: Water | null; /** the sail should be down on the boom: she is left, or lies still */ furl: boolean; /** 0..1: how thick the Murmur Fog is round her */ fog?: number }
 
 export class BoatRig {
   /** World-space group: placed at the boat, turned to its heading, rocked by the waves. */
@@ -217,6 +218,15 @@ export class BoatRig {
   private readonly standSpot: readonly [number, number, number];
   private readonly seatSpot: readonly [number, number, number];
   private tiller: Mesh | null = null;
+  /** The Fog Lamp on the bow stem, once she carries one: its glass, its light and the glow round it. */
+  private fogLamp: Object3D | null = null;
+  private fogGlass: MeshStandardMaterial[] = [];
+  private fogLight = new PointLight(C('#BFF6FF'), 0, 34, 1.3);
+  private fogHalo: Sprite | null = null;
+  /** 0 (dead) .. 1 (burning): the Fog Lamp lights itself as the fog closes in. */
+  fogLit = 0;
+  /** Set when the Fog Lamp lights itself; the game plays the sound and clears it. */
+  fogLampLit = false;
 
   /**
    * `hull` is the skiff model (or its stand-in mesh); `isModel` says which, for how deep it sits. `sailRig`
@@ -268,6 +278,40 @@ export class BoatRig {
     this.root.add(this.lamp);
   }
 
+  get hasFogLamp() { return this.fogLamp !== null; }
+  /**
+   * Ships the Fog Lamp: `model` is the lamp (origin at the foot of its crook, lantern hanging out toward +Z), or
+   * null for a stand-in. The skiff's stem head is 1.61 m above her keel, 1.97 m forward.
+   */
+  shipFogLamp(model: Object3D | null, isModel: boolean) {
+    if (this.fogLamp) return;
+    const lamp = new Group();
+    let glassAt = new Vector3(0, 0.66, 0.28);
+    if (model) {
+      model.traverse((o) => {
+        const m = o as Mesh;
+        if (m.isMesh && (m.material as MeshStandardMaterial).name === 'Glass') { m.material = (m.material as MeshStandardMaterial).clone(); this.fogGlass.push(m.material as MeshStandardMaterial); }
+      });
+      lamp.add(model);
+    } else {
+      const post = new Mesh(new CylinderGeometry(0.025, 0.035, 0.8, 6), new MeshStandardMaterial({ color: '#3B3A40', roughness: 0.9, flatShading: true }));
+      post.position.y = 0.4;
+      const glass = new MeshStandardMaterial({ color: '#E8FBFF', emissive: C('#BFF6FF'), roughness: 0.4, flatShading: true });
+      const lantern = new Mesh(new BoxGeometry(0.14, 0.2, 0.14), glass);
+      lantern.position.set(0, 0.86, 0);
+      this.fogGlass.push(glass);
+      lamp.add(post, lantern);
+      glassAt = new Vector3(0, 0.86, 0);
+    }
+    lamp.position.set(0, isModel ? 1.6 : 0.55, isModel ? 1.95 : 1.8);
+    this.fogLight.position.copy(glassAt);
+    this.fogHalo = new Sprite(new SpriteMaterial({ map: haloTexture(), color: C('#BFF6FF'), blending: AdditiveBlending, depthWrite: false, fog: false, transparent: true, opacity: 0 }));
+    this.fogHalo.position.copy(glassAt); this.fogHalo.renderOrder = 6;
+    lamp.add(this.fogLight, this.fogHalo);
+    this.fogLamp = lamp;
+    this.root.add(lamp);
+  }
+
   /** Called every frame. `fx` gets the bow spray. */
   update(dt: number, b: BoatState, f: RigFrame, fx: Fx, topSpeed: number) {
     const s = Math.sin(b.heading), c = Math.cos(b.heading);
@@ -308,6 +352,17 @@ export class BoatRig {
 
     // Close to the wood it lights, so a little goes a long way.
     this.lamp.intensity = 3.6 * Math.max(0, f.night * 1.4 - 0.1);
+    if (this.fogLamp) {
+      // The Fog Lamp lights itself as the fog thickens, and burns low on a clear night.
+      const fog = Math.min(1, Math.max(0, ((f.fog ?? 0) - 0.04) / 0.2)), want = Math.max(fog * fog * (3 - 2 * fog), 0.3 * f.night);
+      const was = this.fogLit;
+      this.fogLit += (want - this.fogLit) * Math.min(1, dt * (want > this.fogLit ? 2.5 : 0.8));
+      if (was <= 0.5 && this.fogLit > 0.5) this.fogLampLit = true;
+      const flick = 0.93 + 0.07 * Math.sin(f.time * 7.3) * Math.sin(f.time * 2.9), lit = this.fogLit * flick;
+      for (const g of this.fogGlass) { g.emissiveIntensity = 0.05 + 3.2 * lit; g.color.setScalar(0.25 + 0.75 * this.fogLit); }
+      this.fogLight.intensity = 9 * lit;
+      if (this.fogHalo) { (this.fogHalo.material as SpriteMaterial).opacity = 0.85 * lit; this.fogHalo.scale.setScalar(1.2 + 2.6 * lit); }
+    }
 
     // Spray thrown from the bow, more of it the faster she goes; a quiet ring now and then at rest.
     const speed = Math.abs(b.speed);

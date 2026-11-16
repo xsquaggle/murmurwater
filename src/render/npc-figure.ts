@@ -4,17 +4,19 @@
  */
 import {
   AnimationAction, AnimationMixer, BoxGeometry, LoopOnce, Object3D, CapsuleGeometry, Color, ConeGeometry, CylinderGeometry, Group, LoopRepeat, Mesh,
-  MeshStandardMaterial, SphereGeometry, Vector3,
+  MeshStandardMaterial, SphereGeometry, TorusGeometry, Vector3,
 } from 'three';
 import { assets } from './assets';
 
 const mat = (hex: string, rough = 0.85) => new MeshStandardMaterial({ color: new Color(hex), roughness: rough, flatShading: true });
 
-interface Look { height: number; width: number; coat: string; trim: string; skin: string; hair: string; hat?: 'scarf' | 'brim' | 'none'; beard?: boolean; stoop?: number; prop?: 'book' }
+interface Look { height: number; width: number; coat: string; trim: string; skin: string; hair: string; hat?: 'scarf' | 'brim' | 'none'; hatColor?: string; specs?: boolean; beard?: boolean; stoop?: number; prop?: 'book' }
 const LOOKS: Record<string, Look> = {
   mara: { height: 1.62, width: 1.18, coat: '#C25F55', trim: '#F2E3C6', skin: '#D9A27E', hair: '#5A3A2C', hat: 'scarf' },
   pell: { height: 1.86, width: 0.9, coat: '#4C5A66', trim: '#2F3A44', skin: '#E3B796', hair: '#E9E4DA', hat: 'brim', beard: true, stoop: 0.16 },
   wick: { height: 1.2, width: 0.85, coat: '#E86F6F', trim: '#F2E3C6', skin: '#C98E6A', hair: '#2E2420', hat: 'none', prop: 'book' },
+  // A sun hat, round spectacles, a waxed field coat, a notebook always in hand.
+  calloway: { height: 1.7, width: 0.98, coat: '#7C7A4A', trim: '#C9B48E', skin: '#C99872', hair: '#3B2A22', hat: 'brim', hatColor: '#D9C48A', specs: true, prop: 'book' },
 };
 
 function standIn(id: string): Group {
@@ -33,9 +35,10 @@ function standIn(id: string): Group {
   for (const x of [-0.08, 0.08]) { const e = new Mesh(new SphereGeometry(0.026, 5, 4), mat('#2A2030')); e.position.set(x, 1.61, 0.23); body.add(e); }
   if (L.hat === 'scarf') { const sc = new Mesh(new SphereGeometry(0.27, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.42), mat('#3FA7A0')); sc.position.y = 1.62; sc.rotation.x = -0.35; body.add(sc); }
   if (L.hat === 'brim') {
-    const brim = new Mesh(new CylinderGeometry(0.42, 0.42, 0.03, 12), mat('#6E5440')); brim.position.y = 1.78; body.add(brim);
-    const crown = new Mesh(new CylinderGeometry(0.2, 0.24, 0.2, 10), mat('#6E5440')); crown.position.y = 1.88; body.add(crown);
+    const brim = new Mesh(new CylinderGeometry(0.42, 0.42, 0.03, 12), mat(L.hatColor ?? '#6E5440')); brim.position.y = 1.78; body.add(brim);
+    const crown = new Mesh(new CylinderGeometry(0.2, 0.24, 0.2, 10), mat(L.hatColor ?? '#6E5440')); crown.position.y = 1.88; body.add(crown);
   }
+  if (L.specs) for (const x of [-0.08, 0.08]) { const r = new Mesh(new TorusGeometry(0.05, 0.008, 4, 10), mat('#C9A24A', 0.4)); r.position.set(x, 1.61, 0.245); body.add(r); }
   if (L.beard) { const b = new Mesh(new ConeGeometry(0.16, 0.34, 7), hair); b.position.set(0, 1.38, 0.13); b.rotation.x = Math.PI + 0.25; body.add(b); }
   if (L.prop === 'book') { const bk = new Mesh(new BoxGeometry(0.3, 0.22, 0.04), mat('#F2E3C6')); bk.position.set(0.05, 1.0, 0.32); bk.rotation.x = -0.6; body.add(bk); }
   body.rotation.x = L.stoop ?? 0;

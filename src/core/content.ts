@@ -2,6 +2,7 @@
  * Typed access to the JSON content in src/data. All content is validated once at load;
  * tests call validateContent() so broken data fails CI, not the player.
  */
+import type { GroveDef } from './flora';
 import fishJson from '../data/fish.json';
 import rodsJson from '../data/rods.json';
 import baitsJson from '../data/baits.json';
@@ -20,13 +21,21 @@ export interface FishDef {
 export interface RodDef {
   id: string; name: string; tier: number; rarity: string; price: number;
   reach: number; power: number; control: number; luck: number; grace: number; desc: string;
+  /** A flag the shelf waits for before it stocks this (`reached:<region>`: the keeper has been there). */ from?: string;
 }
 export interface BaitDef {
   id: string; name: string; price: number; biteSpeed: number; affinity: Record<string, number>; rarityBoost?: number; /** What it is for, in a few words (the shop). */ blurb: string; desc: string;
+  /** A flag the shelf waits for before it stocks this. */ from?: string;
 }
 export interface ZoneDef { id: string; name: string; x: number; z: number; r: number; priority: number }
-/** A spot in the world the player can interact with (quest targets, stalls, the ferry). */
-export interface PlaceDef { id: string; name: string; x: number; z: number; r: number }
+/**
+ * A spot in the world the player can interact with (quest targets, stalls, the ferry). One with a `prompt` is
+ * something to look at: doing so shows its `text` a line at a time, sets `flag` if it has one, and counts as a visit.
+ * `dark`: the lines are read with the eyes shut, over a darkened screen.
+ */
+export interface PlaceDef { id: string; name: string; x: number; z: number; r: number; prompt?: string; text?: string[]; flag?: string; dark?: boolean }
+/** Something standing in the world: `model` names a builder in render/props (which uses the made model when there is one); `block` is the radius the player walks round. */
+export interface PropDef { model: string; x: number; z: number; yaw: number; block?: number }
 /** Where an NPC stands; an NPC can have one spot per island (Pell follows the ferry). */
 export interface NpcSpot { npc: string; island: string; x: number; z: number; yaw: number }
 /** An ambient animal that wanders within `r` of (x, z). */
@@ -46,12 +55,27 @@ export interface RegionContent extends RegionDef {
   chart?: ChartPlace[]; moorings?: MooringDef[]; chests?: ChestDef[];
   /** What turns a boat back at the edge of the region (shown while the sea murmurs). */
   edgeHint?: string;
+  /** A line under the region's name when the player sails into it. */
+  tagline?: string;
+  /** Stands of drowned trees (see flora.ts). */
+  groves?: GroveDef[];
+  /** Still, shallow water where lilies lie: [x, z, radius]. */
+  lilies?: [number, number, number][];
+  props?: PropDef[];
 }
+
+/**
+ * A sea-road: the one way through the Murmur Fog between two regions, for a boat that carries a fog lamp.
+ * `a` lies inside the first region of `between` and `b` inside the second; the road is the straight line
+ * between them, `halfWidth` to either side.
+ */
+export interface RoadDef { id: string; name: string; between: [string, string]; a: [number, number]; b: [number, number]; halfWidth: number }
 
 export const FISH: FishDef[] = fishJson.fish as FishDef[];
 export const RODS: RodDef[] = rodsJson.rods as RodDef[];
 export const BAITS: BaitDef[] = baitsJson.baits as unknown as BaitDef[];
 export const REGIONS: RegionContent[] = regionsJson.regions as unknown as RegionContent[];
+export const ROADS: RoadDef[] = ((regionsJson as { roads?: unknown }).roads ?? []) as RoadDef[];
 
 const byId = <T extends { id: string }>(arr: T[]) => new Map(arr.map((x) => [x.id, x]));
 export const FISH_BY_ID = byId(FISH);
@@ -72,6 +96,110 @@ export function zoneAt(region: RegionContent, x: number, z: number): ZoneDef | n
   return best;
 }
 
+/** Is this on the shelf yet? Goods from further waters wait until the keeper has been there. */
+export function onShelf(flags: readonly string[], item: { from?: string }): boolean { return !item.from || flags.includes(item.from); }
+
+/** The chart place an island belongs to. */
+export function placeOfIsland(i: { id: string; place?: string }): string { return i.place ?? i.id; }
+
+/** The sea-roads that leave a region. */
+export function roadsOf(region: string): RoadDef[] { return ROADS.filter((r) => r.between.includes(region)); }
+
+/** Where (x, z) lies on a road: `along` 0 at a to 1 at b (not clamped), `off` metres to the side. */
+export function roadPoint(r: RoadDef, x: number, z: number): { along: number; off: number } {
+  const vx = r.b[0] - r.a[0], vz = r.b[1] - r.a[1], L2 = vx * vx + vz * vz;
+  const along = ((x - r.a[0]) * vx + (z - r.a[1]) * vz) / L2;
+  return { along, off: Math.abs((x - r.a[0]) * vz - (z - r.a[1]) * vx) / Math.sqrt(L2) };
+}
+
+/**
+ * 0..1: how far a road lifts the murmur at (x, z). 1 down the middle, falling away over the outer third of its
+ * width, and nothing beyond its ends.
+ */
+export function roadOpen(r: RoadDef, x: number, z: number): number {
+  const p = roadPoint(r, x, z);
+  if (p.along < 0 || p.along > 1 || p.off >= r.halfWidth) return 0;
+  const t = Math.min(1, (r.halfWidth - p.off) / (r.halfWidth * 0.34));
+  return t * t * (3 - 2 * t);
+}
+
+/** How far the roads out of `region` lift the murmur at (x, z). */
+export function roadsOpen(region: string, x: number, z: number): number {
+  let best = 0;
+  for (const r of ROADS) if (r.between.includes(region)) best = Math.max(best, roadOpen(r, x, z));
+  return best;
+}
+
+/**
+ * The region a boat on a sea-road has crossed into, or null while it is still in `region`: the change is made
+ * half way along the road, in the thick of the fog.
+ */
+export function regionAcross(region: string, x: number, z: number): string | null {
+  for (const r of ROADS) {
+    const i = r.between.indexOf(region);
+    if (i < 0) continue;
+    const p = roadPoint(r, x, z);
+    if (p.off > r.halfWidth || p.along < 0 || p.along > 1) continue;
+    if (i === 0 ? p.along > 0.5 : p.along < 0.5) return r.between[1 - i];
+  }
+  return null;
+}
+
+/**
+ * 0..1: how near (x, z) is to the middle of a crossing, where the fog is at its thickest and the game changes
+ * region. It rises over the last fourteenth of the road before half way and falls again after.
+ */
+export function crossingAt(region: string, x: number, z: number): number {
+  let best = 0;
+  for (const r of ROADS) {
+    if (!r.between.includes(region)) continue;
+    const p = roadPoint(r, x, z);
+    if (p.off > r.halfWidth) continue;
+    const t = Math.min(1, Math.max(0, 1 - Math.abs(p.along - 0.5) / 0.07));
+    best = Math.max(best, t * t * (3 - 2 * t));
+  }
+  return best;
+}
+
+/** The region whose waters (x, z) lies in, or null out in the fog between them. */
+export function regionAt(x: number, z: number): string | null {
+  for (const r of REGIONS) if (Math.hypot(x - r.center[0], z - r.center[1]) <= r.radius) return r.id;
+  return null;
+}
+/** The region an NPC stands in (the first that has a spot for them). */
+export function regionOfNpc(id: string): string | null { return REGIONS.find((r) => (r.npcSpots ?? []).some((n) => n.npc === id))?.id ?? null; }
+/** The region a named place lies in. */
+export function regionOfPlace(id: string): string | null { return REGIONS.find((r) => (r.places ?? []).some((p) => p.id === id))?.id ?? null; }
+/** The region a mooring lies in, with the mooring. */
+export function findMooring(id: string): { region: RegionContent; mooring: MooringDef } | null {
+  for (const region of REGIONS) { const mooring = (region.moorings ?? []).find((m) => m.id === id); if (mooring) return { region, mooring }; }
+  return null;
+}
+
+/**
+ * Where to steer from `from` to get to `to`: the near end of the first sea-road on the shortest way there
+ * (counted in roads), and the region it leads into. Null if there is no way, or the two are the same.
+ */
+export function roadToward(from: string, to: string): { road: RoadDef; x: number; z: number; next: string } | null {
+  if (from === to) return null;
+  // Breadth first from the far end, so each region learns its next step toward `to`.
+  const step = new Map<string, RoadDef>(), queue = [to], seen = new Set([to]);
+  while (queue.length) {
+    const at = queue.shift()!;
+    for (const r of ROADS) {
+      const i = r.between.indexOf(at);
+      if (i < 0) continue;
+      const other = r.between[1 - i];
+      if (seen.has(other)) continue;
+      seen.add(other); step.set(other, r); queue.push(other);
+    }
+  }
+  const road = step.get(from);
+  if (!road) return null;
+  const i = road.between.indexOf(from), end = i === 0 ? road.a : road.b;
+  return { road, x: end[0], z: end[1], next: road.between[1 - i] };
+}
+
 /** Returns a list of problems; empty means valid. */
 export function validateContent(): string[] {
   const errs: string[] = [];
@@ -90,8 +218,9 @@ export function validateContent(): string[] {
     for (const k of ['strength', 'stamina', 'temper', 'thrash'] as const) if (typeof f.fight[k] !== 'number') errs.push(`${f.id}: fight.${k} missing`);
     if (f.hours && (f.hours[0] < 0 || f.hours[0] > 24 || f.hours[1] < 0 || f.hours[1] > 24)) errs.push(`${f.id}: bad hours`);
   }
-  for (const r of RODS) { if (r.reach <= 0 || r.power <= 0 || r.control <= 0) errs.push(`rod ${r.id}: stats must be > 0`); }
-  for (const b of BAITS) { for (const k of Object.keys(b.affinity)) if (!FISH_BY_ID.has(k)) errs.push(`bait ${b.id}: unknown fish ${k}`); }
+  const stocked = (who: string, from?: string) => { if (from && !(from.startsWith('reached:') && REGIONS_BY_ID.has(from.slice(8)))) errs.push(`${who}: stocked from an unknown place (${from})`); };
+  for (const r of RODS) { if (r.reach <= 0 || r.power <= 0 || r.control <= 0) errs.push(`rod ${r.id}: stats must be > 0`); stocked(`rod ${r.id}`, r.from); }
+  for (const b of BAITS) { for (const k of Object.keys(b.affinity)) if (!FISH_BY_ID.has(k)) errs.push(`bait ${b.id}: unknown fish ${k}`); stocked(`bait ${b.id}`, b.from); }
   for (const r of REGIONS) {
     if (!r.zones.length) errs.push(`region ${r.id}: no zones`);
     const islands = new Set(r.islands.map((i) => i.id));
@@ -101,6 +230,22 @@ export function validateContent(): string[] {
     const charted = new Set((r.chart ?? []).map((c) => c.id));
     if (charted.size !== (r.chart ?? []).length) errs.push(`region ${r.id}: duplicate chart place`);
     for (const m of r.moorings ?? []) if (!charted.has(m.place)) errs.push(`region ${r.id}: mooring ${m.id} at unknown chart place ${m.place}`);
+    for (const i of r.islands) if (i.place && !charted.has(i.place)) errs.push(`region ${r.id}: island ${i.id} belongs to unknown chart place ${i.place}`);
+    const placeIds = (r.places ?? []).map((p) => p.id);
+    if (new Set(placeIds).size !== placeIds.length) errs.push(`region ${r.id}: duplicate place`);
+    for (const p of r.places ?? []) if (p.prompt && !p.text?.length) errs.push(`region ${r.id}: place ${p.id} has a prompt and nothing to read`);
+    for (const c of r.chests ?? []) {
+      for (const id of Object.keys(c.items ?? {})) if (!BAITS_BY_ID.has(id)) errs.push(`region ${r.id}: chest ${c.id} holds unknown bait ${id}`);
+    }
+  }
+  const places = REGIONS.flatMap((r) => (r.chart ?? []).map((c) => c.id));
+  if (new Set(places).size !== places.length) errs.push('a chart place id is used in two regions');
+  for (const road of ROADS) {
+    const [a, b] = road.between.map((id) => REGIONS_BY_ID.get(id));
+    if (!a || !b) { errs.push(`road ${road.id}: unknown region`); continue; }
+    // Each end must lie in clear water inside its own region, short of the fog, so the road can be found and left.
+    const inside = (r: RegionContent, p: [number, number]) => Math.hypot(p[0] - r.center[0], p[1] - r.center[1]) < r.radius - 110;
+    if (!inside(a, road.a) || !inside(b, road.b)) errs.push(`road ${road.id}: an end lies in the fog or outside its region`);
   }
   return errs;
 }

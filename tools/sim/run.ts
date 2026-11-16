@@ -15,16 +15,19 @@ const mm = (m: number | null) => (m === null || !isFinite(m) ? '   -' : m.toFixe
 export const KEY_MARKS: [string, string][] = [
   ['bought Harbour Rod', 'Harbour Rod'], ['done: Relight', 'lamp lit, skiff'], ['took: Lanterns', 'pot job taken'], ['done: Lanterns', 'pots open'],
   ['bought Gullwing Rod', 'Gullwing Rod'], ['done: A Kettle', 'kettle'], ['done: What Bites', 'flounder'], ['done: A Full Stall', 'full stall'], ['done: The Drowned Bell', 'Bell found'],
-  ['RANG THE BELL', 'first ringing'], ['done: The Turning', 'the Turning told'], ['journal page', 'Hearthbay page'],
+  ['RANG THE BELL', 'first ringing'], ['done: The Turning', 'the Turning told'], ['journal page: The Hearthbay', 'Hearthbay page'],
+  ['echo: The Fog Lamp', 'Fog Lamp'], ['reached Mossglass Fen', 'the Fen reached'], ['done: The Old Sea-Road', 'met Calloway'], ['done: A Sense of Scale', 'six weighed'],
+  ['done: Clear as Glass', 'glassfin'], ['done: The Tape Runs Out', 'the tape'], ['done: What Glows', 'glowbelly'], ['bought Fenwood Rod', 'Fenwood Rod'],
+  ['done: The Sump', 'the eel'], ['done: The Listening Post', 'the post'], ['first Old Mossglass', 'Old Mossglass'], ['first The Listener', 'the Listener'], ['journal page: The Mossglass', 'Mossglass page'],
 ];
 
 if (has('rates')) {
   // What each place pays with each bait, for a few kits. A bait should be the best choice somewhere.
-  for (const kit of [{ rod: 'driftwood-rod', lvl: 0 }, { rod: 'harbour-rod', lvl: 2 }, { rod: 'gullwing-rod', lvl: 3 }, { rod: 'gullwing-rod', lvl: 10 }]) {
+  for (const kit of [{ rod: 'driftwood-rod', lvl: 0 }, { rod: 'harbour-rod', lvl: 2 }, { rod: 'gullwing-rod', lvl: 3 }, { rod: 'gullwing-rod', lvl: 10 }, { rod: 'fenwood-rod', lvl: 0 }, { rod: 'fenwood-rod', lvl: 6 }]) {
     for (const hour of [12, 22]) {
       const s = newGame(7);
       s.gear.rods.push(kit.rod); s.gear.rod = kit.rod; s.gear.rodLevels[kit.rod] = kit.lvl; s.hour = hour;
-      s.boats.owned = ['skiff']; s.boats.current = 'skiff'; s.flags.push('hb-lighthouse-lit');
+      s.boats.owned = ['skiff']; s.boats.current = 'skiff'; s.flags.push('hb-lighthouse-lit', 'reached:mossglass-fen', 'fen-heard');
       for (const f of ['butterperch', 'pebble-goby', 'kettle-carp', 'coral-snapper', 'lampjaw', 'moss-eel', 'twofold-flounder', 'hollow-lantern']) s.journal[f] = { caught: 1, bestWeight: 1, traits: [], firstAt: 0 };
       const p = new SimPlayer({ seed: 3, skill: 0.7, minutes: 1 }, s);
       console.log(`\n${kit.rod} +${kit.lvl}, ${hour}:00, skill 0.7: coins a minute`);

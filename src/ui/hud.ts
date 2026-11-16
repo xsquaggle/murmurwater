@@ -33,6 +33,9 @@ export class Hud {
   private arrowL: HTMLElement; private arrowR: HTMLElement; private fightLabel: HTMLElement;
   private card: HTMLElement;
   private toasts: HTMLElement;
+  private bannerEl: HTMLElement;
+  private veilEl: HTMLElement;
+  private veilA = 0;
   private hint: HTMLElement;
   private prompt: HTMLElement;
   private shownCoins = 0;
@@ -88,6 +91,26 @@ export class Hud {
     this.cpKnots = h('div', 'cp-kn', this.compass);
     this.markers = h('div', 'markers', parent);
     this.fadeEl = h('div', 'fade', parent, '<div class="fade-text"></div>');
+    this.bannerEl = h('div', 'banner', this.root, '<div class="banner-t"></div><div class="banner-s"></div>');
+    this.veilEl = document.createElement('div'); this.veilEl.className = 'veil';
+    parent.insertBefore(this.veilEl, this.root);
+  }
+
+  /** The fog closing right in, under the HUD: `a` 0..1 of the given colour (the scene's fog colour). */
+  veil(a: number, css = '') {
+    const v = a < 0.004 ? 0 : Math.round(a * 250) / 250;
+    if (v === this.veilA) return;
+    this.veilA = v;
+    this.veilEl.style.opacity = String(v);
+    if (v > 0 && css) this.veilEl.style.background = css;
+  }
+
+  /** A place name across the top third of the screen, for arriving somewhere new: it comes, stays a few seconds and goes. */
+  banner(title: string, sub = '') {
+    const el = this.bannerEl;
+    (el.children[0] as HTMLElement).textContent = title;
+    (el.children[1] as HTMLElement).textContent = sub;
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   }
 
   /** Floating markers over NPCs and places: '!' new quest, '?' ready to hand in, names when close. */

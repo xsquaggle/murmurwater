@@ -57,7 +57,8 @@
           "rot": 0,
           "height": 22,
           "seed": 4,
-          "profile": "stack"
+          "profile": "stack",
+          "place": "the-teeth"
         },
         {
           "id": "teeth-2",
@@ -69,7 +70,8 @@
           "rot": 0.4,
           "height": 15,
           "seed": 5,
-          "profile": "stack"
+          "profile": "stack",
+          "place": "the-teeth"
         },
         {
           "id": "teeth-3",
@@ -81,7 +83,8 @@
           "rot": 0.8,
           "height": 11,
           "seed": 6,
-          "profile": "stack"
+          "profile": "stack",
+          "place": "the-teeth"
         },
         {
           "id": "pips-bar",
@@ -105,7 +108,8 @@
           "rot": 0.6,
           "height": 1.3,
           "seed": 11,
-          "profile": "bar"
+          "profile": "bar",
+          "place": "drowned-belfry"
         }
       ],
       "carves": [
@@ -378,6 +382,7 @@
         }
       ],
       "edgeHint": "The Murmur Fog turns the skiff back. She will need a fog lamp to go further.",
+      "tagline": "Home waters",
       "chart": [
         {
           "id": "hearthbay",
@@ -449,7 +454,7 @@
           "items": {
             "glowgrub": 5
           },
-          "text": "Sand in the hinges, and somebody’s initials scratched out of the lid."
+          "text": "Sand in the hinges, and somebody\u2019s initials scratched out of the lid."
         },
         {
           "id": "belfry-chest",
@@ -508,6 +513,560 @@
           "heading": 2.12
         }
       ]
+    },
+    {
+      "id": "mossglass-fen",
+      "name": "Mossglass Fen",
+      "center": [
+        -1141,
+        -829
+      ],
+      "radius": 700,
+      "seaDepth": 4.5,
+      "grade": "moss",
+      "islands": [
+        {
+          "id": "sedge-landing",
+          "name": "Sedge Landing",
+          "x": -874,
+          "z": -635,
+          "rx": 62,
+          "rz": 44,
+          "rot": 0.5,
+          "height": 5,
+          "seed": 21,
+          "profile": "hill"
+        },
+        {
+          "id": "glass-bar-n",
+          "name": "glass-bar-n",
+          "x": -1141,
+          "z": -944,
+          "rx": 70,
+          "rz": 9,
+          "rot": 0.1,
+          "height": 0.7,
+          "seed": 22,
+          "profile": "bar",
+          "place": "glasswater"
+        },
+        {
+          "id": "glass-bar-e",
+          "name": "glass-bar-e",
+          "x": -1001,
+          "z": -809,
+          "rx": 60,
+          "rz": 8,
+          "rot": 1.45,
+          "height": 0.7,
+          "seed": 23,
+          "profile": "bar",
+          "place": "glasswater"
+        },
+        {
+          "id": "glass-bar-s",
+          "name": "glass-bar-s",
+          "x": -1161,
+          "z": -644,
+          "rx": 75,
+          "rz": 9,
+          "rot": -0.15,
+          "height": 0.7,
+          "seed": 24,
+          "profile": "bar",
+          "place": "glasswater"
+        },
+        {
+          "id": "glass-bar-w",
+          "name": "glass-bar-w",
+          "x": -1291,
+          "z": -769,
+          "rx": 55,
+          "rz": 8,
+          "rot": 1.7,
+          "height": 0.7,
+          "seed": 25,
+          "profile": "bar",
+          "place": "glasswater"
+        },
+        {
+          "id": "maze-1",
+          "name": "maze-1",
+          "x": -1011,
+          "z": -1049,
+          "rx": 48,
+          "rz": 7,
+          "rot": 0.6,
+          "height": 0.6,
+          "seed": 26,
+          "profile": "bar",
+          "place": "reed-maze"
+        },
+        {
+          "id": "maze-2",
+          "name": "maze-2",
+          "x": -941,
+          "z": -1069,
+          "rx": 40,
+          "rz": 7,
+          "rot": -0.5,
+          "height": 0.6,
+          "seed": 27,
+          "profile": "bar",
+          "place": "reed-maze"
+        },
+        {
+          "id": "maze-3",
+          "name": "maze-3",
+          "x": -921,
+          "z": -989,
+          "rx": 52,
+          "rz": 7,
+          "rot": 1.2,
+          "height": 0.6,
+          "seed": 28,
+          "profile": "bar",
+          "place": "reed-maze"
+        },
+        {
+          "id": "maze-4",
+          "name": "maze-4",
+          "x": -991,
+          "z": -969,
+          "rx": 36,
+          "rz": 6,
+          "rot": 0.2,
+          "height": 0.6,
+          "seed": 29,
+          "profile": "bar",
+          "place": "reed-maze"
+        },
+        {
+          "id": "maze-5",
+          "name": "maze-5",
+          "x": -881,
+          "z": -1039,
+          "rx": 34,
+          "rz": 6,
+          "rot": 2.0,
+          "height": 0.6,
+          "seed": 30,
+          "profile": "bar",
+          "place": "reed-maze"
+        },
+        {
+          "id": "grove-hummock-1",
+          "name": "grove-hummock-1",
+          "x": -1391,
+          "z": -909,
+          "rx": 20,
+          "rz": 15,
+          "rot": 0.4,
+          "height": 2.4,
+          "seed": 31,
+          "profile": "hill",
+          "place": "standing-trees"
+        },
+        {
+          "id": "grove-hummock-2",
+          "name": "grove-hummock-2",
+          "x": -1341,
+          "z": -859,
+          "rx": 14,
+          "rz": 12,
+          "rot": 1.1,
+          "height": 1.8,
+          "seed": 32,
+          "profile": "hill",
+          "place": "standing-trees"
+        },
+        {
+          "id": "sump-rim",
+          "name": "sump-rim",
+          "x": -1241,
+          "z": -549,
+          "rx": 13,
+          "rz": 10,
+          "rot": 0.2,
+          "height": 1.6,
+          "seed": 33,
+          "profile": "hill",
+          "place": "the-sump"
+        },
+        {
+          "id": "listening-post",
+          "name": "The Listening Post",
+          "x": -1471,
+          "z": -1129,
+          "rx": 26,
+          "rz": 20,
+          "rot": 0.3,
+          "height": 6,
+          "seed": 34,
+          "profile": "hill"
+        }
+      ],
+      "carves": [
+        {
+          "x": -1301,
+          "z": -579,
+          "r": 70,
+          "depth": 42
+        }
+      ],
+      "landmarks": {
+        "dock": {
+          "x": -840.0,
+          "z": -611.0,
+          "rot": 0.9423,
+          "length": 16
+        },
+        "spawn": {
+          "x": -833.5,
+          "z": -606.3,
+          "facing": 0.9423
+        }
+      },
+      "shapes": [
+        {
+          "type": "flat",
+          "x": -1141,
+          "z": -789,
+          "r": 105,
+          "h": -2.1,
+          "soft": 45,
+          "bed": true
+        },
+        {
+          "type": "flat",
+          "x": -846.9,
+          "z": -616.0,
+          "r": 6.5,
+          "h": 1.55,
+          "soft": 4.5,
+          "surface": "dirt"
+        },
+        {
+          "type": "flat",
+          "x": -1371,
+          "z": -889,
+          "r": 95,
+          "h": -1.15,
+          "soft": 40,
+          "bed": true
+        }
+      ],
+      "zones": [
+        {
+          "id": "fen-landing",
+          "name": "Sedge Landing",
+          "x": -874,
+          "z": -635,
+          "r": 95,
+          "priority": 3
+        },
+        {
+          "id": "fen-glass",
+          "name": "Glasswater",
+          "x": -1141,
+          "z": -789,
+          "r": 135,
+          "priority": 2
+        },
+        {
+          "id": "fen-reeds",
+          "name": "The Reed Maze",
+          "x": -961,
+          "z": -1009,
+          "r": 125,
+          "priority": 2
+        },
+        {
+          "id": "fen-grove",
+          "name": "The Standing Trees",
+          "x": -1371,
+          "z": -889,
+          "r": 115,
+          "priority": 2
+        },
+        {
+          "id": "fen-sump",
+          "name": "The Sump",
+          "x": -1301,
+          "z": -579,
+          "r": 62,
+          "priority": 4
+        },
+        {
+          "id": "fen-post",
+          "name": "The Listening Post",
+          "x": -1471,
+          "z": -1129,
+          "r": 90,
+          "priority": 3
+        },
+        {
+          "id": "fen-open",
+          "name": "Mossglass Fen",
+          "x": -1141,
+          "z": -829,
+          "r": 700,
+          "priority": 0
+        }
+      ],
+      "places": [
+        {
+          "id": "packet-box",
+          "name": "Mara's packet box",
+          "x": -844.6,
+          "z": -613.4,
+          "r": 2.4
+        },
+        {
+          "id": "notice-board",
+          "name": "Notice board",
+          "x": -850.6,
+          "z": -612.4,
+          "r": 2.2
+        },
+        {
+          "id": "survey-stake",
+          "name": "Calloway's stake",
+          "x": -921,
+          "z": -989,
+          "r": 2.8,
+          "prompt": "Read the tape on the stake",
+          "text": [
+            "A stake with a brass tag: I.C. 7. A linen tape runs from it into the reeds.",
+            "The tape reads 240 yards. It is pulled tight, and it is humming."
+          ]
+        },
+        {
+          "id": "ear-trumpet",
+          "name": "The ear trumpet",
+          "x": -1460.6,
+          "z": -1117.4,
+          "r": 2.6,
+          "prompt": "Put your ear to the trumpet",
+          "flag": "fen-heard",
+          "text": [
+            "You put your ear to the cold brass.",
+            "Water. Reeds. Then, a long way down, something breathing in. It has been breathing in for a long time.",
+            "It stops. It has heard you listening."
+          ],
+          "dark": true
+        }
+      ],
+      "npcSpots": [
+        {
+          "npc": "calloway",
+          "island": "sedge-landing",
+          "x": -847.6,
+          "z": -619.6,
+          "yaw": 0.94
+        }
+      ],
+      "critters": [],
+      "edgeHint": "The Murmur Fog closes in. The sea-road is the only way through it.",
+      "tagline": "Still water, green as glass",
+      "chart": [
+        {
+          "id": "sedge-landing",
+          "name": "Sedge Landing",
+          "kind": "island",
+          "x": -874,
+          "z": -635,
+          "r": 170,
+          "coins": 200,
+          "note": "Where the sea-road comes in. A jetty, a hut on stilts, and a box with Mara\u2019s mark on it."
+        },
+        {
+          "id": "glasswater",
+          "name": "Glasswater",
+          "kind": "bar",
+          "x": -1141,
+          "z": -789,
+          "r": 150,
+          "coins": 300,
+          "note": "Still, shallow and clear to the moss. You can count the fish before they count you."
+        },
+        {
+          "id": "reed-maze",
+          "name": "The Reed Maze",
+          "kind": "bar",
+          "x": -961,
+          "z": -1009,
+          "r": 110,
+          "coins": 300,
+          "note": "Sandbars and channels. The reeds lean in to hear which way you turn."
+        },
+        {
+          "id": "standing-trees",
+          "name": "The Standing Trees",
+          "kind": "island",
+          "x": -1371,
+          "z": -889,
+          "r": 120,
+          "coins": 400,
+          "note": "A wood with its feet in the water. The moss in the boughs is lit after dark."
+        },
+        {
+          "id": "the-sump",
+          "name": "The Sump",
+          "kind": "rocks",
+          "x": -1301,
+          "z": -579,
+          "r": 80,
+          "coins": 500,
+          "note": "The bottom goes away here. Nobody has found where to."
+        },
+        {
+          "id": "listening-post",
+          "name": "The Listening Post",
+          "kind": "island",
+          "x": -1471,
+          "z": -1129,
+          "r": 90,
+          "coins": 800,
+          "note": "Somebody built a place to sit and listen to the water. Their stool is still here."
+        }
+      ],
+      "moorings": [
+        {
+          "id": "sedge-jetty",
+          "name": "Sedge Landing jetty",
+          "place": "sedge-landing",
+          "x": -820.9,
+          "z": -604.1,
+          "heading": 0.9423
+        }
+      ],
+      "chests": [
+        {
+          "id": "glass-bar-chest",
+          "x": -1161,
+          "z": -644,
+          "yaw": 0.4,
+          "coins": 400,
+          "wearables": [
+            "fen-waders"
+          ],
+          "text": "Half sunk in the bar, a sea chest. Inside, a pair of waders, folded as if for a drawer."
+        },
+        {
+          "id": "grove-chest",
+          "x": -1391,
+          "z": -909,
+          "yaw": 2.0,
+          "coins": 500,
+          "items": {
+            "glowgrub": 8
+          },
+          "text": "Under the roots of the hummock, a chest gone green. The moss has kept the hinges sweet."
+        },
+        {
+          "id": "sump-chest",
+          "x": -1240,
+          "z": -549,
+          "yaw": 1.1,
+          "coins": 800,
+          "items": {
+            "marsh-worm": 12
+          },
+          "text": "A chest on the rim of the Sump, roped to a stake. Somebody did not want it going where the bottom went."
+        }
+      ],
+      "shoals": {
+        "freq": 0.012,
+        "amount": 0.26,
+        "within": 440,
+        "top": -0.16,
+        "seed": 5
+      },
+      "groves": [
+        {
+          "id": "standing-trees",
+          "x": -1371,
+          "z": -889,
+          "r": 104,
+          "spacing": 19,
+          "seed": 3
+        }
+      ],
+      "lilies": [
+        [
+          -1141,
+          -789,
+          100
+        ],
+        [
+          -900,
+          -660,
+          60
+        ]
+      ],
+      "props": [
+        {
+          "model": "packetBox",
+          "x": -844.6,
+          "z": -613.4,
+          "yaw": 0.94,
+          "block": 0.75
+        },
+        {
+          "model": "noticeBoard",
+          "x": -850.6,
+          "z": -612.4,
+          "yaw": 0.5,
+          "block": 0.7
+        },
+        {
+          "model": "stiltHut",
+          "x": -853.6,
+          "z": -622.6,
+          "yaw": 0.94
+        },
+        {
+          "model": "fieldKit",
+          "x": -845.0,
+          "z": -621.0,
+          "yaw": 2.3,
+          "block": 1.0
+        },
+        {
+          "model": "surveyStake",
+          "x": -921,
+          "z": -989,
+          "yaw": 0.3,
+          "block": 0.3
+        },
+        {
+          "model": "listeningPost",
+          "x": -1459.5,
+          "z": -1116.2,
+          "yaw": 0.735,
+          "block": 1.5
+        }
+      ]
+    }
+  ],
+  "roads": [
+    {
+      "id": "hearthbay-fen",
+      "name": "the old sea-road",
+      "between": [
+        "hearthbay",
+        "mossglass-fen"
+      ],
+      "a": [
+        -404.5,
+        -293.9
+      ],
+      "b": [
+        -736.5,
+        -535.1
+      ],
+      "halfWidth": 42
     }
   ]
 }

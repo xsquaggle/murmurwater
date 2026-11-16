@@ -86,3 +86,27 @@ export function sample(hour: number, out?: Lighting): Lighting {
   o.exposure = a.exposure + (b.exposure - a.exposure) * t;
   return o;
 }
+
+/** What a region does to the light the clock gives (applied to the Lighting in place, every frame). */
+export type Grade = (lt: Lighting) => void;
+
+const mossDay = new Color('#9FC6A0'), mossNight = new Color('#12322E'), mossSky = new Color('#8FB49A'), mossGround = new Color('#3E5E44'), _g = new Color();
+/**
+ * Region grades by the `grade` name in the region data. Hearthbay ("amber") is the clock's own light.
+ * Mossglass Fen ("moss"): a green haze that takes the distance by day, so the standing trees come out of it as
+ * shapes first, and a deep teal dark at night that leaves the glowing things to do the lighting.
+ */
+export const GRADES: Record<string, Grade> = {
+  moss: (lt) => {
+    const day = 1 - lt.night;
+    _g.copy(mossNight).lerp(mossDay, day);
+    lt.fog.lerp(_g, 0.72);
+    lt.horizon.lerp(_g, 0.62);
+    lt.zenith.lerp(_g, 0.3);
+    lt.hemiSky.lerp(mossSky, 0.4 * day);
+    lt.hemiGround.lerp(mossGround, 0.5);
+    lt.keyColor.lerp(mossDay, 0.18 * day);
+    lt.keyIntensity *= 0.86;
+    lt.fogDensity = lt.fogDensity * 1.5 + 0.0024 + 0.0008 * lt.night;
+  },
+};

@@ -229,6 +229,262 @@
       "biteWindow": 0.45,
       "lore": "It has seen you before. All of its eyes agree on that.",
       "length": 0.85
+    },
+    {
+      "id": "reedling",
+      "name": "Reedling",
+      "rarity": "common",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-landing",
+        "fen-reeds",
+        "fen-glass",
+        "fen-post",
+        "fen-open"
+      ],
+      "baseValue": 30,
+      "weight": [
+        0.1,
+        0.5
+      ],
+      "fight": {
+        "strength": 1.3,
+        "stamina": 1.0,
+        "temper": 1.1,
+        "thrash": 0.05
+      },
+      "biteWindow": 0.9,
+      "lore": "Stands on its tail among the reeds and hopes to be taken for one. Mostly it is.",
+      "length": 0.28
+    },
+    {
+      "id": "mudlark",
+      "name": "Mudlark",
+      "rarity": "common",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-landing",
+        "fen-reeds",
+        "fen-grove",
+        "fen-sump",
+        "fen-post",
+        "fen-open"
+      ],
+      "baseValue": 36,
+      "weight": [
+        0.3,
+        1.2
+      ],
+      "fight": {
+        "strength": 1.5,
+        "stamina": 1.2,
+        "temper": 0.6,
+        "thrash": 0.05
+      },
+      "biteWindow": 0.9,
+      "lore": "A wide mouth, a cream throat, and the look of a fish that has just been told good news.",
+      "length": 0.3
+    },
+    {
+      "id": "glassfin",
+      "name": "Glassfin",
+      "rarity": "common",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-glass",
+        "fen-landing",
+        "fen-open"
+      ],
+      "baseValue": 44,
+      "weight": [
+        0.1,
+        0.6
+      ],
+      "fight": {
+        "strength": 1.2,
+        "stamina": 0.9,
+        "temper": 1.4,
+        "thrash": 0.1
+      },
+      "biteWindow": 0.8,
+      "lore": "You see its spine before you see the fish. Then you see what it had for breakfast.",
+      "length": 0.24
+    },
+    {
+      "id": "sedge-pike",
+      "name": "Sedge Pike",
+      "rarity": "uncommon",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-reeds",
+        "fen-landing",
+        "fen-open"
+      ],
+      "baseValue": 135,
+      "weight": [
+        1.5,
+        6.0
+      ],
+      "fight": {
+        "strength": 2.0,
+        "stamina": 1.6,
+        "temper": 1.0,
+        "thrash": 0.15
+      },
+      "biteWindow": 0.75,
+      "lore": "It is pretending to be a log. The sprig of sedge on its back is real, and it waters it.",
+      "length": 0.8
+    },
+    {
+      "id": "mossback-tench",
+      "name": "Mossback Tench",
+      "rarity": "uncommon",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-glass",
+        "fen-grove"
+      ],
+      "baseValue": 155,
+      "weight": [
+        1.0,
+        4.0
+      ],
+      "fight": {
+        "strength": 1.9,
+        "stamina": 1.9,
+        "temper": 0.6,
+        "thrash": 0.1
+      },
+      "biteWindow": 0.8,
+      "lore": "Carries a small garden on its back, and gets cross if you pick the flowers.",
+      "length": 0.5
+    },
+    {
+      "id": "glowbelly",
+      "name": "Glowbelly",
+      "rarity": "rare",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-grove",
+        "fen-sump"
+      ],
+      "baseValue": 400,
+      "weight": [
+        0.6,
+        2.4
+      ],
+      "hours": [
+        19,
+        5
+      ],
+      "fight": {
+        "strength": 2.4,
+        "stamina": 2.0,
+        "temper": 1.2,
+        "thrash": 0.25
+      },
+      "biteWindow": 0.65,
+      "lore": "A lantern that swims. It dims when you look straight at it, out of manners.",
+      "length": 0.4
+    },
+    {
+      "id": "stilt-gar",
+      "name": "Stilt Gar",
+      "rarity": "rare",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-reeds",
+        "fen-grove",
+        "fen-post"
+      ],
+      "baseValue": 360,
+      "weight": [
+        2.0,
+        7.0
+      ],
+      "fight": {
+        "strength": 2.6,
+        "stamina": 2.1,
+        "temper": 1.5,
+        "thrash": 0.3
+      },
+      "biteWindow": 0.6,
+      "lore": "Stands in the shallows on its fins and waits. Herons give it room.",
+      "length": 0.9
+    },
+    {
+      "id": "bottomless-eel",
+      "name": "Bottomless Eel",
+      "rarity": "epic",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-sump"
+      ],
+      "baseValue": 950,
+      "weight": [
+        4.0,
+        16.0
+      ],
+      "fight": {
+        "strength": 3.5,
+        "stamina": 3.3,
+        "temper": 1.3,
+        "thrash": 0.35
+      },
+      "biteWindow": 0.55,
+      "lore": "Dr. Calloway has measured this eel four times. It has been four lengths. All of them were longer than the boat.",
+      "length": 1.6
+    },
+    {
+      "id": "old-mossglass",
+      "name": "Old Mossglass",
+      "rarity": "legendary",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-glass"
+      ],
+      "baseValue": 3000,
+      "weight": [
+        6.0,
+        18.0
+      ],
+      "fight": {
+        "strength": 4.0,
+        "stamina": 3.8,
+        "temper": 1.2,
+        "thrash": 0.4
+      },
+      "biteWindow": 0.5,
+      "lore": "A carp of bottle glass, with gold round every scale. Something darker turns over inside it, the way a thought does.",
+      "length": 1.1
+    },
+    {
+      "id": "the-listener",
+      "name": "The Listener",
+      "rarity": "uncanny",
+      "region": "mossglass-fen",
+      "zones": [
+        "fen-post"
+      ],
+      "baseValue": 6000,
+      "weight": [
+        5.0,
+        14.0
+      ],
+      "hours": [
+        0,
+        4
+      ],
+      "requires": "fen-heard",
+      "fight": {
+        "strength": 4.4,
+        "stamina": 4.2,
+        "temper": 1.9,
+        "thrash": 0.5
+      },
+      "biteWindow": 0.42,
+      "lore": "No eyes. Two fins like the horns of a gramophone, turned toward you. It heard the hook go in before you cast.",
+      "length": 1.0
     }
   ]
 }

@@ -40,6 +40,9 @@ export class PotField {
     for (const p of g.state.pots.placed) if (p.fish.length >= g.stats.potCapacity) this.fullTold.add(p.id);
   }
 
+  /** The game has moved to another region: its own pots show, the others keep their clocks unseen. */
+  enterRegion() { this.region = this.g.world.region as RegionContent; this.near = null; this.spot = null; }
+
   private here(): PotState[] { const r = this.g.state.world.region; return this.g.state.pots.placed.filter((p) => p.region === r); }
 
   // ------------------------------------------------------------------ fixed step

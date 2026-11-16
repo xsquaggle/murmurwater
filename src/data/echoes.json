@@ -1,6 +1,8 @@
 {
   "bell": { "k": 0.15, "power": 0.5, "dawn": 6.5 },
   "upgrades": [
+    { "id": "fog-lamp", "name": "The Fog Lamp", "blurb": "Shows the sea-roads through the Murmur Fog", "cost": [8], "thing": true,
+      "desc": "A lamp for the bow of your boat. It burns what the Bell gives back, and it knows the way." },
     { "id": "tidewise", "name": "Tidewise", "blurb": "Fish sell for 15% more", "cost": [1, 2, 3, 4, 6, 8, 10, 13, 16, 20], "effect": { "value": 0.15 },
       "desc": "You have sold this fish before. You know what it is worth." },
     { "id": "quick-hands", "name": "Quick Hands", "blurb": "Reel 5% harder", "cost": [1, 2, 4, 7, 11], "effect": { "power": 0.05 },

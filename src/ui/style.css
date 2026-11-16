@@ -222,6 +222,8 @@ body.titled .hud { opacity: 0; }
 .echo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
 .item.echo { border-color: rgba(122,99,144,.45); } .item.echo.has { border-color: var(--heather); background: #F7F1FF; }
 .item.echo .item-desc { font-family: var(--serif); font-style: italic; }
+/* The Fog Lamp: a thing, not a rank. It has the top of the page to itself. */
+.item.echo.thing { grid-column: 1 / -1; border-color: #3E9C92; background: #EFFBF8; } .item.echo.thing.has { border-color: #3E9C92; background: #E3F7F2; }
 .btn.echo-btn { background: var(--ink); color: var(--cyan); border-color: var(--ink); }
 .btn.echo-btn:hover:not(:disabled) { background: var(--ink-2); }
 .screen-card.sc-bell { width: min(760px, 94vw); }
@@ -288,12 +290,21 @@ body.titled .hud { opacity: 0; }
 .chart-place.here { border-color: var(--lagoon); box-shadow: 0 0 0 3px rgba(63,167,160,.22); }
 .chart-place .item-desc { margin: 3px 0 0; font-size: 13px; }
 .chart-here { font-weight: 800; font-size: 13px; color: #2F8079; }
+.chart-place.far { border-style: dashed; border-color: rgba(47,128,121,.6); background: #F1F8F1; }
+.chart-far { font: italic 600 13px var(--serif); color: #2F8079; }
+.chart-far-row { margin-top: 6px; font-size: 14px; }
 .chart-edge { font-family: var(--serif); font-style: italic; border-top: 1px dashed rgba(59,42,79,.3); padding-top: 8px; }
 
 /* ---------------------------------------------------------------- fade */
 .fade { position: absolute; inset: 0; background: #0B2E36; opacity: 0; pointer-events: none; transition: opacity .9s ease; display: flex; align-items: center; justify-content: center; }
 .fade.on { opacity: 1; }
 .fade-text { font: italic 600 22px var(--serif); color: var(--bone); opacity: .85; }
+.veil { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: #C9C4D6; }
+.banner { position: absolute; left: 0; right: 0; top: 19%; text-align: center; pointer-events: none; opacity: 0; color: var(--bone); text-shadow: 0 2px 14px rgba(11,46,54,.75), 0 0 2px rgba(11,46,54,.6); }
+.banner.on { animation: banner 6.5s ease-in-out both; }
+.banner-t { font: 600 54px var(--serif); letter-spacing: .04em; }
+.banner-s { font: italic 600 20px var(--serif); opacity: .85; margin-top: 4px; }
+@keyframes banner { 0% { opacity: 0; transform: translateY(8px); } 14% { opacity: 1; transform: none; } 78% { opacity: 1; } 100% { opacity: 0; } }
 .subtitle-off .dlg-text { visibility: hidden; }
 
 /* F3 performance overlay */

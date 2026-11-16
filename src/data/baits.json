@@ -38,11 +38,40 @@
       "affinity": {
         "hollow-lantern": 2.2,
         "lampjaw": 1.3,
-        "manyeye": 2.0
+        "manyeye": 2.0,
+        "glowbelly": 2.2
       },
       "rarityBoost": 0.1,
       "blurb": "Night fish, and rarer ones",
       "desc": "A grub that glows. The things that hunt by their own light come to see whose it is."
+    },
+    { "id": "marsh-worm",
+      "name": "Marsh Worm",
+      "price": 14,
+      "from": "reached:mossglass-fen",
+      "biteSpeed": 1.15,
+      "affinity": {
+        "mudlark": 1.5,
+        "sedge-pike": 1.6,
+        "mossback-tench": 1.8,
+        "bottomless-eel": 2.4
+      },
+      "blurb": "Fen bottom feeders: tench, pike, eels",
+      "desc": "Dug from under the reeds. It is the colour of the mud and nearly as cheerful."
+    },
+    { "id": "glass-mayfly",
+      "name": "Glass Mayfly",
+      "price": 22,
+      "from": "reached:mossglass-fen",
+      "biteSpeed": 1.2,
+      "affinity": {
+        "glassfin": 1.8,
+        "reedling": 1.4,
+        "stilt-gar": 1.8,
+        "old-mossglass": 1.3
+      },
+      "blurb": "Fen fish that feed at the top: glassfin, gar",
+      "desc": "Lives a day. Mara packs them by the dozen and does not say how she keeps them."
     }
   ]
 }

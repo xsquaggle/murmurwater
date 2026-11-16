@@ -19,7 +19,9 @@
     { "id": "moth-lure", "name": "Paper Moth", "price": 1100, "when": "night", "effect": { "biteSpeed": 0.3 },
       "blurb": "Faster bites after dark", "desc": "A paper moth on a hook. It flutters when nobody is watching." },
     { "id": "tin-minnow", "name": "Tin Minnow", "effect": { "luck": 0.1 },
-      "blurb": "Rarer fish", "desc": "Somebody loved this once. The paint is worn away where a thumb would go." }
+      "blurb": "Rarer fish", "desc": "Somebody loved this once. The paint is worn away where a thumb would go." },
+    { "id": "glass-bead", "name": "Glass Bead", "price": 5000, "from": "reached:mossglass-fen", "effect": { "luck": 0.16 },
+      "blurb": "Rarer fish", "desc": "A bead of fen glass. A fish looks into it and sees a bigger fish looking back." }
   ],
   "wearables": [
     { "id": "wool-cap", "name": "Wool Cap", "slot": "hat", "price": 250, "effect": { "biteSpeed": 0.05 },
@@ -37,7 +39,11 @@
     { "id": "keepers-boots", "name": "The Keeper's Boots", "slot": "boots", "set": "keepers-things", "effect": { "grace": 0.2, "control": 0.04 },
       "blurb": "The line forgives more", "desc": "Left side by side above the tide line, toes to the sea." },
     { "id": "keepers-whistle", "name": "The Keeper's Whistle", "slot": "charm", "set": "keepers-things", "effect": { "biteWindow": 0.08, "strange": 0.01 },
-      "blurb": "A longer moment to hook, stranger fish", "desc": "Blow it and nothing sounds. Something out past the Teeth turns to listen anyway." }
+      "blurb": "A longer moment to hook, stranger fish", "desc": "Blow it and nothing sounds. Something out past the Teeth turns to listen anyway." },
+    { "id": "field-hat", "name": "Calloway's Spare Field Hat", "slot": "hat", "effect": { "biteSpeed": 0.08, "luck": 0.04 },
+      "blurb": "Bites come 8% sooner, rarer fish", "desc": "Wide brim, a pencil in the band, and a tape measure sewn in that has never given the same answer twice." },
+    { "id": "fen-waders", "name": "Fen Waders", "slot": "boots", "effect": { "control": 0.09 },
+      "blurb": "9% more line control", "desc": "Found folded in a chest, as if for a drawer. They come up to here." }
   ],
   "sets": [
     { "id": "keepers-things", "name": "The Keeper's Things",
@@ -49,7 +55,10 @@
   "collections": [
     { "id": "hearthbay-page", "name": "The Hearthbay page", "region": "hearthbay", "skipRarity": "uncanny",
       "rewards": { "wearables": ["keepers-oilskin"] },
-      "text": "Every Hearthbay fish, drawn and named. Wick presses something heavy and yellow into your arms." }
+      "text": "Every Hearthbay fish, drawn and named. Wick presses something heavy and yellow into your arms." },
+    { "id": "fen-page", "name": "The Mossglass page", "region": "mossglass-fen", "skipRarity": "uncanny",
+      "rewards": { "relics": ["calloway-tape"] },
+      "text": "Every fish of the Fen, drawn and named. Dr. Calloway counts them twice and gets nine both times. She is delighted, and a little afraid. She gives you the tape." }
   ],
   "pots": {
     "interval": 50, "capacity": 3, "value": 0.5, "rarityFalloff": 0.5, "maxOwned": 3,

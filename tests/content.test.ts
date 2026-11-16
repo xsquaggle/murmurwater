@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateContent, zoneAt, REGIONS, BAITS, inHours } from '../src/core/content';
+import { validateContent, zoneAt, REGIONS, BAITS, inHours, regionAt } from '../src/core/content';
 import { Heightfield } from '../src/core/world';
 import { clearance, murmurAt, newBoat, stepBoat } from '../src/core/boat';
 import { LANDING, boatEnv, hullDistance, landingSpot, walkableHeight } from '../src/core/landing';
@@ -22,8 +22,7 @@ describe('content', () => {
   });
 });
 
-describe('the sea', () => {
-  const region = REGIONS[0];
+describe.each(REGIONS.map((r) => [r.name, r] as const))('the sea of %s', (_name, region) => {
   const hf = new Heightfield(region);
   const env = boatEnv(hf);
   const ground = (x: number, z: number) => walkableHeight(hf, x, z);
@@ -39,7 +38,7 @@ describe('the sea', () => {
   });
   it('every boat can sail from the home dock to every mooring, every chart place and every quest ground', () => {
     const home = region.moorings![0];
-    const quests = QUESTS.flatMap((q) => q.objectives.filter((o) => o.at).map((o) => ({ id: q.id, x: o.at![0], z: o.at![1] })));
+    const quests = QUESTS.flatMap((q) => q.objectives.filter((o) => o.at && regionAt(o.at[0], o.at[1]) === region.id).map((o) => ({ id: q.id, x: o.at![0], z: o.at![1] })));
     for (const boat of BOATS) {
       for (const m of [...(region.moorings ?? []).slice(1), ...quests]) {
         const route = findRoute(env, boat, [home.x, home.z], [m.x, m.z]);

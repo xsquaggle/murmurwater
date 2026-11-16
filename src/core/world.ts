@@ -10,16 +10,27 @@ export interface IslandDef {
   id: string; name: string;
   x: number; z: number; rx: number; rz: number; rot: number;
   height: number; seed: number; profile: IslandProfile;
+  /** The chart place this island belongs to, where that is not its own id (the three stacks of the Teeth are one place). */
+  place?: string;
 }
+/**
+ * Reed beds: winding banks that come up to just under the surface, too shallow for a hull and too wet to
+ * walk on, with channels between them. `within` is how far from the region's centre they reach.
+ */
+export interface ShoalDef { freq: number; amount: number; within: number; top: number; seed: number }
 export interface CarveDef { x: number; z: number; r: number; depth: number }
-/** Hand-placed terrain shaping: a level pad, or a graded path through [x, z, height] points. */
+/**
+ * Hand-placed terrain shaping: a level pad, or a graded path through [x, z, height] points. A flat marked `bed`
+ * levels the sea bed and its shoals only (a lagoon floor): islands inside it stand as they are.
+ */
 export type ShapeDef =
-  | { type: 'flat'; x: number; z: number; r: number; h: number; soft: number; surface?: 'cobble' | 'dirt' }
+  | { type: 'flat'; x: number; z: number; r: number; h: number; soft: number; surface?: 'cobble' | 'dirt'; bed?: boolean }
   | { type: 'path'; points: [number, number, number][]; width: number; soft: number; surface?: 'cobble' | 'dirt' };
 export interface LandmarkPose { x: number; z: number; rot?: number; facing?: number; length?: number }
 export interface RegionDef {
   id: string; name: string; center: [number, number]; radius: number; seaDepth: number; grade: string;
   islands: IslandDef[]; carves: CarveDef[]; landmarks: Record<string, LandmarkPose>; shapes?: ShapeDef[];
+  shoals?: ShoalDef;
 }
 
 const smooth = (e0: number, e1: number, x: number) => {
@@ -34,6 +45,7 @@ const smax = (a: number, b: number, k: number) => {
 
 export class Heightfield {
   private noise: Noise2D;
+  private shoalNoise: Noise2D | null;
   private islandNoise: Noise2D[];
   /** For each hand-made shape, a circle [x, z, radius²] outside which it changes nothing. */
   private shapeBounds: [number, number, number][];
@@ -43,6 +55,7 @@ export class Heightfield {
   private q = { w: 0, h: 0, core: 0 };
   constructor(public readonly region: RegionDef, seed = 1234) {
     this.noise = new Noise2D(seed);
+    this.shoalNoise = region.shoals ? new Noise2D(seed * 17 + region.shoals.seed) : null;
     this.islandNoise = region.islands.map((i) => new Noise2D(seed * 31 + i.seed));
     this.islandRot = region.islands.map((i) => [Math.cos(i.rot), Math.sin(i.rot)]);
     this.shapeBounds = (region.shapes ?? []).map((s) => {
@@ -61,6 +74,25 @@ export class Heightfield {
     const r = this.region;
     const n = this.noise;
     let h = -r.seaDepth + n.fbm(x * 0.0035, z * 0.0035, 3) * 5;
+    const sh = r.shoals;
+    if (sh) {
+      const far = Math.hypot(x - r.center[0], z - r.center[1]);
+      if (far < sh.within) {
+        // Banks run along the lines where one noise crosses zero, and are broken wherever a second, slower
+        // one runs low: so they wind, and there is always a way round the end of one.
+        const sn = this.shoalNoise!;
+        const ridge = 1 - Math.abs(sn.fbm(x * sh.freq, z * sh.freq, 2));
+        const gap = sn.get(x * sh.freq * 0.37 + 31.7, z * sh.freq * 0.37 - 12.3);
+        const lift = smooth(1 - sh.amount, 1 - sh.amount * 0.45, ridge) * smooth(-0.15, 0.2, gap) * smooth(sh.within, sh.within - 60, far);
+        if (lift > 0) h = h * (1 - lift) + sh.top * lift;
+      }
+    }
+    const shapes = r.shapes;
+    if (shapes) for (let k = 0; k < shapes.length; k++) {
+      if (!(shapes[k] as { bed?: boolean }).bed) continue;
+      const q = this.shapeAt(k, x, z);
+      if (q && q.w > 0) h = h * (1 - q.w) + q.h * q.w;
+    }
     for (let k = 0; k < r.islands.length; k++) {
       const isl = r.islands[k];
       const dx = x - isl.x, dz = z - isl.z;
@@ -110,8 +142,8 @@ export class Heightfield {
         h = h * (1 - f) + Math.min(h, -c.depth) * f;
       }
     }
-    const shapes = r.shapes;
     if (shapes) for (let k = 0; k < shapes.length; k++) {
+      if ((shapes[k] as { bed?: boolean }).bed) continue;
       const q = this.shapeAt(k, x, z);
       if (q && q.w > 0) h = h * (1 - q.w) + q.h * q.w;
     }

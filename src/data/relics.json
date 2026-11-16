@@ -1,6 +1,8 @@
 {
   "relics": [
     { "id": "wicks-drawing", "name": "Wick's Drawing", "effect": { "luck": 0.03 }, "lore": "A crayon fish with too many legs. On the back, in a grown-up's handwriting: 'He draws them before they come.'" },
-    { "id": "keepers-kettle", "name": "The Keeper's Kettle", "effect": { "biteSpeed": 0.06 }, "lore": "Dented tin, a rope handle. It has sat on a bare rock for twelve winters and it is warm. It is always nearly boiling." }
+    { "id": "keepers-kettle", "name": "The Keeper's Kettle", "effect": { "biteSpeed": 0.06 }, "lore": "Dented tin, a rope handle. It has sat on a bare rock for twelve winters and it is warm. It is always nearly boiling." },
+    { "id": "isolde-log-fen", "name": "A Page of Isolde's Logbook", "effect": { "luck": 0.04 }, "lore": "Tin-box damp, a careful hand. 'The fen hears. Sat at the post till four. It is not the fish that listen, it is what the fish are for. I have stopped saying her name out loud here.'" },
+    { "id": "calloway-tape", "name": "Calloway's Tape Measure", "effect": { "value": 0.06 }, "lore": "Brass case, linen tape. It gave the same answer twice in a row, once, and she handed it over at once. 'I should rather not know which of us was right.'" }
   ]
 }

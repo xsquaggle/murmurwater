@@ -51,6 +51,33 @@
         "Biscuit knows you. Biscuit doesn't know anybody.",
         "Everything's new again. I like new. I think I've liked it lots of times."
       ]
+    },
+    {
+      "id": "calloway",
+      "name": "Dr. Ines Calloway",
+      "role": "Naturalist",
+      "region": "mossglass-fen",
+      "voice": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "barks": [
+        "Fourteen paces from the hut to the jetty. Yesterday it was twelve. I have not grown shorter.",
+        "Do not lean on the theodolite. It is pointing at something, and I should like to know what.",
+        "The frogs stop all at once, you know. Every evening. As if somebody had raised a hand."
+      ],
+      "turned": [
+        "Have we met? No. And yet I have left room for you in the margin. How very like me.",
+        "My notebook has your catches in it, dated next week. I shall assume I was being optimistic."
+      ]
+    },
+    {
+      "id": "packet-box",
+      "name": "Mara's packet box",
+      "role": "A box",
+      "region": "mossglass-fen",
+      "thing": true,
+      "voice": "",
+      "barks": [
+        "A stout sea crate with M.T. stencilled on the front. A note is pinned inside the lid: 'Fish in, coins out. Stall prices. Don't ask me how. M.'"
+      ]
     }
   ]
 }

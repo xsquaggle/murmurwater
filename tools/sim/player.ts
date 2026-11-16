@@ -3,21 +3,23 @@
  * hold, quests, the shop, pots, the Bell) with human-ish hands and a sensible head, and writes down when
  * things happen. Nothing here invents an economy of its own: every coin comes through src/core.
  *
- * What is modelled, not played: walking, sailing and talking are time costs from the places table.
+ * What is modelled, not played: walking, sailing and talking are time costs from the places table. The keeper
+ * is in one region at a time; crossing to another is a time cost too, and she goes where a job sends her or,
+ * with no job to follow, where the fishing pays best.
  */
 import { Rng, hashString } from '../../src/core/rng';
 import { FishingSession, NO_INPUT, type FishingInput } from '../../src/core/fishing';
 import { DAY_LENGTH_S, newGame, type GameState } from '../../src/core/state';
 import { addCatch, breakRhythm, earn, sellAll, RHYTHM } from '../../src/core/economy';
 import {
-  BAITS, FISH, REGIONS_BY_ID, RODS, bait as baitDef, fish as fishDef, inHours, type FishDef,
+  BAITS, FISH, REGIONS, REGIONS_BY_ID, RODS, bait as baitDef, fish as fishDef, inHours, onShelf, regionAt, regionOfNpc, regionOfPlace, zoneAt, type ChestDef, type FishDef,
 } from '../../src/core/content';
 import {
   LURES, WEARABLES, buyBait, buyCreel, buyLure, buyPot, buyRod, buyWearable, claimCollections, creelNext, fishingContext,
-  grantLure, grantWearable, isNight, potPrice, potUpgradeCost, spendBait, stats, tuneCost, tuneRod, upgradePots, type PotUpgrade, type Stats,
+  grantLure, grantWearable, hasFogLamp, isNight, potPrice, potUpgradeCost, spendBait, stats, tuneCost, tuneRod, upgradePots, type PotUpgrade, type Stats,
 } from '../../src/core/gear';
 import {
-  NPCS, QUESTS, accept, acceptBoard, npcOffer, objectiveProgress, objectiveTarget, onQuestEvent, questStatus, tickBoard, turnIn,
+  NPCS, QUESTS, accept, acceptBoard, handsInTo, npcOffer, objectiveProgress, objectiveTarget, onQuestEvent, questStatus, tickBoard, turnIn,
   type ObjectiveDef, type QuestDef,
 } from '../../src/core/quests';
 import { haulPot, placePot, potsInHand, takeUpPot, tickPots } from '../../src/core/pots';
@@ -25,21 +27,34 @@ import { BELL_FLAG, buyEcho, echoCost, echoesFor, ringBell } from '../../src/cor
 import { ECHO_UPGRADES } from '../../src/core/gear';
 import { humanFightPolicy } from '../../tests/helpers';
 
-/** Somewhere to fish. `trip` is the seconds it takes to get there from Mara's stall (and back again). */
-export interface Place { id: string; name: string; needsBoat: boolean; afloat: boolean; trip: number; zone: (castDistance: number) => string; chart?: string }
+/** Somewhere to fish. `trip` is the seconds it takes to get there from where the region's catch is sold (and back again). */
+export interface Place { id: string; name: string; region: string; needsBoat: boolean; afloat: boolean; trip: number; zone: (castDistance: number) => string; chart?: string }
+const HB = 'hearthbay', FEN = 'mossglass-fen';
 export const PLACES: Place[] = [
-  { id: 'dock', name: 'the dock', needsBoat: false, afloat: false, trip: 8, zone: (d) => (d > 16 ? 'hb-bay' : 'hb-dock') },
-  { id: 'open', name: 'open water', needsBoat: true, afloat: true, trip: 24, zone: () => 'hb-open' },
-  { id: 'teeth', name: 'the Teeth', needsBoat: true, afloat: true, trip: 58, zone: () => 'hb-teeth', chart: 'the-teeth' },
+  { id: 'dock', name: 'the dock', region: HB, needsBoat: false, afloat: false, trip: 8, zone: (d) => (d > 16 ? 'hb-bay' : 'hb-dock') },
+  { id: 'open', name: 'open water', region: HB, needsBoat: true, afloat: true, trip: 24, zone: () => 'hb-open' },
+  { id: 'teeth', name: 'the Teeth', region: HB, needsBoat: true, afloat: true, trip: 58, zone: () => 'hb-teeth', chart: 'the-teeth' },
+  // Mossglass Fen, from the packet box on Sedge Landing: 7 m/s under sail, and the reed beds to go round.
+  { id: 'jetty', name: 'the Sedge Landing jetty', region: FEN, needsBoat: false, afloat: false, trip: 8, zone: () => 'fen-landing', chart: 'sedge-landing' },
+  { id: 'fen', name: 'the open fen', region: FEN, needsBoat: true, afloat: true, trip: 22, zone: () => 'fen-open' },
+  { id: 'glass', name: 'Glasswater', region: FEN, needsBoat: true, afloat: true, trip: 45, zone: () => 'fen-glass', chart: 'glasswater' },
+  { id: 'reeds', name: 'the Reed Maze', region: FEN, needsBoat: true, afloat: true, trip: 55, zone: () => 'fen-reeds', chart: 'reed-maze' },
+  { id: 'sump', name: 'the Sump', region: FEN, needsBoat: true, afloat: true, trip: 70, zone: () => 'fen-sump', chart: 'the-sump' },
+  { id: 'grove', name: 'the Standing Trees', region: FEN, needsBoat: true, afloat: true, trip: 85, zone: () => 'fen-grove', chart: 'standing-trees' },
+  { id: 'post', name: 'the Listening Post', region: FEN, needsBoat: true, afloat: true, trip: 118, zone: () => 'fen-post', chart: 'listening-post' },
 ];
 /** Seconds for the things that are not fishing. */
 export const COSTS = {
   sell: 4, talk: 14, board: 5, buy: 4, aim: 0.6, landed: 2.0, lost: 1.6, pot: 6,
   /** Errands, there and back: the ferry and the lighthouse stair, a sail to a place and a walk on it. */
-  visit: { 'lighthouse-lamp': 150, 'keepers-kettle': 115, 'drowned-bell': 110 } as Record<string, number>,
+  visit: { 'lighthouse-lamp': 150, 'keepers-kettle': 115, 'drowned-bell': 110, 'survey-stake': 125, 'ear-trumpet': 250 } as Record<string, number>,
   /** A look at Pip's Bar and its chest on the way home, once the skiff is there. */
   explore: 95, ring: 75, echoes: 20,
+  /** Between regions: the first time by the sea-road, lamp lit, from one landing to the other; after that the chart does it. */
+  cross: 150, fastTravel: 12,
 };
+/** The chart place a quest's place lies at (reaching the one puts the other on the chart). */
+const CHART_OF: Record<string, string> = { 'lighthouse-lamp': 'gull-point', 'keepers-kettle': 'kettle-isle', 'drowned-bell': 'drowned-belfry', 'survey-stake': 'reed-maze', 'ear-trumpet': 'listening-post' };
 
 export interface SimOptions {
   seed: number;
@@ -115,6 +130,7 @@ export class SimPlayer {
   /** One cast, from the press to a fish in the hold or a fish gone. */
   cast(place: Place) {
     const s = this.s, dt = 1 / 60, skill = this.opts.skill;
+    if (s.world.region !== place.region) throw new Error(`the keeper is in ${s.world.region}, not at ${place.name}`);
     this.refresh(place.afloat);
     const session = new FishingSession(
       fishingContext(s, { hour: s.hour, afloat: place.afloat }, (d) => ({ zoneId: place.zone(d), depth: 5, hotspot: false, distance: d }), this.st),
@@ -174,16 +190,16 @@ export class SimPlayer {
 
   // ------------------------------------------------------------------ judgement
 
-  private places(): Place[] { return PLACES.filter((p) => !p.needsBoat || this.s.boats.owned.length > 0); }
+  private places(region = this.s.world.region): Place[] { return PLACES.filter((p) => p.region === region && (!p.needsBoat || this.s.boats.owned.length > 0)); }
 
   /** Coins a second this place pays with this bait and today's gear, sell trips and bait included. Measured by fishing it. */
   rate(place: Place, baitId: string, casts = 36): number {
     const s = this.s, lvl = s.gear.rodLevels[s.gear.rod] ?? 0;
-    const key = [place.id, baitId, s.gear.rod, lvl >> 1, s.gear.lure, isNight(s.hour), s.gear.creel, Object.keys(s.journal).length >> 1, s.flags.includes('hb-lighthouse-lit'), Math.floor(s.hour / 3), s.echoes ? JSON.stringify(s.echoUpgrades) : ''].join('|');
+    const key = [place.id, baitId, s.gear.rod, lvl >> 1, s.gear.lure, isNight(s.hour), s.gear.creel, Object.keys(s.journal).length >> 1, s.flags.includes('hb-lighthouse-lit'), s.flags.includes('fen-heard'), Math.floor(s.hour / 3), s.echoes ? JSON.stringify(s.echoUpgrades) : ''].join('|');
     const hit = this.rates.get(key);
     if (hit !== undefined && casts <= 36) return hit;
     const t = new SimPlayer({ ...this.opts, seed: hashString(key) % 100000 }, structuredClone(s));
-    t.trial = true;
+    t.trial = true; t.s.world.region = place.region;
     t.s.hold = []; t.s.gear.bait = baitId; t.s.gear.baits[baitId] = Infinity;
     t.s.quests = { active: {}, done: [...s.quests.done], board: { quests: [], timer: 1e9, serial: 0 } };
     const t0 = t.s.playTime;
@@ -200,7 +216,7 @@ export class SimPlayer {
   /** The baits worth thinking about: the free one, anything in the tin, anything on the stall the purse can stand. */
   private baitChoices(): string[] {
     const s = this.s;
-    return BAITS.filter((b) => b.price === 0 || (s.gear.baits[b.id] ?? 0) >= 8 || (s.flags.includes('shop-open') && b.price * 20 <= s.coins * 0.5)).map((b) => b.id);
+    return BAITS.filter((b) => b.price === 0 || (s.gear.baits[b.id] ?? 0) >= 8 || (s.flags.includes('shop-open') && onShelf(s.flags, b) && b.price * 20 <= s.coins * 0.5)).map((b) => b.id);
   }
 
   /** Where to fish and with what: the best coins a second, unless a job wants a particular fish. */
@@ -234,9 +250,80 @@ export class SimPlayer {
     const o = this.activeObjectives().find((x) => x.o.type === 'catch' && x.o.fish);
     return o ? fishDef(o.o.fish!) : null;
   }
+  /** The place a job names with a spot on the chart: the one whose water that spot lies in. */
   private wantedAt(): string | null {
-    const o = this.activeObjectives().find((x) => x.o.type === 'catch' && x.o.at);
-    return o ? 'teeth' : null;
+    const at = this.activeObjectives().find((x) => x.o.type === 'catch' && x.o.at)?.o.at;
+    const region = at ? regionAt(at[0], at[1]) : null;
+    const zone = region ? zoneAt(REGIONS_BY_ID.get(region)!, at![0], at![1]) : null;
+    return zone ? PLACES.find((p) => p.region === region && p.zone(20) === zone.id)?.id ?? null : null;
+  }
+
+  // ------------------------------------------------------------------ between regions
+
+  /** Sails to another region, if the boat can: the first time by the sea-road, after that by the chart. */
+  private goTo(region: string): boolean {
+    const s = this.s, from = s.world.region;
+    if (from === region) return true;
+    if (!s.boats.owned.length || !hasFogLamp(s)) return false;
+    // She does not leave her pots behind in waters she is leaving.
+    if (!this.opts.noPots) for (const other of this.places(from)) {
+      const there = s.pots.placed.filter((p) => this.potAt.get(p.id) === other);
+      if (!there.length) continue;
+      this.pass(other.trip, other.afloat);
+      for (const p of there) {
+        const got = haulPot(s, p.id);
+        if (got.length) onQuestEvent(s, { type: 'haul', count: got.length });
+        takeUpPot(s, p.id); this.potAt.delete(p.id);
+        this.pass(COSTS.pot, true);
+      }
+      this.pass(other.trip, other.afloat);
+    }
+    this.sell();
+    const first = !s.world.discovered.includes(region);
+    this.pass(first ? COSTS.cross : COSTS.fastTravel, true);
+    s.world.region = region;
+    if (first) { s.world.discovered.push(region); this.mark(`reached ${REGIONS_BY_ID.get(region)!.name}`); }
+    if (!s.flags.includes(`reached:${region}`)) s.flags.push(`reached:${region}`);
+    // The landing she comes in at goes on the chart as she arrives.
+    const landing = REGIONS_BY_ID.get(region)!.moorings?.[0]?.place;
+    if (landing) this.chart(landing);
+    this.rates.clear();
+    return true;
+  }
+
+  /** The region a job is pulling the keeper toward, if any: somewhere to go, somebody to tell, a fish that lives there. */
+  private jobRegion(): string | null {
+    const s = this.s;
+    for (const q of QUESTS) {
+      const st = questStatus(s, q.id);
+      if (st === 'ready') { const r = regionOfNpc(handsInTo(q)); if (r) return r; }
+      if (st !== 'active') continue;
+      for (let i = 0; i < q.objectives.length; i++) {
+        const o = q.objectives[i];
+        if (objectiveProgress(s, q, i) >= objectiveTarget(o)) continue;
+        if (o.type === 'visit') { const r = regionOfPlace(o.place!) ?? REGIONS.find((x) => (x.chart ?? []).some((c) => c.id === o.place))?.id; if (r) return r; }
+        if (o.type === 'catch') { const r = o.region ?? (o.fish ? fishDef(o.fish).region : null); if (r) return r; }
+      }
+    }
+    // Nothing in hand: somebody with a job to give.
+    for (const q of QUESTS) if (q.chain === 'main' && questStatus(s, q.id) === 'available') { const r = regionOfNpc(q.giver); if (r) return r; }
+    return null;
+  }
+
+  /** Where to spend this outing: where a job is, else where the fishing pays best (with a little reluctance to move). */
+  private chooseRegion() {
+    const s = this.s;
+    if (!hasFogLamp(s) || !s.boats.owned.length) return;
+    const job = this.jobRegion();
+    if (job) { this.goTo(job); return; }
+    let best = s.world.region, br = -Infinity;
+    for (const id of s.world.discovered) {
+      let r = -Infinity;
+      for (const p of this.places(id)) for (const b of this.baitChoices()) r = Math.max(r, this.rate(p, b));
+      if (id !== s.world.region) r *= 0.9;
+      if (r > br) { br = r; best = id; }
+    }
+    this.goTo(best);
   }
 
   // ------------------------------------------------------------------ town
@@ -259,6 +346,7 @@ export class SimPlayer {
     for (let again = true; again;) {
       again = false;
       for (const n of NPCS) {
+        if (n.region !== s.world.region) continue; // only the people who are here
         const offer = npcOffer(s, n.id);
         if (offer.kind === 'turnIn') { turnIn(s, offer.quest.id); this.mark(`done: ${offer.quest.title}`); this.pass(COSTS.talk); again = any = true; }
         else if (offer.kind === 'offer') { accept(s, offer.quest.id); this.mark(`took: ${offer.quest.title}`); this.pass(COSTS.talk); again = any = true; }
@@ -274,13 +362,13 @@ export class SimPlayer {
     const s = this.s, out: Wish[] = [];
     if (!s.flags.includes('shop-open')) return out;
     const tier = RODS.find((r) => r.id === s.gear.rod)!.tier;
-    const next = RODS.filter((r) => r.price > 0 && !s.gear.rods.includes(r.id) && r.tier > tier).sort((a, b) => a.price - b.price)[0];
+    const next = RODS.filter((r) => r.price > 0 && !s.gear.rods.includes(r.id) && r.tier > tier && onShelf(s.flags, r)).sort((a, b) => a.price - b.price)[0];
     const asked = this.activeObjectives().some((x) => x.o.type === 'own' && x.o.item === next?.id);
     if (next) out.push({ name: next.name, price: next.price, buy: () => buyRod(s, next.id), goal: true, asked });
     const creel = creelNext(s);
     if (creel) out.push({ name: creel.name, price: creel.price, buy: () => buyCreel(s) });
-    for (const l of LURES) if (l.price !== undefined && !s.gear.lures.includes(l.id)) out.push({ name: l.name, price: l.price, buy: () => buyLure(s, l.id) });
-    for (const w of WEARABLES) if (w.price !== undefined && !s.gear.wearables.includes(w.id) && !s.gear.worn[w.slot]) out.push({ name: w.name, price: w.price, buy: () => buyWearable(s, w.id) });
+    for (const l of LURES) if (l.price !== undefined && !s.gear.lures.includes(l.id) && onShelf(s.flags, l)) out.push({ name: l.name, price: l.price, buy: () => buyLure(s, l.id) });
+    for (const w of WEARABLES) if (w.price !== undefined && !s.gear.wearables.includes(w.id) && !s.gear.worn[w.slot] && onShelf(s.flags, w)) out.push({ name: w.name, price: w.price, buy: () => buyWearable(s, w.id) });
     if (s.flags.includes('pots-open') && !this.opts.noPots) {
       const p = potPrice(s);
       if (p !== null) out.push({ name: 'another Lantern Pot', price: p, buy: () => buyPot(s) });
@@ -325,38 +413,48 @@ export class SimPlayer {
     s.world.charted.push(id);
     if (c.coins) { earn(s, c.coins); this.totals.coins += c.coins; this.bucket().coins += c.coins; }
     this.mark(`charted ${c.name}`);
+    onQuestEvent(s, { type: 'visit', place: id }); // finding a place can be the whole of a job
+    // Past Hearthbay a chest is found when the place it lies at is: a walk along the bar for it.
+    if (s.world.region !== HB) for (const chest of this.region().chests ?? []) {
+      const near = [...this.region().chart!].sort((a, b) => Math.hypot(a.x - chest.x, a.z - chest.z) - Math.hypot(b.x - chest.x, b.z - chest.z))[0];
+      if (near.id === id) { this.pass(45); this.open(chest); }
+    }
   }
 
   /** Visits a quest's place if one is waiting. Returns true if an errand was run. */
   private errand(): boolean {
     const s = this.s;
-    const v = this.activeObjectives().find((x) => x.o.type === 'visit');
+    const v = this.activeObjectives().find((x) => x.o.type === 'visit' && regionOfPlace(x.o.place!) === s.world.region);
     if (v) {
-      const place = v.o.place!;
+      const place = v.o.place!, def = this.region().places!.find((p) => p.id === place)!;
       this.pass(COSTS.visit[place] ?? 120, place !== 'lighthouse-lamp');
-      if (place === 'lighthouse-lamp') { this.chart('gull-point'); if (!s.flags.includes('lamp-lit')) s.flags.push('lamp-lit'); }
-      if (place === 'keepers-kettle') this.chart('kettle-isle');
-      if (place === 'drowned-bell') this.chart('drowned-belfry');
+      if (place === 'lighthouse-lamp' && !s.flags.includes('lamp-lit')) s.flags.push('lamp-lit');
+      if (CHART_OF[place]) this.chart(CHART_OF[place]);
+      if (!s.flags.includes(`seen:${place}`)) s.flags.push(`seen:${place}`);
+      if (def.flag && !s.flags.includes(def.flag)) { s.flags.push(def.flag); this.rates.clear(); }
       onQuestEvent(s, { type: 'visit', place });
       this.mark(`visited ${place}`);
       return true;
     }
-    if (!this.explored && s.boats.owned.length) {
+    if (s.world.region === HB && !this.explored && s.boats.owned.length) {
       this.explored = true;
       this.pass(COSTS.explore, true);
       this.chart('pips-bar');
-      for (const c of this.region().chests ?? []) {
-        if (s.flags.includes(`chest:${c.id}`)) continue;
-        s.flags.push(`chest:${c.id}`);
-        earn(s, c.coins); this.totals.coins += c.coins; this.bucket().coins += c.coins;
-        for (const [id, n] of Object.entries(c.items ?? {})) s.gear.baits[id] = (s.gear.baits[id] ?? 0) + n;
-        for (const id of c.lures ?? []) grantLure(s, id);
-        for (const id of c.wearables ?? []) grantWearable(s, id);
-        this.mark(`opened ${c.id}`);
-      }
+      for (const c of this.region().chests ?? []) this.open(c);
       return true;
     }
     return false;
+  }
+
+  private open(c: ChestDef) {
+    const s = this.s;
+    if (s.flags.includes(`chest:${c.id}`)) return;
+    s.flags.push(`chest:${c.id}`);
+    earn(s, c.coins); this.totals.coins += c.coins; this.bucket().coins += c.coins;
+    for (const [id, n] of Object.entries(c.items ?? {})) s.gear.baits[id] = (s.gear.baits[id] ?? 0) + n;
+    for (const id of c.lures ?? []) grantLure(s, id);
+    for (const id of c.wearables ?? []) grantWearable(s, id);
+    this.mark(`opened ${c.id}`);
   }
 
   /** Coins a minute over the last ten minutes or so. */
@@ -382,7 +480,11 @@ export class SimPlayer {
       const stalled = (next ? (next.price - s.coins) / Math.max(1, income) : Infinity) >= (this.opts.patience ?? 6);
       const enough = Math.max(5, Math.ceil(this.lastGain * 0.5));
       if (offer < enough || (!stalled && s.playTime - s.run.startedAt < 20 * 60)) return false;
+      // Nobody turns the tide a few minutes short of a new rod.
+      const rod = this.wishlist().find((w) => w.goal);
+      if (rod && (rod.price - s.coins) / Math.max(1, income) < 2 * (this.opts.patience ?? 6)) return false;
     }
+    if (!this.goTo(HB)) return false; // the Bell hangs in Hearthbay
     this.pass(COSTS.ring, true);
     const coins = s.run.coins;
     const t = ringBell(s);
@@ -392,10 +494,10 @@ export class SimPlayer {
     this.rings.push({ t: s.playTime, echoes: t.echoes, coins: coins + t.sold });
     this.totals.coins += t.sold; this.bucket().coins += t.sold;
     this.mark(`RANG THE BELL: ${t.echoes} Echoes from ${coins + t.sold} coins`);
-    // Spend the Echoes: cheapest first, in the tree's own order.
+    // Spend the Echoes: a thing first (the Fog Lamp is the way on), then cheapest first, in the tree's own order.
     for (let bought = true; bought;) {
       bought = false;
-      const pick = ECHO_UPGRADES.map((u) => ({ u, c: echoCost(s, u.id) })).filter((x) => x.c !== null && x.c <= s.echoes && !(this.opts.noPots && x.u.effect?.potSlots)).sort((a, b) => a.c! - b.c!)[0];
+      const pick = ECHO_UPGRADES.map((u) => ({ u, c: echoCost(s, u.id) })).filter((x) => x.c !== null && x.c <= s.echoes && !(this.opts.noPots && x.u.effect?.potSlots)).sort((a, b) => (a.u.thing ? 0 : a.c!) - (b.u.thing ? 0 : b.c!))[0];
       if (pick && buyEcho(s, pick.u.id)) { this.mark(`echo: ${pick.u.name} ${s.echoUpgrades[pick.u.id]}`); bought = true; }
     }
     this.pass(COSTS.echoes);
@@ -413,13 +515,16 @@ export class SimPlayer {
     this.shop();
     this.talk(); // a job that wanted something bought is handed in on the spot
     if (this.ring()) return;
+    const was = s.world.region;
+    this.chooseRegion();
+    if (s.world.region !== was) return; // new people to talk to before anything else
     if (this.errand()) return;
     const plan = this.plan();
     this.stock(plan.bait);
     const place = plan.place;
     // A pot can only be hauled from beside it. Pots left full somewhere the keeper is not going today are
     // fetched first: out to them, up, and back.
-    if (!this.opts.noPots) for (const other of PLACES) {
+    if (!this.opts.noPots) for (const other of this.places()) {
       if (other === place) continue;
       const there = s.pots.placed.filter((p) => this.potAt.get(p.id) === other);
       if (!there.length || there.some((p) => p.fish.length < this.st.potCapacity)) continue;

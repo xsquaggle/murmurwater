@@ -8,11 +8,12 @@ import { Vector3 } from 'three';
 import type { Game } from './game';
 import { BoatRig } from '../render/boat-rig';
 import { assets } from '../render/assets';
-import { clearance, nearestFloat, newBoat, stepBoat, type BoatEnv, type BoatState } from '../core/boat';
+import { clearance, fogAt, nearestFloat, newBoat, stepBoat, type BoatEnv, type BoatState } from '../core/boat';
 import { LANDING, boatEnv, hullDistance, landingSpot } from '../core/landing';
 import { BOATS_BY_ID, type BoatDef } from '../core/quests';
 import { earn } from '../core/economy';
-import type { ChartPlace, MooringDef, RegionContent } from '../core/content';
+import { roadsOpen, type ChartPlace, type MooringDef, type RegionContent } from '../core/content';
+import { hasFogLamp } from '../core/gear';
 
 interface Hop { from: Vector3; to: Vector3; t: number; dur: number; rise: number; toBoat: boolean; done: () => void }
 const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -24,6 +25,10 @@ export class Sailing {
   aboard = false;
   /** 0..1: how hard the murmur at the edge of the region is pushing back. */
   murmur = 0;
+  /** 0..1: how deep in the Murmur Fog she is, whether or not a sea-road is letting her through it. */
+  fog = 0;
+  /** 0..1: how open the sea-road is where she lies (0 off the road, or with no fog lamp aboard). */
+  road = 0;
   /** Speed made good over the ground, m/s: what the helm shows. In the murmur she sails hard and gets nowhere. */
   made = 0;
   /** The helm as last read (for the sail, the sound and the bots). */
@@ -31,7 +36,7 @@ export class Sailing {
   /** 0..1: on their feet amidships (0, to fish) or seated at the tiller (1). */
   seat = 1;
   def: BoatDef | null = null;
-  readonly env: BoatEnv;
+  env: BoatEnv;
   private region: RegionContent;
   private hop: Hop | null = null;
   private landing: { x: number; y: number; z: number } | null = null;
@@ -42,8 +47,25 @@ export class Sailing {
 
   constructor(private g: Game) {
     this.region = g.world.region as RegionContent;
-    this.env = boatEnv(g.world.hf, g.world.rocks);
+    this.env = this.seaHere();
     this.launch();
+  }
+
+  /** The sea of the region the game is in: its bed and rocks, and its sea-roads if she carries the Fog Lamp. */
+  private seaHere(): BoatEnv {
+    const g = this.g;
+    return boatEnv(g.world.hf, g.world.rocks, (x, z) => (hasFogLamp(g.state) ? roadsOpen(g.state.world.region, x, z) : 0));
+  }
+
+  /** The region has changed under her (see Game.enterRegion): a new sea, the same boat, still under way. */
+  enterRegion() {
+    const g = this.g, w = g.world;
+    this.region = w.region as RegionContent;
+    this.env = this.seaHere();
+    this.landing = null; this.landingT = 0.5;
+    // The new region comes with a ferry boat of its own; the player's is already in the scene.
+    if (this.rig) { w.ferryHeld = true; w.ferryBoat.removeFromParent(); }
+    this.store();
   }
 
   get owned() { return this.def !== null; }
@@ -64,6 +86,8 @@ export class Sailing {
     if (!def) { s.world.onBoat = false; return; }
     this.def = def;
     let at = s.boats.at;
+    // A place out past the fog is no place to be left: she goes back to a mooring.
+    if (at && Math.hypot(at.x - this.region.center[0], at.z - this.region.center[1]) > this.region.radius) at = null;
     if (!at || clearance(this.env, def, at.x, at.z, at.heading) < 0) {
       // The first time, she lies at the mooring nearest the player (the skiff is the ferry Pell rowed them in).
       const ms = [...(this.region.moorings ?? [])].sort((a, b) => Math.hypot(a.x - g.pos.x, a.z - g.pos.z) - Math.hypot(b.x - g.pos.x, b.z - g.pos.z));
@@ -118,6 +142,8 @@ export class Sailing {
     const r = stepBoat(this.boat, { throttle: this.throttle, rudder: this.rudder }, this.def, this.env, dt);
     if (dt > 0) this.made += (Math.hypot(this.boat.x - x0, this.boat.z - z0) / dt - this.made) * Math.min(1, dt * 6);
     this.murmur = this.aboard ? r.murmur : 0;
+    this.fog = this.aboard ? fogAt(this.env, this.boat.x, this.boat.z) : 0;
+    this.road = this.aboard && this.fog > 0 ? this.env.open?.(this.boat.x, this.boat.z) ?? 0 : 0;
     if (r.bump > 0) {
       g.audio.boatBump(r.bump);
       this.rig.splash(this.boat, g.fx, r.bump, (x, z) => g.waveY(x, z));
@@ -128,7 +154,7 @@ export class Sailing {
       g.camYaw += wrap(this.boat.heading - h0);
       this.seat += ((sit ? 1 : 0) - this.seat) * Math.min(1, dt * 7);
       this.rig.personAt(this.boat, g.pos, this.seat);
-      if (this.murmur > 0.3 && this.murmurTold <= 0) { this.murmurTold = 14; g.hud.toast(this.region.edgeHint ?? 'The sea murmurs and turns you back.'); }
+      if (this.murmur > 0.3 && this.murmurTold <= 0) { this.murmurTold = 14; g.hud.toast(hasFogLamp(g.state) ? 'The fog is too thick here. The Fog Lamp only shows the way along the old sea-road.' : this.region.edgeHint ?? 'The sea murmurs and turns you back.'); }
       // Somewhere to step off: looked for a few times a second, only when she is nearly still.
       this.landingT -= dt;
       if (this.landingT <= 0) {
@@ -196,7 +222,7 @@ export class Sailing {
     const l = this.landing = this.findLanding();
     if (!l) return false;
     g.audio.boatBoard();
-    this.aboard = false; s.world.onBoat = false; this.murmur = 0;
+    this.aboard = false; s.world.onBoat = false; this.murmur = 0; this.fog = 0; this.road = 0;
     this.startHop(this.stand.set(l.x, l.y, l.z), false, () => {
       g.audio.step(g.world.dockDeckAt(g.pos.x, g.pos.z) !== null ? 'wood' : 'sand', true);
       this.store();
@@ -232,6 +258,8 @@ export class Sailing {
     if (coins) earn(s, coins);
     g.audio.discover();
     g.hud.toast(`On the chart: ${c.name}${coins ? ` · ◉ ${coins}` : ''}`, 'gold');
+    // Finding a place can be the whole of a job ("sail to the Fen").
+    g.town.questEvent({ type: 'visit', place: c.id });
     void g.save();
   }
 
@@ -266,7 +294,17 @@ export class Sailing {
     if (!this.def || !this.rig) return;
     // The sail is down when she is left, and when she has lain still for a moment with nobody asking for way.
     const furl = !this.aboard || this.restT > 1.2;
-    this.rig.update(dt, this.boat, { time: g.world.time, waveY: (x, z) => g.waveY(x, z), night: g.world.light.night, throttle: this.throttle, rudder: this.rudder, water: g.world.water, furl }, g.fx, this.def.speed);
+    this.rig.update(dt, this.boat, { time: g.world.time, waveY: (x, z) => g.waveY(x, z), night: g.world.light.night, throttle: this.throttle, rudder: this.rudder, water: g.world.water, furl, fog: this.fog }, g.fx, this.def.speed);
+    // The Fog Lamp goes on the bow as soon as she has one, and lights itself when the fog closes in.
+    if (!this.rig.hasFogLamp && hasFogLamp(g.state)) this.rig.shipFogLamp(assets.instance('fogLamp'), g.world.ferryIsModel);
+    if (this.rig.fogLampLit) { this.rig.fogLampLit = false; if (this.aboard) g.audio.fogLampLight(); }
+    g.world.lampAt = this.rig.hasFogLamp ? this.boat : null;
+    const road = g.world.seaRoad;
+    if (road && road.lit !== null) {
+      const p = road.at(road.lit), d = Math.hypot(p.x - g.pos.x, p.z - g.pos.z);
+      if (d < 220) g.audio.roadChime(road.lit, Math.max(0.25, 1 - d / 200));
+      road.lit = null;
+    }
     if (this.rig.sailMoved) { if (this.aboard) { if (this.rig.sailMoved === 'up') g.audio.sailFlap(); else g.audio.ropeCreak(); } this.rig.sailMoved = null; }
     // The player rides the boat's rise and fall.
     if (this.aboard && !this.hop) this.rig.personAt(this.boat, g.pos, this.seat);

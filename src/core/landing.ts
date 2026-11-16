@@ -10,7 +10,7 @@ import type { Heightfield } from './world';
  * The sea a boat sails on in a region: depth from the seabed, the dock and any rocks ([x, z, radius]) as
  * solids, and the region's edge for the murmur.
  */
-export function boatEnv(hf: Heightfield, rocks: readonly (readonly [number, number, number])[] = []): BoatEnv {
+export function boatEnv(hf: Heightfield, rocks: readonly (readonly [number, number, number])[] = [], open?: (x: number, z: number) => number): BoatEnv {
   const dock = hf.region.landmarks.dock;
   return {
     depth: (x, z) => hf.depth(x, z),
@@ -19,7 +19,7 @@ export function boatEnv(hf: Heightfield, rocks: readonly (readonly [number, numb
       for (let i = 0; i < rocks.length; i++) { const r = rocks[i], dx = x - r[0], dz = z - r[1]; if (dx * dx + dz * dz < r[2] * r[2]) return true; }
       return false;
     },
-    centre: hf.region.center, radius: hf.region.radius,
+    centre: hf.region.center, radius: hf.region.radius, open,
   };
 }
 

@@ -5,6 +5,7 @@ import {
   relicBonus, tickBoard, turnIn, validateQuests, BOARD,
 } from '../src/core/quests';
 import { FISH, REGIONS, inHours } from '../src/core/content';
+import { buyEcho } from '../src/core/bell';
 import { Rng } from '../src/core/rng';
 
 const places = new Set(REGIONS.flatMap((r) => (r.places ?? []).map((p) => p.id)));
@@ -94,7 +95,7 @@ describe('story quests', () => {
     expect(s.moonpearls).toBe(1);
   });
 
-  it('the whole Hearthbay chain can be finished in order', () => {
+  it('the whole story so far can be finished in order: Hearthbay, the lamp, the road and the Fen', () => {
     const s = newGame(7);
     const play: Record<string, () => void> = {
       'hb-01-salt': () => { for (let i = 0; i < 3; i++) onQuestEvent(s, catchEv('butterperch')); },
@@ -109,6 +110,15 @@ describe('story quests', () => {
       'hb-p1-pots': () => { expect(s.pots.owned).toBe(1); onQuestEvent(s, { type: 'haul', count: 3 }); },
       'hb-09-bell': () => onQuestEvent(s, { type: 'visit', place: 'drowned-bell' }),
       'hb-10-turning': () => onQuestEvent(s, { type: 'ring' }),
+      'hb-11-lamp': () => { s.echoes = 8; expect(buyEcho(s, 'fog-lamp')).toBe(true); },
+      // Sedge Landing goes on the chart as the boat comes out of the fog: that is the visit.
+      'hb-12-road': () => { s.flags.push('reached:mossglass-fen'); s.world.charted.push('sedge-landing'); onQuestEvent(s, { type: 'visit', place: 'sedge-landing' }); },
+      'fen-01-scale': () => { onQuestEvent(s, catchEv('butterperch')); expect(s.quests.active['fen-01-scale'][0] ?? 0).toBe(0); for (const f of ['reedling', 'mudlark', 'glassfin', 'reedling', 'sedge-pike', 'mudlark']) onQuestEvent(s, catchEv(f)); },
+      'fen-02-glass': () => onQuestEvent(s, catchEv('glassfin')),
+      'fen-03-tape': () => onQuestEvent(s, { type: 'visit', place: 'survey-stake' }),
+      'fen-04-glows': () => onQuestEvent(s, catchEv('glowbelly')),
+      'fen-05-sump': () => onQuestEvent(s, catchEv('bottomless-eel')),
+      'fen-06-post': () => onQuestEvent(s, { type: 'visit', place: 'ear-trumpet' }),
     };
     for (let guard = 0; guard < 40 && s.quests.done.length < QUESTS.length; guard++) {
       const q = QUESTS.find((x) => questStatus(s, x.id) === 'available');
@@ -118,7 +128,39 @@ describe('story quests', () => {
     expect(s.quests.done.length).toBe(QUESTS.length);
     expect(currentGoal(s).text).toMatch(/journal/i);
     expect(s.flags).toEqual(expect.arrayContaining(['pots-open', 'bell-found', 'tide-turned']));
-    expect(s.gear.wearables).toEqual(expect.arrayContaining(['keepers-souwester', 'keepers-whistle']));
+    expect(s.gear.wearables).toEqual(expect.arrayContaining(['keepers-souwester', 'keepers-whistle', 'field-hat']));
+    expect(s.relics).toContain('isolde-log-fen');
+  });
+
+  it('a job for somebody else is handed in to them: Pell sends the keeper to the doctor', () => {
+    const s = newGame(7);
+    s.quests.done.push(...QUESTS.filter((q) => q.id.startsWith('hb-') && q.id !== 'hb-12-road').map((q) => q.id));
+    expect(npcOffer(s, 'pell')).toMatchObject({ kind: 'offer', quest: { id: 'hb-12-road' } });
+    expect(npcOffer(s, 'calloway').kind).toBe('none'); // nobody has been to the Fen yet
+    accept(s, 'hb-12-road');
+    expect(currentGoal(s)).toMatchObject({ place: 'sedge-landing' });
+    onQuestEvent(s, { type: 'visit', place: 'sedge-landing' });
+    expect(questStatus(s, 'hb-12-road')).toBe('ready');
+    // Pell still talks about it; the doctor is the one to see.
+    expect(npcOffer(s, 'pell')).toMatchObject({ kind: 'active', quest: { id: 'hb-12-road' } });
+    expect(npcOffer(s, 'calloway')).toMatchObject({ kind: 'turnIn', quest: { id: 'hb-12-road' } });
+    expect(currentGoal(s)).toMatchObject({ npc: 'calloway' });
+    expect(currentGoal(s).text).toContain('Dr. Ines Calloway');
+    expect(turnIn(s, 'hb-12-road')).toMatchObject({ coins: 300 });
+    // Her own first job waits on the keeper having reached the Fen.
+    expect(npcOffer(s, 'calloway').kind).toBe('none');
+    s.flags.push('reached:mossglass-fen');
+    expect(npcOffer(s, 'calloway')).toMatchObject({ kind: 'offer', quest: { id: 'fen-01-scale' } });
+  });
+
+  it('the Fog Lamp is a thing a job can ask for, and it is bought with Echoes', () => {
+    const s = newGame(7);
+    s.quests.done.push('hb-10-turning');
+    accept(s, 'hb-11-lamp');
+    expect(questStatus(s, 'hb-11-lamp')).toBe('active');
+    s.echoes = 7; expect(buyEcho(s, 'fog-lamp')).toBe(false);
+    s.echoes = 8; expect(buyEcho(s, 'fog-lamp')).toBe(true);
+    expect(questStatus(s, 'hb-11-lamp')).toBe('ready');
   });
 });
 
@@ -164,12 +206,24 @@ describe('notice board', () => {
       expect(q.objective.fish).not.toBe('manyeye'); // needs the lighthouse lit
       expect(q.objective.fish).not.toBe('hollow-lantern'); // epic: not a board job
     }
+    // In the Fen the board asks for Fen fish, and never for the one that waits on the Listening Post.
+    s.world.region = 'mossglass-fen';
+    let species = 0;
+    for (let i = 0; i < 300; i++) {
+      const q = generateBoardQuest(s, new Rng(i), 'f' + i);
+      if (!q.objective.fish) continue;
+      species++;
+      expect(FISH.find((f) => f.id === q.objective.fish)!.region).toBe('mossglass-fen');
+      expect(q.objective.fish).not.toBe('the-listener');
+      expect(q.objective.fish).not.toBe('bottomless-eel');
+    }
+    expect(species).toBeGreaterThan(50);
   });
 });
 
 describe('quest fish can be reached', () => {
-  const flagsGranted = new Set(QUESTS.flatMap((q) => q.rewards.flags ?? []));
-  it('every gated fish waits on a flag some quest actually grants', () => {
+  const flagsGranted = new Set(QUESTS.flatMap((q) => q.rewards.flags ?? []).concat(REGIONS.flatMap((r) => (r.places ?? []).flatMap((p) => (p.flag ? [p.flag] : [])))));
+  it('every gated fish waits on a flag some quest grants or some place sets', () => {
     for (const f of FISH) if (f.requires) expect(flagsGranted.has(f.requires), `${f.id} requires "${f.requires}"`).toBe(true);
   });
   it('every fish a story quest asks for before the skiff bites off the Hearthbay dock', () => {
@@ -179,7 +233,7 @@ describe('quest fish can be reached', () => {
     for (const q of QUESTS) for (const o of q.objectives) {
       if (o.type !== 'catch' || !o.fish) continue;
       const f = FISH.find((x) => x.id === o.fish)!;
-      if (q.requires.some(afterSkiff)) { atSea++; continue; }
+      if (q.requires.some(afterSkiff) || f.region !== 'hearthbay') { atSea++; continue; }
       checked++;
       expect(f.zones, `${q.id} wants ${f.id}`).toContain('hb-dock');
     }
