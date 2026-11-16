@@ -610,8 +610,8 @@
       "npc": "pell",
       "speaker": "Pell",
       "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
-      "text": "The fog's thinner on the far side of a Turning. Not thin enough. Ask me again when you've rung her a few more times.",
-      "hash": "7bc99960"
+      "text": "The fog's thinner on the far side of a Turning. Not thin enough to sail through. Thin enough to see where the road was.",
+      "hash": "dca27530"
     },
     {
       "key": "pell/hb-11-lamp.intro.0",
@@ -952,8 +952,8 @@
       "npc": "calloway",
       "speaker": "Dr. Ines Calloway",
       "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
-      "text": "North-west of the lagoon there's a hole. The Sump. I put a lead down it on four hundred fathoms of line.",
-      "hash": "e50ff8ed"
+      "text": "South-west of the lagoon there's a hole. The Sump. I put a lead down it on four hundred fathoms of line.",
+      "hash": "0b726187"
     },
     {
       "key": "calloway/fen-05-sump.intro.1",
@@ -979,8 +979,8 @@
       "npc": "calloway",
       "speaker": "Dr. Ines Calloway",
       "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
-      "text": "The Sump. North-west of Glasswater, where the water goes dark. A strong rod and a marsh worm.",
-      "hash": "73e6360c"
+      "text": "The Sump. South-west of Glasswater, where the water goes dark. A strong rod and a marsh worm.",
+      "hash": "46e55f5a"
     },
     {
       "key": "calloway/fen-05-sump.outro.0",

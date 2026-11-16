@@ -40,6 +40,8 @@ npm run voice         # voice script (docs/voice) and recording status
 npm run electron:dev  # build and run the desktop app
 npm run dist:win      # Windows installer and portable exe (on Windows)
 ```
+A tester's start: F8 on the title screen opens a save at the start of the newest slice (nothing in it is saved, and your own save is not touched). `npm run tester-save` makes that save again from the simulator.
+
 Bots (need `npx vite build && npx vite preview --port 4173` running):
 - `node e2e/story.cjs shots/story` plays the whole Hearthbay story
 - `node e2e/sail.cjs shots/sail` takes the skiff round Hearthbay Waters with the real helm keys

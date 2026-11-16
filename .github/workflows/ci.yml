@@ -39,6 +39,10 @@ jobs:
         run: node e2e/fog.cjs shots/fog
         env:
           MW_QUALITY: low
+      - name: Tester bot (F8 on the title screen, the simulator's save in the real game, across the road to Calloway, nothing saved)
+        run: node e2e/tester.cjs shots/tester
+        env:
+          MW_QUALITY: low
       - name: Walk bot (solid props and people, everyone reachable on foot)
         run: node e2e/walk.cjs shots/walk
         env:

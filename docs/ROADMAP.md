@@ -47,5 +47,6 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 - [x] Mossglass Fen behind the fog: the Fog Lamp (Echoes), the sea-road, the region, Dr. Calloway's six jobs, ten fish, Mara's packet box, the chart across regions (v0.4.0)
 - [x] Fog bot; region tests (roads, terrain, the hand-over at the crossing); the simulator plays through the Fen (v0.4.0)
 - [ ] Deckhands (Biscuit, Mister Hollis) and the second boat
-- [ ] The Fen's music, Calloway's model, voices for the 90 unvoiced lines (wait on credits)
+- [x] Dr. Calloway's model, built in code by the asset thread (v0.4.0)
+- [ ] The Fen's music, voices for the 90 unvoiced lines (wait on credits)
 - [ ] More chests, crates and relics

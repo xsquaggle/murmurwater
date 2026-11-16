@@ -517,13 +517,18 @@ export class SimPlayer {
 
   // ------------------------------------------------------------------ the day
 
-  /** One outing: town business, then out to fish until the hold is full or a job is done, then home. */
-  outing() {
-    const s = this.s;
+  /** What is done ashore before going out: the catch sold, everybody spoken to, the shelf looked over. */
+  townBusiness() {
     this.sell();
     this.talk();
     this.shop();
     this.talk(); // a job that wanted something bought is handed in on the spot
+  }
+
+  /** One outing: town business, then out to fish until the hold is full or a job is done, then home. */
+  outing() {
+    const s = this.s;
+    this.townBusiness();
     if (this.ring()) return;
     const was = s.world.region;
     this.chooseRegion();

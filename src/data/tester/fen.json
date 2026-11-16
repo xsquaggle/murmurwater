@@ -1,0 +1,267 @@
+{
+ "format": "murmurwater-save",
+ "version": 4,
+ "savedAt": "2026-11-16T00:00:00.000Z",
+ "state": {
+  "version": 4,
+  "seed": 1,
+  "playTime": 4398.144418169997,
+  "hour": 8.5,
+  "coins": 0,
+  "moonpearls": 2,
+  "echoes": 0,
+  "lifetime": {
+   "coins": 12270,
+   "catches": 88,
+   "perfectHooks": 19,
+   "snaps": 0,
+   "echoes": 16
+  },
+  "run": {
+   "number": 2,
+   "coins": 0,
+   "startedAt": 4300.944418169996
+  },
+  "nextUid": 154,
+  "hold": [],
+  "journal": {
+   "butterperch": {
+    "caught": 14,
+    "bestWeight": 1.37,
+    "traits": [],
+    "firstAt": 43.56667007085739
+   },
+   "coral-snapper": {
+    "caught": 31,
+    "bestWeight": 2.48,
+    "traits": [
+     "hollow",
+     "glimmering"
+    ],
+    "firstAt": 69.18040055134594
+   },
+   "kettle-carp": {
+    "caught": 7,
+    "bestWeight": 2.99,
+    "traits": [],
+    "firstAt": 94.01714974666194
+   },
+   "moss-eel": {
+    "caught": 3,
+    "bestWeight": 2.19,
+    "traits": [],
+    "firstAt": 241.850655933703
+   },
+   "pebble-goby": {
+    "caught": 6,
+    "bestWeight": 0.25,
+    "traits": [],
+    "firstAt": 307.1240664396293
+   },
+   "lampjaw": {
+    "caught": 11,
+    "bestWeight": 1.96,
+    "traits": [],
+    "firstAt": 1217.4676827686942
+   },
+   "twofold-flounder": {
+    "caught": 12,
+    "bestWeight": 5.83,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 2007.2036167373071
+   },
+   "hollow-lantern": {
+    "caught": 4,
+    "bestWeight": 5.91,
+    "traits": [],
+    "firstAt": 2319.5333956618497
+   }
+  },
+  "gear": {
+   "rods": [
+    "driftwood-rod",
+    "harbour-rod",
+    "gullwing-rod"
+   ],
+   "rodLevels": {
+    "driftwood-rod": 0,
+    "harbour-rod": 0,
+    "gullwing-rod": 0
+   },
+   "rod": "gullwing-rod",
+   "baits": {
+    "breadcrumb": "__inf__",
+    "glowgrub": 6
+   },
+   "bait": "breadcrumb",
+   "lures": [
+    "tin-minnow",
+    "brass-spinner"
+   ],
+   "lure": "tin-minnow",
+   "wearables": [
+    "keepers-boots",
+    "wool-cap",
+    "gull-feather",
+    "keepers-oilskin",
+    "keepers-souwester",
+    "keepers-whistle"
+   ],
+   "worn": {
+    "hat": "wool-cap",
+    "coat": "keepers-oilskin",
+    "boots": "keepers-boots",
+    "charm": "gull-feather"
+   },
+   "creel": 0
+  },
+  "pots": {
+   "owned": 2,
+   "placed": [],
+   "hold": [],
+   "levels": {
+    "speed": 0,
+    "size": 0,
+    "quality": 0
+   },
+   "nextId": 3
+  },
+  "boats": {
+   "owned": [
+    "skiff"
+   ],
+   "current": "skiff",
+   "upgrades": {},
+   "at": null
+  },
+  "world": {
+   "region": "hearthbay",
+   "pos": [
+    -118,
+    1.4,
+    22
+   ],
+   "yaw": -1.5707963267948966,
+   "discovered": [
+    "hearthbay"
+   ],
+   "charted": [
+    "hearthbay",
+    "gull-point",
+    "kettle-isle",
+    "pips-bar",
+    "the-teeth",
+    "drowned-belfry"
+   ],
+   "onBoat": false
+  },
+  "quests": {
+   "active": {
+    "hb-12-road": {}
+   },
+   "done": [
+    "hb-01-salt",
+    "hb-04-drawing",
+    "hb-02-supper",
+    "hb-03-proper-rod",
+    "hb-05-dark-lamp",
+    "hb-06-relight",
+    "hb-07-kettle",
+    "hb-08-teeth",
+    "hb-p1-pots",
+    "hb-08b-stall",
+    "hb-09-bell",
+    "hb-10-turning",
+    "hb-11-lamp"
+   ],
+   "board": {
+    "quests": [
+     {
+      "id": "board-9",
+      "title": "Steady Hands",
+      "objective": {
+       "type": "perfect",
+       "count": 2,
+       "label": "Land 2 perfect hooks"
+      },
+      "reward": {
+       "coins": 60
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-10",
+      "title": "Steady Hands",
+      "objective": {
+       "type": "perfect",
+       "count": 2,
+       "label": "Land 2 perfect hooks"
+      },
+      "reward": {
+       "coins": 60
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-11",
+      "title": "Market Day",
+      "objective": {
+       "type": "sell",
+       "count": 7,
+       "label": "Sell 7 fish"
+      },
+      "reward": {
+       "coins": 75
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     }
+    ],
+    "timer": 406.79999999999995,
+    "serial": 11
+   }
+  },
+  "flags": [
+   "shop-open",
+   "board-open",
+   "has-lampjaw-light",
+   "lamp-lit",
+   "seen:lighthouse-lamp",
+   "hb-lighthouse-lit",
+   "seen:keepers-kettle",
+   "chest:pips-bar-chest",
+   "chest:belfry-chest",
+   "chest:kettle-west-chest",
+   "page:hearthbay-page",
+   "pots-open",
+   "seen:drowned-bell",
+   "bell-found",
+   "tide-turned",
+   "met-mara",
+   "met-wick",
+   "met-pell",
+   "kettle-taken"
+  ],
+  "relics": [
+   "wicks-drawing",
+   "keepers-kettle"
+  ],
+  "echoUpgrades": {
+   "fog-lamp": 1,
+   "tidewise": 2,
+   "quick-hands": 1,
+   "steady-line": 1,
+   "patient-float": 1,
+   "deep-pockets": 1,
+   "maras-ledger": 1
+  },
+  "rhythm": 0
+ }
+}

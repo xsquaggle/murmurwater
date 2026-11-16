@@ -13,6 +13,7 @@
     "test": "vitest run",
     "sim": "tsx tools/sim/run.ts",
     "voice": "tsx tools/voice-manifest.ts",
+    "tester-save": "tsx tools/tester-save.ts",
     "electron": "electron .",
     "dist:win": "npm run build && electron-builder --win --publish never",
     "typecheck": "tsc --noEmit",

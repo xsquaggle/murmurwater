@@ -86,7 +86,7 @@ Voice: very old, slow, gentle man; deep, dry, a little amused.
 | `pell/hb-10-turning.reminder` | bac16c05 | missing | The bell's where you left it, north-west past Gull Point. Ring it when the stall has nothing left you want. |
 | `pell/hb-10-turning.outro.0` | bc8b149a | missing | Morning. First time out here? No. No, I know you. I nearly always do. |
 | `pell/hb-10-turning.outro.1` | 808a699c | missing | Those are Echoes in your satchel. Spend them. They're the only coin that stays spent. |
-| `pell/hb-10-turning.outro.2` | 7bc99960 | missing | The fog's thinner on the far side of a Turning. Not thin enough. Ask me again when you've rung her a few more times. |
+| `pell/hb-10-turning.outro.2` | dca27530 | missing | The fog's thinner on the far side of a Turning. Not thin enough to sail through. Thin enough to see where the road was. |
 | `pell/hb-11-lamp.intro.0` | 0da1f8c9 | missing | There was a road once, out through the fog. Iron lights, two lines of them, all the way to the Fen. They went out. Lights do. |
 | `pell/hb-11-lamp.intro.1` | a38c9e01 | missing | A fog lamp would wake them. Keepers kept one on the bow. It burns what the Bell gives back, so coins won't buy it. Echoes will. |
 | `pell/hb-11-lamp.intro.2` | 6477546f | missing | Eight of them. Look in your satchel, where the Echoes are. I'd tell you where the last lamp went, but I think it was on her boat. |
@@ -154,10 +154,10 @@ Voice: brisk, cheerful, practical woman in her forties; clipped, precise, quick 
 | `calloway/fen-04-glows.reminder` | d3417ff7 | missing | A Glowbelly, after dark, under the Standing Trees. West, past Glasswater. A glowgrub on the hook wouldn't hurt. |
 | `calloway/fen-04-glows.outro.0` | 08372eaa | missing | Oh, look at it. Into the jar. Now cover the jar. Still lit! It isn't reflecting anything. It's making it. |
 | `calloway/fen-04-glows.outro.1` | a6862e0c | missing | It brightens when I talk. Not when you do. Say something. No. Only me. How very flattering, and I do not like it at all. |
-| `calloway/fen-05-sump.intro.0` | e50ff8ed | missing | North-west of the lagoon there's a hole. The Sump. I put a lead down it on four hundred fathoms of line. |
+| `calloway/fen-05-sump.intro.0` | 0b726187 | missing | South-west of the lagoon there's a hole. The Sump. I put a lead down it on four hundred fathoms of line. |
 | `calloway/fen-05-sump.intro.1` | fbaecd1a | missing | It didn't touch. It's still going, as far as I know. I cut it loose on the third day. |
 | `calloway/fen-05-sump.intro.2` | edd10bbf | missing | Something lives in it. Long. I want to know how long. You'll need your strongest rod, and a worm. |
-| `calloway/fen-05-sump.reminder` | 73e6360c | missing | The Sump. North-west of Glasswater, where the water goes dark. A strong rod and a marsh worm. |
+| `calloway/fen-05-sump.reminder` | 46e55f5a | missing | The Sump. South-west of Glasswater, where the water goes dark. A strong rod and a marsh worm. |
 | `calloway/fen-05-sump.outro.0` | 2eaffe1c | missing | Hold the tail. I'll take the head. Five feet two. Now you hold the head. Six feet. Don't look at me like that. |
 | `calloway/fen-05-sump.outro.1` | 7973fefb | missing | I think it's the same with the fen. It is as big as whoever is measuring. And somebody a good deal bigger than us has started. |
 | `calloway/fen-06-post.intro.0` | abb9e758 | missing | Last one, and it isn't a measurement. On the far side, north-west past the trees, there's a platform on piles. Somebody built it to sit and listen. |

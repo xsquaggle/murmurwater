@@ -10,7 +10,7 @@ import {
 } from '../core/gear';
 import { BELL_FLAG, canRing, coinsToNextEcho, echoCost, echoRank, echoesFor, startCoins, turnings, unsoldValue } from '../core/bell';
 import { potInterval, potsInHand } from '../core/pots';
-import { BOARD, QUESTS, RELICS_BY_ID, boardOpen, count, currentGoal, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus } from '../core/quests';
+import { BOARD, QUESTS, RELICS_BY_ID, boardOpen, count, currentGoal, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus, shortName } from '../core/quests';
 import type { GameState } from '../core/state';
 import type { GearAction } from '../game/trade';
 import { ACTION_LABELS, DEFAULT_BINDINGS, type Action } from '../game/input';
@@ -67,7 +67,7 @@ export class Dialogue {
     this.conv = conv; this.onChoice = onChoice; this.onLinesDone = onLinesDone;
     this.isOpen = true; this.i = 0; this.gen++;
     const n = npc(conv.npc);
-    this.portrait.textContent = n.name[0];
+    this.portrait.textContent = shortName(conv.npc)[0];
     this.portrait.style.background = NPC_COLORS[conv.npc] ?? '#7A6390';
     this.nameEl.textContent = n.name;
     this.roleEl.textContent = n.role;

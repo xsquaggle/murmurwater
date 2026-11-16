@@ -1,6 +1,6 @@
 import { Game } from './game/game';
 import type { Quality } from './render/renderer';
-import { loadGame, localStorageStore, type SaveStore } from './core/save';
+import { deserialize, loadGame, localStorageStore, type SaveStore } from './core/save';
 import { newGame } from './core/state';
 import { assets } from './render/assets';
 import { makeFish } from './render/fish-models';
@@ -9,6 +9,7 @@ import * as quests from './core/quests';
 import { findRoute } from './core/seaways';
 import { clearance } from './core/boat';
 import { LANDING, hullDistance, landingSpot } from './core/landing';
+import testerFen from './data/tester/fen.json';
 
 declare global {
   interface Window {
@@ -35,7 +36,14 @@ const nativeStore = (): SaveStore => ({
 });
 // ?fresh starts a new test game in a separate slot; ?keepfresh reloads that test slot (for the story bot).
 const testSlot = params.has('fresh') || params.has('keepfresh');
-const store: SaveStore = window.mwNative ? nativeStore() : localStorageStore(testSlot ? 'murmurwater.test' : 'murmurwater.save');
+/**
+ * ?tester (F8 on the title screen) is a tester's start: a save the simulator's keeper played up to the newest
+ * slice (tools/tester-save.ts), for trying it without the play before it. It reads and writes no save at all,
+ * so the player's own game is as they left it.
+ */
+const tester = params.has('tester');
+const nowhere = (): SaveStore => ({ read: async () => ({ main: null, backup: null }), write: async () => {} });
+const store: SaveStore = tester ? nowhere() : window.mwNative ? nativeStore() : localStorageStore(testSlot ? 'murmurwater.test' : 'murmurwater.save');
 
 async function boot() {
   const ui = document.getElementById('ui')!;
@@ -53,7 +61,7 @@ async function boot() {
   ui.appendChild(loading);
   await assets.loadAll((p) => { loading.textContent = `Listening for the tide… ${Math.round(p * 100)}%`; });
   loading.remove();
-  const state = params.has('fresh') ? newGame(1234) : loaded.state;
+  const state = tester ? deserialize(JSON.stringify(testerFen)) : params.has('fresh') ? newGame(1234) : loaded.state;
   if (params.has('hour')) state.hour = Number(params.get('hour'));
   const settings = await loadSettings();
   if (params.get('quality')) settings.quality = params.get('quality') as Quality;
@@ -68,17 +76,22 @@ async function boot() {
   // Title card: a click starts audio (browser rule) and captures the mouse.
   const title = document.createElement('div');
   title.className = 'title';
-  title.innerHTML = `<div class="title-inner"><div class="title-name">Murmurwater</div><div class="title-sub">the sea is listening</div><div class="title-go">Click to begin</div></div>`;
+  title.innerHTML = `<div class="title-inner"><div class="title-name">Murmurwater</div><div class="title-sub">the sea is listening</div><div class="title-go">Click to begin</div>${tester ? '<div class="title-tester">A tester\'s start: the Bell rung once, the Fog Lamp on the bow, Pell\'s road job in hand.<br>Nothing here is saved, and your own game is untouched. F8 goes back to it.</div>' : ''}</div>`;
   ui.appendChild(title);
   document.body.classList.add('titled');
+  // F8 on the title screen goes to the tester's start, and back.
+  const toTester = (e: KeyboardEvent) => { if (e.code === 'F8') { e.preventDefault(); location.search = tester ? '' : '?tester'; } };
+  window.addEventListener('keydown', toTester);
   const begin = () => {
+    window.removeEventListener('keydown', toTester);
     title.classList.add('out');
     document.body.classList.remove('titled');
     setTimeout(() => title.remove(), 900);
     game.audio.start();
     game.input.requestLock();
+    if (tester) game.hud.toast("Tester's start: nothing here is saved", 'good');
   };
-  if (params.has('notitle')) { title.remove(); document.body.classList.remove('titled'); } else title.addEventListener('click', begin, { once: true });
+  if (params.has('notitle')) { title.remove(); document.body.classList.remove('titled'); window.removeEventListener('keydown', toTester); } else title.addEventListener('click', begin, { once: true });
   // Clicking the view captures the mouse, but not from under a conversation or a menu.
   canvas.addEventListener('click', () => { game.audio.start(); if (!game.town.blocking) game.input.requestLock(); });
 
@@ -91,6 +104,7 @@ async function boot() {
     renderer: game.renderer,
     makeFish,
     get assetsMissing() { return [...assets.missing]; },
+    tester,
     quests,
     findRoute,
     clearance,

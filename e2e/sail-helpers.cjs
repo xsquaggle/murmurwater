@@ -1,7 +1,9 @@
 // Helpers the sailing bot runs inside the page: the granted starting state, walking, boarding, a pilot that
 // steers along a route through the water with the real helm keys, beaching, and fishing.
-module.exports.install = (page) => page.evaluate(() => {
+// `grant: false` leaves the save as it is (the tester's-start bot brings its own).
+module.exports.install = (page, { grant = true } = {}) => page.evaluate((grant) => {
     const MW = window.__MW__, g = MW.game, s = g.state; g.paused = true; g.halted = true;
+    if (grant) {
     // The story so far: the lamp has just been lit, and the player stands on Gull Point with Pell.
     s.quests.done.push('hb-01-salt', 'hb-02-supper', 'hb-03-proper-rod', 'hb-04-drawing', 'hb-05-dark-lamp');
     s.quests.active['hb-06-relight'] = {};
@@ -12,6 +14,7 @@ module.exports.install = (page) => page.evaluate(() => {
     const land = g.world.region.ferry['gull-point'];
     g.pos.set(land.x, g.groundAt(land.x, land.z) ?? 1, land.z);
     g.town.arrive(); g.world.placeFerry('gull-point'); g.snapCamera();
+    }
 
     const NO = { primary: false, primaryPressed: false, primaryReleased: false, steer: 0, cancel: false };
     const sail = g.sailing;
@@ -146,4 +149,4 @@ module.exports.install = (page) => page.evaluate(() => {
       state: () => ({ x: sail.boat.x, z: sail.boat.z, heading: sail.boat.heading, speed: sail.boat.speed, aboard: sail.aboard, island: g.town.island, charted: [...s.world.charted], coins: s.coins, hour: s.hour, prompt: g.town.focusPrompt }),
     };
     const MW_len = (r) => { let d = 0; for (let i = 1; i < r.length; i++) d += Math.hypot(r[i][0] - r[i - 1][0], r[i][1] - r[i - 1][1]); return d; };
-  });
+  }, grant);
