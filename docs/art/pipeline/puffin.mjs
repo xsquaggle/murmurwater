@@ -183,3 +183,25 @@ export const hullMask = (part) => {
   for (let i = 0; i + 1 < zs.length; i++) { const A = row(zs[i]), Bq = row(zs[i + 1]); quadToward(part, [A[0], [0, 0]], [A[1], [0, 0]], [Bq[1], [0, 0]], [Bq[0], [0, 0]], [0, 1, 0]); }
   return part;
 };
+
+// ---- small pieces both builders use
+/** A flat round face in the plane of e1 (to the right) and e2 (up), `proud` of its centre along the normal; edge: a rectangle for a rim down to the surface. */
+export const disc = (part, c, e1, e2, r, sides, rect, { proud = 0, edge = null, flipU = false } = {}) => {            // a flat round face in the plane of e1 (to the right) and e2 (up)
+  const n = norm(cross(e1, e2)), at = (a, k = 1, d = proud) => add(add(c, mul(n, d)), add(mul(e1, k * r * Math.cos(a)), mul(e2, k * r * Math.sin(a)))), uv = (a, k = 1) => rect.at(0.5 + (flipU ? -0.5 : 0.5) * k * Math.cos(a), 0.5 + 0.5 * k * Math.sin(a));
+  for (let i = 0; i < sides; i++) { const a = 2 * Math.PI * (i + 0.5) / sides, b = 2 * Math.PI * (i + 1.5) / sides;
+    triToward(part, [at(0, 0), uv(0, 0)], [at(a), uv(a)], [at(b), uv(b)], n);
+    if (edge) quadToward(part, [at(a, 1, 0), edge.at(i / sides, 0)], [at(b, 1, 0), edge.at((i + 1) / sides, 0)], [at(b), edge.at((i + 1) / sides, 1)], [at(a), edge.at(i / sides, 1)], add(mul(e1, Math.cos((a + b) / 2)), mul(e2, Math.sin((a + b) / 2)))); }
+};
+/** A plate in the Y-Z plane, 2w thick, from an outline [[z, y], ...]: `side` is painted over the box { z0, z1, y0, y1 }, `edge` runs round it. */
+export const slabZY = (part, outline, w, side, edge, box) => {                                                          // a plate in the Y-Z plane, 2w thick: outline [[z, y], ...]
+  const c = outline.reduce((s, q) => [s[0] + q[0] / outline.length, s[1] + q[1] / outline.length], [0, 0]), uv = ([z, y]) => side.at((box.z1 - z) / (box.z1 - box.z0), (y - box.y0) / (box.y1 - box.y0)), N = outline.length;
+  for (let i = 0; i < N; i++) { const a = outline[i], b = outline[(i + 1) % N];
+    for (const sx of [1, -1]) triToward(part, [[sx * w, c[1], c[0]], uv(c)], [[sx * w, a[1], a[0]], uv(a)], [[sx * w, b[1], b[0]], uv(b)], [sx, 0, 0]);
+    const d = [b[0] - a[0], b[1] - a[1]], out = [0, d[0], -d[1]], mid = [(a[0] + b[0]) / 2 - c[0], (a[1] + b[1]) / 2 - c[1]], o = (out[2] * mid[0] + out[1] * mid[1]) >= 0 ? out : mul(out, -1);
+    quadToward(part, [[-w, a[1], a[0]], edge.at(0, i / N)], [[w, a[1], a[0]], edge.at(1, i / N)], [[w, b[1], b[0]], edge.at(1, (i + 1) / N)], [[-w, b[1], b[0]], edge.at(0, (i + 1) / N)], o); }
+};
+/** One rectangle on every face of a box. */
+export const all = (r) => ({ px: r, nx: r, py: r, ny: r, pz: r, nz: r });
+/** The rudder's outline [[z, y], ...] up to the height `top` of its head; it is painted over RUDDER_BOX. */
+export const RUDDER_BOX = { z0: ZT - 0.29, z1: ZT, y0: -0.6, y1: 0.66 };
+export const rudderOutline = (top) => [[ZT - 0.012, -0.57], [ZT - 0.27, -0.55], [ZT - 0.28, -0.05], [ZT - 0.22, 0.15], [ZT - 0.13, 0.40], [ZT - 0.115, top], [ZT - 0.012, top]];

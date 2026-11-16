@@ -1,6 +1,6 @@
 #!/bin/bash
-# regress.sh [repo] : after a change to kit.mjs, mats.py or paintkit.py, rebuild every code-built prop, the Fen fish and
-# Puffin with her rig and Dr. Calloway, and compare each with the file in the repo, byte for byte. One line per model.
+# regress.sh [repo] : after a change to kit.mjs, mats.py or paintkit.py, rebuild every code-built prop, the Fen fish, the
+# Puffin with her rig and her wreck and Dr. Calloway, and compare each with the file in the repo, byte for byte. One line per model.
 cd "$(dirname "$0")"; REPO=${1:-../../..}; O=out/regress; mkdir -p $O; PY=${PY:-../voice/venv/bin/python}; bad=0
 one() { # one <name> <repo file> <builder and its first arguments...>
   local n=$1 f=$2; shift 2
@@ -9,7 +9,7 @@ one() { # one <name> <repo file> <builder and its first arguments...>
   "$@" $O/$n.glb $O/$n.png > /dev/null 2>&1
   if cmp -s $O/$n.glb $f; then echo "same     $n"; else echo "DIFFERS  $n"; bad=1; fi
 }
-for n in fog-lamp sea-road-light lantern-tree-a lantern-tree-b reeds-a reeds-b lily-glow stilt-hut field-kit packet-box listening-post pot-float belfry; do one $n $REPO/public/models/props/$n.glb node build-$n.mjs; done
+for n in fog-lamp sea-road-light lantern-tree-a lantern-tree-b reeds-a reeds-b lily-glow stilt-hut field-kit packet-box listening-post pot-float belfry puffin-wreck; do one $n $REPO/public/models/props/$n.glb node build-$n.mjs; done
 for n in reedling mudlark glassfin sedge-pike glowbelly stilt-gar mossback-tench old-mossglass bottomless-eel the-listener; do one $n $REPO/public/models/fish/$n.glb node build-fen-fish.mjs $n; done
 for n in puffin puffin-rig; do one $n $REPO/public/models/boats/$n.glb node build-$n.mjs; done
 PLAYER=${PLAYER:-$REPO/public/models/characters/player.glb} ./make-calloway.sh 128 > /dev/null 2>&1
