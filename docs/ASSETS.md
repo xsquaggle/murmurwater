@@ -73,6 +73,16 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `fish/hollow-lantern.glb` | 2,847 | 0.33 x 0.77 x 1.00 | centre | lantern in the rib cage, eye | `hollow-lantern` | `521e59a9-5de6-4114-a776-086027764d40` |
 | `fish/manyeye.glb` | 2,940 | 0.69 x 0.87 x 1.00 | centre | eyes | `manyeye` | `8e8f2a8a-34e3-4eb9-9a3e-9349037fdac6` |
 | `fish/pebble-goby.glb` | 2,912 | 0.44 x 0.52 x 1.00 | centre | no | `pebble-goby` | `01c438b2-c45e-48cc-9a8f-93893900ae02` |
+| `fish/reedling.glb` | 1,116 | 0.17 x 0.26 x 1.00 | centre | no | `reedling` | none: built and painted in code (see below) |
+| `fish/mudlark.glb` | 1,524 | 0.61 x 0.48 x 1.00 | centre | no | `mudlark` | none: built and painted in code (see below) |
+| `fish/glassfin.glb` | 1,212 | 0.20 x 0.62 x 1.00 | centre | no | `glassfin` | none: built and painted in code (see below) |
+| `fish/sedge-pike.glb` | 1,360 | 0.19 x 0.42 x 1.00 | centre of the body: the sprig stands to 0.27 m above it | no | `sedge-pike` | none: built and painted in code (see below) |
+| `fish/mossback-tench.glb` | 1,528 | 0.36 x 0.57 x 1.00 | centre | no | `mossback-tench` | none: built and painted in code (see below) |
+| `fish/glowbelly.glb` | 1,236 | 0.59 x 0.59 x 1.00 | centre | the belly lantern | `glowbelly` | none: built and painted in code (see below) |
+| `fish/stilt-gar.glb` | 1,276 | 0.18 x 0.47 x 1.00 | centre of the body: the stilts hang to 0.36 m below it | no | `stilt-gar` | none: built and painted in code (see below) |
+| `fish/bottomless-eel.glb` | 2,206 | 0.12 x 0.12 x 1.00 | centre | the eyes, faintly | `bottomless-eel` | none: built and painted in code (see below) |
+| `fish/old-mossglass.glb` | 1,636 | 0.43 x 0.64 x 1.00 | centre | the whole fish faintly, scale rims brighter, the shape inside dark | `old-mossglass` | none: built and painted in code (see below) |
+| `fish/the-listener.glb` | 1,368 | 0.57 x 0.54 x 1.00 | centre | the inside of the horns, the pores along its side | `the-listener` | none: built and painted in code (see below) |
 | `boats/skiff.glb` | 5,728 | 2.33 x 2.16 x 4.00 | keel, centre | stern lantern | `skiff` | `be7b1c34-13e6-4d60-b9b6-e015989c1a9d` |
 | `props/crate.glb` | 1,856 | 0.59 x 0.60 x 0.79 | base | no | `crate` | `d8862a17-b399-468c-926e-7779d6c328de` |
 | `props/barrel.glb` | 1,886 | 0.82 x 0.90 x 0.83 | base | no | `barrel` | `622a5755-0592-42f7-a622-54827ad5f86a` |
@@ -101,6 +111,19 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `props/listening-post.glb` | 1,442 (post 1,392, tin box 50) | 2.49 x 3.23 x 2.63 | waterline, under the middle of the platform: deck 0.45 m above it, piles 1.5 m below | no (the lantern is dead) | `listening-post` | none: built and painted in code (see below) |
 
 Fish are normalized to 1 m nose to tail along +Z, so the game scales each to its species length. Glow maps are an `emissiveTexture` on the same material with `KHR_materials_emissive_strength` 1.5, derived from the warm bright texels of the base colour; `docs/art/sheets/emissive-dark.webp` shows them with the lights off.
+
+The ten fish of Mossglass Fen (`reedling` to `the-listener` in the table) are original work built and painted in code, with no generation job: `docs/art/pipeline/build-fen-fish.mjs` holds the ten, `fish.mjs` builds them and `fishmats.py` paints them (`make-fish.sh <fish>` runs it all). Each is 1 m from nose (+Z) to tail with the middle of its bounds at the origin, as the fish above, except that the Sedge Pike and the Stilt Gar have the middle of the body there in height, so that the sprig and the stilts do not move the fish off the point it is held by. One material, `main`, single-sided; 1024 x 512 px base colour (the eel 1024 x 256). The body is lofted through sections from the lips to the root of the tail and both sides share one painted skin; eyes are domes; fins are thin two-faced wedges. The four that glow have an `emissiveTexture` of their own (512 x 256 px, black where nothing glows) and an emissive factor of 1 with no strength extension: `docs/art/sheets/fen-fish-dark.webp` shows them with the lights off (Glowbelly, Old Mossglass, the Listener, the Bottomless Eel).
+
+- Reedling: pencil-thin, straw green with ten dark upright bars, the lower jaw reaching forward and up.
+- Mudlark: squat, with an open smiling mouth (modelled, red inside), a cream throat, two pairs of short whiskers.
+- Glassfin: leaf-shaped and painted as if clear: the backbone and ribs, a pink sac and a silver bladder show through; cyan edges to every fin. Roughness 0.45.
+- Sedge Pike: long and flat-snouted with bark furrows and pale flecks, eyes high on the head; four blades of sedge and a seed head stand on its back.
+- Mossback Tench: round-backed with fine scales and red eyes; a cushion of moss sits over the shoulders with two white flowers, one on either side.
+- Glowbelly: plump and dark teal; the belly is a lantern of cyan glass with ribs running from end to end, and it is the part that glows.
+- Stilt Gar: a needle snout a quarter of its length; four thin fins hang 0.31 to 0.33 m below the body and bow outward.
+- Bottomless Eel: ink black at the head going to deep green at the tail, a row of small green pores, pale eyes with pin pupils; a fin runs along the back and the belly and stops short of the tail, which thins to a thread.
+- Old Mossglass: a deep carp of bottle green with large gold-rimmed scales, gold whiskers and gold fin rays, an open mouth, and a dark shape painted inside the body. Roughness 0.35.
+- The Listener: pale, smooth and eyeless, with a row of dark pores along its side and, in place of pectoral fins, two round horns 0.31 m across on short stems, violet inside.
 
 Notes: the fish stall is the second run of its job (the first, `c941c034-4adf-48ff-b2f8-9cec702029ba`, came back with a blank grey texture and was discarded); its bounds were fitted to 2.6 x 2.4 x 1.45 m with a mild non-uniform scale (`--fit`), about 15 % shallower than generated. The sketchbook has a 512 px texture and was fitted to 0.24 x 0.25 x 0.055 m (thinner than generated) so it sits between Wick's hands. Biscuit is two sculpts, standing and sitting, because the two poses do not deform into each other cleanly; the game swaps models when the cat sits.
 
