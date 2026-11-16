@@ -8,7 +8,7 @@ import type { Game } from './game';
 import { assets } from '../render/assets';
 import { buildPotFloat, createPropMaterial } from '../render/props';
 import { canPlacePot, haulPot, placePot, potKnows, potsInHand, takeUpPot, tickPots } from '../core/pots';
-import { zoneAt, type RegionContent } from '../core/content';
+import { REGIONS_BY_ID, zoneAt, type RegionContent } from '../core/content';
 import { hullDistance } from '../core/landing';
 import { fmt } from '../core/economy';
 import type { PotState } from '../core/state';
@@ -53,7 +53,8 @@ export class PotField {
     tickPots(s, dt, s.hour, st);
     for (const p of s.pots.placed) {
       const full = p.fish.length >= st.potCapacity;
-      if (full && !this.fullTold.has(p.id)) { this.fullTold.add(p.id); g.hud.toast('A Lantern Pot is full', 'good'); }
+      // A pot in the other water fills too: say where, so nobody looks round for it here.
+      if (full && !this.fullTold.has(p.id)) { this.fullTold.add(p.id); g.hud.toast(p.region === s.world.region ? 'A Lantern Pot is full' : `A Lantern Pot is full, back in ${REGIONS_BY_ID.get(p.region)?.name ?? 'the other water'}`, 'good'); }
       else if (!full) this.fullTold.delete(p.id);
     }
     if (!free) { this.near = null; this.spot = null; return; }

@@ -228,7 +228,8 @@
       },
       "biteWindow": 0.45,
       "lore": "It has seen you before. All of its eyes agree on that.",
-      "length": 0.85
+      "length": 0.85,
+      "hint": "Something waits for a light."
     },
     {
       "id": "reedling",
@@ -484,7 +485,8 @@
       },
       "biteWindow": 0.42,
       "lore": "No eyes. Two fins like the horns of a gramophone, turned toward you. It heard the hook go in before you cast.",
-      "length": 1.0
+      "length": 1.0,
+      "hint": "Something is listening. It has not heard you yet."
     }
   ]
 }

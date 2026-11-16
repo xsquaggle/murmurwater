@@ -5,6 +5,7 @@
 import { Color, Vector3 } from 'three';
 import type { Game } from './game';
 import { NpcFigure } from '../render/npc-figure';
+import { freeOwn } from '../render/assets';
 import { Cat } from '../render/cat';
 import { hashString } from '../core/rng';
 import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
@@ -117,8 +118,8 @@ export class Town {
    */
   enterRegion(first: boolean) {
     const g = this.g;
-    for (const [, e] of this.npcs) e.fig.root.removeFromParent();
-    for (const c of this.critters) c.cat.root.removeFromParent();
+    for (const [, e] of this.npcs) { e.fig.root.removeFromParent(); freeOwn(e.fig.root); }
+    for (const c of this.critters) { c.cat.root.removeFromParent(); freeOwn(c.cat.root); }
     this.npcs.clear(); this.critters.length = 0; this.places.clear(); this.spots.clear();
     this.chartRaster = null; this.focus = null; this.talking = null;
     this.region = g.world.region as RegionContent;
@@ -459,7 +460,10 @@ export class Town {
     }
     if (!goal.place) return null;
     const place = this.places.get(goal.place);
-    return place ? at(place.x, place.z, 3) : away(regionOfPlace(goal.place));
+    if (place) return at(place.x, place.z, 3);
+    // A place on the chart of these waters, or one across the fog (then: the sea-road that leads there).
+    const charted = (this.region.chart ?? []).find((c) => c.id === goal.place);
+    return charted ? at(charted.x, charted.z, 5) : away(regionOfPlace(goal.place));
   }
 
   /** Compass marks for the helm: the goal, and the moorings the player knows. */

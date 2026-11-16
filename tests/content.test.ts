@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateContent, zoneAt, REGIONS, BAITS, inHours, regionAt } from '../src/core/content';
+import { validateContent, zoneAt, REGIONS, REGIONS_BY_ID, BAITS, FISH, fishHint, inHours, regionAt, regionOfPlace } from '../src/core/content';
 import { Heightfield } from '../src/core/world';
 import { clearance, murmurAt, newBoat, stepBoat } from '../src/core/boat';
 import { LANDING, boatEnv, hullDistance, landingSpot, walkableHeight } from '../src/core/landing';
@@ -13,6 +13,30 @@ describe('content', () => {
     expect(zoneAt(hb, -100, 22)?.id).toBe('hb-dock');
     expect(zoneAt(hb, -275, 245)?.id).toBe('hb-teeth');
     expect(zoneAt(hb, 300, 300)?.id).toBe('hb-open');
+  });
+  it('past the rim of every zone the water is still the open water of the region', () => {
+    const hb = REGIONS[0];
+    expect(zoneAt(hb, 720, 0)?.id).toBe('hb-open');
+    expect(zoneAt(hb, -5000, 5000)?.id).toBe('hb-open');
+  });
+  it('the journal hints at where and when each fish really bites', () => {
+    for (const f of FISH) {
+      const region = REGIONS_BY_ID.get(f.region)!, home = region.zones.find((z) => z.id === f.zones[0])!;
+      expect(home, `${f.id}: its first zone exists`).toBeTruthy();
+      expect(home.hint, `${home.id} has a hint`).toBeTruthy();
+      const told = fishHint(f, f.requires ? [f.requires] : []);
+      expect(told, f.id).toContain(home.hint!);
+      if (f.hours) expect(told, f.id).toMatch(f.hours[0] > f.hours[1] ? /after dark$/ : /between .+ and .+$/);
+      else expect(told, f.id).toBe(`Bites ${home.hint}`);
+      // One that waits on something keeps its own riddle until then, and the riddle gives the place away to nobody.
+      if (f.requires) { expect(f.hint, `${f.id} has a riddle`).toBeTruthy(); expect(fishHint(f, [])).toBe(f.hint); }
+    }
+    expect(fishHint(FISH.find((f) => f.id === 'the-listener')!, ['fen-heard'])).toBe('Bites by the Listening Post between midnight and 4:00');
+    expect(fishHint(FISH.find((f) => f.id === 'glowbelly')!, [])).toBe('Bites among the Standing Trees after dark');
+    expect(fishHint(FISH.find((f) => f.id === 'butterperch')!, [])).toBe('Bites off the dock');
+  });
+  it('every place a job sends the keeper to lies in a region, so the compass can point to it', () => {
+    for (const q of QUESTS) for (const o of q.objectives) if (o.place) expect(regionOfPlace(o.place), `${q.id}: ${o.place}`).not.toBeNull();
   });
   it('hour ranges wrap midnight', () => {
     expect(inHours(23, [19, 5])).toBe(true);

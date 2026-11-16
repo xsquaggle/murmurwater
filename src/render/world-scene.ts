@@ -1,13 +1,13 @@
 /** Assembles a region's 3D scene: sky, water, terrain, landmarks, scatter, lighting, time of day. */
 import {
-  AdditiveBlending, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, FogExp2, Group, HemisphereLight, InstancedMesh, Mesh, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Scene, ShaderMaterial, Texture, Vector3,
+  AdditiveBlending, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, FogExp2, Group, HemisphereLight, Mesh, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Scene, ShaderMaterial, Texture, Vector3,
 } from 'three';
 import { Heightfield, type RegionDef } from '../core/world';
 import { createSky, createSkyUniforms, type SkyUniforms } from './sky';
 import { Water } from './water';
 import { buildTerrain, type TerrainBuild } from './terrain';
 import { addLanternLight, buildArch, buildBellPost, buildBelfry, buildBuoy, buildDock, buildKettleCamp, buildLighthouse, buildNoticeBoard, buildRowboat, buildStall, createPropMaterial, scatterIsland } from './props';
-import { assets } from './assets';
+import { assets, freeOwn } from './assets';
 import { buildHullMask } from './boat-rig';
 import { dockDeckAt } from '../core/dock';
 import { waveHeight, CALM_WAVES } from '../core/waves';
@@ -533,20 +533,8 @@ export class WorldScene {
    */
   dispose() {
     this.scene.remove(this.root);
-    const shared = assets.shared, done = new Set<object>();
-    const free = (o: { dispose(): void } | null | undefined) => { if (o && !shared.has(o) && !done.has(o)) { done.add(o); o.dispose(); } };
-    this.root.traverse((o) => {
-      const m = o as Mesh;
-      if (!m.geometry || !m.material) return;
-      if ((o as InstancedMesh).isInstancedMesh) (o as InstancedMesh).dispose();
-      free(m.geometry);
-      for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
-        if (!mat || shared.has(mat)) continue;
-        for (const v of Object.values(mat)) if (v && (v as Texture).isTexture) free(v as Texture);
-        free(mat);
-      }
-    });
-    free(this.heightTex);
+    freeOwn(this.root);
+    this.heightTex.dispose();
     for (const l of [this.key]) l.shadow.map?.dispose();
   }
 

@@ -7,7 +7,7 @@
 import { Vector3 } from 'three';
 import type { Game } from './game';
 import { BoatRig } from '../render/boat-rig';
-import { assets } from '../render/assets';
+import { assets, freeOwn } from '../render/assets';
 import { clearance, fogAt, nearestFloat, newBoat, stepBoat, type BoatEnv, type BoatState } from '../core/boat';
 import { LANDING, boatEnv, hullDistance, landingSpot } from '../core/landing';
 import { BOATS_BY_ID, type BoatDef } from '../core/quests';
@@ -64,7 +64,7 @@ export class Sailing {
     this.env = this.seaHere();
     this.landing = null; this.landingT = 0.5;
     // The new region comes with a ferry boat of its own; the player's is already in the scene.
-    if (this.rig) { w.ferryHeld = true; w.ferryBoat.removeFromParent(); }
+    if (this.rig) { w.ferryHeld = true; w.ferryBoat.removeFromParent(); freeOwn(w.ferryBoat); }
     this.store();
   }
 

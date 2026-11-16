@@ -4,7 +4,7 @@
  * sell for less, and it stops when it is full, so it has to be hauled. Nothing here reads a wall clock:
  * a pot's timer moves only when `tickPots` is called from the running game, so nothing is earned while closed.
  */
-import { FISH, RARITIES, inHours, type FishDef } from './content';
+import { FISH, RARITIES, REGIONS_BY_ID, inHours, openZone, type FishDef } from './content';
 import { RARITY_WEIGHT } from './fishing';
 import { POTS, stats, type Stats } from './gear';
 import { earn } from './economy';
@@ -31,14 +31,19 @@ export function placePot(s: GameState, zone: string | null, x: number, z: number
   return pot;
 }
 
+/** The water a pot fishes: the zone it was set in, or the region's open water if it was set in none. Never "everywhere". */
+function zoneOf(zone: string | null, region: string): string | null { const r = REGIONS_BY_ID.get(region); return zone ?? (r ? openZone(r)?.id ?? null : null); }
+
 /** What a pot can trap where it sits: fish of its zone that are in the journal, at this hour, never the Uncanny. */
 export function potTable(s: GameState, pot: PotState, hour: number): FishDef[] {
-  return FISH.filter((f) => f.region === pot.region && (!pot.zone || f.zones.includes(pot.zone)) && f.rarity !== 'uncanny'
+  const zone = zoneOf(pot.zone, pot.region);
+  return FISH.filter((f) => f.region === pot.region && (!zone || f.zones.includes(zone)) && f.rarity !== 'uncanny'
     && !!s.journal[f.id] && inHours(hour, f.hours) && (!f.requires || s.flags.includes(f.requires)));
 }
 
 /** How many kinds of fish a pot here could ever trap (any hour): 0 means it sits in water the journal knows nothing of. */
-export function potKnows(s: GameState, zone: string | null, region = s.world.region): number {
+export function potKnows(s: GameState, at: string | null, region = s.world.region): number {
+  const zone = zoneOf(at, region);
   return FISH.filter((f) => f.region === region && (!zone || f.zones.includes(zone)) && f.rarity !== 'uncanny' && !!s.journal[f.id] && (!f.requires || s.flags.includes(f.requires))).length;
 }
 

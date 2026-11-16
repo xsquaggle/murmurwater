@@ -281,7 +281,8 @@ const { chromium } = require('playwright');
   // 18. People very nearly remember. Pell first (the story), then Mara's line for after a Turning.
   await ev(() => { window.tide.talk('pell'); window.bot.readAll(); });
   check((await status('hb-10-turning')) === 'done', 'Pell hears of the Turning');
-  await ev(() => { if (window.__MW__.game.town.dialogue.isOpen) window.bot.choose('Bye'); });
+  // (He goes straight on to the lamp job now that the Fen exists: that is turned down here, and taken by the fog bot.)
+  await ev(() => { const d = window.__MW__.game.town.dialogue; for (let k = 0; d.isOpen && k < 4; k++) { window.bot.readAll(); if (!window.bot.choose('Bye')) window.bot.choose('Not just now'); } });
   r = await ev(() => { window.tide.talk('mara'); const g = window.__MW__.game; g.town.dialogue.advance(); const first = document.querySelector('.dlg-text')?.textContent ?? ''; return { first, turned: window.__MW__.quests.npc('mara').turned }; });
   check(r.turned.includes(r.first), `Mara opens with a line about nearly knowing the keeper ("${r.first.slice(0, 50)}…")`);
   await shot('21-mara-after-the-turning');

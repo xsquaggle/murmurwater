@@ -394,7 +394,7 @@
       "outro": [
         "Morning. First time out here? No. No, I know you. I nearly always do.",
         "Those are Echoes in your satchel. Spend them. They're the only coin that stays spent.",
-        "The fog's thinner on the far side of a Turning. Not thin enough. Ask me again when you've rung her a few more times."
+        "The fog's thinner on the far side of a Turning. Not thin enough to sail through. Thin enough to see where the road was."
       ],
       "rewards": {
         "moonpearls": 1,
@@ -477,7 +477,9 @@
       "giver": "calloway",
       "title": "A Sense of Scale",
       "summary": "Catch six fish of the Fen for Dr. Calloway to weigh.",
-      "requires": [],
+      "requires": [
+        "hb-12-road"
+      ],
       "requiresFlags": [
         "reached:mossglass-fen"
       ],
@@ -616,12 +618,12 @@
       "chain": "main",
       "giver": "calloway",
       "title": "The Sump",
-      "summary": "Catch a Bottomless Eel in the Sump, the hole in the north-west of the Fen.",
+      "summary": "Catch a Bottomless Eel in the Sump, the hole in the south-west of the Fen.",
       "requires": [
         "fen-04-glows"
       ],
       "intro": [
-        "North-west of the lagoon there's a hole. The Sump. I put a lead down it on four hundred fathoms of line.",
+        "South-west of the lagoon there's a hole. The Sump. I put a lead down it on four hundred fathoms of line.",
         "It didn't touch. It's still going, as far as I know. I cut it loose on the third day.",
         "Something lives in it. Long. I want to know how long. You'll need your strongest rod, and a worm."
       ],
@@ -634,10 +636,10 @@
             -1301,
             -579
           ],
-          "label": "Catch a Bottomless Eel in the Sump, north-west of Glasswater"
+          "label": "Catch a Bottomless Eel in the Sump, south-west of Glasswater"
         }
       ],
-      "reminder": "The Sump. North-west of Glasswater, where the water goes dark. A strong rod and a marsh worm.",
+      "reminder": "The Sump. South-west of Glasswater, where the water goes dark. A strong rod and a marsh worm.",
       "outro": [
         "Hold the tail. I'll take the head. Five feet two. Now you hold the head. Six feet. Don't look at me like that.",
         "I think it's the same with the fen. It is as big as whoever is measuring. And somebody a good deal bigger than us has started."

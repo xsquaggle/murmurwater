@@ -2,7 +2,7 @@
  * Menus and conversations: dialogue box, Mara's shop, the notice board, the satchel (hold, gear,
  * journal, quests), pause and settings. Plain DOM; the game supplies a UiHost to act on choices.
  */
-import { BAITS, FISH, RODS, fish as fishDef, onShelf } from '../core/content';
+import { BAITS, FISH, REGIONS_BY_ID, RODS, fish as fishDef, fishHint, onShelf } from '../core/content';
 import { RHYTHM, fmt, rarityIndex } from '../core/economy';
 import {
   COLLECTIONS, CREEL, ECHO_UPGRADES, LURES, LURES_BY_ID, POTS, SETS, SLOTS, TUNING, WEARABLES, WEARABLES_BY_ID, collectionProgress, creel, creelNext, potPrice, potUpgradeCost,
@@ -10,7 +10,7 @@ import {
 } from '../core/gear';
 import { BELL_FLAG, canRing, coinsToNextEcho, echoCost, echoRank, echoesFor, startCoins, turnings, unsoldValue } from '../core/bell';
 import { potInterval, potsInHand } from '../core/pots';
-import { BOARD, QUESTS, RELICS_BY_ID, boardOpen, count, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus } from '../core/quests';
+import { BOARD, QUESTS, RELICS_BY_ID, boardOpen, count, currentGoal, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus } from '../core/quests';
 import type { GameState } from '../core/state';
 import type { GearAction } from '../game/trade';
 import { ACTION_LABELS, DEFAULT_BINDINGS, type Action } from '../game/input';
@@ -384,10 +384,10 @@ export class Screens {
       const region = FISH.filter((f) => f.region === s.world.region);
       const found = region.filter((f) => s.journal[f.id]).length;
       const sel = this.selectedFish && s.journal[this.selectedFish] ? this.selectedFish : null;
-      this.card.append(el('p', { class: 'muted' }, `Hearthbay: ${found} of ${region.length} found`));
+      this.card.append(el('p', { class: 'muted' }, `${REGIONS_BY_ID.get(s.world.region)?.name ?? 'These waters'}: ${found} of ${region.length} found`));
       for (const c of COLLECTIONS.filter((x) => x.region === s.world.region)) {
         const p = collectionProgress(s, c), done = s.flags.includes(`page:${c.id}`);
-        this.card.append(el('p', { class: 'page-line' + (done ? ' done' : '') }, done ? `✓ ${c.name} is complete.` : `${c.name}: ${p.found} of ${p.total}. Wick has something put by for whoever fills it.`));
+        this.card.append(el('p', { class: 'page-line' + (done ? ' done' : '') }, done ? `✓ ${c.name} is complete.` : `${c.name}: ${p.found} of ${p.total}. ${c.tease}`));
       }
       const grid = el('div', { class: 'journal-grid' }, ...region.map((f) => {
         const j = s.journal[f.id];
@@ -395,7 +395,7 @@ export class Screens {
         return el('button', { class: `jcard r${r}` + (j ? '' : ' unknown') + (sel === f.id ? ' sel' : ''), onclick: () => { if (j) { this.selectedFish = f.id; this.render(); } } },
           el('div', { class: 'jname' }, j ? f.name : '???'),
           el('div', { class: 'jrar' }, RARITY_NAMES[r]),
-          j ? el('div', { class: 'jstat' }, `× ${j.caught} · best ${j.bestWeight.toFixed(2)} kg`) : el('div', { class: 'jstat' }, hintFor(f.id)));
+          j ? el('div', { class: 'jstat' }, `× ${j.caught} · best ${j.bestWeight.toFixed(2)} kg`) : el('div', { class: 'jstat' }, fishHint(f, s.flags)));
       }));
       this.card.append(grid);
       if (sel) { const f = fishDef(sel); const j = s.journal[sel]; this.card.append(el('div', { class: 'jdetail' }, el('b', {}, f.name), el('p', {}, f.lore), j.traits.length ? el('p', { class: 'muted' }, 'Strange ones seen: ' + j.traits.join(', ')) : null)); }
@@ -403,7 +403,7 @@ export class Screens {
       const active = QUESTS.filter((q) => ['active', 'ready'].includes(questStatus(s, q.id)));
       const done = QUESTS.filter((q) => questStatus(s, q.id) === 'done');
       this.card.append(el('h3', {}, 'In progress'));
-      if (!active.length) this.card.append(el('p', { class: 'muted' }, 'Nothing right now. Someone in Hearthbay probably wants a word.'));
+      if (!active.length) { const who = currentGoal(s).npc; this.card.append(el('p', { class: 'muted' }, who ? `Nothing right now. ${npc(who).name} probably wants a word.` : 'Nothing right now.')); }
       for (const q of active) {
         const ready = questStatus(s, q.id) === 'ready';
         this.card.append(el('div', { class: 'qcard' + (ready ? ' ready' : '') },
@@ -586,9 +586,3 @@ export class Screens {
 
 const DEFAULTS = () => DEFAULT_BINDINGS;
 const RARITIES_IDX = (id: string) => rarityIndex(id);
-function hintFor(id: string): string {
-  const f = fishDef(id);
-  const zone = f.zones.includes('hb-dock') ? 'off the dock' : f.zones.includes('hb-teeth') ? 'near the Teeth' : f.zones.includes('hb-bay') ? 'out in the bay' : 'in open water';
-  const time = f.hours ? (f.hours[0] > f.hours[1] ? 'after dark' : `between ${f.hours[0]}:00 and ${f.hours[1]}:00`) : '';
-  return f.requires ? 'Something waits for a light.' : `Bites ${zone}${time ? ' ' + time : ''}`;
-}

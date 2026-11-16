@@ -55,9 +55,11 @@
   "collections": [
     { "id": "hearthbay-page", "name": "The Hearthbay page", "region": "hearthbay", "skipRarity": "uncanny",
       "rewards": { "wearables": ["keepers-oilskin"] },
+      "tease": "Wick has something put by for whoever fills it.",
       "text": "Every Hearthbay fish, drawn and named. Wick presses something heavy and yellow into your arms." },
     { "id": "fen-page", "name": "The Mossglass page", "region": "mossglass-fen", "skipRarity": "uncanny",
       "rewards": { "relics": ["calloway-tape"] },
+      "tease": "Dr. Calloway has something put by for whoever fills it.",
       "text": "Every fish of the Fen, drawn and named. Dr. Calloway counts them twice and gets nine both times. She is delighted, and a little afraid. She gives you the tape." }
   ],
   "pots": {

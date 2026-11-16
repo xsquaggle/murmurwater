@@ -319,7 +319,7 @@ export class Game {
       const next = regionAcross(s.world.region, sail.boat.x, sail.boat.z);
       if (next && this.enterRegion(next)) this.audio.fogCross();
       // In the fog on an open sea-road: the waters she is bound for are made ready a little each step.
-      else if (sail.road > 0) { const ahead = regionAhead(s.world.region, sail.boat.x, sail.boat.z); if (ahead) this.prepare(ahead); }
+      else if (sail.road > 0) { const ahead = regionAhead(s.world.region, sail.boat.x, sail.boat.z, sail.boat.heading); if (ahead) this.prepare(ahead); }
     }
     this.prep.pump(this.prepBudget);
     let mx = 0, mz = 0;

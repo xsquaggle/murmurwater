@@ -2,7 +2,7 @@
  * Generated model library (public/models). Every model is loaded once at boot and cloned per use.
  * A missing or broken file never stops the game: callers fall back to the procedural stand-ins.
  */
-import { AnimationClip, Group, Material, Mesh, MeshStandardMaterial, Object3D, SkinnedMesh } from 'three';
+import { AnimationClip, Group, InstancedMesh, Material, Mesh, MeshStandardMaterial, Object3D, SkinnedMesh, Texture } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import present from 'virtual:model-list';
@@ -120,3 +120,25 @@ export class Assets {
 }
 
 export const assets = new Assets();
+
+/**
+ * Frees what the things under `root` hold on the graphics card for themselves: geometry, materials and their
+ * textures, instance tables and skeletons. Models from the library share theirs with every other copy and
+ * are left alone. For anything taken out of the scene for good.
+ */
+export function freeOwn(root: Object3D) {
+  const shared = assets.shared, done = new Set<object>();
+  const free = (o: { dispose(): void } | null | undefined) => { if (o && !shared.has(o) && !done.has(o)) { done.add(o); o.dispose(); } };
+  root.traverse((o) => {
+    const m = o as Mesh;
+    if (!m.geometry || !m.material) return;
+    if ((o as InstancedMesh).isInstancedMesh) (o as InstancedMesh).dispose();
+    if ((o as SkinnedMesh).isSkinnedMesh) free((o as SkinnedMesh).skeleton);
+    free(m.geometry);
+    for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
+      if (!mat || shared.has(mat)) continue;
+      for (const v of Object.values(mat)) if (v && (v as Texture).isTexture) free(v as Texture);
+      free(mat);
+    }
+  });
+}

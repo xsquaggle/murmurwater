@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { REGIONS, REGIONS_BY_ID, ROADS, findMooring, regionAcross, regionAt, regionOfNpc, roadOpen, roadPoint, roadToward, roadsOpen } from '../src/core/content';
+import { FISH, REGIONS, REGIONS_BY_ID, ROADS, SWAP_BAND, findMooring, regionAcross, regionAhead, regionAt, regionOfNpc, regionOfPlace, roadOpen, roadPoint, roadToward, roadsOpen, zoneAt } from '../src/core/content';
 import { Heightfield } from '../src/core/world';
 import { clearance, fogAt, murmurAt, newBoat, stepBoat } from '../src/core/boat';
 import { boatEnv } from '../src/core/landing';
@@ -55,9 +55,14 @@ describe('the sea-road', () => {
   it('changes region half way along, from either side, and only on the road', () => {
     expect(regionAcross('hearthbay', ...at(0.2))).toBeNull();
     expect(regionAcross('hearthbay', ...at(0.49))).toBeNull();
-    expect(regionAcross('hearthbay', ...at(0.51))).toBe('mossglass-fen');
-    expect(regionAcross('mossglass-fen', ...at(0.51))).toBeNull();
-    expect(regionAcross('mossglass-fen', ...at(0.49))).toBe('hearthbay');
+    expect(regionAcross('hearthbay', ...at(0.52))).toBe('mossglass-fen');
+    expect(regionAcross('mossglass-fen', ...at(0.52))).toBeNull();
+    expect(regionAcross('mossglass-fen', ...at(0.48))).toBe('hearthbay');
+    // A boat turning about on the line does not change waters with every yard: there is a band neither side claims.
+    for (const k of [0.5 - SWAP_BAND * 0.9, 0.5, 0.5 + SWAP_BAND * 0.9]) {
+      expect(regionAcross('hearthbay', ...at(k))).toBeNull();
+      expect(regionAcross('mossglass-fen', ...at(k))).toBeNull();
+    }
     expect(regionAcross('hearthbay', ...at(0.6, road.halfWidth + 5))).toBeNull();
     expect(regionAcross('hearthbay', ...at(1.1))).toBeNull();
   });
@@ -89,7 +94,37 @@ describe('the sea-road', () => {
     expect(dark.worst).toBeGreaterThan(0.5);
   });
 
+  it('is open water to fish in, all the way across: never a place where every fish of the region bites', () => {
+    // The road runs out past the rim of each region's widest zone. A point in no zone would be read by the
+    // fishing rules as every zone at once: the Sump's eel, Old Mossglass and the Listener in the fog.
+    for (const region of REGIONS) {
+      const open = region.zones.find((z) => z.priority === 0)!;
+      for (let k = -0.05; k <= 1.05; k += 0.01) for (const side of [-road.halfWidth, 0, road.halfWidth]) {
+        const [x, z] = at(k, side), zone = zoneAt(region, x, z);
+        expect(zone, `${region.id} at ${k.toFixed(2)}`).not.toBeNull();
+        if (Math.hypot(x - region.center[0], z - region.center[1]) > region.radius) expect(zone!.id).toBe(open.id);
+      }
+      // What bites in open water is the common run of the region: nothing rarer than uncommon, nothing that waits on anything.
+      const here = FISH.filter((f) => f.region === region.id && f.zones.includes(open.id));
+      expect(here.length).toBeGreaterThan(1);
+      if (region.id === 'mossglass-fen') for (const f of here) expect(['common', 'uncommon'], f.id).toContain(f.rarity);
+    }
+  });
+
+  it('is prepared for only by a boat bound along it', () => {
+    const out = Math.atan2(road.b[0] - road.a[0], road.b[1] - road.a[1]), home = out + Math.PI;
+    expect(regionAhead('hearthbay', ...at(0.3), out)).toBe('mossglass-fen');
+    expect(regionAhead('hearthbay', ...at(0.3), home)).toBeNull();
+    // Just through, and still heading on: the waters behind are not made ready again.
+    expect(regionAhead('mossglass-fen', ...at(0.53), out)).toBeNull();
+    expect(regionAhead('mossglass-fen', ...at(0.53), home)).toBe('hearthbay');
+    expect(regionAhead('hearthbay', ...at(0.3))).toBe('mossglass-fen');
+  });
+
   it('knows the way from one region toward another', () => {
+    expect(regionOfPlace('sedge-landing')).toBe('mossglass-fen');
+    expect(regionOfPlace('ear-trumpet')).toBe('mossglass-fen');
+    expect(regionOfPlace('drowned-bell')).toBe('hearthbay');
     const out = roadToward('hearthbay', 'mossglass-fen')!, back = roadToward('mossglass-fen', 'hearthbay')!;
     expect([out.x, out.z]).toEqual(road.a); expect(out.next).toBe('mossglass-fen');
     expect([back.x, back.z]).toEqual(road.b); expect(back.next).toBe('hearthbay');

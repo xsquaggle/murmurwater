@@ -23,7 +23,7 @@ export const SLOTS: Slot[] = ['hat', 'coat', 'boots', 'charm'];
 export interface LureDef { id: string; name: string; price?: number; when?: When; effect: Effect; blurb: string; desc: string; /** A flag the shelf waits for. */ from?: string }
 export interface WearableDef { id: string; name: string; slot: Slot; set?: string; price?: number; effect: Effect; blurb: string; desc: string; /** A flag the shelf waits for. */ from?: string }
 export interface SetDef { id: string; name: string; bonuses: { pieces: number; effect: Effect; blurb: string }[] }
-export interface CollectionDef { id: string; name: string; region: string; skipRarity?: string; rewards: { wearables?: string[]; lures?: string[]; relics?: string[] }; text: string }
+export interface CollectionDef { id: string; name: string; region: string; skipRarity?: string; rewards: { wearables?: string[]; lures?: string[]; relics?: string[] }; text: string; /** Who rewards it: the journal's line while the page is unfinished. */ tease: string }
 export interface EchoDef { id: string; name: string; blurb: string; desc: string; cost: number[]; effect?: Effect; startCoins?: number[]; /** A thing bought once, not a rank of something. */ thing?: boolean }
 export interface PotUpgradeDef { name: string; blurb: string; max: number; base: number; growth: number; per: number }
 export type PotUpgrade = 'speed' | 'size' | 'quality';

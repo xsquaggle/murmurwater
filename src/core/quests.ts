@@ -11,7 +11,7 @@ import questsJson from '../data/quests.json';
 import npcsJson from '../data/npcs.json';
 import relicsJson from '../data/relics.json';
 import boatsJson from '../data/boats.json';
-import { BAITS, BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, REGIONS, REGIONS_BY_ID, RODS_BY_ID, fish, inHours } from './content';
+import { BAITS, BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, REGIONS, REGIONS_BY_ID, RODS_BY_ID, fish, inHours, regionOfNpc } from './content';
 import { ECHOES_BY_ID, LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable } from './gear';
 import { earn } from './economy';
 import { Rng, hashString } from './rng';
@@ -242,9 +242,14 @@ export const count = (n: number) => Math.floor(n).toLocaleString('en-US');
 /** The onboarding goal line: always one clear next step from the story chain. */
 export interface Goal { text: string; npc?: string; place?: string; at?: [number, number] }
 export function currentGoal(s: GameState): Goal {
-  // 1. Anything ready to hand in (main chain first).
   const story = [...QUESTS].sort((a, b) => (a.chain === b.chain ? 0 : a.chain === 'main' ? -1 : 1));
-  for (const q of story) if (questStatus(s, q.id) === 'ready') return { text: q.receiver ? `${q.title}: talk to ${npc(q.receiver).name}` : `Return to ${npc(q.giver).name}: ${q.title}`, npc: handsInTo(q) };
+  // Somebody across the fog can wait while there is anything to do in the waters the keeper is in.
+  const here = (who: string) => { const r = regionOfNpc(who); return !r || r === s.world.region; };
+  const handIn = (q: QuestDef): Goal => ({ text: q.receiver ? `${q.title}: talk to ${npc(q.receiver).name}` : `Return to ${npc(q.giver).name}: ${q.title}`, npc: handsInTo(q) });
+  const offer = (q: QuestDef): Goal => ({ text: `Talk to ${npc(q.giver).name}`, npc: q.giver });
+  const ready = story.filter((q) => questStatus(s, q.id) === 'ready'), open = story.filter((q) => questStatus(s, q.id) === 'available');
+  // 1. Anything ready to hand in to somebody here (main chain first).
+  for (const q of ready) if (here(handsInTo(q))) return handIn(q);
   // 2. The first active main quest's first unfinished objective.
   for (const q of story) {
     if (questStatus(s, q.id) !== 'active') continue;
@@ -254,9 +259,12 @@ export function currentGoal(s: GameState): Goal {
     const prog = t > 1 ? ` (${count(objectiveProgress(s, q, i))}/${count(t)})` : '';
     return { text: `${q.title}: ${o.label}${prog}`, place: o.place, at: o.at };
   }
-  // 3. A new story quest waiting with someone.
-  for (const q of story) if (questStatus(s, q.id) === 'available') return { text: `Talk to ${npc(q.giver).name}`, npc: q.giver };
-  // 4. Postgame of this slice: the journal.
+  // 3. A new story quest waiting with somebody here.
+  for (const q of open) if (here(q.giver)) return offer(q);
+  // 4. The same two across the fog.
+  if (ready.length) return handIn(ready[0]);
+  if (open.length) return offer(open[0]);
+  // 5. With the story told as far as it goes: the journal.
   const regionFish = FISH.filter((f) => f.region === s.world.region);
   const found = regionFish.filter((f) => s.journal[f.id]).length;
   return { text: `Fill the journal: ${found}/${regionFish.length} ${REGIONS_BY_ID.get(s.world.region)?.name ?? ''} fish found`.replace('  ', ' ') };
@@ -296,9 +304,19 @@ export function refreshBoard(s: GameState) {
 }
 
 /**
+ * The untaken jobs, read again for the waters the keeper is in now: each is the same job it was (the same
+ * number, so the same draw), asked of this region's fish and paid at this region's prices. Nothing is drawn
+ * anew and the board's clock is not touched, so crossing the fog is no way to shuffle the board.
+ */
+export function localiseBoard(s: GameState) {
+  const b = s.quests.board;
+  b.quests = b.quests.map((q) => (q.accepted ? q : generateBoardQuest(s, new Rng(hashString(`${s.seed}:board:${q.id.slice('board-'.length)}`)), q.id)));
+}
+
+/**
  * The keeper has come into a region. It is known from now on (the far shelf and the people there wait on
- * that), and the notice board has that region's work: jobs already taken are kept, the rest are replaced.
- * Returns true the first time.
+ * that), and the notice board asks for that region's fish: jobs already taken are kept as they are, the
+ * rest are read again for these waters (`localiseBoard`). Returns true the first time.
  */
 export function arriveIn(s: GameState, region: string): boolean {
   const first = !s.world.discovered.includes(region);
@@ -306,7 +324,7 @@ export function arriveIn(s: GameState, region: string): boolean {
   s.world.region = region;
   if (first) s.world.discovered.push(region);
   if (!s.flags.includes(`reached:${region}`)) s.flags.push(`reached:${region}`);
-  if (changed && boardOpen(s)) refreshBoard(s);
+  if (changed && boardOpen(s)) localiseBoard(s);
   return first;
 }
 

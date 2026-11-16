@@ -220,7 +220,40 @@ describe('notice board', () => {
     expect(species).toBeGreaterThan(50);
   });
 
-  it('has the work of the waters the keeper is in: untaken jobs change on arrival, taken ones are kept', () => {
+  it('the goal is work in the waters the keeper is in before anybody across the fog', () => {
+    const s = newGame(31);
+    const before = (id: string) => QUESTS.slice(0, QUESTS.findIndex((q) => q.id === id)).map((q) => q.id);
+    // The lamp bought and the Fen reached without a word to Pell: his job waits at home, and Calloway has
+    // nothing for a stranger, so home is where the goal points.
+    s.quests.done.push(...before('hb-11-lamp'));
+    s.quests.active['hb-11-lamp'] = {};
+    s.echoUpgrades['fog-lamp'] = 1;
+    expect(questStatus(s, 'hb-11-lamp')).toBe('ready');
+    arriveIn(s, 'mossglass-fen');
+    expect(questStatus(s, 'fen-01-scale')).toBe('locked');
+    expect(currentGoal(s)).toMatchObject({ npc: 'pell' });
+    // Pell told, his errand taken and run: it is handed to Calloway, here.
+    arriveIn(s, 'hearthbay');
+    expect(turnIn(s, 'hb-11-lamp')).not.toBeNull();
+    expect(accept(s, 'hb-12-road')).toBe(true);
+    onQuestEvent(s, { type: 'visit', place: 'sedge-landing' });
+    expect(currentGoal(s)).toMatchObject({ npc: 'calloway' });
+    arriveIn(s, 'mossglass-fen');
+    expect(currentGoal(s)).toMatchObject({ npc: 'calloway' });
+    expect(turnIn(s, 'hb-12-road')).not.toBeNull();
+    expect(currentGoal(s)).toMatchObject({ npc: 'calloway', text: 'Talk to Dr. Ines Calloway' });
+    // With a Fen job under way, a job that has come ready for somebody in Hearthbay does not take the goal
+    // (or the compass) away from it; at home it comes first again.
+    expect(accept(s, 'fen-01-scale')).toBe(true);
+    s.quests.done = s.quests.done.filter((id) => id !== 'hb-p1-pots');
+    s.quests.active['hb-p1-pots'] = { 0: 99 };
+    expect(questStatus(s, 'hb-p1-pots')).toBe('ready');
+    expect(currentGoal(s).text).toContain('A Sense of Scale');
+    arriveIn(s, 'hearthbay');
+    expect(currentGoal(s)).toMatchObject({ npc: 'mara' });
+  });
+
+  it('has the work of the waters the keeper is in: untaken jobs are read again on arrival, taken ones are kept, and nothing is re-rolled', () => {
     const s = newGame(21);
     s.flags.push('board-open');
     refreshBoard(s);
@@ -228,14 +261,19 @@ describe('notice board', () => {
     expect(fishOf('hearthbay')).toBe(true);
     const taken = s.quests.board.quests[0];
     acceptBoard(s, taken.id);
-    const serial = s.quests.board.serial;
+    const serial = s.quests.board.serial, home = JSON.stringify(s.quests.board), kinds = () => s.quests.board.quests.map((q) => `${q.id}:${q.objective.type}`).join();
+    const kindsHome = kinds();
+    s.quests.board.timer = 123;
     expect(arriveIn(s, 'mossglass-fen')).toBe(true);
     expect(s.world.region).toBe('mossglass-fen');
     expect(s.world.discovered).toContain('mossglass-fen');
     expect(s.flags).toContain('reached:mossglass-fen');
     expect(s.quests.board.quests.length).toBe(BOARD.slots);
     expect(s.quests.board.quests.find((q) => q.id === taken.id)?.accepted).toBe(true);
-    expect(s.quests.board.serial).toBe(serial + BOARD.slots - 1);
+    // The same jobs, of the same kinds, with the board's clock where it was: a crossing is not a new board.
+    expect(s.quests.board.serial).toBe(serial);
+    expect(kinds()).toBe(kindsHome);
+    expect(s.quests.board.timer).toBe(123);
     expect(fishOf('mossglass-fen')).toBe(true);
     // Coming again is not a first time, and arriving where she already is changes nothing.
     const before = JSON.stringify(s.quests.board);
@@ -243,6 +281,10 @@ describe('notice board', () => {
     expect(JSON.stringify(s.quests.board)).toBe(before);
     expect(arriveIn(s, 'hearthbay')).toBe(false);
     expect(fishOf('hearthbay')).toBe(true);
+    // There and back, as often as she likes, is the board she left.
+    for (let i = 0; i < 5; i++) { arriveIn(s, 'mossglass-fen'); arriveIn(s, 'hearthbay'); }
+    s.quests.board.timer = JSON.parse(home).timer;
+    expect(JSON.stringify(s.quests.board)).toBe(home);
     expect(s.flags.filter((f) => f === 'reached:mossglass-fen').length).toBe(1);
     // Before the board is open there is nothing to change.
     const fresh = newGame(22);

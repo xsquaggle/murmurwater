@@ -66,9 +66,33 @@ describe('the ground', () => {
     expect(stepped.land).toBe(whole.land);
     expect(stepped.bed).toBe(whole.bed);
     expect(turns).toBeGreaterThan(300);
-    // No single turn is a pause anyone would see (the meshes themselves are the longest).
-    expect(longest).toBeLessThan(120);
+    expect(longest).toBeLessThan(50);
+    // The sphere round each mesh is reckoned, not measured: it must still hold every corner.
+    for (const m of [r.value.mesh, ...(r.value.mesh.children as Mesh[])]) {
+      const sphere = m.geometry.boundingSphere!, p = m.geometry.getAttribute('position');
+      let worst = 0;
+      for (let i = 0; i < p.count; i++) worst = Math.max(worst, Math.hypot(p.getX(i) - sphere.center.x, p.getY(i) - sphere.center.y, p.getZ(i) - sphere.center.z));
+      expect(worst).toBeLessThanOrEqual(sphere.radius);
+      expect(sphere.radius).toBeLessThan(region.radius * 1.6);
+    }
   }, 60000);
+
+  // The cells the game really uses (renderer.ts: low 4, medium 2.5, high 2). The boat is under way while this
+  // runs, so one turn has to fit inside a frame with room to spare. A turn or two may be caught by the
+  // machine doing something else, so the third longest is the one held to a frame.
+  for (const cell of [4, 2.5, 2]) {
+    it(`no turn of the work is a pause anyone would see, at a cell of ${cell} m`, () => {
+      const region = REGIONS_BY_ID.get('mossglass-fen')!;
+      const steps = terrainSteps(new Heightfield(region), cell, lookOf(region.grade).terrain);
+      const times: number[] = [];
+      let r = steps.next();
+      while (!r.done) { const t0 = performance.now(); r = steps.next(); times.push(performance.now() - t0); }
+      times.sort((a, b) => b - a);
+      expect(times.length).toBeGreaterThan(900);
+      expect(times[2]).toBeLessThan(16);
+      expect(times[0]).toBeLessThan(50);
+    }, 60000);
+  }
 
   it('is made ready ahead of a crossing, and handed over once', () => {
     const prep = new RegionPrep(), fen = REGIONS_BY_ID.get('mossglass-fen')!;
@@ -96,5 +120,9 @@ describe('the ground', () => {
     expect(regionAhead(r.between[0], ...mid(0.2))).toBe(r.between[1]);
     expect(regionAhead(r.between[1], ...mid(0.8))).toBe(r.between[0]);
     expect(regionAhead(r.between[0], 0, 0)).toBeNull();
+    // Pointing back the way she came, she is bound for nowhere.
+    const out = Math.atan2(r.b[0] - r.a[0], r.b[1] - r.a[1]);
+    expect(regionAhead(r.between[0], ...mid(0.2), out)).toBe(r.between[1]);
+    expect(regionAhead(r.between[0], ...mid(0.2), out + Math.PI)).toBeNull();
   });
 });

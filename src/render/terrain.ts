@@ -5,7 +5,7 @@
  */
 import {
   BufferAttribute, BufferGeometry, Color, DataTexture, DataUtils, HalfFloatType, LinearFilter, ClampToEdgeWrapping,
-  Mesh, MeshStandardMaterial, RedFormat, Vector4,
+  Mesh, MeshStandardMaterial, RedFormat, Sphere, Vector3, Vector4,
 } from 'three';
 import { Heightfield } from '../core/world';
 import { Noise2D } from '../core/noise';
@@ -64,6 +64,8 @@ vec3 mw_groundDetail(vec3 wp, vec2 surf, float dist) {
 const BED_TOP = -0.3;
 /** Blocks of this many cells a side are drawn as one fan where the bed is well under water and nearly level. */
 const BLOCK = 4, BED_FLAT_TOP = -1.2;
+/** The stepped build: faces to a block of memory, faces made in one turn, and blocks copied in one turn. */
+const CHUNK = 4096, TURN_FACES = 400, COPY_CHUNKS = 8;
 /** How far a block's bed may rise and fall and still be drawn as a fan: more, the deeper it lies. */
 const flatEnough = (lo: number, hi: number) => hi - lo < 0.35 + 0.3 * -hi;
 
@@ -78,9 +80,10 @@ export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = look
 }
 
 /**
- * The same build a little at a time: each `next()` does a row or so of the work (well under a millisecond,
- * but for the last few, which make the meshes), so a region can be made ready over many frames while the
- * boat is still in the fog on her way to it.
+ * The same build a little at a time: each `next()` does a row of the lattice or a few hundred faces (a
+ * millisecond or two at the finest ground), so a region can be made ready over many frames while the boat is
+ * still in the fog on her way to it. Nothing here does a whole mesh's worth of work in one turn: faces are
+ * written into blocks of typed memory as they are made and copied out a few blocks at a time.
  */
 export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = lookOf('amber').terrain): Generator<void, TerrainBuild, void> {
   const r = hf.region;
@@ -93,6 +96,7 @@ export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = loo
   const vx = new Float32Array((n + 1) * (n + 1));
   const vz = new Float32Array((n + 1) * (n + 1));
   const vy = new Float32Array((n + 1) * (n + 1));
+  let yLo = Infinity, yHi = -Infinity;
   for (let j = 0; j <= n; j++) {
     for (let i = 0; i <= n; i++) {
       const k = j * (n + 1) + i;
@@ -100,7 +104,10 @@ export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = loo
       const jx = edge ? 0 : (hash2(i, j) - 0.5) * cell * 0.62;
       const jz = edge ? 0 : (hash2(j + 91, i + 17) - 0.5) * cell * 0.62;
       const x = minX + i * cell + jx, z = minZ + j * cell + jz;
-      vx[k] = x; vz[k] = z; vy[k] = hf.height(x, z);
+      const y = hf.height(x, z);
+      vx[k] = x; vz[k] = z; vy[k] = y;
+      if (y < yLo) yLo = y;
+      if (y > yHi) yHi = y;
     }
     yield;
   }
@@ -116,7 +123,7 @@ export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = loo
       const l = Math.hypot(gx, 1, gz);
       vn[k * 3] = -gx / l; vn[k * 3 + 1] = 1 / l; vn[k * 3 + 2] = -gz / l;
     }
-    if (j % 32 === 31) yield;
+    if (j % 8 === 7) yield;
   }
 
   const sand = new Color(look.sand);
@@ -135,16 +142,21 @@ export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = loo
   const dirt = new Color('#A88A66'), dirtLight = new Color('#BFA27A');
 
   // Two meshes of the same stuff: the land, which throws shadows, and the bed under the water, which does not.
-  interface Soup { positions: number[]; normals: number[]; colors: number[]; /** Per face: (cobble weight, dirt weight) for the close-up ground detail in the shader. */ surfs: number[] }
-  const soup = (): Soup => ({ positions: [], normals: [], colors: [], surfs: [] });
+  // Faces go straight into blocks of typed memory, CHUNK faces to a block, so no turn has to grow a long list
+  // or convert one.
+  interface Chunk { positions: Float32Array; normals: Float32Array; colors: Float32Array; /** Per face: (cobble weight, dirt weight) for the close-up ground detail in the shader. */ surfs: Float32Array }
+  interface Soup { chunks: Chunk[]; faces: number }
+  const soup = (): Soup => ({ chunks: [], faces: 0 });
   const land = soup(), bed = soup();
+  /** Faces made since the last pause. */
+  let made = 0;
   const c = new Color();
   const pushTri = (a: number, b: number, d: number) => {
     const ax = vx[a], ay = vy[a], az = vz[a];
     const bx = vx[b], by = vy[b], bz = vz[b];
     const dx = vx[d], dy = vy[d], dz = vz[d];
     if (ay < -18 && by < -18 && dy < -18) return; // hidden under opaque deep water
-    const { positions, normals, colors, surfs } = ay < BED_TOP && by < BED_TOP && dy < BED_TOP ? bed : land;
+    const into = ay < BED_TOP && by < BED_TOP && dy < BED_TOP ? bed : land;
     // Face normal
     const ux = bx - ax, uy = by - ay, uz = bz - az;
     const wx = dx - ax, wy = dy - ay, wz = dz - az;
@@ -183,12 +195,23 @@ export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = loo
     }
     const surf = hf.surfaceAt(cx, cz);
     const sw = surf.kind && cy > -0.2 ? surf.w : 0;
-    for (let t = 0; t < 3; t++) surfs.push(surf.kind === 'cobble' ? sw : 0, surf.kind === 'dirt' ? sw : 0);
     if (surf.kind && cy > -0.2) c.lerp(surf.kind === 'cobble' ? (hash2(cx * 3.1, cz * 1.7) > 0.5 ? cobble : cobbleDark) : (hash2(cx, cz * 2.3) > 0.6 ? dirtLight : dirt), surf.w * 0.92);
     c.multiplyScalar(jit);
-    positions.push(ax, ay, az, bx, by, bz, dx, dy, dz);
-    for (const k of [a, b, d]) normals.push(vn[k * 3], vn[k * 3 + 1], vn[k * 3 + 2]);
-    for (let t = 0; t < 3; t++) colors.push(c.r, c.g, c.b);
+    const f = into.faces % CHUNK;
+    if (f === 0) into.chunks.push({ positions: new Float32Array(CHUNK * 9), normals: new Float32Array(CHUNK * 9), colors: new Float32Array(CHUNK * 9), surfs: new Float32Array(CHUNK * 6) });
+    const { positions, normals, colors, surfs } = into.chunks[into.chunks.length - 1];
+    into.faces++; made++;
+    const o = f * 9, u = f * 6, cobbleW = surf.kind === 'cobble' ? sw : 0, dirtW = surf.kind === 'dirt' ? sw : 0;
+    positions[o] = ax; positions[o + 1] = ay; positions[o + 2] = az;
+    positions[o + 3] = bx; positions[o + 4] = by; positions[o + 5] = bz;
+    positions[o + 6] = dx; positions[o + 7] = dy; positions[o + 8] = dz;
+    normals[o] = vn[a * 3]; normals[o + 1] = vn[a * 3 + 1]; normals[o + 2] = vn[a * 3 + 2];
+    normals[o + 3] = vn[b * 3]; normals[o + 4] = vn[b * 3 + 1]; normals[o + 5] = vn[b * 3 + 2];
+    normals[o + 6] = vn[d * 3]; normals[o + 7] = vn[d * 3 + 1]; normals[o + 8] = vn[d * 3 + 2];
+    for (let t = 0; t < 3; t++) {
+      colors[o + t * 3] = c.r; colors[o + t * 3 + 1] = c.g; colors[o + t * 3 + 2] = c.b;
+      surfs[u + t * 2] = cobbleW; surfs[u + t * 2 + 1] = dirtW;
+    }
   };
   // A flat stretch of bed needs few faces. The lattice is cut into blocks of BLOCK cells a side; a block that
   // is all under water and nearly level is drawn as a fan about its middle, taking in the lattice points along
@@ -208,7 +231,7 @@ export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = loo
   const faceUp = (p: number, q: number, w: number) => (vz[q] - vz[p]) * (vx[w] - vx[p]) - (vx[q] - vx[p]) * (vz[w] - vz[p]) > sliver;
   const ring: number[] = [];
   for (let bj = 0; bj < nb; bj++) for (let bi = 0; bi < nb; bi++) {
-    if (bi === 0 && bj > 0) yield;
+    if (made >= TURN_FACES || (bi === 0 && bj % 8 === 7)) { made = 0; yield; }
     const i0 = bi * BLOCK, j0 = bj * BLOCK;
     if (!flat[bj * nb + bi]) {
       for (let j = j0; j < Math.min(n, j0 + BLOCK); j++) for (let i = i0; i < Math.min(n, i0 + BLOCK); i++) {
@@ -233,18 +256,24 @@ export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = loo
     const mid = at2(i0 + BLOCK / 2, j0 + BLOCK / 2);
     for (let k = 0; k < ring.length; k++) pushTri(mid, ring[k], ring[(k + 1) % ring.length]);
   }
-  // Packing a few hundred thousand faces takes a moment for each attribute: one a turn.
+  // The blocks are copied into one stretch of memory for each attribute, a few blocks a turn. The sphere round
+  // the mesh is worked out from the lattice, which is known, not by going over every corner again.
+  const sphere = new Sphere(new Vector3(r.center[0], (yLo + yHi) / 2, r.center[1]), Math.hypot(half, half, (yHi - yLo) / 2) + cell);
   const toGeo = function* (s: Soup): Generator<void, BufferGeometry, void> {
     const geo = new BufferGeometry();
-    geo.setAttribute('position', new BufferAttribute(new Float32Array(s.positions), 3)); s.positions = [];
-    yield;
-    geo.setAttribute('color', new BufferAttribute(new Float32Array(s.colors), 3)); s.colors = [];
-    yield;
-    geo.setAttribute('normal', new BufferAttribute(new Float32Array(s.normals), 3)); s.normals = [];
-    yield;
-    geo.setAttribute('aSurf', new BufferAttribute(new Float32Array(s.surfs), 2)); s.surfs = [];
-    yield;
-    geo.computeBoundingSphere();
+    for (const [name, key, size] of [['position', 'positions', 3], ['color', 'colors', 3], ['normal', 'normals', 3], ['aSurf', 'surfs', 2]] as const) {
+      const out = new Float32Array(s.faces * 3 * size);
+      yield;
+      for (let k = 0; k < s.chunks.length; k++) {
+        const from = s.chunks[k][key], at = k * CHUNK * 3 * size, left = out.length - at;
+        out.set(left < from.length ? from.subarray(0, left) : from, at);
+        if (k % COPY_CHUNKS === COPY_CHUNKS - 1) yield;
+      }
+      geo.setAttribute(name, new BufferAttribute(out, size));
+      yield;
+    }
+    s.chunks = [];
+    geo.boundingSphere = sphere.clone();
     return geo;
   };
 
@@ -280,7 +309,7 @@ export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = loo
   mesh.receiveShadow = true;
   mesh.castShadow = true;
   yield;
-  if (bed.positions.length) {
+  if (bed.faces) {
     const under = new Mesh(yield* toGeo(bed), material);
     under.receiveShadow = true;
     mesh.add(under);

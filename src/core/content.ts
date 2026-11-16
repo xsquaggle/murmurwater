@@ -17,6 +17,7 @@ export interface FishDef {
   id: string; name: string; rarity: Rarity; region: string; zones: string[];
   baseValue: number; weight: [number, number]; /** typical nose-to-tail length in metres (models are scaled to it) */ length: number; fight: FightStats; biteWindow: number;
   hours?: [number, number]; requires?: string; lore: string;
+  /** The journal's riddle for a fish that `requires` something, shown until that has happened. */ hint?: string;
 }
 export interface RodDef {
   id: string; name: string; tier: number; rarity: string; price: number;
@@ -27,7 +28,7 @@ export interface BaitDef {
   id: string; name: string; price: number; biteSpeed: number; affinity: Record<string, number>; rarityBoost?: number; /** What it is for, in a few words (the shop). */ blurb: string; desc: string;
   /** A flag the shelf waits for before it stocks this. */ from?: string;
 }
-export interface ZoneDef { id: string; name: string; x: number; z: number; r: number; priority: number }
+export interface ZoneDef { id: string; name: string; x: number; z: number; r: number; priority: number; /** For the journal: "off the dock", "in the Sump". */ hint?: string }
 /**
  * A spot in the world the player can interact with (quest targets, stalls, the ferry). One with a `prompt` is
  * something to look at: doing so shows its `text` a line at a time, sets `flag` if it has one, and counts as a visit.
@@ -87,13 +88,36 @@ export function fish(id: string): FishDef { const f = FISH_BY_ID.get(id); if (!f
 export function rod(id: string): RodDef { const r = RODS_BY_ID.get(id); if (!r) throw new Error(`Unknown rod ${id}`); return r; }
 export function bait(id: string): BaitDef { const b = BAITS_BY_ID.get(id); if (!b) throw new Error(`Unknown bait ${id}`); return b; }
 
-/** The highest-priority zone containing (x, z) in a region, or null if none. */
+/** A region's open water: its widest, lowest-priority zone. */
+export function openZone(region: RegionContent): ZoneDef | null {
+  let open: ZoneDef | null = null;
+  for (const zn of region.zones) if (!open || zn.priority < open.priority || (zn.priority === open.priority && zn.r > open.r)) open = zn;
+  return open;
+}
+
+/**
+ * The highest-priority zone containing (x, z) in a region. Past every zone's rim (a sea-road runs out beyond
+ * the region's edge) the water is still the region's open water: never "no zone", which the fishing rules
+ * would read as every fish of the region.
+ */
 export function zoneAt(region: RegionContent, x: number, z: number): ZoneDef | null {
   let best: ZoneDef | null = null;
   for (const zn of region.zones) {
     if (Math.hypot(x - zn.x, z - zn.z) <= zn.r && (!best || zn.priority > best.priority)) best = zn;
   }
-  return best;
+  return best ?? openZone(region);
+}
+
+/**
+ * The journal's line for a fish not yet caught: its home water (the first zone it is listed in) and when it is
+ * about. A fish that waits on something keeps its own riddle until that thing has happened.
+ */
+export function fishHint(f: FishDef, flags: readonly string[]): string {
+  if (f.requires && !flags.includes(f.requires)) return f.hint ?? 'Something is waiting.';
+  const zone = REGIONS_BY_ID.get(f.region)?.zones.find((z) => z.id === f.zones[0]);
+  const hr = (h: number) => (h % 24 === 0 ? 'midnight' : h === 12 ? 'noon' : `${h}:00`);
+  const time = f.hours ? (f.hours[0] > f.hours[1] ? ' after dark' : ` between ${hr(f.hours[0])} and ${hr(f.hours[1])}`) : '';
+  return `Bites ${zone?.hint ?? 'in open water'}${time}`;
 }
 
 /** Is this on the shelf yet? Goods from further waters wait until the keeper has been there. */
@@ -130,20 +154,36 @@ export function roadsOpen(region: string, x: number, z: number): number {
   return best;
 }
 
-/** The region the sea-road under (x, z) leads to from `region`, or null off the roads: where she is bound. */
-export function regionAhead(region: string, x: number, z: number): string | null {
+/**
+ * The region the sea-road under (x, z) leads to from `region`, or null off the roads: where she is bound.
+ * Given a heading, only a boat pointing along the road toward that region is bound for it (one that has just
+ * come through, or has turned for home, is not).
+ */
+export function regionAhead(region: string, x: number, z: number, heading?: number): string | null {
   for (const r of ROADS) {
     const i = r.between.indexOf(region);
     if (i < 0) continue;
     const p = roadPoint(r, x, z);
-    if (p.off <= r.halfWidth * 1.5 && p.along >= -0.05 && p.along <= 1.05) return r.between[1 - i];
+    if (p.off > r.halfWidth * 1.5 || p.along < -0.05 || p.along > 1.05) continue;
+    if (heading !== undefined) {
+      const toward = i === 0 ? 1 : -1;
+      if ((Math.sin(heading) * (r.b[0] - r.a[0]) + Math.cos(heading) * (r.b[1] - r.a[1])) * toward <= 0) continue;
+    }
+    return r.between[1 - i];
   }
   return null;
 }
 
 /**
+ * How far past half way (as a share of the road) a boat must be before the region changes. A little, so that
+ * a boat turning about on the line does not change waters with every yard: coming back, she must cross it by
+ * as much again.
+ */
+export const SWAP_BAND = 0.015;
+
+/**
  * The region a boat on a sea-road has crossed into, or null while it is still in `region`: the change is made
- * half way along the road, in the thick of the fog.
+ * just past half way along the road (`SWAP_BAND`), in the thick of the fog.
  */
 export function regionAcross(region: string, x: number, z: number): string | null {
   for (const r of ROADS) {
@@ -151,7 +191,7 @@ export function regionAcross(region: string, x: number, z: number): string | nul
     if (i < 0) continue;
     const p = roadPoint(r, x, z);
     if (p.off > r.halfWidth || p.along < 0 || p.along > 1) continue;
-    if (i === 0 ? p.along > 0.5 : p.along < 0.5) return r.between[1 - i];
+    if (i === 0 ? p.along > 0.5 + SWAP_BAND : p.along < 0.5 - SWAP_BAND) return r.between[1 - i];
   }
   return null;
 }
@@ -179,8 +219,10 @@ export function regionAt(x: number, z: number): string | null {
 }
 /** The region an NPC stands in (the first that has a spot for them). */
 export function regionOfNpc(id: string): string | null { return REGIONS.find((r) => (r.npcSpots ?? []).some((n) => n.npc === id))?.id ?? null; }
-/** The region a named place lies in. */
-export function regionOfPlace(id: string): string | null { return REGIONS.find((r) => (r.places ?? []).some((p) => p.id === id))?.id ?? null; }
+/** The region a named place lies in: somewhere to look at, or a place on the chart. */
+export function regionOfPlace(id: string): string | null {
+  return REGIONS.find((r) => (r.places ?? []).some((p) => p.id === id) || (r.chart ?? []).some((c) => c.id === id))?.id ?? null;
+}
 /** The region a mooring lies in, with the mooring. */
 export function findMooring(id: string): { region: RegionContent; mooring: MooringDef } | null {
   for (const region of REGIONS) { const mooring = (region.moorings ?? []).find((m) => m.id === id); if (mooring) return { region, mooring }; }
