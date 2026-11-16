@@ -68,7 +68,7 @@ export const emit = async (m, R, atlas, args, { size = atlas[0] === atlas[1] ? a
 };
 
 export class Part {
-  constructor(name, { node = 'root', material = 'main', crease = 40, shade = 1, xf = ident } = {}) { Object.assign(this, { name, node, material, crease, shade, xf, tris: [] }); }
+  constructor(name, { node = 'root', material = 'main', crease = 40, shade = 1, xf = ident, bind = null } = {}) { Object.assign(this, { name, node, material, crease, shade, xf, bind, tris: [] }); }      // bind: for a model with a skeleton (see Model.skeleton)
   /** One triangle, counter-clockwise seen from outside. Corners are [position, uv in pixels, shade?]. */
   tri(a, b, c) { this.tris.push([a, b, c].map(([p, uv, s]) => ({ p: this.xf(p), uv, s: (s ?? 1) * this.shade }))); return this; }
   /** A quad a-b-c-d, counter-clockwise seen from outside. */
@@ -150,6 +150,8 @@ export class Model {
   empty(name, at, parent = 'root') { this.empties.push({ name, at, parent }); return this; }
   /** kind 'texture' (the atlas) or 'plain' ({ color: [r, g, b] in linear 0..1 }); emissive: [r, g, b] factor; glow: true gives it an emissive texture: the model's glow map if write() gets one, else the atlas. */
   material(name, def) { this.materials.set(name, def); return this; }
+  /** A skeleton: { joints: [{ name, parent, t, r, s, ibm }] } in order, parents first (dump-skeleton.mjs writes one). The model is then one skinned mesh, and every part needs a bind: a joint's name, or a function of a point giving [[joint, weight], ...]. */
+  skeleton(rig) { this.rig = rig; return this; }
 
   async write(out, { texture, glowTexture = null, glowSize = null, size = 1024, atlas = [1024, 1024], quality = 90 } = {}) {
     const doc = new Document(); doc.createExtension(EXTTextureWebP).setRequired(true); const buf = doc.createBuffer();
@@ -168,6 +170,13 @@ export class Model {
       mats.set(name, m);
     }
     const scene = doc.createScene(this.name); const gn = new Map(); const stats = { nodes: {}, tris: 0, verts: 0 };
+    const rig = this.rig || null, jix = rig ? new Map(rig.joints.map((j, i) => [j.name, i])) : null;
+    const weightsOf = (part, p) => {                                                     // the four heaviest joints of a corner, weights summing to 1
+      const b = part.bind; if (!b) throw new Error(`part ${part.name} has no bind`);
+      let w = (typeof b === 'string' ? [[b, 1]] : b(p)).filter(([, x]) => x > 1e-4).sort((a, c) => c[1] - a[1]).slice(0, 4); const tot = w.reduce((t, [, x]) => t + x, 0);
+      const J4 = [0, 0, 0, 0], W4 = [0, 0, 0, 0]; w.forEach(([j, x], i) => { if (!jix.has(j)) throw new Error(`part ${part.name}: no joint ${j}`); J4[i] = jix.get(j); W4[i] = Math.round(x / tot * 1e4) / 1e4; });
+      W4[0] += 1 - (W4[0] + W4[1] + W4[2] + W4[3]); return [J4, W4];
+    };
     const world = (name) => { const n = this.nodes.get(name); return n.pivot; };
     for (const [name, n] of this.nodes) { const g = doc.createNode(name === 'root' ? this.name : name); gn.set(name, g); }
     for (const [name, n] of this.nodes) { if (n.parent === null) scene.addChild(gn.get(name)); else { gn.get(n.parent).addChild(gn.get(name)); gn.get(name).setTranslation(sub(n.pivot, world(n.parent))); } }
@@ -176,7 +185,7 @@ export class Model {
       const parts = this.parts.filter(p => p.node === nodeName); if (!parts.length) continue;
       const mesh = doc.createMesh(nodeName === 'root' ? this.name : nodeName); const pivot = world(nodeName); let nodeTris = 0;
       for (const matName of new Set(parts.map(p => p.material))) {
-        const P = [], N = [], UV = [], COL = [], I = [], index = new Map(); const textured = this.materials.get(matName).kind === 'texture';
+        const P = [], N = [], UV = [], COL = [], I = [], JN = [], WT = [], index = new Map(); const textured = this.materials.get(matName).kind === 'texture';
         for (const part of parts.filter(p => p.material === matName)) {
           const tris = part.tris.filter(t => len(cross(sub(t[1].p, t[0].p), sub(t[2].p, t[0].p))) > 1e-10);
           const fn = tris.map(t => cross(sub(t[1].p, t[0].p), sub(t[2].p, t[0].p)));       // area-weighted face normals
@@ -187,17 +196,25 @@ export class Model {
             const me = norm(fn[f]); let n = [0, 0, 0];
             for (const g of at.get(key(c.p))) if (dot(me, norm(fn[g])) >= cosC) n = add(n, fn[g]);
             n = norm(n); const p = sub(c.p, pivot), uv = [c.uv[0] / atlas[0], c.uv[1] / atlas[1]];
-            const k = [...p, ...n, ...uv, c.s].map(v => Math.round(v * 1e4)).join(',');
-            let i = index.get(k); if (i === undefined) { i = P.length / 3; index.set(k, i); P.push(...p); N.push(...n); UV.push(...uv); COL.push(c.s, c.s, c.s, 1); }
+            const jw = rig ? weightsOf(part, c.p) : null;
+            const k = [...p, ...n, ...uv, c.s].map(v => Math.round(v * 1e4)).join(',') + (jw ? '|' + jw[0].join(',') + '|' + jw[1].join(',') : '');
+            let i = index.get(k); if (i === undefined) { i = P.length / 3; index.set(k, i); P.push(...p); N.push(...n); UV.push(...uv); COL.push(c.s, c.s, c.s, 1); if (jw) { JN.push(...jw[0]); WT.push(...jw[1]); } }
             I.push(i); for (let q = 0; q < 3; q++) { lo[q] = Math.min(lo[q], c.p[q]); hi[q] = Math.max(hi[q], c.p[q]); }
           }));
         }
         const prim = doc.createPrimitive().setMaterial(mats.get(matName)).setIndices(acc(I, 'SCALAR', P.length / 3 > 65535 ? Uint32Array : Uint16Array)).setAttribute('POSITION', acc(P, 'VEC3')).setAttribute('NORMAL', acc(N, 'VEC3'));
         if (textured) prim.setAttribute('TEXCOORD_0', acc(UV, 'VEC2'));
         if (COL.some((v, i) => i % 4 < 3 && v < 0.999)) prim.setAttribute('COLOR_0', acc(COL, 'VEC4'));
+        if (rig) prim.setAttribute('JOINTS_0', acc(JN, 'VEC4', Uint8Array)).setAttribute('WEIGHTS_0', acc(WT, 'VEC4'));
         mesh.addPrimitive(prim); nodeTris += I.length / 3; stats.verts += P.length / 3;
       }
-      gn.get(nodeName).setMesh(mesh); stats.nodes[nodeName] = nodeTris; stats.tris += nodeTris;
+      if (rig) {                                                                        // a skinned mesh: a node of its own beside the skeleton, as the generated characters have it
+        const jn = rig.joints.map((j) => doc.createNode(j.name).setTranslation(j.t).setRotation(j.r).setScale(j.s)), skin = doc.createSkin(this.name);
+        rig.joints.forEach((j, i) => { (j.parent ? jn[jix.get(j.parent)] : gn.get('root')).addChild(jn[i]); skin.addJoint(jn[i]); });
+        skin.setSkeleton(jn[0]).setInverseBindMatrices(acc(rig.joints.flatMap((j) => j.ibm), 'MAT4'));
+        const mn = doc.createNode(this.name + '-mesh').setMesh(mesh).setSkin(skin); gn.get('root').addChild(mn);
+      } else gn.get(nodeName).setMesh(mesh);
+      stats.nodes[nodeName] = nodeTris; stats.tris += nodeTris;
     }
     for (const e of this.empties) { const n = doc.createNode(e.name).setTranslation(sub(e.at, world(e.parent))); gn.get(e.parent).addChild(n); }
     await new NodeIO().registerExtensions([EXTTextureWebP]).write(out, doc);
