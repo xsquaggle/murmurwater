@@ -2696,5 +2696,305 @@
   "loud100_db": -16.7,
   "bytes": 102879,
   "rotated": 0
+ },
+ {
+  "name": "fog-lamp-light_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "themightyglider",
+    "file": "flame_0.ogg",
+    "speed": 0.6
+   },
+   {
+    "kind": "synth",
+    "what": "one ringing note of struck glass (F sharp 6: a tone with the upper partials of glass, each a pair a hertz or two apart, a tick at the start and a short tail of room), 0.16 s after the start"
+   }
+  ],
+  "how": "the whoomp is a recorded flame catching, played at 0.6 of its speed with everything above 1800 Hz taken off; the ring is synthesised in sfx_fen.py",
+  "file": "fog-lamp-light_1.ogg",
+  "seconds": 1.283,
+  "samples": 56582,
+  "decoded": 56582,
+  "peak_db": -7.3,
+  "loud100_db": -17.1,
+  "bytes": 11238
+ },
+ {
+  "name": "sea-road-chime_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "one far note of a glass bell (A5): a soft-struck tone with the faint upper partials of glass, each a pair a fraction of a hertz apart, its top taken off by distance, and a diffuse tail"
+   }
+  ],
+  "how": "synthesised in sfx_fen.py; the three notes are A, B and D, which sit on the open fifth of the murmur",
+  "file": "sea-road-chime_1.ogg",
+  "seconds": 1.604,
+  "samples": 70736,
+  "decoded": 70736,
+  "peak_db": -17.4,
+  "loud100_db": -21.9,
+  "bytes": 9338
+ },
+ {
+  "name": "sea-road-chime_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "one far note of a glass bell (B5): a soft-struck tone with the faint upper partials of glass, each a pair a fraction of a hertz apart, its top taken off by distance, and a diffuse tail"
+   }
+  ],
+  "how": "synthesised in sfx_fen.py; the three notes are A, B and D, which sit on the open fifth of the murmur",
+  "file": "sea-road-chime_2.ogg",
+  "seconds": 1.604,
+  "samples": 70736,
+  "decoded": 70736,
+  "peak_db": -18.3,
+  "loud100_db": -21.9,
+  "bytes": 8574
+ },
+ {
+  "name": "sea-road-chime_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "one far note of a glass bell (D6): a soft-struck tone with the faint upper partials of glass, each a pair a fraction of a hertz apart, its top taken off by distance, and a diffuse tail"
+   }
+  ],
+  "how": "synthesised in sfx_fen.py; the three notes are A, B and D, which sit on the open fifth of the murmur",
+  "file": "sea-road-chime_3.ogg",
+  "seconds": 1.604,
+  "samples": 70736,
+  "decoded": 70736,
+  "peak_db": -18.4,
+  "loud100_db": -21.9,
+  "bytes": 8342
+ },
+ {
+  "name": "fog-cross_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rustltd-wind",
+    "file": "wind3.wav",
+    "cut": [
+     21.0,
+     25.7
+    ]
+   },
+   {
+    "kind": "synth",
+    "what": "the murmur of murmur_1 (ten humming voices on an open fifth of D) under it"
+   }
+  ],
+  "how": "recorded wind between 90 and 1100 Hz, swelling over two seconds and falling over two and a half; the murmur comes in half a second later and goes with it",
+  "file": "fog-cross_1.ogg",
+  "seconds": 4.704,
+  "samples": 207446,
+  "decoded": 207446,
+  "peak_db": -9.2,
+  "loud100_db": -20.1,
+  "bytes": 36118
+ },
+ {
+  "name": "packet-box_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "metalLatch.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_misc_06.ogg",
+    "speed": 0.75
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     2.92,
+     3.62
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "amarikah-gold",
+    "file": "gold_sack.wav",
+    "cut": [
+     0.86,
+     1.72
+    ]
+   }
+  ],
+  "how": "a latch and the knock of the lid (played slower, so it is a heavier lid), a creak of rope from a creaking tree, and a sack of coins set down",
+  "file": "packet-box_1.ogg",
+  "seconds": 1.655,
+  "samples": 72998,
+  "decoded": 72998,
+  "peak_db": -0.9,
+  "loud100_db": -19.5,
+  "bytes": 24204
+ },
+ {
+  "name": "reed-brush_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-rustle",
+    "file": "rustle11.flac",
+    "speed": 0.8
+   },
+   {
+    "kind": "cc0",
+    "pack": "qubodup-rustle",
+    "file": "rustle16.flac",
+    "speed": 0.72
+   },
+   {
+    "kind": "cc0",
+    "pack": "qubodup-rustle",
+    "file": "rustle09.flac",
+    "speed": 0.8
+   },
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "swim.wav"
+   }
+  ],
+  "how": "three rustles of dry leaves, played slower and with their top taken off so that they are stalks and not leaves, one after another, over a soft wash of water",
+  "file": "reed-brush_1.ogg",
+  "seconds": 1.254,
+  "samples": 55301,
+  "decoded": 55301,
+  "peak_db": -1.6,
+  "loud100_db": -17.6,
+  "bytes": 16243
+ },
+ {
+  "name": "reed-brush_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-rustle",
+    "file": "rustle14.flac",
+    "speed": 0.75
+   },
+   {
+    "kind": "cc0",
+    "pack": "qubodup-rustle",
+    "file": "rustle19.flac",
+    "speed": 0.82
+   },
+   {
+    "kind": "cc0",
+    "pack": "qubodup-rustle",
+    "file": "rustle12.flac",
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "ezwa",
+    "file": "water_splash-03.flac"
+   }
+  ],
+  "how": "three rustles of dry leaves, played slower and with their top taken off so that they are stalks and not leaves, one after another, over a soft wash of water",
+  "file": "reed-brush_2.ogg",
+  "seconds": 1.254,
+  "samples": 55301,
+  "decoded": 55301,
+  "peak_db": -5.1,
+  "loud100_db": -17.8,
+  "bytes": 15030
+ },
+ {
+  "name": "fen-day_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rustltd-wind",
+    "file": "wind1.wav",
+    "cut": [
+     8.0,
+     44.0
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "lokif-swamp",
+    "file": "cricket_1.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "lokif-swamp",
+    "file": "cicada_1.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "lokif-swamp",
+    "file": "cicada_2.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "isaiah658-birds",
+    "file": "birds-isaiah658_0.ogg"
+   }
+  ],
+  "how": "a quiet bed of recorded wind; three frogs, each the same recorded chirps played at 0.72, 0.58 and 0.86 of their speed, calling in bouts, the far ones duller and with a tail; five swells of cicadas; seven single drips; a far bird three times. Everything is laid round a 36 s ring, so tails that pass the end come back in at the start",
+  "file": "fen-day_1.ogg",
+  "seconds": 36.0,
+  "samples": 1587600,
+  "decoded": 1587600,
+  "peak_db": -4.8,
+  "loud100_db": -17.0,
+  "bytes": 359973,
+  "rotated": 0
+ },
+ {
+  "name": "fen-night_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "wolfgang-crickets",
+    "file": "crickets_1.mp3"
+   },
+   {
+    "kind": "cc0",
+    "pack": "lokif-swamp",
+    "file": "cricket_1.ogg"
+   },
+   {
+    "kind": "synth",
+    "what": "the murmur of murmur_1 with everything above 420 Hz taken off, swelling once in the loop"
+   }
+  ],
+  "how": "a bed of recorded crickets, four times round the ring with 2 s crossfades; three frogs, the recorded chirps played at 0.42, 0.34 and 0.5 of their speed, so they are deep, calling in bouts; and, once in the loop, a far hum. 36 s, laid round a ring like the day loop",
+  "file": "fen-night_1.ogg",
+  "seconds": 36.0,
+  "samples": 1587600,
+  "decoded": 1587600,
+  "peak_db": -4.8,
+  "loud100_db": -17.4,
+  "bytes": 364905,
+  "rotated": 0
  }
 ]

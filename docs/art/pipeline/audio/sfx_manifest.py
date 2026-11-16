@@ -27,6 +27,12 @@ PACKS = {   # path prefix -> (short name, title, author, page)
     'oga/opening-and-closing-a-map-sounds/': ('springspring-map', 'Opening and Closing a Map Sounds', 'Spring Spring', OGA + 'opening-and-closing-a-map-sounds'),
     'oga/various-paper-sound-effects/': ('luckius-paper', 'Various Paper Sound Effects', 'Luckius', OGA + 'various-paper-sound-effects'),
     'oga/beach-ocean-waves/': ('jasinski-waves', 'Beach Ocean Waves', 'jasinski', OGA + 'beach-ocean-waves'),
+    'oga/swamp-environment-audio/': ('lokif-swamp', 'Swamp Environment Audio', 'LokiF', OGA + 'swamp-environment-audio'),
+    'oga/20-rustles-dry-leaves/': ('qubodup-rustle', '20 Rustles of dry leaves', 'qubodup', OGA + '20-rustles-dry-leaves'),
+    'oga/wind1/': ('rustltd-wind', 'wind1', 'Luke.RUSTLTD', OGA + 'wind1'),
+    'oga/crickets-ambient-noise-loopable/': ('wolfgang-crickets', 'Crickets Ambient Noise - loopable', 'Wolfgang_', OGA + 'crickets-ambient-noise-loopable'),
+    'oga/ambient-bird-sounds/': ('isaiah658-birds', 'Ambient Bird Sounds', 'isaiah658', OGA + 'ambient-bird-sounds'),
+    'oga/sack-of-gold/': ('amarikah-gold', 'Sack of Gold', 'Amarikah', OGA + 'sack-of-gold'),
 }
 BAM = 'oga/swish-bamboo-stick-weapon-swhoshes/swoshes.x/swosh-%02d.flac'
 FISH = 'oga/fisheefects/FisheefectsComplete.x/'
@@ -256,4 +262,8 @@ def build(B):
         sea = np.fft.irfft(spec, n); sea *= (0.55 + 0.45 * cyc(2, 0.13)) * (0.8 + 0.2 * cyc(5, 0.4))
         return y / np.abs(y).max() + 0.05 * air / np.abs(air).max() + 0.16 * sea / np.abs(sea).max()
     add('murmur_1', make=murmur, loop=True, lufs=-22, sources=[{'kind': 'synth', 'what': 'ten humming voices on an open fifth of D (D2, A2 and D3, each a few cents apart with a vibrato of its own, and one note that slides between A3 and B flat), with slowly changing vowels, over a breath of low noise'}], how='synthesised in sfx_manifest.py; every part runs a whole number of cycles in 11 s, so there is no seam')
+
+    # ---- Mossglass Fen: eight sounds and two ambience loops, in sfx_fen.py ----
+    import sfx_fen
+    sfx_fen.build(B, add, label, dict(DROPS=DROPS, DRIP=DRIP, FLAME=FLAME, KR=KR, WM=WM, TREE=TREE, SKIP=SKIP, EZWA=EZWA, murmur=murmur))
     return items

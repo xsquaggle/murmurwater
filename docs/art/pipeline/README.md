@@ -74,6 +74,9 @@ The scripts behind `public/audio/music/` and `public/audio/sfx/`. Setup: Python 
 | `loop.py` | Cut a seamless music loop: candidate start and end points on phrase boundaries, crossfade into the audio before the loop start, seam report. |
 | `master_music.py` | Loops and stings to -18 LUFS OGG Vorbis, checking that the decoded length is the length written; a sting can be transposed by playing it faster or slower. `master_music.py <name>` does one file. |
 | `sfx_manifest.py` | What every sound effect is made from: source file, cut, speed, layers, level. Also the pack list and the synthesised chime. |
+| `sfx_fen.py` | The Mossglass Fen sounds, called from the manifest: the Fog Lamp, the sea-road chimes, the crossing, the packet box, the reeds, and the two ambience loops, which are laid round a ring (a bed, and single events placed on it) and not cut from one recording. |
+| `fen_judge.py` | For the Fen sounds: tags, CLAP rank, how well a few other descriptions fit, and for a loop the tags and level of every six seconds. |
+| `unpack.py` | Unpack a downloaded `.zip` or `.7z` into `<name>.x/`, refusing paths that leave it. |
 | `sfx_build.py` | Builds every effect in the manifest: cut, layer, trim to the sound, level, encode, and write `index.json`. Output is byte-identical from run to run. |
 | `sfx_check.py`, `sfx-check.json` | CLAP rank and AudioSet tags of every finished effect. |
 | `loop_check.py` | Whether a loop's wrap point stands out from the rest of the loop. |
