@@ -62,25 +62,11 @@ P.shell(hull, R); P.backbone(wood, R); P.transom(wood, { out: R.transomOut, in: 
 P.rubrail(wood, R.rub); P.rail(wood, R.rail); P.ceiling(wood, R.ceiling); P.cockpit(wood, R); P.deck(wood, R); P.cuddy(wood, { side: R.cuddySide, end: R.cuddyEnd, roof: R.roof, eave: R.eave });
 P.hullMask(mask);
 
-// ---- helpers
-const disc = (part, c, e1, e2, r, sides, rect, { proud = 0, edge = null, flipU = false } = {}) => {            // a flat round face in the plane of e1 (to the right) and e2 (up)
-  const n = norm(cross(e1, e2)), at = (a, k = 1, d = proud) => add(add(c, mul(n, d)), add(mul(e1, k * r * Math.cos(a)), mul(e2, k * r * Math.sin(a)))), uv = (a, k = 1) => rect.at(0.5 + (flipU ? -0.5 : 0.5) * k * Math.cos(a), 0.5 + 0.5 * k * Math.sin(a));
-  for (let i = 0; i < sides; i++) { const a = 2 * Math.PI * (i + 0.5) / sides, b = 2 * Math.PI * (i + 1.5) / sides;
-    triToward(part, [at(0, 0), uv(0, 0)], [at(a), uv(a)], [at(b), uv(b)], n);
-    if (edge) quadToward(part, [at(a, 1, 0), edge.at(i / sides, 0)], [at(b, 1, 0), edge.at((i + 1) / sides, 0)], [at(b), edge.at((i + 1) / sides, 1)], [at(a), edge.at(i / sides, 1)], add(mul(e1, Math.cos((a + b) / 2)), mul(e2, Math.sin((a + b) / 2)))); }
-};
-const slabZY = (part, outline, w, side, edge, box) => {                                                          // a plate in the Y-Z plane, 2w thick: outline [[z, y], ...]
-  const c = outline.reduce((s, q) => [s[0] + q[0] / outline.length, s[1] + q[1] / outline.length], [0, 0]), uv = ([z, y]) => side.at((box.z1 - z) / (box.z1 - box.z0), (y - box.y0) / (box.y1 - box.y0)), N = outline.length;
-  for (let i = 0; i < N; i++) { const a = outline[i], b = outline[(i + 1) % N];
-    for (const sx of [1, -1]) triToward(part, [[sx * w, c[1], c[0]], uv(c)], [[sx * w, a[1], a[0]], uv(a)], [[sx * w, b[1], b[0]], uv(b)], [sx, 0, 0]);
-    const d = [b[0] - a[0], b[1] - a[1]], out = [0, d[0], -d[1]], mid = [(a[0] + b[0]) / 2 - c[0], (a[1] + b[1]) / 2 - c[1]], o = (out[2] * mid[0] + out[1] * mid[1]) >= 0 ? out : mul(out, -1);
-    quadToward(part, [[-w, a[1], a[0]], edge.at(0, i / N)], [[w, a[1], a[0]], edge.at(1, i / N)], [[w, b[1], b[0]], edge.at(1, (i + 1) / N)], [[-w, b[1], b[0]], edge.at(0, (i + 1) / N)], o); }
-};
-const all = (r) => ({ px: r, nx: r, py: r, ny: r, pz: r, nz: r });
+const { disc, slabZY, all } = P;                                  // flat round faces, plates in the Y-Z plane, one rectangle on every face of a box
 
 // ---- the rudder and the tiller (they turn together about the pintles)
-const RUD = { z0: ZT - 0.29, z1: ZT, y0: -0.6, y1: 0.66 };
-slabZY(til, [[ZT - 0.012, -0.57], [ZT - 0.27, -0.55], [ZT - 0.28, -0.05], [ZT - 0.22, 0.15], [ZT - 0.13, 0.40], [ZT - 0.115, TILLER_Y + 0.085], [ZT - 0.012, TILLER_Y + 0.085]], 0.028, R.rudder, R.rudderEdge, RUD);
+const RUD = P.RUDDER_BOX;
+slabZY(til, P.rudderOutline(TILLER_Y + 0.085), 0.028, R.rudder, R.rudderEdge, RUD);
 for (const y of [0.33, -0.01]) til.box([0, y, ZT - 0.075], [0.036, 0.022, 0.068], all(R.iron));
 for (const y of [0.33, -0.01]) fit.box([0, y, ZT - 0.004], [0.10, 0.022, 0.010], all(R.iron));                    // the gudgeons' straps on the transom
 const TPATH = [[PIVOT[2] - 0.035, TILLER_Y], [ZT + 0.14, TILLER_Y], [-2.12, TILLER_Y - 0.035], [-1.99, GRIP[1] + 0.05], [-1.90, GRIP[1] + 0.006], [GRIP[2] + 0.08, GRIP[1]], [GRIP[2] + 0.10, GRIP[1]]];

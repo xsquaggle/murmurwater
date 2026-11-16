@@ -1,5 +1,6 @@
 """boatmats.py : paint for boats that are built in code (puffin.mjs, build-puffin*.mjs): painted planking, a hull seen
-from the side in bands by height, a name board, a round badge with a puffin on it, a porthole, wickerwork, sailcloth.
+from the side in bands by height, a name board, a round badge with a puffin on it, a porthole, wickerwork, sailcloth;
+and for her wreck: any material after forty years in the weather (`aged`), a nest of reed, a moorhen's egg.
 mats.py adds these to its table, so a boat's layout names them like any other material.
 """
 import numpy as np
@@ -247,4 +248,59 @@ def sailcloth(H, W, seed=0, colour='#8E4B35', cloths=7, along='y', seam='#5E2F22
     return img
 
 
-BOAT = {'planked': planked, 'antifoul': antifoul, 'bands': bands, 'lettering': lettering, 'badge': badge, 'porthole': porthole, 'wicker': wicker, 'sailcloth': sailcloth}
+def _age(img, seed, v, algae=0.4, lichen=0.25, fade=0.3, low=0.5, droppings=0.0, tile_x=False):
+    """Forty years in the weather: colour gone grey-green, algae in blotches (more toward the patch's lower edge by
+    `low`) with runs below them, spots of ochre and pale lichen, and what birds leave from the top edge down."""
+    H, W = img.shape[:2]
+    grey = img.mean(axis=2, keepdims=True) * np.ones(3)
+    img = mix(img, mix(grey, hexc('#A4A694'), 0.5), fade)
+    n1 = stretch(fbm(H, W, max(2, H / 90), max(2, W / 90), seed + 21, 3, tile_x=tile_x))
+    runs = strokes(H, W, seed + 22, 'y', 6, 40, tile_x=tile_x)
+    a = smooth(n1 + low * (0.5 - v) * 1.2, 0.42, 0.85)
+    img = mix(img, hexc('#5E6E42'), algae * a * (0.55 + 0.45 * runs))
+    img = mix(img, hexc('#2F3A26'), 0.5 * algae * smooth(n1 + low * (0.5 - v), 0.80, 1.0))
+    if lichen:
+        k = lichen / 0.25
+        img = mix(img, hexc('#C2A248'), 0.80 * smooth(speckle(H, W, seed + 23, 0.0011 * k, (1.6, 3.4), tile_x=tile_x), 0.45, 0.75))
+        img = mix(img, hexc('#B4BBA2'), 0.60 * smooth(speckle(H, W, seed + 24, 0.0009 * k, (2.0, 4.0), tile_x=tile_x), 0.45, 0.75))
+    if droppings:
+        d = speckle(H, W, seed + 25, 0.0004 * droppings / 0.2, (1.6, 3.2), tile_x=tile_x)
+        run = np.maximum.accumulate(d * (np.random.default_rng(seed + 26).uniform(0.3, 1.0, (1, W)) > 0.5), axis=0) * np.exp(-np.cumsum(np.ones((H, 1)), axis=0) / (H * 0.5))
+        img = mix(img, hexc('#DCDACD'), 0.7 * smooth(np.maximum(d, 0.6 * run), 0.45, 0.75))
+    return img
+
+
+def aged(H, W, seed=0, of='wood', algae=0.4, lichen=0.25, fade=0.3, low=0.5, droppings=0.0, tile_x=False, **kw):
+    """Any other material (`of`, with its own options) after forty years in the weather: see _age."""
+    from mats import PAINT
+    img = PAINT[of](H, W, seed=seed, tile_x=tile_x, **kw)
+    return _age(img, seed, _grid(H, W)[2], algae, lichen, fade, low, droppings, tile_x)
+
+
+def nest(H, W, seed=0, tile_x=True, **_):
+    """A nest of reed: dead stems wound round and round (they run along x, a little every way), a few still green."""
+    rs = np.random.default_rng(seed)
+    img = hexc('#463824') * np.ones((H, W, 3))
+    img = shade(img, 0.85 + 0.3 * stretch(fbm(H, W, 4, 8, seed, tile_x=tile_x)))
+    for colour, n, width in (('#6E5A38', 70, 2.8), ('#9C8450', 90, 2.2), ('#C9B57A', 60, 1.7), ('#7C8A4A', 22, 1.8)):
+        lines = []
+        for _ in range(max(4, int(n * W * H / (256 * 128)))):
+            x, y, a, L = rs.uniform(0, W), rs.uniform(0, H), rs.normal(0, 0.32), rs.uniform(0.12, 0.34) * W
+            dx, dy, bend = np.cos(a) * L / 2, np.sin(a) * L / 2, rs.normal(0, 0.05) * L
+            pts = [(x - dx, y - dy), (x, y + bend), (x + dx, y + dy)]
+            lines += [pts, [(px - W, py) for px, py in pts], [(px + W, py) for px, py in pts]] if tile_x else [pts]
+        m = linemask(H, W, lines, width)
+        img = shade(img, 1 - 0.5 * np.clip(blur(m, 1.6, wrap_x=tile_x) - m, 0, 1))
+        img = mix(img, hexc(colour), 0.92 * m)
+    return img
+
+
+def egg(H, W, seed=0, tile_x=True, **_):
+    """A moorhen's egg: buff, with red-brown spots and a few grey ones."""
+    img = hexc('#DCCFA9') * np.ones((H, W, 3))
+    img = shade(img, 0.94 + 0.12 * stretch(fbm(H, W, 3, 3, seed, tile_x=tile_x)))
+    img = mix(img, hexc('#6B3F2A'), 0.85 * smooth(speckle(H, W, seed + 1, 0.016, (1.2, 3.0), tile_x=tile_x), 0.30, 0.55))
+    return mix(img, hexc('#8C8478'), 0.5 * smooth(speckle(H, W, seed + 2, 0.008, (1.5, 3.0), tile_x=tile_x), 0.30, 0.55))
+
+
+BOAT = {'planked': planked, 'antifoul': antifoul, 'bands': bands, 'lettering': lettering, 'badge': badge, 'porthole': porthole, 'wicker': wicker, 'sailcloth': sailcloth, 'aged': aged, 'nest': nest, 'egg': egg}
