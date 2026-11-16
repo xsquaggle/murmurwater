@@ -16,7 +16,10 @@ WHAT = {
     'boat-board': 'stepping into a small wooden boat, a thump and a slosh', 'chart-open': 'unrolling a paper map', 'murmur': 'a low eerie wordless hum, a drone',
     'chest-open': 'a wooden chest lid creaking open with a clink of coins',
     'bell-toll': 'one strike of a big deep church bell ringing out', 'pot-set': 'a basket dropped into the sea with a splash and a rope running out',
-    'pot-haul': 'hauling a wet basket out of the sea, water pouring off it', 'echo-buy': 'a soft glassy chime, a ding', 'tide-turn': 'a long ocean wave washing in and pulling back'}
+    'pot-haul': 'hauling a wet basket out of the sea, water pouring off it', 'echo-buy': 'a soft glassy chime, a ding', 'tide-turn': 'a long ocean wave washing in and pulling back',
+    'fog-lamp-light': 'a gas lamp lighting with a soft whoomp and a glassy ring', 'sea-road-chime': 'one distant glass bell note ringing far away', 'fog-cross': 'a low gust of wind with an eerie hum under it',
+    'packet-box': 'a wooden box lid, a rope creak and a bag of coins', 'reed-brush': 'a boat pushing through reeds, rustling stalks', 'fen-day': 'a marsh by day with frogs, insects and a far bird',
+    'fen-night': 'a marsh at night with crickets and deep frogs'}
 names = list(WHAT); T = ears.embed_text([WHAT[n] for n in names]); out = {}
 for f in sorted(os.listdir(D)):
     if not f.endswith('.ogg'): continue
