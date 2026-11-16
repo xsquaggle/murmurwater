@@ -12,7 +12,7 @@ import { FishingSession, NO_INPUT, type FishingInput } from '../../src/core/fish
 import { DAY_LENGTH_S, newGame, type GameState } from '../../src/core/state';
 import { addCatch, breakRhythm, earn, sellAll, RHYTHM } from '../../src/core/economy';
 import {
-  BAITS, FISH, REGIONS, REGIONS_BY_ID, RODS, bait as baitDef, fish as fishDef, inHours, onShelf, regionAt, regionOfNpc, regionOfPlace, zoneAt, type ChestDef, type FishDef,
+  BAITS, FISH, RARITIES, REGIONS, REGIONS_BY_ID, RODS, bait as baitDef, fish as fishDef, inHours, onShelf, regionAt, regionOfNpc, regionOfPlace, zoneAt, type ChestDef, type FishDef,
 } from '../../src/core/content';
 import {
   LURES, WEARABLES, buyBait, buyCreel, buyLure, buyPot, buyRod, buyWearable, claimCollections, creelNext, fishingContext,
@@ -221,18 +221,18 @@ export class SimPlayer {
 
   /** Where to fish and with what: the best coins a second, unless a job wants a particular fish. */
   private plan(): { place: Place; bait: string; want: FishDef | null } {
-    const s = this.s, places = this.places();
+    const places = this.places();
     const want = this.wantedFish();
     let pool = places;
     if (want) {
       const can = places.filter((p) => want.zones.includes(p.zone(20)) || want.zones.includes(p.zone(5)));
       const at = this.wantedAt();
-      if (at) pool = places.filter((p) => p.id === at); else if (can.length && inHours(s.hour, want.hours)) pool = can;
+      if (at) pool = places.filter((p) => p.id === at); else if (can.length && this.about(want)) pool = can;
     }
     let best = { place: pool[0], bait: 'breadcrumb', r: -Infinity };
     for (const p of pool) for (const b of this.baitChoices()) {
       let r = this.rate(p, b);
-      if (want && inHours(s.hour, want.hours)) r *= baitDef(b).affinity[want.id] ?? 1; // a job fish is worth leaning toward
+      if (want && this.about(want)) r *= baitDef(b).affinity[want.id] ?? 1; // a wanted fish is worth leaning toward
       if (r > best.r * (b === 'breadcrumb' ? 1 : 1.04)) best = { place: p, bait: b, r };
     }
     return { place: best.place, bait: best.bait, want };
@@ -248,8 +248,19 @@ export class SimPlayer {
   }
   private wantedFish(): FishDef | null {
     const o = this.activeObjectives().find((x) => x.o.type === 'catch' && x.o.fish);
-    return o ? fishDef(o.o.fish!) : null;
+    if (o) return fishDef(o.o.fish!);
+    // With the story told as far as it goes she fills the journal: the commonest fish of these waters not yet in it that is about now.
+    const s = this.s;
+    this.hunting = !this.trial && !QUESTS.some((q) => q.chain === 'main' && ['active', 'ready', 'available'].includes(questStatus(s, q.id)));
+    if (!this.hunting) return null;
+    // She does not sit up for a fish that keeps hours while there is still a better rod to earn.
+    const rod = this.wishlist().some((w) => w.goal);
+    return FISH.filter((f) => f.region === s.world.region && !s.journal[f.id] && this.about(f) && (!f.requires || s.flags.includes(f.requires)) && !(rod && f.hours))
+      .sort((a, b) => RARITIES.indexOf(a.rarity) - RARITIES.indexOf(b.rarity))[0] ?? null;
   }
+  private hunting = false;
+  /** Is this fish about now? For a fish she is after for the journal, also: will it be by the time she is there? */
+  private about(f: FishDef): boolean { return inHours(this.s.hour, f.hours) || (this.hunting && inHours((this.s.hour + 2.5) % 24, f.hours)); }
   /** The place a job names with a spot on the chart: the one whose water that spot lies in. */
   private wantedAt(): string | null {
     const at = this.activeObjectives().find((x) => x.o.type === 'catch' && x.o.at)?.o.at;
@@ -555,6 +566,7 @@ export class SimPlayer {
     const toSell = () => worth() || this.activeObjectives().some((x) => x.o.type === 'sell' && s.hold.length >= objectiveTarget(x.o) - objectiveProgress(s, x.q, x.q.objectives.indexOf(x.o)));
     while (s.hold.length < this.st.hold && ready() === before && !toSell() && s.playTime < until && s.playTime < this.opts.minutes * 60) {
       if (plan.want && !inHours(s.hour, plan.want.hours) !== !inHours(s.hour - 0.01, plan.want.hours)) break;
+      if (this.hunting && this.wantedFish() !== plan.want) break; // a fish that keeps hours: time to go to it, or it has gone
       this.cast(place);
       this.haul(true, place);
     }
@@ -590,4 +602,3 @@ export function when(r: SimReport, what: string): number | null {
   const m = r.marks.find((x) => x.what.includes(what));
   return m ? m.t / 60 : null;
 }
-void FISH;

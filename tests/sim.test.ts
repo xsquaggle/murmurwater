@@ -55,6 +55,15 @@ describe('the first hours, by simulation', () => {
     }
   }, 120000);
 
+  it('with the story told the journal can be filled: the Mossglass page, and the Listener for a keeper who sits up for it', () => {
+    // Nine fish make the page (the uncanny one is not asked for); nobody is still short of it at four hours.
+    for (const r of play(0.7)) expect(when(r, 'journal page: The Mossglass page') ?? Infinity, 'the Mossglass page').toBeLessThan(240);
+    // The Listener keeps the small hours at one place and likes glowgrub. Most keepers who go after it have it inside seven hours.
+    const long = SEEDS.map((seed) => simulate({ seed, skill: 0.7, minutes: 420 }));
+    const got = long.map((r) => when(r, 'first The Listener')).filter((m) => m !== null && m !== undefined);
+    expect(got.length, `keepers of ${SEEDS.length} with the Listener: ${got.map((m) => m!.toFixed(0)).join(', ')}`).toBeGreaterThanOrEqual(3);
+  }, 240000);
+
   it('pots earn a fair share while the game runs, and never more than the rod', () => {
     for (const r of play(0.7)) {
       const from = Math.ceil((when(r, 'done: Lanterns in the Water') ?? 0) * 60 / BUCKET_S) + 1;
