@@ -123,7 +123,7 @@ The ten fish of Mossglass Fen (`reedling` to `the-listener` in the table) are or
 - Stilt Gar: a needle snout a quarter of its length; four thin fins hang 0.31 to 0.33 m below the body and bow outward.
 - Bottomless Eel: ink black at the head going to deep green at the tail, a row of small green pores, pale eyes with pin pupils; a fin runs along the back and the belly and stops short of the tail, which thins to a thread.
 - Old Mossglass: a deep carp of bottle green with large gold-rimmed scales, gold whiskers and gold fin rays, an open mouth, and a dark shape painted inside the body. Roughness 0.35.
-- The Listener: pale, smooth and eyeless, with a row of dark pores along its side and, in place of pectoral fins, two round horns 0.28 m across on short stems, violet inside.
+- The Listener: pale, smooth and eyeless, with a row of dark pores along its side and, in place of pectoral fins, two round horns 0.31 m across on short stems, violet inside.
 
 Notes: the fish stall is the second run of its job (the first, `c941c034-4adf-48ff-b2f8-9cec702029ba`, came back with a blank grey texture and was discarded); its bounds were fitted to 2.6 x 2.4 x 1.45 m with a mild non-uniform scale (`--fit`), about 15 % shallower than generated. The sketchbook has a 512 px texture and was fitted to 0.24 x 0.25 x 0.055 m (thinner than generated) so it sits between Wick's hands. Biscuit is two sculpts, standing and sitting, because the two poses do not deform into each other cleanly; the game swaps models when the cat sits.
 
