@@ -19,7 +19,7 @@ import {
   grantLure, grantWearable, hasFogLamp, isNight, potPrice, potUpgradeCost, spendBait, stats, tuneCost, tuneRod, upgradePots, type PotUpgrade, type Stats,
 } from '../../src/core/gear';
 import {
-  NPCS, QUESTS, accept, acceptBoard, handsInTo, npcOffer, objectiveProgress, objectiveTarget, onQuestEvent, questStatus, tickBoard, turnIn,
+  NPCS, QUESTS, accept, acceptBoard, arriveIn, handsInTo, npcOffer, objectiveProgress, objectiveTarget, onQuestEvent, questStatus, tickBoard, turnIn,
   type ObjectiveDef, type QuestDef,
 } from '../../src/core/quests';
 import { haulPot, placePot, potsInHand, takeUpPot, tickPots } from '../../src/core/pots';
@@ -281,9 +281,8 @@ export class SimPlayer {
     this.sell();
     const first = !s.world.discovered.includes(region);
     this.pass(first ? COSTS.cross : COSTS.fastTravel, true);
-    s.world.region = region;
-    if (first) { s.world.discovered.push(region); this.mark(`reached ${REGIONS_BY_ID.get(region)!.name}`); }
-    if (!s.flags.includes(`reached:${region}`)) s.flags.push(`reached:${region}`);
+    arriveIn(s, region);
+    if (first) this.mark(`reached ${REGIONS_BY_ID.get(region)!.name}`);
     // The landing she comes in at goes on the chart as she arrives.
     const landing = REGIONS_BY_ID.get(region)!.moorings?.[0]?.place;
     if (landing) this.chart(landing);

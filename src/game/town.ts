@@ -649,7 +649,7 @@ export class Town {
     this.closeScreens();
     const hours = (Math.hypot(m.x - sail.boat.x, m.z - sail.boat.z) / sail.def!.speed) * (24 / DAY_LENGTH_S) * 1.5;
     this.run([
-      { at: 0, run: () => { g.hud.fade(true, far ? `The Fog Lamp finds the sea-road to ${hit.region.name}…` : `You set the sail for ${m.name}…`); g.audio.sailFlap(); } },
+      { at: 0, run: () => { g.hud.fade(true, far ? `The Fog Lamp finds the sea-road to ${hit.region.name}…` : `You set the sail for ${m.name}…`); g.audio.sailFlap(); if (far) g.prepare(hit.region.id, 9); } },
       { at: 1.5, run: () => {
         // The save waits until she lies at the mooring: half way, the boat is still in the waters she left.
         if (far) g.enterRegion(hit.region.id, false);

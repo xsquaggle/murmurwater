@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newGame } from '../src/core/state';
 import {
-  QUESTS, abandonBoard, accept, acceptBoard, currentGoal, generateBoardQuest, npcOffer, onQuestEvent, questStatus, refreshBoard,
+  QUESTS, abandonBoard, accept, acceptBoard, arriveIn, currentGoal, generateBoardQuest, npcOffer, onQuestEvent, questStatus, refreshBoard,
   relicBonus, tickBoard, turnIn, validateQuests, BOARD,
 } from '../src/core/quests';
 import { FISH, REGIONS, inHours } from '../src/core/content';
@@ -218,6 +218,36 @@ describe('notice board', () => {
       expect(q.objective.fish).not.toBe('bottomless-eel');
     }
     expect(species).toBeGreaterThan(50);
+  });
+
+  it('has the work of the waters the keeper is in: untaken jobs change on arrival, taken ones are kept', () => {
+    const s = newGame(21);
+    s.flags.push('board-open');
+    refreshBoard(s);
+    const fishOf = (region: string) => s.quests.board.quests.filter((q) => q.objective.fish && !q.accepted).every((q) => FISH.find((f) => f.id === q.objective.fish)!.region === region);
+    expect(fishOf('hearthbay')).toBe(true);
+    const taken = s.quests.board.quests[0];
+    acceptBoard(s, taken.id);
+    const serial = s.quests.board.serial;
+    expect(arriveIn(s, 'mossglass-fen')).toBe(true);
+    expect(s.world.region).toBe('mossglass-fen');
+    expect(s.world.discovered).toContain('mossglass-fen');
+    expect(s.flags).toContain('reached:mossglass-fen');
+    expect(s.quests.board.quests.length).toBe(BOARD.slots);
+    expect(s.quests.board.quests.find((q) => q.id === taken.id)?.accepted).toBe(true);
+    expect(s.quests.board.serial).toBe(serial + BOARD.slots - 1);
+    expect(fishOf('mossglass-fen')).toBe(true);
+    // Coming again is not a first time, and arriving where she already is changes nothing.
+    const before = JSON.stringify(s.quests.board);
+    expect(arriveIn(s, 'mossglass-fen')).toBe(false);
+    expect(JSON.stringify(s.quests.board)).toBe(before);
+    expect(arriveIn(s, 'hearthbay')).toBe(false);
+    expect(fishOf('hearthbay')).toBe(true);
+    expect(s.flags.filter((f) => f === 'reached:mossglass-fen').length).toBe(1);
+    // Before the board is open there is nothing to change.
+    const fresh = newGame(22);
+    arriveIn(fresh, 'mossglass-fen');
+    expect(fresh.quests.board.quests.length).toBe(0);
   });
 });
 

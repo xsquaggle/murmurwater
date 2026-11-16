@@ -130,6 +130,17 @@ export function roadsOpen(region: string, x: number, z: number): number {
   return best;
 }
 
+/** The region the sea-road under (x, z) leads to from `region`, or null off the roads: where she is bound. */
+export function regionAhead(region: string, x: number, z: number): string | null {
+  for (const r of ROADS) {
+    const i = r.between.indexOf(region);
+    if (i < 0) continue;
+    const p = roadPoint(r, x, z);
+    if (p.off <= r.halfWidth * 1.5 && p.along >= -0.05 && p.along <= 1.05) return r.between[1 - i];
+  }
+  return null;
+}
+
 /**
  * The region a boat on a sea-road has crossed into, or null while it is still in `region`: the change is made
  * half way along the road, in the thick of the fog.

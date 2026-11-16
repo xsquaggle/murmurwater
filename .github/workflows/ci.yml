@@ -35,6 +35,10 @@ jobs:
         run: node e2e/tide.cjs shots/tide
         env:
           MW_QUALITY: low
+      - name: Fog bot (the Fog Lamp, the sea-road, the crossing to Mossglass Fen, Calloway, the packet box, a save in the Fen)
+        run: node e2e/fog.cjs shots/fog
+        env:
+          MW_QUALITY: low
       - name: Walk bot (solid props and people, everyone reachable on foot)
         run: node e2e/walk.cjs shots/walk
         env:

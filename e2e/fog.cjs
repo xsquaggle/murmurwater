@@ -124,14 +124,15 @@ const { chromium } = require('playwright');
   check((await status('hb-11-lamp')) === 'ready', 'Pell\'s job is ready to hand in');
 
   // 4. Home, the lamp shown to Pell, and the road job taken.
-  r = await ev(() => { const back = window.bot.sailTo(-295, -206.5, { stopR: 10 }); return { back, went: window.fog.chartTo('Hearthbay') }; });
+  // (Out of the fog by the road first: the route finder does not plan from inside it.)
+  r = await ev(([x, z]) => { window.fog.pilot(x, z, 60, 8); const back = window.bot.sailTo(-295, -206.5, { stopR: 10 }); return { back, went: window.fog.chartTo('Hearthbay') }; }, A);
   check(r.back.ok && r.went, `back to the belfry mooring and home by the chart (${JSON.stringify(r.back)})`);
   r = await ev(() => { const l = window.bot.land(); const g = window.__MW__.game; const grubs0 = g.state.gear.baits.glowgrub ?? 0; const t = window.fog.talk('pell', 'Talk to Pell'); window.bot.readAll(); return { l, t, grubs: (g.state.gear.baits.glowgrub ?? 0) - grubs0 }; });
   check((await status('hb-11-lamp')) === 'done' && r.grubs === 6, `Pell sees the lamp and gives 6 glowgrubs (${JSON.stringify(r.l)})`);
   choices = await ev(() => { const g = window.__MW__.game; if (!g.town.dialogue.isOpen) window.bot.interact(); return window.bot.readAll(); });
   await ev(() => window.bot.choose('do it'));
   check((await status('hb-12-road')) === 'active', `The Old Sea-Road is under way (${choices.join(' | ')})`);
-  r = await ev(() => document.querySelector('.goal-t')?.textContent ?? '');
+  r = await ev(() => { window.__MW__.game.presentOnce(1 / 30); return document.querySelector('.goal-t')?.textContent ?? ''; });
   check(/Mossglass Fen|sea-road/i.test(r), `the goal points at the sea-road ("${r}")`);
 
   // 5. The crossing, by the helm: the road lights come up, the lamp lights itself, and the waters change
@@ -145,18 +146,22 @@ const { chromium } = require('playwright');
   check(r.p.region === 'hearthbay' && r.p.maxFog > 0.4 && r.p.maxMur < 0.3 && r.road > 0, `with the lamp the road opens: fog ${r.p.maxFog.toFixed(2)}, murmur ${r.p.maxMur.toFixed(2)}, ${r.road} road lights alight`);
   check(r.p.lamp > 0.5, `the Fog Lamp has lit itself (${r.p.lamp.toFixed(2)})`);
   await shot('03-on-the-sea-road');
-  r = await ev(([x, z]) => { const p = window.fog.pilot(x, z, 60, 6); const s = window.__MW__.state; return { p, flags: s.flags.includes('reached:mossglass-fen'), discovered: s.world.discovered, banner: document.querySelector('.banner')?.textContent ?? '', toasts: window.fog.toasts() }; }, at(0.66));
+  r = await ev(([x, z]) => { const g = window.__MW__.game, before = { ready: g.prep.readyFor, spent: Math.round(g.prep.spent), longest: +g.prep.longest.toFixed(1) }; const p = window.fog.pilot(x, z, 60, 6); const s = window.__MW__.state; return { p, before, swap: g.lastSwap, flags: s.flags.includes('reached:mossglass-fen'), discovered: s.world.discovered, coins: s.coins }; }, at(0.66));
+  const coinsInTheFog = r.coins;
   check(r.p.region === 'mossglass-fen' && r.p.swapped, `half way along, the waters are Mossglass Fen (${JSON.stringify(r.p.swapped)})`);
   check(r.p.swapped && r.p.swapped.fog >= 0.95, `the change happens in the thick of the fog (fog ${r.p.swapped?.fog.toFixed(2)})`);
+  check(r.before.ready === 'mossglass-fen' && r.swap.readyBefore === 1 && r.swap.finishing < 30, `the Fen's ground was made ready on the way, a little at a time (${JSON.stringify(r.before)})`);
+  // (Made at the crossing the ground alone took a second here; the limit leaves room for a slower machine.)
+  check(r.swap.terrain < 30 && r.swap.scene < 500, `so the change itself is short: ${r.swap.scene} ms (${JSON.stringify(r.swap)})`);
   check(r.flags && r.discovered.includes('mossglass-fen'), 'the Fen is a place the keeper has been');
-  check(/Mossglass Fen/.test(r.banner), `the Fen is named on arrival ("${r.banner}")`);
-  r = await ev(([x, z]) => window.fog.pilot(x, z, 60, 6), at(1.0));
+  r = await ev(([x, z]) => ({ ...window.fog.pilot(x, z, 60, 6), banner: document.querySelector('.banner')?.textContent ?? '' }), at(1.0));
   check(r.region === 'mossglass-fen' && r.maxMur < 0.3, `she comes out of the fog on the Fen side (${Math.round(r.x)}, ${Math.round(r.z)})`);
+  check(/Mossglass Fen/.test(r.banner), `the Fen is named as she comes out ("${r.banner}")`);
   console.log(`     crossing: ${((Date.now() - t0) / 1000).toFixed(0)} s of bot time`);
   await shot('04-out-of-the-fog');
 
   // 6. Sedge Landing: on the chart, and Pell's errand is ready for Calloway.
-  r = await ev(() => { const s = window.__MW__.state, c0 = s.coins; const m = window.bot.mooring('sedge-jetty'); const go = window.bot.sailTo(m.x, m.z, { stopR: 7 }); return { go, charted: s.world.charted.includes('sedge-landing'), paid: s.coins - c0, goal: document.querySelector('.goal-t')?.textContent ?? '' }; });
+  r = await ev((c0) => { const s = window.__MW__.state; const m = window.bot.mooring('sedge-jetty'); const go = window.bot.sailTo(m.x, m.z, { stopR: 7 }); return { go, charted: s.world.charted.includes('sedge-landing'), paid: s.coins - c0, goal: document.querySelector('.goal-t')?.textContent ?? '' }; }, coinsInTheFog);
   check(r.go.ok, `the route finder knows the Fen's water: to the jetty in ${r.go.seconds} s (${JSON.stringify(r.go)})`);
   check(r.charted && r.paid === 200, `Sedge Landing goes on the chart and pays ${r.paid} coins`);
   check((await status('hb-12-road')) === 'ready' && /Calloway/.test(r.goal), `the road job is to be handed to Calloway ("${r.goal}")`);
@@ -192,7 +197,7 @@ const { chromium } = require('playwright');
   r = await ev(() => {
     const g = window.__MW__.game, s = g.state, p = g.world.region.places.find((x) => x.id === 'packet-box');
     const prompt = window.bot.walk(p.x, p.z, 40, () => (g.town.focusPrompt ?? '').includes('packet box'));
-    const open = window.bot.interact(); const first = document.querySelector('.dlg-text')?.textContent ?? '';
+    const open = window.bot.interact(); g.town.dialogue.advance(); const first = document.querySelector('.dlg-text')?.textContent ?? '';
     const c0 = s.coins, n0 = s.hold.length; const ch = window.bot.readAll();
     const sold = window.bot.choose('Sell'); const after = window.bot.readAll();
     return { prompt, open, first, ch, sold, coins: s.coins - c0, n0, left: s.hold.length, after };
@@ -214,10 +219,10 @@ const { chromium } = require('playwright');
     window.bot.interact(); const open = g.town.screens.isOpen;
     const jobs = s.quests.board.quests.map((q) => q.title ?? q.kind ?? q.id); const text = document.querySelector('.screen-card')?.textContent ?? '';
     g.town.closeScreens();
-    return { prompt, open, jobs, fen: /reedling|mudlark|glassfin|sedge|tench|marsh|Fen/i.test(text) };
+    return { prompt, open, jobs, text: text.slice(0, 300), fen: s.quests.board.quests.every((q) => !q.objective.fish || /reedling|mudlark|glassfin|sedge-pike|mossback-tench|glowbelly|stilt-gar/.test(q.objective.fish)) };
   });
   check(r.open && r.jobs.length > 0, `the notice board opens with ${r.jobs.length} jobs (${r.prompt})`);
-  check(r.fen, 'and they are about the Fen');
+  check(r.fen, `and any fish they ask for are fish of the Fen (${r.text.replace(/\s+/g, ' ').slice(0, 200)})`);
   await shot('09-landing', 4);
 
   // 11. Calloway's stake (set down beside it): a place to read, which counts for the job that asks for it.
@@ -226,9 +231,14 @@ const { chromium } = require('playwright');
     s.quests.done.push('fen-01-scale', 'fen-02-glass'); delete s.quests.active['fen-01-scale']; s.quests.active['fen-03-tape'] = {};
     const sx = p.x + 1.6, sz = p.z + 1.2;
     g.pos.set(sx, g.groundAt(sx, sz) ?? 1, sz); g.town.arrive(); g.snapCamera(); g.camYaw = Math.atan2(p.x - sx, p.z - sz); window.fog.wait(0.6);
-    const prompt = g.town.focusPrompt; window.bot.tap('KeyE'); window.fog.wait(0.5); const first = window.fog.toasts(); window.fog.wait(4); const then = window.fog.toasts();
-    return { prompt, first, then, ground: g.groundAt(sx, sz), seen: s.flags.includes('seen:survey-stake') };
+    const prompt = g.town.focusPrompt; window.bot.tap('KeyE'); window.fog.wait(0.5);
+    return { prompt, ground: g.groundAt(sx, sz), seen: s.flags.includes('seen:survey-stake') };
   });
+  // Its lines come by the clock on the wall, one after the other.
+  await page.waitForTimeout(400);
+  r.first = await ev(() => window.fog.toasts());
+  await page.waitForTimeout(3000);
+  r.then = await ev(() => window.fog.toasts());
   check(r.prompt === 'Read the tape on the stake', `the stake offers to be read (${r.prompt}; ground ${r.ground})`);
   check([...r.first, ...r.then].some((t) => /I\.C\. 7/.test(t)) && r.then.some((t) => /humming/.test(t)), `and reads out line by line (${[...new Set([...r.first, ...r.then])].join(' | ').slice(0, 160)})`);
   check(r.seen && (await status('fen-03-tape')) === 'ready', 'reading it finishes The Tape Runs Out');
@@ -271,7 +281,7 @@ const { chromium } = require('playwright');
   check(r.mara && !r.dark, 'Hearthbay is itself again, Mara and all');
   await shot('14-home-again');
   r = await ev(() => { const g = window.__MW__.game; g.town.openScreen('shop'); const names = [...document.querySelectorAll('.item b')].map((e) => e.textContent); g.town.closeScreens(); return names; });
-  check(!r.some((n) => /Marsh Worm|Fenwood/i.test(n)), 'Mara\'s stall at home still sells only what Hearthbay has (the far goods come from the box)');
+  check(r.some((n) => /Marsh Worm/i.test(n)) && r.some((n) => /Fenwood/i.test(n)), 'now that the Fen is known, Mara\'s stall at home stocks its goods too');
   r = await ev(() => { const g = window.__MW__.game, s = g.state; const went = window.fog.chartTo('Sedge Landing jetty'); const m = window.bot.mooring('sedge-jetty'); return { went, region: s.world.region, built: g.world.region.id, d: m ? Math.hypot(g.sailing.boat.x - m.x, g.sailing.boat.z - m.z) : -1 }; });
   check(r.went && r.region === 'mossglass-fen' && r.built === 'mossglass-fen' && r.d >= 0 && r.d < 12, `and back to the Fen (${JSON.stringify(r)})`);
 

@@ -19,9 +19,11 @@ import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
 import { Rng } from '../core/rng';
 import { FishingSession, type FishingInput, type SpotInfo } from '../core/fishing';
-import { REGIONS_BY_ID, bait, crossingAt, regionAcross, rod, zoneAt } from '../core/content';
+import { REGIONS_BY_ID, bait, crossingAt, regionAcross, regionAhead, rod, zoneAt } from '../core/content';
+import { RegionPrep } from '../render/region-prep';
 import { addCatch, breakRhythm, rarityIndex, RHYTHM } from '../core/economy';
 import { claimCollections, fishingContext, isNight, spendBait, stats, type Stats } from '../core/gear';
+import { arriveIn } from '../core/quests';
 import { type GameState } from '../core/state';
 import { serialize, type SaveStore } from '../core/save';
 import { walkableHeight } from '../core/landing';
@@ -83,6 +85,10 @@ export class Game {
   /** Screenshot/debug hooks: force an avatar pose or a fixed camera. */
   debugPose: { pose: Pose; speed?: number; power?: number; tension?: number; lateral?: number; reeling?: boolean } | null = null;
   debugCam: { pos: Vector3; look: Vector3 } | null = null;
+  /** What the last change of region cost, in ms by part (for the frame profile). */
+  lastSwap: Record<string, number> = {};
+  readonly prep = new RegionPrep();
+  private prepBudget = 3;
   /** The camera has come in beside tall ground (see the camera code). */
   private camTucked = false;
   /** When set (tests/bot), replaces player input to the fishing session. */
@@ -174,6 +180,17 @@ export class Game {
   rushSky(hours: number) { this.skyLag = Math.max(0, Math.min(23, hours)); }
 
   /**
+   * Start making a region's ground ready before it is entered (see RegionPrep). `budgetMs` is how much of each
+   * step may go on it: a little under way, more when the screen is dark for a passage by the chart.
+   */
+  prepare(id: string, budgetMs = 3) {
+    const region = REGIONS_BY_ID.get(id);
+    if (!region || id === this.state.world.region) return;
+    this.prep.want(region, this.renderer.profile.terrainCell);
+    this.prepBudget = budgetMs;
+  }
+
+  /**
    * The player has crossed into another region: this one is taken down and that one built in its place, in
    * the same scene and the same coordinates, so the boat, the player and the camera carry straight on. It is
    * only ever done where nothing can be seen: in the thick of the Murmur Fog, or behind a faded screen.
@@ -182,18 +199,20 @@ export class Game {
     const s = this.state, region = REGIONS_BY_ID.get(id);
     if (!region || id === s.world.region) return false;
     const old = this.world;
-    s.world.region = id;
-    const first = !s.world.discovered.includes(id);
-    if (first) s.world.discovered.push(id);
-    // What the shelf and the people of the place wait on (see `from` on goods, `requiresFlags` on quests).
-    if (!s.flags.includes(`reached:${id}`)) s.flags.push(`reached:${id}`);
+    const first = arriveIn(s, id);
+    const t0 = performance.now();
+    const ready = this.prep.take(id, this.renderer.profile.terrainCell);
+    const waited = performance.now() - t0;
     old.dispose();
-    this.world = new WorldScene(region, this.renderer.profile, old.scene);
+    this.world = new WorldScene(region, this.renderer.profile, old.scene, ready);
+    const built = performance.now();
     this.world.carryFrom(old);
     this.sailing.enterRegion();
     this.town.enterRegion(first);
     this.pots.enterRegion();
     this.refreshSession();
+    this.lastSwap = { ...WorldScene.lastBuild, readyBefore: ready ? 1 : 0, finishing: Math.round(waited), scene: Math.round(built - t0), game: Math.round(performance.now() - built) };
+    this.prepBudget = 3;
     if (save) void this.save();
     return true;
   }
@@ -296,7 +315,13 @@ export class Game {
     const canMove = rodIdle && !ui && !sail.busy;
     sail.step(dt, canMove, !rodIdle, ph === 'idle' || ph === 'lost');
     // Half way along a sea-road, in the thick of the fog, one region gives way to the next.
-    if (sail.aboard) { const next = regionAcross(s.world.region, sail.boat.x, sail.boat.z); if (next && this.enterRegion(next)) this.audio.fogCross(); }
+    if (sail.aboard) {
+      const next = regionAcross(s.world.region, sail.boat.x, sail.boat.z);
+      if (next && this.enterRegion(next)) this.audio.fogCross();
+      // In the fog on an open sea-road: the waters she is bound for are made ready a little each step.
+      else if (sail.road > 0) { const ahead = regionAhead(s.world.region, sail.boat.x, sail.boat.z); if (ahead) this.prepare(ahead); }
+    }
+    this.prep.pump(this.prepBudget);
     let mx = 0, mz = 0;
     if (canMove && !sail.riding) {
       if (inp.held('forward')) mz += 1; if (inp.held('back')) mz -= 1;
@@ -652,14 +677,18 @@ export class Game {
     // Aboard, and with a pot in reach, the prompt sits low: the thing it is about floats where it would otherwise be.
     this.hud.setPrompt(prompts.join('<br>'), sail.aboard || !!this.pots.near);
 
-    const night = this.world.light.night;
+    const night = this.world.light.night, fen = !!this.world.fen;
     this.audio.update(dt, {
       reeling: !!fs && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3, tension, fighting: !!fs, sea: 0.5,
       charge: ph === 'charging' ? this.session.power : -1,
       // The night theme comes in once the sky is properly dark and leaves at first light.
       // By day the boat has her own tune; ashore each island keeps its own.
-      music: !sail.aboard && this.town.island === 'gull-point' ? 'gull-point'
-        : night > 0.6 ? 'hearthbay-night' : night < 0.4 ? (sail.aboard ? 'open-water' : 'hearthbay-day') : undefined,
+      // A fen keeps to its own air (frogs by day, crickets by night) with the boat's tune under way by day;
+      // until that air is recorded it borrows the sea's music.
+      music: fen && AudioEngine.recorded('fen-day') ? (night > 0.6 || !sail.aboard ? null : night < 0.4 ? 'open-water' : undefined)
+        : !sail.aboard && this.town.island === 'gull-point' ? 'gull-point'
+        : night > 0.6 ? 'hearthbay-night' : night < 0.4 ? (sail.aboard || fen ? 'open-water' : 'hearthbay-day') : undefined,
+      fen,
       day: 1 - night, onDock: !sail.riding && this.world.dockDeckAt(this.pos.x, this.pos.z) !== null, purr: this.town.catCloseness(),
       hull: sail.aboard ? sail.pace : undefined, murmur: sail.murmur,
     });

@@ -10,7 +10,11 @@ import { fish as fishDef } from '../core/content';
 const STANDIN_COLORS: Record<string, string> = {
   butterperch: '#E8B24A', 'pebble-goby': '#8C8A86', 'kettle-carp': '#3FA7A0', 'coral-snapper': '#E86F6F', lampjaw: '#2F6E7A',
   'moss-eel': '#6F8F4E', 'twofold-flounder': '#B9BFC6', 'hollow-lantern': '#E9DCC0', manyeye: '#6A4C8C',
+  reedling: '#D2DBA2', mudlark: '#A8703C', glassfin: '#C2EFE9', 'sedge-pike': '#6F7A40', 'mossback-tench': '#7C7A36',
+  glowbelly: '#235E68', 'stilt-gar': '#7A9288', 'bottomless-eel': '#161F25', 'old-mossglass': '#1D7850', 'the-listener': '#E6E0EE',
 };
+/** Long fish whose whole body carries the wave. */
+const EELS = new Set(['moss-eel', 'bottomless-eel']);
 
 export interface FishObject {
   readonly obj: Group;
@@ -54,7 +58,7 @@ export function makeFish(id: string, weight?: number): FishObject {
   const mats: { mat: MeshStandardMaterial; u: ReturnType<typeof addSwim> }[] = [];
   model.traverse((o: Object3D) => {
     const m = o as Mesh;
-    if (m.isMesh) { const mat = m.material as MeshStandardMaterial; mats.push({ mat, u: addSwim(mat, id === 'moss-eel') }); }
+    if (m.isMesh) { const mat = m.material as MeshStandardMaterial; mats.push({ mat, u: addSwim(mat, EELS.has(id)) }); }
   });
   const glowBase = mats.map(({ mat }) => mat.emissiveIntensity);
   let phase = 0, lastT = 0;

@@ -295,6 +295,21 @@ export function refreshBoard(s: GameState) {
   b.quests = [...keep, ...fresh];
 }
 
+/**
+ * The keeper has come into a region. It is known from now on (the far shelf and the people there wait on
+ * that), and the notice board has that region's work: jobs already taken are kept, the rest are replaced.
+ * Returns true the first time.
+ */
+export function arriveIn(s: GameState, region: string): boolean {
+  const first = !s.world.discovered.includes(region);
+  const changed = s.world.region !== region;
+  s.world.region = region;
+  if (first) s.world.discovered.push(region);
+  if (!s.flags.includes(`reached:${region}`)) s.flags.push(`reached:${region}`);
+  if (changed && boardOpen(s)) refreshBoard(s);
+  return first;
+}
+
 export function acceptBoard(s: GameState, id: string): boolean {
   const q = s.quests.board.quests.find((x) => x.id === id);
   if (!q || q.accepted) return false;

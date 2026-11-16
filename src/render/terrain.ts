@@ -1,6 +1,6 @@
 /**
- * Low-poly terrain from the shared heightfield: one faceted mesh per region, coloured per face
- * from the palette, with animated caustics on the underwater parts. Also bakes the seabed
+ * Low-poly terrain from the shared heightfield: the land and the bed under the water (a child of the land's
+ * mesh), faceted, coloured per face from the palette, with animated caustics on the underwater parts. Also bakes the seabed
  * heightmap texture the water shader reads for depth colour and foam.
  */
 import {
@@ -60,12 +60,29 @@ vec3 mw_groundDetail(vec3 wp, vec2 surf, float dist) {
 }
 `;
 
+/** Faces wholly below this are the bed: drawn, but they throw no shadow. */
+const BED_TOP = -0.3;
+/** Blocks of this many cells a side are drawn as one fan where the bed is well under water and nearly level. */
+const BLOCK = 4, BED_FLAT_TOP = -1.2;
+/** How far a block's bed may rise and fall and still be drawn as a fan: more, the deeper it lies. */
+const flatEnough = (lo: number, hi: number) => hi - lo < 0.35 + 0.3 * -hi;
+
 const hash2 = (x: number, z: number) => {
   const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
   return s - Math.floor(s);
 };
 
 export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = lookOf('amber').terrain): TerrainBuild {
+  const steps = terrainSteps(hf, cell, look);
+  for (;;) { const r = steps.next(); if (r.done) return r.value; }
+}
+
+/**
+ * The same build a little at a time: each `next()` does a row or so of the work (well under a millisecond,
+ * but for the last few, which make the meshes), so a region can be made ready over many frames while the
+ * boat is still in the fog on her way to it.
+ */
+export function* terrainSteps(hf: Heightfield, cell = 4, look: TerrainLook = lookOf('amber').terrain): Generator<void, TerrainBuild, void> {
   const r = hf.region;
   const half = r.radius;
   const minX = r.center[0] - half, minZ = r.center[1] - half;
@@ -85,6 +102,7 @@ export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = look
       const x = minX + i * cell + jx, z = minZ + j * cell + jz;
       vx[k] = x; vz[k] = z; vy[k] = hf.height(x, z);
     }
+    yield;
   }
   // Smooth normals from the heightfield; the shader mixes them with the facet normal so faces stay
   // visibly low-poly without the hard light jumps of pure flat shading on big slopes.
@@ -98,6 +116,7 @@ export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = look
       const l = Math.hypot(gx, 1, gz);
       vn[k * 3] = -gx / l; vn[k * 3 + 1] = 1 / l; vn[k * 3 + 2] = -gz / l;
     }
+    if (j % 32 === 31) yield;
   }
 
   const sand = new Color(look.sand);
@@ -115,17 +134,17 @@ export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = look
   const cobble = new Color('#A99E8C'), cobbleDark = new Color('#8C8272');
   const dirt = new Color('#A88A66'), dirtLight = new Color('#BFA27A');
 
-  const positions: number[] = [];
-  const normals: number[] = [];
-  const colors: number[] = [];
-  /** Per face: (cobble weight, dirt weight) for the close-up ground detail in the shader. */
-  const surfs: number[] = [];
+  // Two meshes of the same stuff: the land, which throws shadows, and the bed under the water, which does not.
+  interface Soup { positions: number[]; normals: number[]; colors: number[]; /** Per face: (cobble weight, dirt weight) for the close-up ground detail in the shader. */ surfs: number[] }
+  const soup = (): Soup => ({ positions: [], normals: [], colors: [], surfs: [] });
+  const land = soup(), bed = soup();
   const c = new Color();
   const pushTri = (a: number, b: number, d: number) => {
     const ax = vx[a], ay = vy[a], az = vz[a];
     const bx = vx[b], by = vy[b], bz = vz[b];
     const dx = vx[d], dy = vy[d], dz = vz[d];
     if (ay < -18 && by < -18 && dy < -18) return; // hidden under opaque deep water
+    const { positions, normals, colors, surfs } = ay < BED_TOP && by < BED_TOP && dy < BED_TOP ? bed : land;
     // Face normal
     const ux = bx - ax, uy = by - ay, uz = bz - az;
     const wx = dx - ax, wy = dy - ay, wz = dz - az;
@@ -171,19 +190,63 @@ export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = look
     for (const k of [a, b, d]) normals.push(vn[k * 3], vn[k * 3 + 1], vn[k * 3 + 2]);
     for (let t = 0; t < 3; t++) colors.push(c.r, c.g, c.b);
   };
-  for (let j = 0; j < n; j++) {
-    for (let i = 0; i < n; i++) {
-      const a = j * (n + 1) + i, b = a + 1, cc = a + (n + 1), d = cc + 1;
-      if ((i + j) % 2 === 0) { pushTri(a, cc, b); pushTri(b, cc, d); }
-      else { pushTri(a, cc, d); pushTri(a, d, b); }
-    }
+  // A flat stretch of bed needs few faces. The lattice is cut into blocks of BLOCK cells a side; a block that
+  // is all under water and nearly level is drawn as a fan about its middle, taking in the lattice points along
+  // any side it shares with a block drawn in full, so the two meet without a crack.
+  const nb = Math.ceil(n / BLOCK);
+  const flat = new Uint8Array(nb * nb);
+  for (let bj = 0; bj < nb; bj++) for (let bi = 0; bi < nb; bi++) {
+    const i0 = bi * BLOCK, j0 = bj * BLOCK;
+    if (i0 + BLOCK > n || j0 + BLOCK > n) continue;
+    let lo = Infinity, hi = -Infinity;
+    for (let j = j0; j <= j0 + BLOCK; j++) for (let i = i0, k = j * (n + 1) + i0; i <= i0 + BLOCK; i++, k++) { const y = vy[k]; if (y < lo) lo = y; if (y > hi) hi = y; }
+    if (hi < BED_FLAT_TOP && flatEnough(lo, hi)) flat[bj * nb + bi] = 1;
   }
-  const geo = new BufferGeometry();
-  geo.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
-  geo.setAttribute('color', new BufferAttribute(new Float32Array(colors), 3));
-  geo.setAttribute('normal', new BufferAttribute(new Float32Array(normals), 3));
-  geo.setAttribute('aSurf', new BufferAttribute(new Float32Array(surfs), 2));
-  geo.computeBoundingSphere();
+  const isFlat = (bi: number, bj: number) => bi >= 0 && bj >= 0 && bi < nb && bj < nb && flat[bj * nb + bi] === 1;
+  yield;
+  const sliver = 0.04 * cell * cell;
+  const faceUp = (p: number, q: number, w: number) => (vz[q] - vz[p]) * (vx[w] - vx[p]) - (vx[q] - vx[p]) * (vz[w] - vz[p]) > sliver;
+  const ring: number[] = [];
+  for (let bj = 0; bj < nb; bj++) for (let bi = 0; bi < nb; bi++) {
+    if (bi === 0 && bj > 0) yield;
+    const i0 = bi * BLOCK, j0 = bj * BLOCK;
+    if (!flat[bj * nb + bi]) {
+      for (let j = j0; j < Math.min(n, j0 + BLOCK); j++) for (let i = i0; i < Math.min(n, i0 + BLOCK); i++) {
+        const a = j * (n + 1) + i, b = a + 1, cc = a + (n + 1), d = cc + 1;
+        // The diagonal alternates like a chequerboard, unless the jitter has left that way a sliver or
+        // turned a face over: then the cell is cut the other way.
+        let even = (i + j) % 2 === 0;
+        if (even ? !(faceUp(a, cc, b) && faceUp(b, cc, d)) : !(faceUp(a, cc, d) && faceUp(a, d, b))) even = !even;
+        if (even) { pushTri(a, cc, b); pushTri(b, cc, d); }
+        else { pushTri(a, cc, d); pushTri(a, d, b); }
+      }
+      continue;
+    }
+    // Round the block: down the west side, along the south, up the east, back along the north.
+    const at2 = (i: number, j: number) => j * (n + 1) + i, i1 = i0 + BLOCK, j1 = j0 + BLOCK;
+    ring.length = 0;
+    const west = !isFlat(bi - 1, bj) && bi > 0, south = !isFlat(bi, bj + 1) && bj < nb - 1, east = !isFlat(bi + 1, bj) && bi < nb - 1, north = !isFlat(bi, bj - 1) && bj > 0;
+    for (let s = 0; s < BLOCK; s += west ? 1 : BLOCK) ring.push(at2(i0, j0 + s));
+    for (let s = 0; s < BLOCK; s += south ? 1 : BLOCK) ring.push(at2(i0 + s, j1));
+    for (let s = 0; s < BLOCK; s += east ? 1 : BLOCK) ring.push(at2(i1, j1 - s));
+    for (let s = 0; s < BLOCK; s += north ? 1 : BLOCK) ring.push(at2(i1 - s, j0));
+    const mid = at2(i0 + BLOCK / 2, j0 + BLOCK / 2);
+    for (let k = 0; k < ring.length; k++) pushTri(mid, ring[k], ring[(k + 1) % ring.length]);
+  }
+  // Packing a few hundred thousand faces takes a moment for each attribute: one a turn.
+  const toGeo = function* (s: Soup): Generator<void, BufferGeometry, void> {
+    const geo = new BufferGeometry();
+    geo.setAttribute('position', new BufferAttribute(new Float32Array(s.positions), 3)); s.positions = [];
+    yield;
+    geo.setAttribute('color', new BufferAttribute(new Float32Array(s.colors), 3)); s.colors = [];
+    yield;
+    geo.setAttribute('normal', new BufferAttribute(new Float32Array(s.normals), 3)); s.normals = [];
+    yield;
+    geo.setAttribute('aSurf', new BufferAttribute(new Float32Array(s.surfs), 2)); s.surfs = [];
+    yield;
+    geo.computeBoundingSphere();
+    return geo;
+  };
 
   const material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
   /** uFacet: 1 = pure flat shading, 0 = smooth. */
@@ -212,9 +275,17 @@ export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = look
           totalEmissiveRadiance += vec3(0.85, 1.0, 0.92) * caus * k * 0.55 * uCausticStrength;
         }`);
   };
-  const mesh = new Mesh(geo, material);
+  yield;
+  const mesh = new Mesh(yield* toGeo(land), material);
   mesh.receiveShadow = true;
   mesh.castShadow = true;
+  yield;
+  if (bed.positions.length) {
+    const under = new Mesh(yield* toGeo(bed), material);
+    under.receiveShadow = true;
+    mesh.add(under);
+  }
+  yield;
 
   // Seabed heightmap for the water shader.
   const res = 512;
@@ -227,6 +298,7 @@ export function buildTerrain(hf: Heightfield, cell = 4, look: TerrainLook = look
       heights[j * res + i] = h;
       data[j * res + i] = DataUtils.toHalfFloat(h);
     }
+    if (j % 2 === 1) yield;
   }
   const size = half * 2;
   /** The same grid for the CPU: quick enough to ask thousands of times a frame, good to about a metre and a half. */

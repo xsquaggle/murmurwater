@@ -40,7 +40,7 @@ export class Sailing {
   private region: RegionContent;
   private hop: Hop | null = null;
   private landing: { x: number; y: number; z: number } | null = null;
-  private landingT = 0; private scanT = 0; private murmurTold = 0; private slowTold = 0;
+  private landingT = 0; private scanT = 0; private murmurTold = 0; private slowTold = 0; private reedT = 0;
   private stand = new Vector3();
   /** How long she has lain still with no call for way, s: after a moment the sail comes down. */
   private restT = 99;
@@ -304,6 +304,11 @@ export class Sailing {
       const p = road.at(road.lit), d = Math.hypot(p.x - g.pos.x, p.z - g.pos.z);
       if (d < 220) g.audio.roadChime(road.lit, Math.max(0.25, 1 - d / 200));
       road.lit = null;
+    }
+    // Reeds hiss along the hull when she is pushed through a bed of them, quicker the faster she goes.
+    if (this.aboard && g.world.fen && Math.abs(this.boat.speed) > 0.7) {
+      this.reedT -= dt * Math.min(2.2, Math.abs(this.boat.speed) / 2.5);
+      if (this.reedT <= 0 && g.world.fen.inReeds(this.boat.x, this.boat.z)) { this.reedT = 0.55 + Math.random() * 0.4; g.audio.reedBrush(0.6 + 0.4 * this.pace); }
     }
     if (this.rig.sailMoved) { if (this.aboard) { if (this.rig.sailMoved === 'up') g.audio.sailFlap(); else g.audio.ropeCreak(); } this.rig.sailMoved = null; }
     // The player rides the boat's rise and fall.

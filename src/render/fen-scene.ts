@@ -240,6 +240,9 @@ export class FenDressing {
   /** Counts, for the bots and the frame profile. */
   readonly counts = { sheaves: 0, trees: 0, lilies: 0, clumps: 0 };
 
+  /** Is (x, z) in a reed bed (for the sound of a hull pushing through)? */
+  inReeds(x: number, z: number): boolean { const h = this.o.heightAt(x, z); return h > BED_LOW - 0.5 && h < BED_HIGH; }
+
   constructor(private o: FenOptions) {
     const isBed = (x: number, z: number) => { const h = o.heightAt(x, z); return h > BED_LOW && h < BED_HIGH; };
     const isClear = (x: number, z: number) => o.clear.some((c) => (x - c[0]) ** 2 + (z - c[1]) ** 2 < c[2] * c[2]);

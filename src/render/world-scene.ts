@@ -5,7 +5,7 @@ import {
 import { Heightfield, type RegionDef } from '../core/world';
 import { createSky, createSkyUniforms, type SkyUniforms } from './sky';
 import { Water } from './water';
-import { buildTerrain } from './terrain';
+import { buildTerrain, type TerrainBuild } from './terrain';
 import { addLanternLight, buildArch, buildBellPost, buildBelfry, buildBuoy, buildDock, buildKettleCamp, buildLighthouse, buildNoticeBoard, buildRowboat, buildStall, createPropMaterial, scatterIsland } from './props';
 import { assets } from './assets';
 import { buildHullMask } from './boat-rig';
@@ -90,8 +90,18 @@ export class WorldScene {
   /** Where the bell hangs, for the camera and for sparks. */
   readonly bellPos = new Vector3();
 
-  constructor(readonly region: RegionDef, profile: QualityProfile, scene: Scene = new Scene()) {
-    this.hf = new Heightfield(region);
+  /** How long the parts of the last region built took, in ms (for the frame profile). */
+  static lastBuild: Record<string, number> = {};
+
+  /**
+   * `ready`: the region's ground, made beforehand (see RegionPrep), so that changing regions does not hold
+   * the game up while half a million faces are worked out.
+   */
+  constructor(readonly region: RegionDef, profile: QualityProfile, scene: Scene = new Scene(), ready: { hf: Heightfield; terrain: TerrainBuild } | null = null) {
+    let lapAt = performance.now();
+    const laps: Record<string, number> = WorldScene.lastBuild = {};
+    const lap = (name: string) => { const now = performance.now(); laps[name] = Math.round(now - lapAt); lapAt = now; };
+    this.hf = ready?.hf ?? new Heightfield(region);
     this.scene = scene;
     this.grade = GRADES[region.grade] ?? null;
     const s = this.root;
@@ -101,13 +111,15 @@ export class WorldScene {
 
     const look = lookOf(region.grade);
     this.swell = look.water.swell;
-    const terrain = buildTerrain(this.hf, profile.terrainCell, look.terrain);
+    const terrain = ready?.terrain ?? buildTerrain(this.hf, profile.terrainCell, look.terrain);
     this.terrainMat = terrain.material;
     this.heightTex = terrain.heightTex;
     s.add(terrain.mesh);
+    lap('terrain');
 
     this.water = new Water({ heightTex: terrain.heightTex, heightBounds: terrain.heightBounds, sky: this.sky, segments: profile.waterSegments, look: look.water });
     s.add(this.water.mesh);
+    lap('water');
 
     const roads = roadsOf(region.id);
     if (roads.length) { this.seaRoad = new SeaRoadLights(roads, (x, z) => this.hf.height(x, z)); s.add(this.seaRoad.root); }
@@ -120,6 +132,7 @@ export class WorldScene {
       if (dock) clear.push([dock.x + Math.sin(dock.rot ?? 0) * (dock.length ?? 30) / 2, dock.z + Math.cos(dock.rot ?? 0) * (dock.length ?? 30) / 2, (dock.length ?? 30) / 2 + 7]);
       this.fen = new FenDressing({ center: region.center, within: region.shoals.within, heightAt: terrain.heightAt, trees, lilies: rcx.lilies ?? [], clear });
       s.add(this.fen.root);
+      lap('flora');
     }
 
     const L = region.landmarks;
@@ -384,6 +397,7 @@ export class WorldScene {
     // A pocket lantern: warm light around the player once the sun is down, so the ground never goes black.
     this.pocket = new PointLight(new Color('#FFC98A'), 0, 16, 1.5);
     s.add(this.pocket);
+    lap('rest');
   }
   private boat: Object3D;
   private pocket: PointLight;

@@ -6,6 +6,8 @@
  * so the game is never silent. The cast charge creak, the line hum and the interface chimes are procedural
  * by design: they follow a value that changes every frame.
  */
+import present from 'virtual:audio-list';
+
 export type Bus = 'music' | 'sfx' | 'voice' | 'ambience';
 export type Track = 'hearthbay-day' | 'hearthbay-night' | 'gull-point' | 'open-water';
 export type Ground = 'wood' | 'cobble' | 'grass' | 'sand';
@@ -27,21 +29,25 @@ const SFX = {
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
-const LOOPS = ['reel-click', 'waves-lap', 'cat-purr', 'hull-wash', 'murmur'] as const;
+const LOOPS = ['reel-click', 'waves-lap', 'cat-purr', 'hull-wash', 'murmur', 'fen-day', 'fen-night'] as const;
 type Loop = (typeof LOOPS)[number];
 /**
- * Sounds that have been asked for but are not recorded yet (see docs/HANDOFF.md). They are not fetched and
- * not counted as missing; their synth stand-ins play instead. Delete a name here when its files land.
+ * Sounds that have been asked for and may not be recorded yet (docs/briefs). Until its files are in the build
+ * such a sound is not fetched and not counted as missing, and its synth stand-in plays; from the first build
+ * after they land it is used, with nothing to change here.
  */
-const PENDING: ReadonlySet<string> = new Set<string>(['fog-lamp-light', 'sea-road-chime', 'fog-cross', 'packet-box', 'reed-brush']);
+const PENDING: ReadonlySet<string> = new Set<string>(['fog-lamp-light', 'sea-road-chime', 'fog-cross', 'packet-box', 'reed-brush', 'fen-day', 'fen-night']);
+const BUILT_IN: ReadonlySet<string> = new Set(present);
+/** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
+const wanted = (name: string) => !PENDING.has(name) || BUILT_IN.has(`audio/sfx/${name}_1.ogg`);
 
 interface SfxOpts { gain?: number; rate?: number; at?: number; vary?: number; bus?: Bus; dur?: number }
 export interface AudioState {
   reeling: boolean; reelSpeed: number; tension: number; fighting: boolean; sea: number;
   /** Cast charge 0..1, or -1 when not charging. */
   charge?: number;
-  /** Which music should be playing. */
-  music?: Track;
+  /** Which music should be playing: a track, null for none, or undefined to leave it as it is. */
+  music?: Track | null;
   /** 0 (night) .. 1 (full day): gulls call by day. */
   day?: number;
   /** Standing on the dock: it creaks now and then. */
@@ -52,6 +58,8 @@ export interface AudioState {
   hull?: number;
   /** 0..1: the murmur at the edge of the region. */
   murmur?: number;
+  /** In a fen: frogs and insects instead of gulls. */
+  fen?: boolean;
 }
 
 export class AudioEngine {
@@ -156,8 +164,8 @@ export class AudioEngine {
     if (!this.ctx) this.start();
     if (this.bankLoad) return this.bankLoad;
     const names: string[] = [];
-    for (const [name, [n]] of Object.entries(SFX)) if (!PENDING.has(name)) for (let i = 1; i <= n; i++) names.push(`${name}_${i}`);
-    for (const l of LOOPS) if (!PENDING.has(l)) names.push(`${l}_1`);
+    for (const [name, [n]] of Object.entries(SFX)) if (wanted(name)) for (let i = 1; i <= n; i++) names.push(`${name}_${i}`);
+    for (const l of LOOPS) if (wanted(l)) names.push(`${l}_1`);
     const missing: string[] = [];
     const queue = [...names];
     const worker = async () => {
@@ -385,6 +393,9 @@ export class AudioEngine {
     else void this.play('audio/music/sting-discover.ogg', 'music', 0.9).then((src) => { if (!src) synth(); });
   }
 
+  /** Is this recorded sound (by the name of its files, less the number) in the build? */
+  static recorded(name: string): boolean { return BUILT_IN.has(`audio/sfx/${name}_1.ogg`); }
+
   // ---- music ----
   /** Crossfades to a looping track. Only one track is kept decoded at a time. */
   setMusic(track: Track | null) {
@@ -445,7 +456,7 @@ export class AudioEngine {
     this.gullTimer -= dt;
     if (this.gullTimer <= 0) {
       this.gullTimer = 14 + Math.random() * 30;
-      if ((s.day ?? 0) > 0.35) this.sfx('gulls', { bus: 'ambience', gain: 0.5 + Math.random() * 0.5, vary: 0.06 });
+      if ((s.day ?? 0) > 0.35 && !s.fen) this.sfx('gulls', { bus: 'ambience', gain: 0.5 + Math.random() * 0.5, vary: 0.06 });
     }
     this.creakTimer -= dt;
     if (this.creakTimer <= 0) {
@@ -472,6 +483,10 @@ export class AudioEngine {
     this.murmurGain.gain.setTargetAtTime((murLoop ? 0.25 : 1) * 0.3 * mur * (0.75 + 0.25 * Math.sin(this.murmurLfo * 0.9)), now, 0.4);
     const purr = this.loops.get('cat-purr');
     if (purr) purr.gain.gain.setTargetAtTime(0.9 * (s.purr ?? 0), now, 0.4);
+    // A fen has its own air: one loop for the day and one for the night, crossing over at dusk and dawn.
+    const day = s.day ?? 1;
+    this.loops.get('fen-day')?.gain.gain.setTargetAtTime(s.fen ? 0.8 * Math.min(1, Math.max(0, (day - 0.3) / 0.3)) : 0, now, 1.2);
+    this.loops.get('fen-night')?.gain.gain.setTargetAtTime(s.fen ? 0.8 * Math.min(1, Math.max(0, (0.7 - day) / 0.3)) : 0, now, 1.2);
     if (s.music !== undefined) this.setMusic(s.music);
     this.musicDuck.gain.setTargetAtTime(this.voices > 0 ? 0.45 : 1, now, 0.25);
   }

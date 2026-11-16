@@ -32,23 +32,24 @@ export const MODEL_PATHS = {
   sketchbook: 'models/props/sketchbook.glb',
   biscuit: 'models/characters/biscuit.glb',
   biscuitSit: 'models/characters/biscuit-sit.glb',
+  packetBox: 'models/props/packet-box.glb',
+  stiltHut: 'models/props/stilt-hut.glb',
+  fieldKit: 'models/props/field-kit.glb',
+  listeningPost: 'models/props/listening-post.glb',
 } as const;
 /**
  * Models that have been asked for and may not be made yet (docs/briefs): used from the build after they land,
  * with nothing to change here, and not counted as missing meanwhile.
  */
-const FEN_FISH = ['reedling', 'mudlark', 'glassfin', 'sedge-pike', 'mossback-tench', 'glowbelly', 'stilt-gar', 'bottomless-eel', 'old-mossglass', 'the-listener'];
 export const PENDING_MODELS: Record<string, string> = {
-  packetBox: 'models/props/packet-box.glb',
-  stiltHut: 'models/props/stilt-hut.glb',
-  fieldKit: 'models/props/field-kit.glb',
-  listeningPost: 'models/props/listening-post.glb',
   'npc:calloway': 'models/characters/calloway.glb',
-  ...Object.fromEntries(FEN_FISH.map((id) => [`fish:${id}`, `models/fish/${id}.glb`])),
 };
 /** Optional NPC models; each falls back to a procedural stand-in until its file exists. */
 export const NPC_MODEL_IDS = ['mara', 'pell', 'wick'];
-export const FISH_MODEL_IDS = ['butterperch', 'pebble-goby', 'kettle-carp', 'coral-snapper', 'lampjaw', 'moss-eel', 'twofold-flounder', 'hollow-lantern', 'manyeye'];
+export const FISH_MODEL_IDS = [
+  'butterperch', 'pebble-goby', 'kettle-carp', 'coral-snapper', 'lampjaw', 'moss-eel', 'twofold-flounder', 'hollow-lantern', 'manyeye',
+  'reedling', 'mudlark', 'glassfin', 'sedge-pike', 'mossback-tench', 'glowbelly', 'stilt-gar', 'bottomless-eel', 'old-mossglass', 'the-listener',
+];
 
 interface Entry { scene: Group; clips: AnimationClip[] }
 
