@@ -62,6 +62,7 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `characters/mara.glb` | 14,269 | 1.12 x 1.60 x 0.59 (A-pose) | feet | no | `mara-sheet` | `91d1e727-3e75-47a4-af68-6f367a77fa9f` |
 | `characters/pell.glb` | 13,896 | 1.15 x 1.88 x 0.75 (A-pose) | feet | hand lantern | `pell-sheet` | `dfb779a3-05c1-4861-8ec2-d1458f8b9501` |
 | `characters/wick.glb` | 12,860 | 0.79 x 1.25 x 0.48 (A-pose) | feet | no | `wick-sheet` | `133831b3-7f36-42d3-97ad-25fa271a66a3` |
+| `characters/calloway.glb` | 7,458 | 0.96 x 1.68 x 0.54 (A-pose) | feet | no | `calloway`, `calloway-clips`, `calloway-lineup` | none: built and painted in code (see "Dr. Calloway" below) |
 | `characters/biscuit.glb` | 7,514 | 0.29 x 0.55 x 0.47 (standing, to the tail tip) | feet | no | `biscuit-stand-sheet` | `ff65ea63-ffb6-474d-9a32-49c25cf6f9d4` |
 | `characters/biscuit-sit.glb` | 5,749 | 0.33 x 0.45 x 0.31 (sitting) | base | no | `biscuit-sit-sheet` | `7df5fd5e-8374-44bd-b907-f3d047d7845b` |
 | `fish/butterperch.glb` | 2,958 | 0.54 x 0.79 x 1.00 | centre | no | `butterperch` | `fd9ea949-0241-4ba0-af03-fac94c86777a` |
@@ -210,6 +211,22 @@ Same route as the player: `meshy_rigging`, one job per clip, merged with `merge-
 | | `book_idle`, `book_idle_look`, `book_talk` | 6.03 s, 4.03 s, 4.00 s | Authored on `idle`, `idle_look` and `talk` with `author-anim.mjs` + `wick-clips.mjs`: both hands hold the sketchbook by its side edges; he glances down at it once per idle loop and lifts and shakes it while talking | none |
 
 Wick has one socket: `BookSocket`, an empty child of `LeftHand` at the sketchbook's centre in the `book_*` clips. Parent `props/sketchbook.glb` to it with identity transform (the cover faces the socket's +Z). The other clips are empty-handed, so detach or hide the book for them.
+
+### Dr. Calloway
+
+`characters/calloway.glb` (2026-11-16), Dr. Ines Calloway, is original work built and painted in code, with no generation job and no credits. `docs/art/pipeline/build-calloway.mjs` holds her whole shape and the layout of her atlas, on `kit.mjs` and `figure.mjs` (skins lofted over rings of points, ribbons for straps and tapes, slabs for pockets and the satchel). `callomats.py` paints her: a face drawn in metres on the front of the head, skin, hair, plaited straw, waxed cloth with seams and stitching, leather with laces, the check of her sleeve linings, the dots of her neckerchief, the marks of the tape. `make-calloway.sh` runs it all and checks that the result repeats byte for byte. 7,458 triangles, 1.68 m to the top of her hat (her eyes are at 1.45 m), one material `main` (roughness 0.82), one 1024 px WebP atlas painted at 2048 px, 814 KB.
+
+What she wears, for whoever writes about her: a straw sun hat tipped back, with a teal band, a bow at the back and a sprig of bulrush and reed in the band, held by a chin cord with a teal bead; round brass spectacles; dark brown hair in a bun with a pencil through it, a fringe and a lock in front of each ear; freckles and a grin. An olive waxed field coat to mid-thigh with a brown collar and six brass buttons, belted, with seven pockets: two bellows pockets on the skirt, a ticket pocket above each, an open chest pocket on her left with a red notebook, a pencil and a pen in it, a pocket on the left sleeve and a game pocket across the back. Sleeves rolled above the elbow, showing a checked lining. A heather neckerchief with cream dots, knotted in front. A yellow measuring tape hangs round her neck, its two ends at different lengths. A leather satchel on her right hip behind her hand, its strap over her left shoulder, with a roll of paper standing in it. A magnifying glass on a cord from her belt at her left hip. Sand-coloured trousers tucked into tall laced brown boots.
+
+She is skinned to the skeleton the generated characters share: the 24 joints of the player's rig at their rest places (`biped-rig.json`, written by `dump-skeleton.mjs`), with every part bound in the builder. Hat, hair and spectacles follow `Head`; the coat is bound by height along the spine, toward the shoulders at the top and the legs at the hem, and its pockets, belt, tape and strap with it; the limbs by distance along their joints; the satchel and the magnifier each move in one piece with the coat under them. The root node is `calloway`, with the skeleton and the mesh node `calloway-mesh` under it. Any clip of the player, Mara, Pell or Wick can be carried over to her with `borrow-clips.mjs`, which works through the skinning matrices as `merge-anim.mjs` does.
+
+| Clip | Length | What she does | Made from |
+|---|---|---|---|
+| `idle` | 12.07 s | Looks about the Fen to both sides, then pushes her spectacles up her nose with her left hand | Head, spine and arms authored with `author-anim.mjs` + `calloway-clips.mjs` over the sway of the player's `idle` (two rounds of it), which `borrow-clips.mjs` carries over |
+| `talk` | 6.03 s | Both hands come up and show how long the thing was, twice, the second time longer; she nods and leans in | Authored the same way over one round of the same sway |
+| `wave` | 2.80 s | Her right hand goes up beside her hat and waves, four quick strokes; meant to be played once | Authored the same way |
+
+No sockets, and her hands are empty in every clip. Contact sheets: `docs/art/sheets/calloway.webp` (rest pose, eight views), `calloway-clips.webp` (six frames of each clip) and `calloway-lineup.webp` (beside Mara, the player and Pell, from the front and from three quarters, everyone in their idle).
 
 ### Biscuit the cat
 

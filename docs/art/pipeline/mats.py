@@ -17,6 +17,7 @@ import numpy as np
 from paintkit import (hexc, mix, smooth, fbm, stretch, blur, emboss, chips, strokes, shade, tint, paintify, speckle,
                       polymask, linemask)
 from fishmats import FISH
+from callomats import CALLO
 
 ALGAE, SCUM, BARNACLE = hexc('#58724A'), hexc('#3B4734'), hexc('#DAD8C2')
 
@@ -422,6 +423,7 @@ PAINT = {'iron': iron, 'brass': brass, 'copper': copper, 'floats': floats, 'tin'
          'bulrush': bulrush, 'lilypad': lilypad, 'bud': bud, 'wood': wood, 'endgrain': endgrain, 'cork': cork, 'rope': rope,
          'glass': glass, 'glow': glow, 'cloth': cloth, 'flat': flat}
 PAINT.update(FISH)                                                   # skins, fins and eyes for the fish (fishmats.py)
+PAINT.update(CALLO)                                                  # skin, hair, straw and cloth for a person (callomats.py)
 
 
 # ------------------------------------------------------------------------------------------------ what happens to a patch afterwards
