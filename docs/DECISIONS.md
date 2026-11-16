@@ -2,6 +2,30 @@
 
 Newest first. Each entry: date, decision, why.
 
+## 2026-11-16 — The next water is made ready on the way to it
+Building the Fen's ground at the moment of crossing froze the game for a second (measured: 1,000 ms, 95% of it the terrain). The terrain builder is now a generator that can be run a few milliseconds a frame (`terrainSteps`), and `RegionPrep` runs it for the region a sea-road leads to as soon as the skiff is on that road; the chart's "Sail here" gives it a bigger share during the fade. At the swap the finished ground is handed over, and what is left (water, flora, props) takes 78 ms here in software rendering. If the ground is not ready it is finished on the spot, so the worst case is the old pause, never a wrong world. Why not a worker: the builder reads the heightfield and three.js types directly, and stepping it on the main thread needed no second copy of either.
+
+## 2026-11-16 — The sea bed is its own mesh, drawn coarse where it is flat
+The Fen is mostly shallow water over a nearly flat bed, and at the lattice the land needs it came to 624,000 triangles, drawn twice because the ground casts shadows: 1.8 million a frame. The ground is now two meshes. Faces wholly under the water are the bed, which receives shadows and casts none. Where a 4 by 4 block of bed cells is flat for its depth it is drawn as one fan about its middle, with the fine lattice's own vertices kept on any side that meets a finely drawn neighbour, so there are no cracks (a test walks every edge). The Fen now draws 0.76 million triangles a frame on Medium, Hearthbay 0.44 million. Below 18 m the bed is left out: the water hides it.
+
+## 2026-11-16 — The notice board belongs to the water the keeper is in
+The first run of the Fen bot found the board at Sedge Landing asking for Hearthbay fish. Arriving in a region (`arriveIn`) now redraws the jobs nobody has taken, so a board only asks for what swims nearby. A job already taken is kept and can be finished anywhere.
+
+## 2026-11-16 — The simulated keeper fills the journal once the story is told
+The simulator said nobody ever landed the Listener or finished the Mossglass page. That was a fact about the model player, not the game: she fished only where the coins were best, and planned an outing without looking at the clock. With no story job left she now goes after the fish missing from the journal, sets out early for one that keeps hours, and does not sit up for it while a better rod is still to be earned. With that, the page comes about a quarter of an hour after Calloway's last job, and nine keepers in ten have the Listener inside seven hours, most of them about an hour and a quarter after the Post. A liking for glowgrub was tried for the Listener and taken out again: with the Fenwood Rod's luck it made one bite in six at the Post an uncanny fish, which is a farm, not a rumour.
+
+## 2026-11-15 — One sea, one set of coordinates, one water built at a time
+The five regions stand on a ring round the Still Eye in a single coordinate space, so a mooring, a chest or a sea-road end means the same thing to the save, the chart, the route finder and the simulator. Only the water the keeper is in is built; the change is made half way along the sea-road, in the thick of the fog where nothing can be seen, so there is no loading screen and no seam to look at. Considered and dropped: building both neighbours at once (twice the triangles for a view the fog hides) and a loading screen (the directive asks for free sailing).
+
+## 2026-11-15 — The lamp shows the road; it does not open the sea
+With the Fog Lamp the fog still turns a boat back everywhere except along the sea-road, a double line of lights that only wake to the lamp. Why: a lamp that simply switched the fog off would leave 230 m of empty grey to cross in any direction and nothing to steer by. A road gives the crossing a shape, something to follow, and a place for the swap; and later roads can ask for more than a lamp.
+
+## 2026-11-15 — No new shopkeeper in the Fen: Mara's packet box
+Selling in the Fen goes through a crate of Mara's on the landing, at stall prices, with her shelf in the lid. Why: one shop to learn, one voice to record, and Calloway stays what she is (somebody who measures, not somebody who sells). Goods marked `from: "reached:<region>"` appear on every shelf once that region has been reached, at home as well: the first design kept Fen goods to the box, and it only meant a sail across the fog to buy bait.
+
+## 2026-11-15 — Lists of what is in the build are made at build time
+`vite.config.ts` lists the models and sounds under `public/` into two virtual modules. A sound or model that has been asked for and not delivered is "pending": its stand-in plays and no test looks for it; the day its file is in the build it is used, with no change to the code. Why: the asset thread pushes to main on its own clock, and a delivery should not wait on somebody editing a list.
+
 ## 2026-11-15 — Pots copy the journal, stop when full, and are set by hand
 Automation had to stay behind active play and earn only while the game is open. A Lantern Pot traps only fish the player has already caught and written in the journal, at half the value, with rare fish half as likely per tier; it holds three and stops. So a pot never discovers anything, never out-earns the rod (the simulator holds it to 10 to 25% of income), and pays for coming back to it, not for leaving the game running. Pots tick in the game's fixed step and nowhere else: nothing accrues while closed. Rejected: a rate that runs forever (rewards idling), a pot that rolls the zone's whole table (finds fish for the player), offline catch-up.
 

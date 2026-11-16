@@ -36,12 +36,13 @@ type Loop = (typeof LOOPS)[number];
  * such a sound is not fetched and not counted as missing, and its synth stand-in plays; from the first build
  * after they land it is used, with nothing to change here.
  */
-const PENDING: ReadonlySet<string> = new Set<string>(['fog-lamp-light', 'sea-road-chime', 'fog-cross', 'packet-box', 'reed-brush', 'fen-day', 'fen-night']);
+const PENDING: ReadonlySet<string> = new Set<string>([]);
 const BUILT_IN: ReadonlySet<string> = new Set(present);
 /** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
 const wanted = (name: string) => !PENDING.has(name) || BUILT_IN.has(`audio/sfx/${name}_1.ogg`);
 
-interface SfxOpts { gain?: number; rate?: number; at?: number; vary?: number; bus?: Bus; dur?: number }
+/** `pick` chooses the variation (0 is the first, and it wraps) instead of leaving it to chance. */
+interface SfxOpts { gain?: number; rate?: number; at?: number; vary?: number; bus?: Bus; dur?: number; pick?: number }
 export interface AudioState {
   reeling: boolean; reelSpeed: number; tension: number; fighting: boolean; sea: number;
   /** Cast charge 0..1, or -1 when not charging. */
@@ -193,8 +194,8 @@ export class AudioEngine {
   sfx(name: Sfx, o: SfxOpts = {}): boolean {
     const ctx = this.ctx; if (!ctx) return false;
     const [n, vol] = SFX[name];
-    let i = 1 + Math.floor(Math.random() * n);
-    if (n > 1 && i === this.lastPick.get(name)) i = 1 + (i % n);
+    let i = o.pick !== undefined ? 1 + (((o.pick % n) + n) % n) : 1 + Math.floor(Math.random() * n);
+    if (o.pick === undefined && n > 1 && i === this.lastPick.get(name)) i = 1 + (i % n);
     const buf = this.bank.get(`${name}_${i}`);
     if (!buf) return false;
     this.lastPick.set(name, i);
@@ -369,7 +370,7 @@ export class AudioEngine {
   }
   /** A light of the sea-road answering as the boat passes: one far, glassy bell note. `i` picks the note. */
   roadChime(i = 0, gain = 1) {
-    if (this.sfx('sea-road-chime', { gain, vary: 0.01 })) return;
+    if (this.sfx('sea-road-chime', { gain, vary: 0.01, pick: i })) return; // the three recordings rise: A, B, D
     const f = [1046.5, 1174.66, 1396.91][((i % 3) + 3) % 3];
     this.tone(f, 1.5, 0.075 * gain, 'sine'); this.tone(f * 2.76, 0.5, 0.022 * gain, 'sine'); this.tone(f * 0.5, 1.2, 0.03 * gain, 'sine', 0.02);
   }
@@ -380,7 +381,8 @@ export class AudioEngine {
   }
   /** Mara's packet box taking a catch: lid, rope, coins. */
   packetBox(n = 3) {
-    if (this.sfx('packet-box')) return;
+    // The recording is latch and lid, rope, then coins from 0.85 s: with nothing sold it stops before the coins.
+    if (this.sfx('packet-box', n > 0 ? {} : { dur: 0.8 })) return;
     this.tone(120, 0.12, 0.22, 'sine', 0, 80); this.noise(0.3, 700, 0.8, 0.08, 'bandpass', 500, 0.1); this.coin(n);
   }
   /** A hull pushing through reeds. */
@@ -448,7 +450,7 @@ export class AudioEngine {
     this.humOsc.frequency.setTargetAtTime(90 + s.tension * 260, now, 0.05);
     // Sea: recorded lapping waves over a quiet wash that breathes.
     const waves = this.loops.get('waves-lap');
-    if (waves) waves.gain.gain.setTargetAtTime(0.8, now, 1.5);
+    if (waves) waves.gain.gain.setTargetAtTime(s.fen ? 0.3 : 0.8, now, 1.5); // a fen's water hardly laps
     const wash = waves ? 0.35 : 1;
     this.seaGain.gain.setTargetAtTime(wash * (0.1 + 0.05 * Math.sin(now * 0.4) + s.sea * 0.05), now, 0.5);
     this.seaFilter.frequency.setTargetAtTime(380 + 220 * (0.5 + 0.5 * Math.sin(now * 0.31)), now, 0.5);

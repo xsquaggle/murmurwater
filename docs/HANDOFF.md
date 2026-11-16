@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the Drowned Bell), released as v0.3.0. The next slice is Mossglass Fen behind the Murmur Fog.
+Last updated: 2026-11-16, phase 2 third slice (the Fog Lamp, the sea-road, Mossglass Fen), released as v0.4.0. The next slice is deckhands and the second boat.
 
 ## Start here (new session)
 1. Read `docs/DIRECTIVE.md` (the brief, verbatim) and this file.
@@ -16,14 +16,15 @@ Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the
 - Economy and gear (v0.3.0): Mara's shelf has four pages (rods and bait with rod tuning, lures and creel, clothes, Lantern Pots); the satchel has a Gear page that totals everything and an Echoes page once the Bell is known. Hearthbay is tuned by the simulator: the skiff at about 23 minutes, pots at 43, the first ring of the Bell between 73 and 79.
 - Lantern Pots (v0.3.0): set and hauled with F from shore, dock or the skiff; they trap journal fish on play time only, hold three and stop.
 - The Drowned Bell (v0.3.0): the belfry stands on a shoal north-west of Gull Point. Pell's hb-09 finds it, hb-10 rings it; ringing turns the tide (coins and what they bought are taken, Echoes are paid on lifetime coins, the keeper wakes on the dock). Four more quests in all: hb-p1-pots, hb-08b-stall, hb-09-bell, hb-10-turning.
+- Mossglass Fen (v0.4.0): the second region, north-west across the Murmur Fog. Pell's hb-11 asks for the Fog Lamp (8 Echoes, satchel), hb-12 sends the keeper down the old sea-road past the belfry. At Sedge Landing: Dr. Calloway (six jobs, fen-01 to fen-06), Mara's packet box (sells and has her shelf), a notice board that asks for Fen fish. Ten fish, the Fenwood Rod, two baits, a lure, two wearables, two relics, three chests, six chart places, the Mossglass page of the journal. In the simulator: the lamp at about 75 minutes, the Fen at 80, Calloway's last job at 150, the page at 165, the Listener for nine keepers in ten inside seven hours.
 - Settings are separate from the save (Electron `userData/settings.json`, browser localStorage). An unreadable save is quarantined, never overwritten.
 
 ## Code map
-- `src/core`: pure logic (fishing, economy, quests, saves, world heightfield, dock, `boat.ts` handling, `seaways.ts` route finding, `landing.ts` where a boat floats and a person can step off, `gear.ts` the one fold of every bonus into `stats()`, `pots.ts`, `bell.ts`). Tested in Node.
+- `src/core`: pure logic (fishing, economy, quests, saves, world heightfield, dock, `boat.ts` handling, `seaways.ts` route finding, `landing.ts` where a boat floats and a person can step off, `gear.ts` the one fold of every bonus into `stats()`, `pots.ts`, `bell.ts`, `content.ts` with the regions, sea-roads and `regionAhead`, `flora.ts` where trees stand in the water). Tested in Node.
 - `src/data`: JSON content (fish, rods, baits, boats, relics, quests, NPCs, regions with places, NPC spots, critters, ferry points, chart places, moorings, chests).
 - `src/game`: glue (game loop, camera, input, town: NPCs, talk, screens, cutscenes; `sailing.ts`: the player's boat, boarding, the helm, discovery, fast travel; `potfield.ts`: pots in the world; `trade.ts`: every buy, tune, wear and Echo button; settings).
 - `tools/sim`: the economy simulator (`npm run sim`).
-- `src/render`: three.js (world scene, terrain, water with fish shadows, sky, avatar, fishing view: lure, line, float, splashes; `boat-rig.ts`: hull, sail, wake, spray, tiller, where the person sits and stands; NPC figures, cat, fish models, assets).
+- `src/render`: three.js (world scene, terrain, water with fish shadows, sky, avatar, fishing view: lure, line, float, splashes; `boat-rig.ts`: hull, sail, wake, spray, tiller, the Fog Lamp, where the person sits and stands; NPC figures, cat, fish models, assets; `looks.ts`: a region's colours; `sea-road.ts`: the lights in the fog; `fen-scene.ts`: reeds, the grove, lilies, night lights; `fen-props.ts`: data-driven props with stand-ins; `region-prep.ts`: the next region's ground made ahead of the crossing).
 - `src/audio`: mixer, sound bank, music.
 - `src/ui`: DOM HUD (with the helm compass), dialogue and screens (`chart.ts` paints the chart).
 - `e2e`: the bots.
@@ -34,6 +35,7 @@ Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the
 | `story.cjs` | The whole Hearthbay chain through the real game, quest fish really caught, save and reload (STORY OK) |
 | `sail.cjs` | The skiff from Pell, sailed with the real helm keys along routes through the water: Kettle Isle, the kettle, home, the Teeth, a flounder from the boat, the chest on Pip's Bar, the chart and fast travel, running at a beach, the Murmur Fog, a save made at sea (SAIL OK). Helpers in `sail-helpers.cjs` |
 | `tide.cjs` | The second half of Hearthbay: the pot job, F to set and haul from the dock and from the boat, every page of the shelf, the Gear page, the belfry by boat and its chest, the first ring of the Bell, what the tide took and kept, an Echo spent, the lines after a Turning, save and reload (TIDE OK) |
+| `fog.cjs` | The way to Mossglass Fen: Pell's lamp job, the fog turning her back without it, the Fog Lamp bought with Echoes, the sea-road sailed with the real helm, the change of waters in the thick of the fog (and that the ground was ready before it), Calloway, fish off the jetty, the packet box and its shelf, the Fen's notice board, the stake, the ear trumpet, the chart across the fog both ways, a save made in the Fen, a v4 save from before the Fen (FOG OK). Helpers `window.fog` at the top of the file |
 | `play.cjs` | Core loop: cast, hook, fight, land, sell |
 | `walk.cjs` | Walking with the real keys: props, houses and people are solid, everyone is reachable; shots of the dock, night, lighthouse and conversations |
 | `shadows.cjs` | A shadow reaches the float before the bite; top-down and in-game frames |
@@ -46,10 +48,15 @@ Last updated: 2026-11-15, phase 2 second slice (economy, gear, Lantern Pots, the
 The asset thread ("Generate and import game assets") makes models, clips, voice, music and sound with Higgsfield, Blender and CC0 sources and pushes them to main. It documents every file in `docs/ASSETS.md`.
 
 ## Known issues
-- 35 lines are not voiced: the four new jobs and the nine lines people say after a Turning. `npm run voice` lists them; the asset thread records them once Lawson has answered about credits (4.84 Higgsfield credits were left on 2026-11-13, a line costs about half a credit).
-- The six new sounds (`pot-set`, `pot-haul` x2, `bell-toll`, `echo-buy`, `tide-turn`) are in and levelled by measurement; nobody has heard them in play. A sound asked for but not yet delivered goes in `PENDING` in `src/audio/audio.ts` so its stand-in plays and the smoke test does not look for it.
-- No person has played the v0.3.0 slice. Its timings are the simulator's.
-- Echoes have ten upgrades to go on and nothing else until the fog lamp exists.
+- 90 of 142 lines are not voiced: all of Calloway, Pell's hb-11 and hb-12, and the 35 from v0.3.0. `npm run voice` lists them; the asset thread records them once Lawson has answered about credits (4.84 Higgsfield credits were left on 2026-11-13, a line costs about half a credit). The decision card about buying credits is still open in the project thread.
+- Calloway is a stand-in figure (`npc-figure.ts`, key `npc:calloway` in `PENDING_MODELS`). The asset thread is trying her in code; a generated model waits on credits.
+- The Fen has no music of its own: ashore only the fen's ambience plays, under sail by day the open-water theme. Themes wait on credits.
+- The ten Fen sounds (`fog-lamp-light`, `sea-road-chime` x3, `fog-cross`, `packet-box`, `reed-brush` x2, loops `fen-day` and `fen-night`) and the six from v0.3.0 are in and levelled by measurement; nobody has heard them in play. A sound asked for but not yet delivered goes in `PENDING` in `src/audio/audio.ts` so its stand-in plays and the smoke test does not look for it; it is used from the build its first file is in.
+- No person has played the v0.3.0 or v0.4.0 slices. Their timings are the simulator's.
+- The Fen draws about 0.76 M triangles a frame on Medium (Hearthbay 0.44 M), most of it reeds and the grove with their shadows. Unmeasured on the 3060.
+- Where the Sump's deep water meets the shallows the bed shows coarse facets. Reed sheaves are coarse at arm's length.
+- A keeper who buys the lamp and sails to the Fen before taking hb-12 from Pell is offered fen-01 by Calloway first. hb-12, taken later, is ready at once (a place already found counts when a job is taken) and is handed to Calloway. Harmless, but the order reads oddly.
+- The route finder knows one region's water at a time and does not plan from inside the fog: bots pilot along the road and back to a road end first (`window.fog.pilot`).
 - In the simulator a clumsy keeper (skill 0.4) earns about what a practised one (0.7) does over three hours, and only the best (0.95) pulls ahead, by 10 to 15%. Either the simulated clumsy keeper fights too well or skill pays too little. Worth a look alongside Lawson's feedback on how the fishing feels; `tests/sim.test.ts` only holds that the best is never behind.
 - The goal line after the story counts all nine Hearthbay fish (the Manyeye among them) while the journal page counts the eight ordinary ones.
 - The sailing sounds, the murmur and the open-water theme were levelled by measurement; nobody has heard them in play.
@@ -73,6 +80,18 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 - Sea chests are data (`regions.json chests`: place, coins, baits, a line of text); `town.ts openChest` pays them once (flag `chest:<id>`), and `world-scene.ts` swaps the shut model for the open one.
 - `Heightfield.shapeAt` and `landing.ts solid` run hundreds of times a frame at sea: keep them free of allocation.
 
+## Regions and the Fen, for whoever touches them next
+- One coordinate space for the whole sea. A region is a disc (`centre`, `radius` 700) in `regions.json`; its last 110 m is fog. A sea-road (`ROADS` in `core/content.ts`: ends `a` and `b`, `halfWidth`, the two regions) is the only way through, and only with the Fog Lamp. `tests/roads.test.ts` holds that the road joins quiet water to quiet water, that the murmur lifts only down its middle, that the region changes half way along and only on the road, and that a boat with the lamp gets across while one without is turned back.
+- Only the active region is built. `Game.enterRegion(id)` tears down the old `WorldScene` and builds the new one in the same three.js scene; `arriveIn(state, id)` in `core/quests.ts` is the save's side of it (region, discovered, the `reached:<id>` flag, a fresh notice board). The swap happens at half way along the road, or under the fade of a chart journey.
+- The pause at the swap is short because the ground is already made: `Game.step` asks `regionAhead` while the skiff is on a road and `RegionPrep.pump` builds the terrain a few milliseconds a frame (`terrainSteps`, a generator). `Game.lastSwap` records what the swap cost; the fog bot holds `readyBefore === 1`. Anything new that is slow to build for a region should be given to `RegionPrep` the same way, not built in the `WorldScene` constructor.
+- The ground is two meshes: the land (casts shadows) and the bed below the waterline as its child (does not), with flat bed drawn as coarse fans. `tests/terrain.test.ts` checks every face looks up and no edge is left open. The lattice is jittered, so a cell picks whichever diagonal does not make a sliver.
+- Goods, places and props are data. `from: "reached:<region>"` on a rod, bait or lure puts it on every shelf once that region is reached. A look-at place (`places` with `prompt`, `text`, `flag`, `dark`) is the stake and the ear trumpet. A region's `props` name a model in `fen-props.ts SPECS`, which has a stand-in for each; `block` gives it a solid circle. An NPC with `thing: true` is not a person (the packet box): it has no voice, its one line is read the first time only, and it has its own sound.
+- A quest can be handed in to someone other than its giver (`receiver`); `handsInTo(q)` is who.
+- Reeds and other thin leaves use `fen-scene.ts swaying()`: lit mostly as if facing the sky, plus light through the leaf toward a low sun (taken from the sun's strength more than its hue, or dusk turns them crimson).
+- The water shader has a float `uTurbid` (clearness); `uMurk` is the sky's vec4 for the fog and the two must not share a name (a redefinition made the water vanish in both regions, and only a browser shows it).
+- Audio in the Fen: `AudioState.fen` turns the gulls off, lowers the lapping and brings up `fen-day` and `fen-night`, which cross over at dusk and dawn. The three road chimes are picked in order (`sfx(..., { pick })`) so a row of lights plays a rising tune.
+- The simulated keeper (`tools/sim/player.ts`) crosses to the Fen for jobs and for better fishing, takes her pots up first, and after the story fills the journal. `tests/sim.test.ts` holds the Fen's bands.
+
 ## Gear, pots and the Bell, for whoever touches them next
 - Add a bonus by adding an effect to data (`gear.json`, `echoes.json`, `relics.json`) and, if it is a new kind, one line in `core/gear.ts stats()`. Do not add bonuses anywhere else: the Gear page and the simulator read `stats()`.
 - After any tuning change run `npm run sim` and `npx vitest run tests/sim.test.ts`. The tests are the tuning targets; change a target on purpose or not at all.
@@ -86,4 +105,4 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 - Two traps for bots, both met while finishing this slice. The game saves as the page leaves (`beforeunload`), so a bot that plants a save in `localStorage` must stop `game.save` first or its own game lands on top. And a job handed in can run straight on into the giver's next offer, where there is no goodbye to pick: turn the offer down first (`e2e/sail.cjs` after the flounder).
 
 ## Next steps
-The rest of phase 2 in ROADMAP: Mossglass Fen behind the Murmur Fog (the fog lamp, bought with Echoes, is the gate), a second boat, deckhands, more chests, crates and relics. Voice the 35 new lines when credits allow. Act on Lawson's feedback from v0.3.0 first.
+The rest of phase 2 in ROADMAP: deckhands (Biscuit and Mister Hollis, who fish from the boat or dock while the game is open), the second boat, more chests, crates and relics. Voice the 90 unvoiced lines, give the Fen its music and Calloway her model when credits allow. Act on Lawson's feedback on v0.2.0 to v0.4.0 first: none has come yet.

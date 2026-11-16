@@ -121,6 +121,29 @@ const { chromium } = require('playwright');
   rows.push(await measure('step grass (walk)', 'a.step("grass", false)', 0.5));
   rows.push(await measure('ui click', 'a.click()', 0.3));
   rows.push(await measure('gulls', 'a.sfx("gulls", { bus: "ambience" })', 2));
+  // The sea-road and the Fen: the new one-shots, then the Fen's own air by day and by night.
+  rows.push(await measure('fog lamp lights', 'a.fogLampLight()', 1.6));
+  rows.push(await measure('road chimes (three, rising)', 'a.roadChime(0); setTimeout(() => a.roadChime(1), 500); setTimeout(() => a.roadChime(2), 1000)', 2.8));
+  rows.push(await measure('the crossing', 'a.fogCross()', 5));
+  rows.push(await measure('packet box (a sale)', 'a.packetBox(5)', 2));
+  rows.push(await measure('reeds on the hull', 'a.reedBrush(1)', 1.4));
+  const synth = await page.evaluate(() => { const p = window.__MW__.game.audio.played; return ['fog-lamp-light', 'sea-road-chime', 'fog-cross', 'packet-box', 'reed-brush'].filter((n) => !(p[n] > 0)); });
+  check(synth.length === 0, `the sea-road and Fen recordings play (${synth.length ? 'stand-ins instead: ' + synth.join(', ') : 'all five'})`);
+  const fen = await page.evaluate(() => {
+    const g = window.__MW__.game, s = g.state;
+    s.boats.owned.push('skiff'); s.boats.current = 'skiff'; s.echoUpgrades['fog-lamp'] = 1;
+    const ok = g.enterRegion('mossglass-fen', false);
+    g.pos.set(-846.5, g.groundAt(-846.5, -616.5) ?? 1.5, -616.5); g.snapCamera(); s.hour = 12;
+    for (let i = 0; i < 10; i++) { g.simulate(1 / 30); g.presentOnce(1 / 30); }
+    return ok;
+  });
+  check(fen, 'the keeper is set down on Sedge Landing');
+  await page.waitForTimeout(7000); // the day theme fades out and the fen's loop comes up
+  const fenDay = await measure('bed: the Fen by day', '', 8);
+  await page.evaluate(() => { const g = window.__MW__.game; g.state.hour = 23; for (let i = 0; i < 10; i++) { g.simulate(1 / 30); g.presentOnce(1 / 30); } });
+  await page.waitForTimeout(7000);
+  const fenNight = await measure('bed: the Fen by night', '', 8);
+  rows.push(fenDay, fenNight);
   const db = (v) => (v > 0 ? (20 * Math.log10(v)).toFixed(1).padStart(6) : '  -inf');
   console.log('\nlevel at the master output          peak dBFS   RMS dBFS');
   for (const r of rows) console.log(`  ${r.label.padEnd(30)} ${db(r.peak)}     ${db(r.rms)}`);
@@ -128,7 +151,9 @@ const { chromium } = require('playwright');
   check(bed.rms > 0.004, `the music and sea bed is audible (RMS ${db(bed.rms)} dBFS)`);
   check(rows.every((r) => r.peak < 0.97), `nothing clips (loudest peak ${db(Math.max(...rows.map((r) => r.peak)))} dBFS)`);
   // Foreground sounds should peak well clear of the bed's average level (12 dB or more).
-  for (const r of rows.slice(1)) if (!/step|click|gulls|reel/.test(r.label)) check(r.peak > bed.rms * 4, `${r.label} stands out over the bed`);
+  for (const r of rows.slice(1)) if (!/step|click|gulls|reel|bed:|reeds|chimes/.test(r.label)) check(r.peak > bed.rms * 4, `${r.label} stands out over the bed`);
+  // The Fen ashore has no music: its bed is the frogs and insects, heard but well under a voice or a catch.
+  for (const r of [fenDay, fenNight]) check(r.rms > 0.0015 && r.rms < 0.12 && r.peak < 0.8, `${r.label} is there and is not loud (RMS ${db(r.rms)}, peak ${db(r.peak)} dBFS)`);
 
   if (errors.length) problems.push('page errors: ' + errors.join(' | '));
   console.log(problems.length ? 'AUDIO FAILED\n' + problems.join('\n') : 'AUDIO OK');

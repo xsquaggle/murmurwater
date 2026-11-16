@@ -1,5 +1,5 @@
 {
-  "count": 87,
+  "count": 142,
   "lines": [
     {
       "key": "mara/hb-01-salt.intro.0",
@@ -614,6 +614,456 @@
       "hash": "7bc99960"
     },
     {
+      "key": "pell/hb-11-lamp.intro.0",
+      "file": "public/audio/voice/pell/hb-11-lamp.intro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "There was a road once, out through the fog. Iron lights, two lines of them, all the way to the Fen. They went out. Lights do.",
+      "hash": "0da1f8c9"
+    },
+    {
+      "key": "pell/hb-11-lamp.intro.1",
+      "file": "public/audio/voice/pell/hb-11-lamp.intro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "A fog lamp would wake them. Keepers kept one on the bow. It burns what the Bell gives back, so coins won't buy it. Echoes will.",
+      "hash": "a38c9e01"
+    },
+    {
+      "key": "pell/hb-11-lamp.intro.2",
+      "file": "public/audio/voice/pell/hb-11-lamp.intro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Eight of them. Look in your satchel, where the Echoes are. I'd tell you where the last lamp went, but I think it was on her boat.",
+      "hash": "6477546f"
+    },
+    {
+      "key": "pell/hb-11-lamp.reminder",
+      "file": "public/audio/voice/pell/hb-11-lamp.reminder.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The lamp wants eight Echoes. If you're short, the Bell has more. It always has more.",
+      "hash": "eb23d337"
+    },
+    {
+      "key": "pell/hb-11-lamp.outro.0",
+      "file": "public/audio/voice/pell/hb-11-lamp.outro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "There she is, on the bow. She'll light herself when the fog comes close. Don't help her. She doesn't like it.",
+      "hash": "f7ba10db"
+    },
+    {
+      "key": "pell/hb-11-lamp.outro.1",
+      "file": "public/audio/voice/pell/hb-11-lamp.outro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The road starts past the belfry, north-west. Two dead lights standing in the sea. Sail between them, and keep between them.",
+      "hash": "36beece0"
+    },
+    {
+      "key": "pell/hb-11-lamp.outro.2",
+      "file": "public/audio/voice/pell/hb-11-lamp.outro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Off the road the fog is the fog still. It'll turn you round and tell you it was your idea.",
+      "hash": "f3354276"
+    },
+    {
+      "key": "pell/hb-12-road.intro.0",
+      "file": "public/audio/voice/pell/hb-12-road.intro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The Fen's the next water round. Green and still. Shallow enough to stand in, and deep enough not to.",
+      "hash": "71f9560d"
+    },
+    {
+      "key": "pell/hb-12-road.intro.1",
+      "file": "public/audio/voice/pell/hb-12-road.intro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "There's a doctor out there, counting things. Came through on the packet before the lights went out. That can't be right, can it? Never mind.",
+      "hash": "c740dde0"
+    },
+    {
+      "key": "pell/hb-12-road.intro.2",
+      "file": "public/audio/voice/pell/hb-12-road.intro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Mara's a box on the landing, so you needn't sail home to sell. Tell the doctor the ferryman remembers her. She'll say we've not met.",
+      "hash": "71230232"
+    },
+    {
+      "key": "pell/hb-12-road.reminder",
+      "file": "public/audio/voice/pell/hb-12-road.reminder.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Past the belfry, north-west, between the two lights. Keep to the road. The doctor's on the landing at the far end.",
+      "hash": "8898c2ab"
+    },
+    {
+      "key": "calloway/hb-12-road.outro.0",
+      "file": "public/audio/voice/calloway/hb-12-road.outro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "A visitor! Splendid. Dr. Ines Calloway, natural history. Mind the tape, it's measuring.",
+      "hash": "6807a3cb"
+    },
+    {
+      "key": "calloway/hb-12-road.outro.1",
+      "file": "public/audio/voice/calloway/hb-12-road.outro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The ferryman remembers me? How kind. We've not met. I came out on the packet, which, yes, does not run. I have decided not to mind.",
+      "hash": "ae1f20bf"
+    },
+    {
+      "key": "calloway/hb-12-road.outro.2",
+      "file": "public/audio/voice/calloway/hb-12-road.outro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Now. You fish, and I measure. The fen keeps coming out a different size, and I should like a second opinion.",
+      "hash": "510c98ff"
+    },
+    {
+      "key": "calloway/fen-01-scale.intro.0",
+      "file": "public/audio/voice/calloway/fen-01-scale.intro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "First, a baseline. I need to know what a fish of this fen weighs when nobody is being clever about it.",
+      "hash": "ecea3e7d"
+    },
+    {
+      "key": "calloway/fen-01-scale.intro.1",
+      "file": "public/audio/voice/calloway/fen-01-scale.intro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Catch me six. Any sort, anywhere in the fen. I shall weigh them and write the numbers down, and we shall see if they stay written.",
+      "hash": "f9cfb07d"
+    },
+    {
+      "key": "calloway/fen-01-scale.intro.2",
+      "file": "public/audio/voice/calloway/fen-01-scale.intro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Sell them in Mara's box after. It gives stall prices. I have had it in pieces twice, and it is a box.",
+      "hash": "5829679a"
+    },
+    {
+      "key": "calloway/fen-01-scale.reminder",
+      "file": "public/audio/voice/calloway/fen-01-scale.reminder.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Six fish of the fen, any sort. I've the scale ready. It was ready before you came, which I don't remember doing.",
+      "hash": "34ad844c"
+    },
+    {
+      "key": "calloway/fen-01-scale.outro.0",
+      "file": "public/audio/voice/calloway/fen-01-scale.outro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Six. Thank you. Now watch the scale. There. And again. You saw that?",
+      "hash": "d45bccdb"
+    },
+    {
+      "key": "calloway/fen-01-scale.outro.1",
+      "file": "public/audio/voice/calloway/fen-01-scale.outro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The same fish, a quarter of a pound heavier the second time. I am a careful woman. I do not think it is me.",
+      "hash": "392b5f33"
+    },
+    {
+      "key": "calloway/fen-02-glass.intro.0",
+      "file": "public/audio/voice/calloway/fen-02-glass.intro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Glasswater next. The lagoon in the middle, west of here. Clear as a lens, and I want to know what it magnifies.",
+      "hash": "5d1d1d47"
+    },
+    {
+      "key": "calloway/fen-02-glass.intro.1",
+      "file": "public/audio/voice/calloway/fen-02-glass.intro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "There's a little fish there you can see straight through. Glassfin. Bring me one whole. Try a mayfly on the hook.",
+      "hash": "ca8bd0ac"
+    },
+    {
+      "key": "calloway/fen-02-glass.reminder",
+      "file": "public/audio/voice/calloway/fen-02-glass.reminder.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "A Glassfin, from Glasswater. West of here, the still lagoon. You'll see the bottom all the way out.",
+      "hash": "43d59e3b"
+    },
+    {
+      "key": "calloway/fen-02-glass.outro.0",
+      "file": "public/audio/voice/calloway/fen-02-glass.outro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Lovely. Hold it to the light. You can read through it. I've tried: my own notes, quite legible.",
+      "hash": "476325e7"
+    },
+    {
+      "key": "calloway/fen-02-glass.outro.1",
+      "file": "public/audio/voice/calloway/fen-02-glass.outro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Except this line. I didn't write that. 'She is on the far side.' It's in my hand. Well. I shall press it flat and think.",
+      "hash": "0660a1d1"
+    },
+    {
+      "key": "calloway/fen-03-tape.intro.0",
+      "file": "public/audio/voice/calloway/fen-03-tape.intro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "I ran a line across the Reed Maze, north of here. A stake at each end, and my best tape between.",
+      "hash": "594aec56"
+    },
+    {
+      "key": "calloway/fen-03-tape.intro.1",
+      "file": "public/audio/voice/calloway/fen-03-tape.intro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "It was two hundred yards when I set it. Sail up and read me the far stake, the one on the long bar. I can't leave the scale.",
+      "hash": "e43da5e9"
+    },
+    {
+      "key": "calloway/fen-03-tape.intro.2",
+      "file": "public/audio/voice/calloway/fen-03-tape.intro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Mind the reed beds. The channels go round them, and so must you.",
+      "hash": "65898270"
+    },
+    {
+      "key": "calloway/fen-03-tape.reminder",
+      "file": "public/audio/voice/calloway/fen-03-tape.reminder.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The far stake, on the long bar in the Reed Maze. North of here. Just read me the number.",
+      "hash": "28f07261"
+    },
+    {
+      "key": "calloway/fen-03-tape.outro.0",
+      "file": "public/audio/voice/calloway/fen-03-tape.outro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Two hundred and forty? You're sure. No, I believe you. I believe the tape. That's what worries me.",
+      "hash": "d3eb167c"
+    },
+    {
+      "key": "calloway/fen-03-tape.outro.1",
+      "file": "public/audio/voice/calloway/fen-03-tape.outro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Forty yards of fen that were not there on Tuesday. It isn't growing. Growing leaves marks. It's being remembered larger.",
+      "hash": "e0ec8bb6"
+    },
+    {
+      "key": "calloway/fen-03-tape.outro.2",
+      "file": "public/audio/voice/calloway/fen-03-tape.outro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Here, you'll want a hat for this sun. That one's my spare. The tape in the band is not to be trusted either.",
+      "hash": "769ab543"
+    },
+    {
+      "key": "calloway/fen-04-glows.intro.0",
+      "file": "public/audio/voice/calloway/fen-04-glows.intro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The trees in the west light up after dark. The moss does, I mean. So does something in the water under them.",
+      "hash": "e49723f9"
+    },
+    {
+      "key": "calloway/fen-04-glows.intro.1",
+      "file": "public/audio/voice/calloway/fen-04-glows.intro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Glowbelly, the reed-cutters called it. Nobody has brought me one. Go at night, to the Standing Trees, and put something that glows on the hook.",
+      "hash": "39aa6cb2"
+    },
+    {
+      "key": "calloway/fen-04-glows.reminder",
+      "file": "public/audio/voice/calloway/fen-04-glows.reminder.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "A Glowbelly, after dark, under the Standing Trees. West, past Glasswater. A glowgrub on the hook wouldn't hurt.",
+      "hash": "d3417ff7"
+    },
+    {
+      "key": "calloway/fen-04-glows.outro.0",
+      "file": "public/audio/voice/calloway/fen-04-glows.outro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Oh, look at it. Into the jar. Now cover the jar. Still lit! It isn't reflecting anything. It's making it.",
+      "hash": "08372eaa"
+    },
+    {
+      "key": "calloway/fen-04-glows.outro.1",
+      "file": "public/audio/voice/calloway/fen-04-glows.outro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "It brightens when I talk. Not when you do. Say something. No. Only me. How very flattering, and I do not like it at all.",
+      "hash": "a6862e0c"
+    },
+    {
+      "key": "calloway/fen-05-sump.intro.0",
+      "file": "public/audio/voice/calloway/fen-05-sump.intro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "North-west of the lagoon there's a hole. The Sump. I put a lead down it on four hundred fathoms of line.",
+      "hash": "e50ff8ed"
+    },
+    {
+      "key": "calloway/fen-05-sump.intro.1",
+      "file": "public/audio/voice/calloway/fen-05-sump.intro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "It didn't touch. It's still going, as far as I know. I cut it loose on the third day.",
+      "hash": "fbaecd1a"
+    },
+    {
+      "key": "calloway/fen-05-sump.intro.2",
+      "file": "public/audio/voice/calloway/fen-05-sump.intro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Something lives in it. Long. I want to know how long. You'll need your strongest rod, and a worm.",
+      "hash": "edd10bbf"
+    },
+    {
+      "key": "calloway/fen-05-sump.reminder",
+      "file": "public/audio/voice/calloway/fen-05-sump.reminder.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The Sump. North-west of Glasswater, where the water goes dark. A strong rod and a marsh worm.",
+      "hash": "73e6360c"
+    },
+    {
+      "key": "calloway/fen-05-sump.outro.0",
+      "file": "public/audio/voice/calloway/fen-05-sump.outro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Hold the tail. I'll take the head. Five feet two. Now you hold the head. Six feet. Don't look at me like that.",
+      "hash": "2eaffe1c"
+    },
+    {
+      "key": "calloway/fen-05-sump.outro.1",
+      "file": "public/audio/voice/calloway/fen-05-sump.outro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "I think it's the same with the fen. It is as big as whoever is measuring. And somebody a good deal bigger than us has started.",
+      "hash": "7973fefb"
+    },
+    {
+      "key": "calloway/fen-06-post.intro.0",
+      "file": "public/audio/voice/calloway/fen-06-post.intro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Last one, and it isn't a measurement. On the far side, north-west past the trees, there's a platform on piles. Somebody built it to sit and listen.",
+      "hash": "abb9e758"
+    },
+    {
+      "key": "calloway/fen-06-post.intro.1",
+      "file": "public/audio/voice/calloway/fen-06-post.intro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "There's a brass ear trumpet on it the size of a dinghy, pointed down at the water. I put my ear to it once. Once.",
+      "hash": "92f79507"
+    },
+    {
+      "key": "calloway/fen-06-post.intro.2",
+      "file": "public/audio/voice/calloway/fen-06-post.intro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "You go. You've the look of somebody it would rather talk to. There's a tin box by the stool. Bring me what's in it.",
+      "hash": "eeb0b4a1"
+    },
+    {
+      "key": "calloway/fen-06-post.reminder",
+      "file": "public/audio/voice/calloway/fen-06-post.reminder.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The Listening Post. North-west, past the trees, as far as the fen goes. Put your ear to the trumpet. Then come back.",
+      "hash": "4415a24e"
+    },
+    {
+      "key": "calloway/fen-06-post.outro.0",
+      "file": "public/audio/voice/calloway/fen-06-post.outro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "A page. One page, and the rest of the book gone. 'I. Fenn.' Do you know the name? No. Nor do I, and I keep nearly knowing it.",
+      "hash": "de15287e"
+    },
+    {
+      "key": "calloway/fen-06-post.outro.1",
+      "file": "public/audio/voice/calloway/fen-06-post.outro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "She sat there and wrote down what the water said. Read the last line. 'It is not the fish that listen.' Keep it. It was left for you, not for me.",
+      "hash": "e919767f"
+    },
+    {
+      "key": "calloway/fen-06-post.outro.2",
+      "file": "public/audio/voice/calloway/fen-06-post.outro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "And if something with no eyes comes up by the post at night, don't tell me how big it was. I shan't be able to stop myself.",
+      "hash": "e02981b8"
+    },
+    {
       "key": "mara/bark.0",
       "file": "public/audio/voice/mara/bark.0.mp3",
       "npc": "mara",
@@ -677,6 +1127,60 @@
       "hash": "7c0c234f"
     },
     {
+      "key": "pell/bark.0",
+      "file": "public/audio/voice/pell/bark.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "High water at a quarter past never. Low water just after you've forgotten.",
+      "hash": "5036d214"
+    },
+    {
+      "key": "pell/bark.1",
+      "file": "public/audio/voice/pell/bark.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The lamp remembers. That's the trouble with lamps.",
+      "hash": "b2462cdc"
+    },
+    {
+      "key": "pell/bark.2",
+      "file": "public/audio/voice/pell/bark.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Mind the second moon. It minds you.",
+      "hash": "42f18078"
+    },
+    {
+      "key": "pell/turned.0",
+      "file": "public/audio/voice/pell/turned.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Tide's turned. You'll have noticed. Nobody else will.",
+      "hash": "7e9cd6ef"
+    },
+    {
+      "key": "pell/turned.1",
+      "file": "public/audio/voice/pell/turned.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "You again. For the first time.",
+      "hash": "5ee8e009"
+    },
+    {
+      "key": "pell/turned.2",
+      "file": "public/audio/voice/pell/turned.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The bell's quiet this morning. That's how you know it rang.",
+      "hash": "66b62d7d"
+    },
+    {
       "key": "wick/bark.0",
       "file": "public/audio/voice/wick/bark.0.mp3",
       "npc": "wick",
@@ -731,58 +1235,49 @@
       "hash": "871ae001"
     },
     {
-      "key": "pell/bark.0",
-      "file": "public/audio/voice/pell/bark.0.mp3",
-      "npc": "pell",
-      "speaker": "Pell",
-      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
-      "text": "High water at a quarter past never. Low water just after you've forgotten.",
-      "hash": "5036d214"
+      "key": "calloway/bark.0",
+      "file": "public/audio/voice/calloway/bark.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Fourteen paces from the hut to the jetty. Yesterday it was twelve. I have not grown shorter.",
+      "hash": "337f4fb8"
     },
     {
-      "key": "pell/bark.1",
-      "file": "public/audio/voice/pell/bark.1.mp3",
-      "npc": "pell",
-      "speaker": "Pell",
-      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
-      "text": "The lamp remembers. That's the trouble with lamps.",
-      "hash": "b2462cdc"
+      "key": "calloway/bark.1",
+      "file": "public/audio/voice/calloway/bark.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Do not lean on the theodolite. It is pointing at something, and I should like to know what.",
+      "hash": "3f4a203e"
     },
     {
-      "key": "pell/bark.2",
-      "file": "public/audio/voice/pell/bark.2.mp3",
-      "npc": "pell",
-      "speaker": "Pell",
-      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
-      "text": "Mind the second moon. It minds you.",
-      "hash": "42f18078"
+      "key": "calloway/bark.2",
+      "file": "public/audio/voice/calloway/bark.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The frogs stop all at once, you know. Every evening. As if somebody had raised a hand.",
+      "hash": "8c1a41a1"
     },
     {
-      "key": "pell/turned.0",
-      "file": "public/audio/voice/pell/turned.0.mp3",
-      "npc": "pell",
-      "speaker": "Pell",
-      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
-      "text": "Tide's turned. You'll have noticed. Nobody else will.",
-      "hash": "7e9cd6ef"
+      "key": "calloway/turned.0",
+      "file": "public/audio/voice/calloway/turned.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Have we met? No. And yet I have left room for you in the margin. How very like me.",
+      "hash": "36475974"
     },
     {
-      "key": "pell/turned.1",
-      "file": "public/audio/voice/pell/turned.1.mp3",
-      "npc": "pell",
-      "speaker": "Pell",
-      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
-      "text": "You again. For the first time.",
-      "hash": "5ee8e009"
-    },
-    {
-      "key": "pell/turned.2",
-      "file": "public/audio/voice/pell/turned.2.mp3",
-      "npc": "pell",
-      "speaker": "Pell",
-      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
-      "text": "The bell's quiet this morning. That's how you know it rang.",
-      "hash": "66b62d7d"
+      "key": "calloway/turned.1",
+      "file": "public/audio/voice/calloway/turned.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "My notebook has your catches in it, dated next week. I shall assume I was being optimistic.",
+      "hash": "940dff78"
     }
   ]
 }

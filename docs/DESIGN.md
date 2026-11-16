@@ -138,13 +138,13 @@ Unlocks after the region 1 story beat. Ringing it turns the tide: the islands fo
 - **Taken:** coins, rod tuning, the creel, bait, pot upgrades (pots in the water come home), boat upgrades, notice board jobs, Rhythm. **Kept:** rods, lures, wearables, boats, pots owned, relics, Moonpearls, journal, chart, story, Echoes and what they bought.
 - Ten Echo upgrades in the satchel: Tidewise (fish sell for 15% more, 10 ranks), Quick Hands, Steady Line, Patient Float, Second Sight, Old Habits, Deep Pockets (coins at the start of each tide), Mara's Ledger (cheaper tuning), Lamp Minder (one more pot), Warm Lanterns (faster pots).
 - After a Turning each of Mara, Pell and Wick has a line about nearly knowing the keeper, said once per tide.
-- The fog lamp that opens Mossglass Fen will be bought with Echoes: the first Turning is the gate to region 2.
+- The Fog Lamp that opens Mossglass Fen is bought with Echoes (8, once): the first Turning is the gate to region 2.
 
 ### 8.3 Target arc (simulator-verified)
 | Phase | Hours | Content |
 |---|---|---|
 | Hearthbay (R1) | 0–1.5 | Tutorial, lighthouse relit, first boat (about 23 min), Lantern Pots (about 42 min), first Bell (about 75 min) |
-| Mossglass Fen (R2) | 1.5–4 | Fog lamp, Dr. Calloway, deckhands |
+| Mossglass Fen (R2) | 1.3–4 | Fog Lamp (about 75 min), the Fen reached (80), Calloway's six jobs (done at about 150), the Fenwood Rod (150 to 190), the Mossglass page (165), the Listener (about 240 for a keeper who sits up for it); deckhands and the second boat to come |
 | Saltbone Reach (R3) | 4–7 | Rough seas, whale-bone isles, storms |
 | The Hush (R4) | 7–10 | Silent pale isles, aurora, the Choir |
 | The Sunken Lanterns (R5) | 10–12.5 | Drowned town under glass-clear water |
@@ -183,6 +183,8 @@ The last keeper, **Isolde Fenn**, noticed the dream souring (the uncanny fish ar
 - **Fish** (ten): Reedling, Mudlark, Glassfin (common); Sedge Pike, Mossback Tench (uncommon); Glowbelly (rare, night), Stilt Gar (rare); Bottomless Eel (epic, the Sump); Old Mossglass (legendary); the Listener (uncanny, after the Listening Post). Worth five to seven times their Hearthbay rank.
 - **Dr. Ines Calloway** measures everything and the numbers will not agree: the fen is bigger each time she paces it. Her jobs: A Sense of Scale, Clear as Glass, The Tape Runs Out, What Glows, The Sump, The Listening Post. The last gives the second page of Isolde's logbook.
 - **Later in this region:** deckhands (Biscuit, Mister Hollis) and the second boat come in the slice after this one.
+
+**As built (v0.4.0, 2026-11-16).** Everything above is in the game. Numbers: common fish 30 to 44 coins, uncommon 135 and 155, the rares 360 and 400, the Bottomless Eel 950, Old Mossglass 3,000, the Listener 6,000 (hours 0 to 4, at the Post, only after the keeper has listened at the trumpet). The Fenwood Rod is 14,000, Marsh Worm 14, Glass Mayfly 22, the Glass Bead lure 5,000; all four join Mara's shelf everywhere once the Fen has been reached. Calloway's jobs pay 500, 900, her spare field hat, 2,500, 6,000, and 3,000 with the logbook page; the three chests 400, 500 and 800; the six chart places 200 to 800. With the same rod the Fen's best water pays a few times Hearthbay's best (a test holds it above 1.6 times). The notice board asks only for fish of the water the keeper is in. Filling the journal's Mossglass page (nine fish, the Listener not asked for) earns Calloway's tape measure. Not yet in: the Fen's own music, Calloway's finished model, any voice for her lines.
 
 ### 10.4 Writing rules
 - Short lines. Never more than three dialogue boxes before control returns.

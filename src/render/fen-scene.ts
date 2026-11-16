@@ -48,9 +48,17 @@ function swaying(mat: MeshStandardMaterial, time: { value: number }, amount: num
     // Thin leaves let the light through: lit mostly as if they faced the sky, so a bed seen against the sun
     // is not a row of black blades.
     shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_begin>', `#include <normal_fragment_begin>
-        normal = normalize(mix(normal, (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz, 0.72));`);
+        normal = normalize(mix(normal, (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz, 0.72));`)
+      // And the light that comes through them: a little always, most when looking toward a low sun.
+      .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+        #if NUM_DIR_LIGHTS > 0
+          float mwThrough = max(dot(normalize(vViewPosition), -directionalLights[0].direction), 0.0);
+          // (Mostly the light's strength, little of its hue: a red dusk sun must not turn a green leaf crimson.)
+          vec3 mwSun = mix(vec3(dot(directionalLights[0].color, vec3(0.3, 0.59, 0.11))), directionalLights[0].color, 0.3);
+          reflectedLight.directDiffuse += diffuseColor.rgb * mwSun * (0.1 + 0.5 * mwThrough * mwThrough) * RECIPROCAL_PI;
+        #endif`);
   };
-  mat.customProgramCacheKey = () => `sway-${amount}`;
+  mat.customProgramCacheKey = () => `sway3-${amount}`;
   return mat;
 }
 
