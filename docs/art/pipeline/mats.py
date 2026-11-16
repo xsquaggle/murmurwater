@@ -19,6 +19,7 @@ from paintkit import (hexc, mix, smooth, fbm, stretch, blur, emboss, chips, stro
 from fishmats import FISH
 from callomats import CALLO
 from boatmats import BOAT
+from hollismats import HOLLIS
 
 ALGAE, SCUM, BARNACLE = hexc('#58724A'), hexc('#3B4734'), hexc('#DAD8C2')
 
@@ -426,6 +427,7 @@ PAINT = {'iron': iron, 'brass': brass, 'copper': copper, 'floats': floats, 'tin'
 PAINT.update(FISH)                                                   # skins, fins and eyes for the fish (fishmats.py)
 PAINT.update(CALLO)                                                  # skin, hair, straw and cloth for a person (callomats.py)
 PAINT.update(BOAT)                                                   # painted planking, name boards, sailcloth (boatmats.py)
+PAINT.update(HOLLIS)                                                 # oilskin, knitting, carpet and a watch's dial for Mister Hollis (hollismats.py)
 
 
 # ------------------------------------------------------------------------------------------------ what happens to a patch afterwards
