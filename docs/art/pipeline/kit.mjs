@@ -1,7 +1,8 @@
 // kit.mjs : a small mesh kit for props that are built in code (build-pot-float.mjs, build-belfry.mjs, the Fen props).
 // A model is a set of parts. A part is a soup of triangles (corners with a position, a texture coordinate in pixels of
 // the atlas and a shade 0..1 that becomes COLOR_0); it belongs to a node and a material. write() welds the corners,
-// gives them normals (smooth up to the part's crease angle), and writes one GLB with a WebP texture.
+// gives them normals (smooth up to the part's crease angle), and writes one GLB with a WebP texture. A node's mesh can
+// have morph targets (a sail that fills and furls): Model.morphs() names them, corners say where they go.
 import { Document, NodeIO } from '@gltf-transform/core';
 import { EXTTextureWebP } from '@gltf-transform/extensions';
 import sharp from 'sharp';
@@ -68,9 +69,9 @@ export const emit = async (m, R, atlas, args, { size = atlas[0] === atlas[1] ? a
 };
 
 export class Part {
-  constructor(name, { node = 'root', material = 'main', crease = 40, shade = 1, xf = ident, bind = null } = {}) { Object.assign(this, { name, node, material, crease, shade, xf, bind, tris: [] }); }      // bind: for a model with a skeleton (see Model.skeleton)
-  /** One triangle, counter-clockwise seen from outside. Corners are [position, uv in pixels, shade?]. */
-  tri(a, b, c) { this.tris.push([a, b, c].map(([p, uv, s]) => ({ p: this.xf(p), uv, s: (s ?? 1) * this.shade }))); return this; }
+  constructor(name, { node = 'root', material = 'main', crease = 40, shade = 1, xf = ident, bind = null, morph = null } = {}) { Object.assign(this, { name, node, material, crease, shade, xf, bind, morph, tris: [] }); }      // bind: for a model with a skeleton (see Model.skeleton); morph: [fn or null, ...], one per morph target of the node (see Model.morphs): where a point of this part goes at weight 1
+  /** One triangle, counter-clockwise seen from outside. Corners are [position, uv in pixels, shade?, morphed?]: morphed = [position or null, ...], where the corner is at weight 1 of each of its node's morph targets. */
+  tri(a, b, c) { this.tris.push([a, b, c].map(([p, uv, s, m]) => { const q = this.xf(p), c = { p: q, uv, s: (s ?? 1) * this.shade }; if (m) c.m = m.map((v) => (v ? this.xf(v) : null)); else if (this.morph) c.m = this.morph.map((f) => (f ? f(q) : null)); return c; })); return this; }
   /** A quad a-b-c-d, counter-clockwise seen from outside. */
   quad(a, b, c, d) { return this.tri(a, b, c).tri(a, c, d); }
   /** A flat quad from four points and a rectangle: a = bottom left, b = bottom right, c = top right, d = top left. */
@@ -142,12 +143,14 @@ export class Part {
 }
 
 export class Model {
-  constructor(name) { this.name = name; this.parts = []; this.nodes = new Map([['root', { pivot: [0, 0, 0], parent: null }]]); this.materials = new Map(); this.empties = []; }
+  constructor(name) { this.name = name; this.parts = []; this.nodes = new Map([['root', { pivot: [0, 0, 0], parent: null }]]); this.materials = new Map(); this.empties = []; this.targets = new Map(); }
   part(name, opt) { const p = new Part(name, opt); this.parts.push(p); return p; }
   /** A node of its own (something the game moves): its origin is `pivot`, in model coordinates. */
   node(name, pivot = [0, 0, 0], parent = 'root') { this.nodes.set(name, { pivot, parent }); return this; }
-  /** An empty node at a point, child of a node. */
-  empty(name, at, parent = 'root') { this.empties.push({ name, at, parent }); return this; }
+  /** Morph targets of a node's mesh, in order: names and the weights the mesh starts with. Corners say where they go (see Part.tri); a corner that says nothing stays where it is. */
+  morphs(node, names, weights = names.map(() => 0)) { this.targets.set(node, { names, weights }); return this; }
+  /** An empty node at a point, child of a node. yaw (degrees about +Y) turns it: its +Z then points toward +X at 90 (a socket that says which way to face). */
+  empty(name, at, parent = 'root', yaw = 0) { this.empties.push({ name, at, parent, yaw }); return this; }
   /** kind 'texture' (the atlas) or 'plain' ({ color: [r, g, b] in linear 0..1 }); emissive: [r, g, b] factor; glow: true gives it an emissive texture: the model's glow map if write() gets one, else the atlas. */
   material(name, def) { this.materials.set(name, def); return this; }
   /** A skeleton: { joints: [{ name, parent, t, r, s, ibm }] } in order, parents first (dump-skeleton.mjs writes one). The model is then one skinned mesh, and every part needs a bind: a joint's name, or a function of a point giving [[joint, weight], ...]. */
@@ -184,21 +187,26 @@ export class Model {
     for (const [nodeName] of this.nodes) {
       const parts = this.parts.filter(p => p.node === nodeName); if (!parts.length) continue;
       const mesh = doc.createMesh(nodeName === 'root' ? this.name : nodeName); const pivot = world(nodeName); let nodeTris = 0;
+      const T = this.targets.get(nodeName) || null;
       for (const matName of new Set(parts.map(p => p.material))) {
         const P = [], N = [], UV = [], COL = [], I = [], JN = [], WT = [], index = new Map(); const textured = this.materials.get(matName).kind === 'texture';
+        const MP = T ? T.names.map(() => []) : null, MN = T ? T.names.map(() => []) : null;
         for (const part of parts.filter(p => p.material === matName)) {
           const tris = part.tris.filter(t => len(cross(sub(t[1].p, t[0].p), sub(t[2].p, t[0].p))) > 1e-10);
           const fn = tris.map(t => cross(sub(t[1].p, t[0].p), sub(t[2].p, t[0].p)));       // area-weighted face normals
           const at = new Map(); const key = (p) => p.map(v => Math.round(v * 1e4)).join(',');
           tris.forEach((t, f) => t.forEach(c => { const k = key(c.p); if (!at.has(k)) at.set(k, []); at.get(k).push(f); }));
           const cosC = Math.cos(rad(part.crease));
+          const mfn = T ? T.names.map((_, q) => tris.map(t => { const w = t.map(c => (c.m && c.m[q]) || c.p); return cross(sub(w[1], w[0]), sub(w[2], w[0])); })) : null;      // the faces' normals at each morph target
           tris.forEach((t, f) => t.forEach(c => {
-            const me = norm(fn[f]); let n = [0, 0, 0];
-            for (const g of at.get(key(c.p))) if (dot(me, norm(fn[g])) >= cosC) n = add(n, fn[g]);
+            const me = norm(fn[f]); let n = [0, 0, 0]; const near = at.get(key(c.p)).filter(g => dot(me, norm(fn[g])) >= cosC);
+            for (const g of near) n = add(n, fn[g]);
             n = norm(n); const p = sub(c.p, pivot), uv = [c.uv[0] / atlas[0], c.uv[1] / atlas[1]];
             const jw = rig ? weightsOf(part, c.p) : null;
-            const k = [...p, ...n, ...uv, c.s].map(v => Math.round(v * 1e4)).join(',') + (jw ? '|' + jw[0].join(',') + '|' + jw[1].join(',') : '');
-            let i = index.get(k); if (i === undefined) { i = P.length / 3; index.set(k, i); P.push(...p); N.push(...n); UV.push(...uv); COL.push(c.s, c.s, c.s, 1); if (jw) { JN.push(...jw[0]); WT.push(...jw[1]); } }
+            const dP = [], dN = [];                                                        // morph targets: where the corner goes and how its normal turns, as differences (the same faces stay smooth together)
+            if (T) T.names.forEach((_, q) => { let nq = [0, 0, 0]; for (const g of near) nq = add(nq, mfn[q][g]); nq = len(nq) > 1e-12 ? norm(nq) : n; dP.push(sub((c.m && c.m[q]) || c.p, c.p)); dN.push(sub(nq, n)); });
+            const k = [...p, ...n, ...uv, c.s].map(v => Math.round(v * 1e4)).join(',') + (jw ? '|' + jw[0].join(',') + '|' + jw[1].join(',') : '') + (T ? '|' + [...dP.flat(), ...dN.flat()].map(v => Math.round(v * 1e4)).join(',') : '');
+            let i = index.get(k); if (i === undefined) { i = P.length / 3; index.set(k, i); P.push(...p); N.push(...n); UV.push(...uv); COL.push(c.s, c.s, c.s, 1); if (jw) { JN.push(...jw[0]); WT.push(...jw[1]); } if (T) T.names.forEach((_, q) => { MP[q].push(...dP[q]); MN[q].push(...dN[q]); }); }
             I.push(i); for (let q = 0; q < 3; q++) { lo[q] = Math.min(lo[q], c.p[q]); hi[q] = Math.max(hi[q], c.p[q]); }
           }));
         }
@@ -206,8 +214,10 @@ export class Model {
         if (textured) prim.setAttribute('TEXCOORD_0', acc(UV, 'VEC2'));
         if (COL.some((v, i) => i % 4 < 3 && v < 0.999)) prim.setAttribute('COLOR_0', acc(COL, 'VEC4'));
         if (rig) prim.setAttribute('JOINTS_0', acc(JN, 'VEC4', Uint8Array)).setAttribute('WEIGHTS_0', acc(WT, 'VEC4'));
+        if (T) T.names.forEach((name, q) => prim.addTarget(doc.createPrimitiveTarget(name).setAttribute('POSITION', acc(MP[q], 'VEC3')).setAttribute('NORMAL', acc(MN[q], 'VEC3'))));
         mesh.addPrimitive(prim); nodeTris += I.length / 3; stats.verts += P.length / 3;
       }
+      if (T) mesh.setWeights(T.weights).setExtras({ targetNames: T.names });
       if (rig) {                                                                        // a skinned mesh: a node of its own beside the skeleton, as the generated characters have it
         const jn = rig.joints.map((j) => doc.createNode(j.name).setTranslation(j.t).setRotation(j.r).setScale(j.s)), skin = doc.createSkin(this.name);
         rig.joints.forEach((j, i) => { (j.parent ? jn[jix.get(j.parent)] : gn.get('root')).addChild(jn[i]); skin.addJoint(jn[i]); });
@@ -216,7 +226,7 @@ export class Model {
       } else gn.get(nodeName).setMesh(mesh);
       stats.nodes[nodeName] = nodeTris; stats.tris += nodeTris;
     }
-    for (const e of this.empties) { const n = doc.createNode(e.name).setTranslation(sub(e.at, world(e.parent))); gn.get(e.parent).addChild(n); }
+    for (const e of this.empties) { const n = doc.createNode(e.name).setTranslation(sub(e.at, world(e.parent))); if (e.yaw) n.setRotation([0, Math.sin(rad(e.yaw) / 2), 0, Math.cos(rad(e.yaw) / 2)]); gn.get(e.parent).addChild(n); }
     await new NodeIO().registerExtensions([EXTTextureWebP]).write(out, doc);
     return { out, ...stats, min: lo.map(v => +v.toFixed(3)), max: hi.map(v => +v.toFixed(3)), texBytes };
   }

@@ -46,6 +46,7 @@ Promise.all([loader.loadAsync(url), q.get('attach') ? loader.loadAsync(q.get('at
   // add=<url>@x,y,z[,yaw];... places further models in the scene (a rig on a boat, a figure for scale); morph=<w> sets every morph weight
   for (const spec of (q.get('add') || '').split(';').filter(Boolean)) { const [u, at] = spec.split('@'); const [x, y, z, yaw] = (at || '0,0,0').split(',').map(Number); const g = await loader.loadAsync(u); g.scene.position.set(x, y, z); g.scene.rotation.y = THREE.MathUtils.degToRad(yaw || 0); root.add(g.scene); }
   if (q.get('morph') !== null) root.traverse(o => { if (o.morphTargetInfluences) { const w = q.get('morph').split(',').map(Number); o.morphTargetInfluences.forEach((_, i) => { o.morphTargetInfluences[i] = w.length > 1 ? (w[i] || 0) : w[0]; }); } });   // morph=w for all, morph=w0,w1 per target
+  for (const n of (q.get('hide') || '').split(',').filter(Boolean)) { const o = root.getObjectByName(n); if (o) o.visible = false; }
   if (extra) { const sk = root.getObjectByName(q.get('socket') || 'BookSocket'); if (sk) sk.add(extra.scene); }
   // glow=<n> sets every material's emissiveIntensity (0 = by day, as the game does); water=1 lays a sheet of water at y = 0
   if (q.get('glow') !== null) root.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.emissiveIntensity = Number(q.get('glow')); }); });

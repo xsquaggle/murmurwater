@@ -1,4 +1,4 @@
-// Usage: node render.mjs <model.glb> <out.png> [key=value ...]   (keys: cell, cols, flat, clip, times, views, bg)
+// Usage: node render.mjs <model.glb> <out.png> [key=value ...]   (keys: cell, cols, flat, clip, times, views, focus, bg, dark, glow, water, morph, hide, add)
 // Renders a turntable contact sheet of a GLB with three.js in headless Chromium and prints mesh stats.
 import http from 'node:http';
 import fs from 'node:fs';
