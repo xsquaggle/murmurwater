@@ -11,12 +11,8 @@ import {
   Matrix4, Mesh, MeshStandardMaterial, OctahedronGeometry, Points, PointsMaterial, Quaternion, Vector3,
 } from 'three';
 import { assets } from './assets';
-import type { RoadDef } from '../core/content';
+import { roadLights, type RoadDef } from '../core/content';
 
-/** Metres between one light and the next on the same side. */
-const SPACING = 44;
-/** How far from the road's middle line each line of lights stands: just inside where the murmur starts. */
-const INSET = 12;
 /** A light is fully lit within NEAR metres of the lamp and dark beyond FAR. */
 const NEAR = 85, FAR = 185;
 const CYAN = new Color('#7FF0E0');
@@ -63,16 +59,10 @@ export class SeaRoadLights {
 
   /** `depth(x, z)`: the height of the sea bed; a light is left out where its spar would stand in the ground. */
   constructor(roads: RoadDef[], depth: (x: number, z: number) => number) {
-    for (const r of roads) {
-      const vx = r.b[0] - r.a[0], vz = r.b[1] - r.a[1], L = Math.hypot(vx, vz), ux = vx / L, uz = vz / L;
-      const off = r.halfWidth - INSET, n = Math.floor(L / (SPACING / 2));
-      for (let i = 0; i <= n; i++) {
-        // Alternate sides, so the two lines are staggered and the lights come one at a time.
-        const side = i % 2 ? 1 : -1, t = (i / n) * L;
-        const x = r.a[0] + ux * t + uz * off * side, z = r.a[1] + uz * t - ux * off * side;
-        if (depth(x, z) > -2.4) continue;
-        this.posts.push({ x, z, yaw: ((i * 2.399963) % (Math.PI * 2)), ph: i * 1.618, lit: 0, told: false });
-      }
+    // Where they stand is the rules' business (core/content.ts roadLights): somebody waits by one of them.
+    for (const r of roads) for (const { i, x, z } of roadLights(r)) {
+      if (depth(x, z) > -2.4) continue;
+      this.posts.push({ x, z, yaw: ((i * 2.399963) % (Math.PI * 2)), ph: i * 1.618, lit: 0, told: false });
     }
     const n = this.posts.length;
     const model = assets.instance('seaRoadLight');

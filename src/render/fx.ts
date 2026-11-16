@@ -98,6 +98,7 @@ export class Ripples {
   private scale = new Float32Array(MAX_R);
   private p: Vector3[] = Array.from({ length: MAX_R }, () => new Vector3());
   private col: Color[] = Array.from({ length: MAX_R }, () => new Color(1, 1, 1));
+  private wide = new Float32Array(MAX_R).fill(1); private yaw = new Float32Array(MAX_R);
   private next = 0;
   private dummy = new Object3D();
   private c = new Color();
@@ -114,9 +115,10 @@ export class Ripples {
     for (let i = 0; i < MAX_R; i++) { this.dummy.scale.setScalar(0.0001); this.dummy.updateMatrix(); this.mesh.setMatrixAt(i, this.dummy.matrix); }
     this.mesh.instanceColor = new InstancedBufferAttribute(new Float32Array(MAX_R * 3).fill(1), 3);
   }
-  spawn(at: Vector3, size = 1.5, duration = 1.2, color?: Color) {
+  /** A ring that spreads to `size`. `wide` under 1 makes it an oval, `size` long and that much as wide, lying along `yaw` (round a hull). */
+  spawn(at: Vector3, size = 1.5, duration = 1.2, color?: Color, wide = 1, yaw = 0) {
     const i = this.next; this.next = (this.next + 1) % MAX_R;
-    this.p[i].copy(at); this.t[i] = 0; this.dur[i] = duration; this.scale[i] = size;
+    this.p[i].copy(at); this.t[i] = 0; this.dur[i] = duration; this.scale[i] = size; this.wide[i] = wide; this.yaw[i] = yaw;
     if (color) this.col[i].copy(color); else this.col[i].setRGB(1, 1, 1);
   }
   update(dt: number, waterY: (x: number, z: number) => number) {
@@ -128,7 +130,8 @@ export class Ripples {
       else {
         const s = 0.2 + this.scale[i] * (1 - Math.pow(1 - k, 2.2));
         this.dummy.position.set(this.p[i].x, waterY(this.p[i].x, this.p[i].z) + 0.04, this.p[i].z);
-        this.dummy.scale.set(s, 1, s);
+        this.dummy.scale.set(s * this.wide[i], 1, s);
+        this.dummy.rotation.y = this.yaw[i];
         const fade = 1 - k;
         this.mesh.setColorAt(i, this.c.copy(this.col[i]).multiplyScalar(fade));
       }

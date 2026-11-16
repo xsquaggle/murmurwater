@@ -23,6 +23,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0B2E36; }
 .pill.pots.idle { opacity: .6; }
 .pill .ico.lant { position: relative; width: 11px; height: 13px; margin: 3px 1px 0 2px; border-radius: 3px; background: var(--lantern); border: 2px solid var(--ink); box-shadow: 0 0 8px rgba(255,179,92,.9); }
 .pill .ico.lant::before { content: ''; position: absolute; left: 1px; right: 1px; top: -7px; height: 5px; border: 2px solid var(--ink); border-bottom: none; border-radius: 5px 5px 0 0; }
+.pill.crew.full { background: #FFE9B8; border-color: #C98E2A; animation: pulse 1.4s infinite; }
+.pill .ico.bask { position: relative; width: 14px; height: 9px; margin: 8px 1px 0 2px; border-radius: 2px 2px 6px 6px; background: #C9A26A; border: 2px solid var(--ink); }
+.pill .ico.bask::before { content: ''; position: absolute; left: 1px; right: 1px; top: -9px; height: 7px; border: 2px solid var(--ink); border-bottom: none; border-radius: 7px 7px 0 0; }
 .pill.echoes { background: rgba(59,42,79,.92); color: var(--bone); border-color: rgba(180,140,255,.9); }
 .pill.echoes .ico { color: var(--cyan); }
 .pill.echoes.spend { box-shadow: 0 0 14px rgba(124,255,212,.55), 0 3px 0 rgba(59,42,79,.35); }
@@ -87,7 +90,7 @@ body.titled .hud { opacity: 0; }
 .cc-warn { margin-top: 8px; font-weight: 800; color: #C2493F; font-size: 13px; }
 
 /* Below the goal card, which a long goal makes two lines tall: a wide toast must not run under its corner. */
-.toasts { position: absolute; left: 50%; top: 108px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.toasts { position: absolute; left: 50%; top: 108px; transition: top .35s; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .toast { background: rgba(59,42,79,.9); color: var(--bone); padding: 8px 18px; border-radius: 999px; font-weight: 800; font-size: 16px; animation: tin .3s ease-out; transition: opacity .5s, transform .5s; }
 .toast.good { background: rgba(63,143,110,.95); } .toast.bad { background: rgba(178,72,64,.95); } .toast.gold { background: linear-gradient(90deg, #C98E2A, #F0A23A); color: #3B2A4F; }
 .toast.out { opacity: 0; transform: translateY(-10px); }
@@ -114,8 +117,10 @@ body.titled .hud { opacity: 0; }
 .fatal { position: absolute; inset: 30% 20%; background: var(--bone); border: 2px solid var(--ink); border-radius: 16px; padding: 24px; font-weight: 700; pointer-events: auto; }
 .loading { position: absolute; left: 50%; bottom: 9vh; transform: translateX(-50%); font: 500 15px/1 'Nunito Variable', sans-serif; letter-spacing: .08em; color: #F2E3C6; opacity: .8; z-index: 30; }
 
-.compass { position: absolute; left: 50%; top: 16px; width: 420px; margin-left: -210px; opacity: 0; transform: translateY(-8px); transition: opacity .35s, transform .35s; }
+.compass { position: absolute; left: 50%; top: 16px; width: 420px; margin-left: -210px; opacity: 0; transform: translateY(-8px); transition: opacity .35s, transform .35s, top .35s; }
 .compass.on { opacity: 1; transform: none; }
+.hud.cp-low .compass { top: 66px; }
+.hud.cp-low .toasts { top: 152px; }
 .cp-win { position: relative; height: 34px; overflow: hidden; border-radius: 999px; background: rgba(242,227,198,.92); border: 2px solid rgba(59,42,79,.85);
   box-shadow: 0 3px 0 rgba(59,42,79,.35), 0 8px 20px rgba(11,46,54,.25); }
 .cp-fade { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(90deg, transparent 2%, #000 12%, #000 88%, transparent 98%); mask-image: linear-gradient(90deg, transparent 2%, #000 12%, #000 88%, transparent 98%); }
@@ -313,3 +318,12 @@ body.titled .hud { opacity: 0; }
   color: #F2E3C6; background: rgba(28, 22, 40, 0.78); padding: 6px 10px; border-radius: 6px; pointer-events: none; }
 .perf.on { display: block; }
 .muted.small { font-size: 12px; margin-top: 12px; opacity: 0.8; }
+
+/* Pell's boatyard and the Crew page */
+.boat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 10px 0; }
+.item.boat .stat span { width: 76px; }
+.item.boat .stat em { font-style: normal; font-size: 12px; opacity: .75; min-width: 54px; text-align: right; }
+.item.hand .bar { margin: 6px 0 4px; }
+.sum-i.warn b { color: #B5532F; }
+
+.hold-also { margin: 2px 0 8px; } .hold-also b { color: var(--ink); }

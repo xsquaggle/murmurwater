@@ -25,6 +25,11 @@ export interface PropBuild {
   vane: Object3D | null;
   /** Where its lit lantern hangs, in its own frame, if it has one. */
   lamp: Vector3 | null;
+  /**
+   * It lies aground (a wreck on a bar), not on the ground or the water: how much water stands over its origin
+   * where the bed is deep enough, in metres. On a shallower bed it lies on the bed. Null for everything else.
+   */
+  aground: number | null;
 }
 
 interface Part { name?: string; geo: BufferGeometry; pos?: [number, number, number] }
@@ -32,6 +37,9 @@ interface Spec {
   /** The key of the delivered model in the library. */ asset: string;
   /** The stand-in: the body, then any parts that must be nodes of their own. */ standIn: () => Part[];
   lamp?: [number, number, number];
+  aground?: number;
+  /** Reeds are kept this far back from it (metres), so that it can be seen for them. */
+  clearing?: number;
 }
 
 /** Mara's packet box: a lidded sea crate on short legs, a scale pan on the lid, her pennant on a pole. */
@@ -174,6 +182,34 @@ function tackleBox(): Part[] {
   return [{ geo: b.build() }];
 }
 
+/**
+ * The Puffin as she is found: a stout sloop heeled over on a bar in the reeds, her mast broken and lying along
+ * her, grey-green, weed to her old waterline, a moorhen's nest in the cockpit. Origin on the bed under her
+ * middle (the bar is a hand's breadth under water); bow toward +Z before the heel.
+ */
+function puffinWreck(): Part[] {
+  const b = new Builder(97, 0.07);
+  const grey = C('#8E9A86'), weed = C('#4E6B4A'), dark = C('#4A4E48'), wood = C('#7C6A56'), nest = C('#B79A5E');
+  const heel = 0.35, R: [number, number, number] = [0, 0, -heel];
+  // Hull: a fat half shell, weed below the old waterline.
+  b.add(new SphereGeometry(1, 9, 5, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), (c) => (c.y < 0.25 ? weed : grey), { pos: [0, 0.75, 0], rot: R, scale: [1.0, 0.85, 2.7] });
+  b.add(new CylinderGeometry(0.98, 0.98, 0.14, 9, 1, true), dark, { pos: [0.02, 0.78, 0], rot: R, scale: [1, 1, 2.72] });
+  // Cuddy, cockpit benches, the transom board with what is left of her name.
+  b.add(new BoxGeometry(1.1, 0.4, 1.3), grey, { pos: [-0.14, 0.9, 1.0], rot: R });
+  b.add(new BoxGeometry(1.5, 0.08, 0.4), wood, { pos: [-0.1, 0.62, -1.3], rot: R });
+  b.add(new BoxGeometry(1.2, 0.3, 0.06), C('#B9B39A'), { pos: [-0.2, 0.75, -2.5], rot: R });
+  // The mast, broken at the partners and lying along her; a rag of tanbark sail.
+  b.add(new CylinderGeometry(0.07, 0.09, 0.9, 6), wood, { pos: [-0.12, 1.35, 0.5], rot: [0.1, 0, -heel] });
+  b.add(new CylinderGeometry(0.05, 0.07, 4.2, 6), wood, { pos: [-0.55, 0.95, -1.1], rot: [Math.PI / 2 - 0.08, 0, 0.12] });
+  b.add(new BoxGeometry(0.9, 0.03, 1.6), C('#8A4A3A'), { pos: [-0.75, 0.82, -1.6], rot: [0.05, 0.2, -heel - 0.2] });
+  // The nest: a bowl of reed in the cockpit, three eggs.
+  b.add(new CylinderGeometry(0.3, 0.22, 0.14, 9), nest, { pos: [-0.12, 0.66, -0.7] });
+  for (const [x, z] of [[-0.18, -0.72], [-0.06, -0.66], [-0.12, -0.78]]) b.add(new SphereGeometry(0.05, 6, 5), C('#D9D2B8'), { pos: [x, 0.74, z], scale: [1, 1.25, 1] });
+  // Reeds grown through a sprung plank.
+  for (let i = 0; i < 7; i++) b.add(new ConeGeometry(0.035, 1.5 + (i % 3) * 0.35, 4), C('#7C8A4A'), { pos: [0.65 + (i % 3) * 0.12, 0.9 + (i % 3) * 0.15, 0.2 + i * 0.22], rot: [0.05 * (i % 2 ? 1 : -1), 0, -0.08] });
+  return [{ geo: b.build() }];
+}
+
 const SPECS: Record<string, Spec> = {
   packetBox: { asset: 'packetBox', standIn: packetBox },
   noticeBoard: { asset: 'noticeBoard', standIn: () => [{ geo: buildNoticeBoard() }] },
@@ -184,8 +220,11 @@ const SPECS: Record<string, Spec> = {
   crate: { asset: 'crate', standIn: crate },
   barrel: { asset: 'barrel', standIn: barrel },
   tackleBox: { asset: 'tackleBox', standIn: tackleBox },
+  puffinWreck: { asset: 'puffinWreck', standIn: puffinWreck, aground: 0.2, clearing: 4.6 },
 };
 export const PROP_MODELS = Object.keys(SPECS);
+/** How far reeds are kept back from a prop of this kind, if at all. */
+export const propClearing = (model: string): number => SPECS[model]?.clearing ?? 0;
 
 /** Builds a prop by the name its region's data gives it; null if there is no such thing. */
 export function buildProp(model: string): PropBuild | null {
@@ -202,7 +241,7 @@ export function buildProp(model: string): PropBuild | null {
       if (!glass.has(mat)) glass.set(mat, mat.clone());
       m.material = glass.get(mat)!;
     });
-    return { object: made, mats: [], glass: [...glass.values()], pennant: made.getObjectByName('Pennant') ?? null, vane: made.getObjectByName('Vane') ?? null, lamp };
+    return { object: made, mats: [], glass: [...glass.values()], pennant: made.getObjectByName('Pennant') ?? null, vane: made.getObjectByName('Vane') ?? null, lamp, aground: spec.aground ?? null };
   }
   const g = new Group(), mat = createPropMaterial();
   let pennant: Object3D | null = null;
@@ -213,5 +252,5 @@ export function buildProp(model: string): PropBuild | null {
     if (part.name) { m.name = part.name; if (part.name === 'Pennant') pennant = m; }
     g.add(m);
   }
-  return { object: g, mats: [mat], glass: [], pennant, vane: null, lamp };
+  return { object: g, mats: [mat], glass: [], pennant, vane: null, lamp, aground: spec.aground ?? null };
 }

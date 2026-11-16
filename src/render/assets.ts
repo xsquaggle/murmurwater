@@ -11,6 +11,8 @@ export const MODEL_PATHS = {
   player: 'models/characters/player.glb',
   skiff: 'models/boats/skiff.glb',
   sailRig: 'models/boats/sail-rig.glb',
+  puffin: 'models/boats/puffin.glb',
+  puffinRig: 'models/boats/puffin-rig.glb',
   buoy: 'models/props/buoy.glb',
   potFloat: 'models/props/pot-float.glb',
   belfry: 'models/props/belfry.glb',
@@ -36,12 +38,15 @@ export const MODEL_PATHS = {
   stiltHut: 'models/props/stilt-hut.glb',
   fieldKit: 'models/props/field-kit.glb',
   listeningPost: 'models/props/listening-post.glb',
+  puffinWreck: 'models/props/puffin-wreck.glb',
 } as const;
 /**
  * Models that have been asked for and may not be made yet (docs/briefs): used from the build after they land,
  * with nothing to change here, and not counted as missing meanwhile.
  */
-export const PENDING_MODELS: Record<string, string> = {};
+export const PENDING_MODELS: Record<string, string> = {
+  'npc:hollis': 'models/characters/hollis.glb',
+};
 /** Optional NPC models; each falls back to a procedural stand-in until its file exists. */
 export const NPC_MODEL_IDS = ['mara', 'pell', 'wick', 'calloway'];
 export const FISH_MODEL_IDS = [

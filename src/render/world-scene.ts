@@ -15,7 +15,7 @@ import { SeaRoadLights } from './sea-road';
 import { lookOf } from './looks';
 import { FenDressing } from './fen-scene';
 import { groveTrees } from '../core/flora';
-import { buildProp } from './fen-props';
+import { buildProp, propClearing } from './fen-props';
 import { roadsOf } from '../core/content';
 import type { RegionContent } from '../core/content';
 import { GRADES, sample, type Grade, type Lighting } from './daycycle';
@@ -130,6 +130,7 @@ export class WorldScene {
       for (const t of trees) this.rocks.push([t.x, t.z, t.r]);
       const clear: [number, number, number][] = (rcx.moorings ?? []).map((m) => [m.x, m.z, 9]);
       if (dock) clear.push([dock.x + Math.sin(dock.rot ?? 0) * (dock.length ?? 30) / 2, dock.z + Math.cos(dock.rot ?? 0) * (dock.length ?? 30) / 2, (dock.length ?? 30) / 2 + 7]);
+      for (const p of rcx.props ?? []) { const r = propClearing(p.model); if (r) clear.push([p.x, p.z, r]); }
       this.fen = new FenDressing({ center: region.center, within: region.shoals.within, heightAt: terrain.heightAt, trees, lilies: rcx.lilies ?? [], clear });
       s.add(this.fen.root);
       lap('flora');
@@ -297,8 +298,11 @@ export class WorldScene {
       const built = buildProp(p.model);
       if (!built) continue;
       const o = built.object;
-      // On the ground, or on the deck where there is one, and never under the waterline (a thing on piles stands in the shallows).
-      o.position.set(p.x, Math.max(0, this.hf.height(p.x, p.z), dockDeckAt(L.dock, p.x, p.z) ?? 0), p.z); o.rotation.y = p.yaw;
+      // On the ground, or on the deck where there is one, and never under the waterline (a thing on piles stands in
+      // the shallows), unless it lies aground: then it is on the bed, or as deep as it was made to lie.
+      const bed = this.hf.height(p.x, p.z);
+      o.position.set(p.x, built.aground !== null ? Math.max(bed, -built.aground) : Math.max(0, bed, dockDeckAt(L.dock, p.x, p.z) ?? 0), p.z); o.rotation.y = p.yaw;
+      if (p.until) this.untilProps.push({ flag: p.until, object: o });
       s.add(o); o.updateMatrixWorld(true);
       this.propMats.push(...built.mats); this.glassMats.push(...built.glass);
       if (built.pennant) { built.pennant.userData.rest = built.pennant.rotation.y; this.pennants.push(built.pennant); }
@@ -422,6 +426,11 @@ export class WorldScene {
     this.lampAt = old.lampAt;
     if (old.seaRoad) this.seaRoad?.carryFrom(old.seaRoad);
   }
+
+  /** Things that are gone once a flag is set (PropDef.until). */
+  private untilProps: { flag: string; object: Object3D }[] = [];
+  /** Shows what the save says is still there: a prop that waits on a flag goes when the flag is set. */
+  showProps(flags: string[]) { for (const p of this.untilProps) p.object.visible = !flags.includes(p.flag); }
 
   /** Strikes the bell: it swings and settles (the sound is the game's business). */
   tollBell(strength = 1) { if (this.bell) { this.bell.t = 0; this.bell.amp = 0.42 * strength; } }

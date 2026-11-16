@@ -26,6 +26,9 @@ const SFX = {
   'pot-set': [1, 0.8], 'pot-haul': [2, 0.85], 'bell-toll': [1, 1], 'echo-buy': [1, 0.8], 'tide-turn': [1, 0.9],
   // The sea-road and Mossglass Fen
   'fog-lamp-light': [1, 0.9], 'sea-road-chime': [3, 0.7], 'fog-cross': [1, 0.9], 'packet-box': [1, 0.8], 'reed-brush': [2, 0.6],
+  // Hands aboard, the boatyard and the Puffin
+  'cat-catch': [2, 0.75], 'cat-eat': [1, 0.7], 'hollis-catch': [2, 0.75], 'hollis-thin': [1, 0.8], 'hollis-thick': [1, 0.8],
+  'crew-basket-full': [1, 0.8], 'boatyard': [1, 0.9], 'sloop-sail': [1, 0.75],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
@@ -36,7 +39,7 @@ type Loop = (typeof LOOPS)[number];
  * such a sound is not fetched and not counted as missing, and its synth stand-in plays; from the first build
  * after they land it is used, with nothing to change here.
  */
-const PENDING: ReadonlySet<string> = new Set<string>([]);
+const PENDING: ReadonlySet<string> = new Set<string>(['cat-catch', 'cat-eat', 'hollis-catch', 'hollis-thin', 'hollis-thick', 'crew-basket-full', 'boatyard', 'sloop-sail']);
 const BUILT_IN: ReadonlySet<string> = new Set(present);
 /** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
 const wanted = (name: string) => !PENDING.has(name) || BUILT_IN.has(`audio/sfx/${name}_1.ogg`);
@@ -387,6 +390,56 @@ export class AudioEngine {
   }
   /** A hull pushing through reeds. */
   reedBrush(gain = 1) { if (!this.sfx('reed-brush', { gain, vary: 0.12 })) this.noise(0.7, 2600, 0.6, 0.1 * gain, 'bandpass', 1500); }
+
+  // ---- hands aboard, the boatyard and the Puffin (synth stand-ins until the recordings land) ----
+  /** Biscuit hooks a fish out: a small quick splash, a wet flap on wood, a chirrup. */
+  catCatch(gain = 1) {
+    if (this.sfx('cat-catch', { gain, vary: 0.06 })) return;
+    this.noise(0.14, 2400, 0.8, 0.16 * gain, 'bandpass', 900); this.noise(0.07, 500, 1, 0.14 * gain, 'lowpass', 220, 0.2);
+    this.tone(880, 0.09, 0.05 * gain, 'triangle', 0.36, 1320); this.tone(1320, 0.1, 0.04 * gain, 'triangle', 0.45, 1560);
+  }
+  /** One for her: small crunching, and a purr under it. */
+  catEat(gain = 1) {
+    if (this.sfx('cat-eat', { gain, vary: 0.05 })) return;
+    for (let i = 0; i < 6; i++) this.noise(0.05, 3200 - i * 150, 1.4, 0.07 * gain, 'bandpass', undefined, 0.15 + i * 0.27);
+    this.tone(27, 1.9, 0.09 * gain, 'sawtooth', 0.1);
+  }
+  /** Mister Hollis lands one: line drawn through a mitten, a drip, and one low breathy note, as if the fog had said "ah". */
+  hollisCatch(gain = 1) {
+    if (this.sfx('hollis-catch', { gain, vary: 0.04 })) return;
+    this.noise(0.5, 1500, 0.6, 0.06 * gain, 'bandpass', 700); this.tone(1400, 0.06, 0.04 * gain, 'sine', 0.62, 900);
+    this.noise(0.9, 420, 2.2, 0.1 * gain, 'bandpass', 360, 0.7); this.tone(196, 0.9, 0.05 * gain, 'sine', 0.75, 185);
+  }
+  /** Dawn: he thins. A long breath out, the note falling away. */
+  hollisThin() {
+    if (this.sfx('hollis-thin', { vary: 0 })) return;
+    this.noise(2.3, 700, 0.8, 0.09, 'bandpass', 240); this.tone(220, 2.2, 0.05, 'sine', 0.1, 147);
+  }
+  /** Dusk or fog: he is there again. A breath in, the note arriving. */
+  hollisThick() {
+    if (this.sfx('hollis-thick', { vary: 0 })) return;
+    this.noise(2.1, 260, 0.8, 0.09, 'bandpass', 760); this.tone(147, 2.2, 0.05, 'sine', 0.2, 220);
+  }
+  /** The crew basket is full: a wicker creak and two knocks on wood. */
+  basketFull() {
+    if (this.sfx('crew-basket-full', { vary: 0.03 })) return;
+    this.noise(0.22, 900, 3, 0.1, 'bandpass', 600);
+    for (const at of [0.3, 0.48]) { this.tone(180, 0.08, 0.2, 'sine', at, 120); this.noise(0.04, 1200, 1, 0.08, 'bandpass', undefined, at); }
+  }
+  /** Pell's refit, heard under a black screen: mallet, saw, plane, and a hull sliding into the water. */
+  boatyard() {
+    if (this.sfx('boatyard', { vary: 0 })) return;
+    for (const at of [0.2, 0.75, 1.3]) { this.tone(150, 0.1, 0.26, 'sine', at, 90); this.noise(0.05, 1500, 1, 0.1, 'bandpass', undefined, at); }
+    for (let i = 0; i < 4; i++) this.noise(0.26, i % 2 ? 1300 : 1900, 1.5, 0.11, 'bandpass', i % 2 ? 1900 : 1300, 1.9 + i * 0.3);
+    this.noise(0.7, 2600, 0.8, 0.07, 'bandpass', 3400, 3.3);
+    this.noise(1.5, 300, 0.6, 0.22, 'lowpass', 900, 4.2); this.noise(0.5, 1600, 0.7, 0.14, 'bandpass', 500, 5.3);
+  }
+  /** The Puffin's bigger sail filling: a deeper thump of canvas and a creak of gaff jaws. */
+  sloopSail() {
+    if (this.sfx('sloop-sail', { vary: 0.08 })) return;
+    if (!this.sfx('sail-flap', { rate: 0.72, gain: 1.15, vary: 0.06 })) { this.noise(0.16, 320, 0.6, 0.26, 'lowpass', 120); this.noise(0.22, 260, 0.6, 0.18, 'lowpass', 100, 0.14); }
+    if (!this.sfx('rope-creak', { rate: 0.8, gain: 0.6, at: 0.25 })) this.noise(0.3, 600, 2, 0.06, 'bandpass', 420, 0.3);
+  }
 
   /** A new place on the chart: a short rising figure (the recorded sting once it exists). */
   discover() {

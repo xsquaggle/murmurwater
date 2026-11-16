@@ -14,6 +14,7 @@ import { PerfOverlay } from '../ui/perf';
 import { Town } from './town';
 import { Sailing } from './sailing';
 import { PotField } from './potfield';
+import { Hands } from './hands';
 import { defaultSettings, keyLabel, type Settings } from './settings';
 import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
@@ -96,6 +97,8 @@ export class Game {
   readonly town: Town;
   readonly sailing: Sailing;
   readonly pots: PotField;
+  /** The deckhands. Made after the boat, so the boat's first launch finds none (see Sailing.fitOut). */
+  hands!: Hands;
   /** Hours the sky is still behind the clock, after the clock was put on (see rushSky). */
   private skyLag = 0;
   /** Camera shake multiplier from settings (0 = off). */
@@ -125,6 +128,7 @@ export class Game {
     this.faceYaw = this.yaw;
     this.town = new Town(this, uiRoot, settings);
     this.pots = new PotField(this);
+    this.hands = new Hands(this);
     // A journal page that was filled before pages paid anything (an older save) is paid now.
     this.town.pagesDone(claimCollections(state));
     this.town.applySettings(['volumes', 'sensitivity', 'invertY', 'bindings', 'uiScale', 'subtitles']);
@@ -405,6 +409,8 @@ export class Game {
     // Lantern Pots: their clocks, and the pot key.
     const after = this.session.phase;
     this.pots.step(dt, (after === 'idle' || after === 'landed' || after === 'lost') && !this.town.blocking && !sail.busy);
+    // The hands aboard fish on the game's clock while she lies still.
+    this.hands.step(dt);
 
     // Rhythm fades if you stop fishing for a while. Not while she is under way: sailing to the next ground is part of the work.
     const underWay = sail.aboard && (Math.abs(sail.boat.speed) > 0.9 || sail.throttle !== 0);
@@ -660,6 +666,7 @@ export class Game {
     const veil = sail.aboard ? crossingAt(this.state.world.region, sail.boat.x, sail.boat.z) : 0;
     this.hud.veil(veil * 0.94, veil > 0 ? `#${(this.world.scene.fog as { color: Color }).color.getHexString()}` : '');
     this.pots.present(dt);
+    this.hands.present(dt);
 
     // HUD
     let bitePos: { x: number; y: number } | null = null;

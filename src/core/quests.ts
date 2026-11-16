@@ -29,6 +29,7 @@ export interface ObjectiveDef {
   /** own: a rod, bait, boat, lure or wearable id, or a thing bought with Echoes. */ item?: string;
   /** visit: a place id from a region's places, or a place on a chart (found by sailing close). */ place?: string;
   /** Where to go for it, as [x, z], when it is not a place (a fishing ground): for the compass and the chart. */ at?: [number, number];
+  /** Who to see about it (a thing somebody sells): the goal marker goes over them. */ npc?: string;
 }
 export interface Rewards {
   coins?: number; moonpearls?: number; items?: Record<string, number>; rods?: string[];
@@ -267,7 +268,7 @@ export function currentGoal(s: GameState): Goal {
     const o = q.objectives[i];
     const t = objectiveTarget(o);
     const prog = t > 1 ? ` (${count(objectiveProgress(s, q, i))}/${count(t)})` : '';
-    return { text: `${q.title}: ${o.label}${prog}`, place: o.place, at: o.at };
+    return { text: `${q.title}: ${o.label}${prog}`, place: o.place, at: o.at, npc: o.npc };
   }
   // 3. A new story quest waiting with somebody here.
   for (const q of open) if (here(q.giver)) return offer(q);
@@ -415,6 +416,7 @@ export function validateQuests(placeIds: Set<string>): string[] {
       if (o.fish && !FISH_BY_ID.has(o.fish)) errs.push(`${q.id}: unknown fish ${o.fish}`);
       if (o.region && !REGIONS_BY_ID.has(o.region)) errs.push(`${q.id}: unknown region ${o.region}`);
       if (o.fish && o.region && fish(o.fish).region !== o.region) errs.push(`${q.id}: ${o.fish} does not live in ${o.region}`);
+      if (o.npc && !NPCS_BY_ID.has(o.npc)) errs.push(`${q.id}: nobody called ${o.npc} to see about it`);
       if (o.type === 'own' && !(RODS_BY_ID.has(o.item!) || BAITS_BY_ID.has(o.item!) || BOATS_BY_ID.has(o.item!) || LURES_BY_ID.has(o.item!) || WEARABLES_BY_ID.has(o.item!) || ECHOES_BY_ID.get(o.item!)?.thing)) errs.push(`${q.id}: unknown item ${o.item}`);
       if (o.type === 'visit' && !placeIds.has(o.place!) && !charted.has(o.place!)) errs.push(`${q.id}: unknown place ${o.place}`);
     }

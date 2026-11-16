@@ -872,10 +872,11 @@
           "name": "The wreck of the Puffin",
           "x": -1030,
           "z": -997,
-          "r": 6.5,
+          "r": 9,
           "prompt": "Look over the wreck",
           "flag": "puffin-found",
           "fromBoat": true,
+          "until": "puffin-afloat",
           "text": [
             "A sloop on the flats, heeled over, her mast lying along her. PUFFIN, on the transom, in paint the colour of old tea.",
             "Her planks are sound under the weed. In the cockpit a moorhen sits on three eggs and regards you without enthusiasm."

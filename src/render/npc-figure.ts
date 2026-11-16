@@ -7,6 +7,12 @@ import {
   MeshStandardMaterial, SphereGeometry, TorusGeometry, Vector3,
 } from 'three';
 import { assets } from './assets';
+import { dressHollis, hollisStandIn } from './crew-figures';
+
+/** Who sits down on an upturned tackle box when left alone (a `sit` clip alone does not mean that: Mister Hollis sits in a boat). */
+const SITS_ASHORE = new Set(['wick']);
+/** How tall each is, for the label, when the look table does not say. */
+const HEIGHT: Record<string, number> = { hollis: 2.0 };
 
 const mat = (hex: string, rough = 0.85) => new MeshStandardMaterial({ color: new Color(hex), roughness: rough, flatShading: true });
 
@@ -101,20 +107,27 @@ export class NpcFigure {
       }
       for (const n of ['wave', 'book_idle_look']) if (this.acts[n]) { this.acts[n].stop(); this.acts[n].setLoop(LoopOnce, 1); }
       // A sitter gets an upturned tackle box for a seat, with the sketchbook put down beside it.
-      if (this.acts.sit && assets.has('tackleBox')) {
+      if (this.acts.sit && SITS_ASHORE.has(id) && assets.has('tackleBox')) {
         this.seat = new Group();
         const box = assets.instance('tackleBox')!; this.seat.add(box);
         const book = assets.instance('sketchbook');
         if (book) { book.rotation.set(-Math.PI / 2, 0, 0.5); book.position.set(0.36, 0.03, 0.12); this.seat.add(book); this.groundBook = book; }
         this.root.add(this.seat);
       }
-      this.labelHeight = (LOOKS[id]?.height ?? 1.7) + 0.45;
+      this.labelHeight = (LOOKS[id]?.height ?? HEIGHT[id] ?? 1.7) + 0.45;
+    } else if (id === 'hollis') {
+      const s = hollisStandIn();
+      this.body = s.body;
+      this.fig.add(s.group);
+      this.labelHeight = HEIGHT.hollis + 0.4;
     } else {
       const s = standIn(id);
       this.body = s.userData.body as Group;
       this.fig.add(s);
       this.labelHeight = (LOOKS[id]?.height ?? 1.7) + 0.5;
     }
+    // A gentleman made of fog: where he waits, on the road, the fog is thick and so is he.
+    if (id === 'hollis') dressHollis(this.fig)(1);
   }
 
   private play(name: string) {

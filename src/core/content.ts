@@ -37,6 +37,7 @@ export interface ZoneDef { id: string; name: string; x: number; z: number; r: nu
 export interface PlaceDef {
   id: string; name: string; x: number; z: number; r: number; prompt?: string; text?: string[]; flag?: string; dark?: boolean;
   /** Looked at from a boat lying within `r` of it, not on foot (it stands in the water). */ fromBoat?: boolean;
+  /** A flag: once it is set the place is gone (the wreck that was floated off). */ until?: string;
 }
 /** Something standing in the world: `model` names a builder in render/props (which uses the made model when there is one); `block` is the radius the player walks round. */
 export interface PropDef { model: string; x: number; z: number; yaw: number; block?: number; /** A flag: once it is set the thing is gone. */ until?: string }

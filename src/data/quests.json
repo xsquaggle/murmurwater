@@ -535,7 +535,8 @@
         {
           "type": "own",
           "item": "puffin",
-          "label": "Pay Pell ◉ 40,000 to refit the Puffin (talk to Pell, then: the boatyard)"
+          "npc": "pell",
+          "label": "Pay Pell ◉ 40,000 to refit the Puffin (ask him about the boatyard)"
         }
       ],
       "reminder": "Forty thousand for the Puffin. Ask me about the boatyard. The skiff stays yours. I'll mind whichever you're not sailing.",

@@ -176,6 +176,12 @@ export class FishingSession {
     return Math.max(0, at - this.waitElapsed);
   }
 
+  /** Seconds until the float goes under for good while waiting (0 once it has); Infinity otherwise. A nibble is not a bite. */
+  get biteIn(): number {
+    if (this.phase === 'bite') return 0;
+    return this.phase === 'waiting' ? Math.max(0, this.wait - this.waitElapsed) : Infinity;
+  }
+
   /** True while the charge sits in the sweet spot. */
   get inSweetSpot(): boolean { return this.phase === 'charging' && this.power >= FEEL.sweetSpot[0] && this.power <= FEEL.sweetSpot[1]; }
 

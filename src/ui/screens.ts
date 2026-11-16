@@ -10,7 +10,9 @@ import {
 } from '../core/gear';
 import { BELL_FLAG, canRing, coinsToNextEcho, echoCost, echoRank, echoesFor, startCoins, turnings, unsoldValue } from '../core/bell';
 import { potInterval, potsInHand } from '../core/pots';
-import { BOARD, QUESTS, RELICS_BY_ID, boardOpen, count, currentGoal, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus, shortName } from '../core/quests';
+import { BOARD, BOATS, BOATS_BY_ID, QUESTS, RELICS_BY_ID, boardOpen, count, currentGoal, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus, shortName } from '../core/quests';
+import { aboard, basket, berths, crewProgress, hired } from '../core/crew';
+import { boatOnOffer } from '../core/gear';
 import type { GameState } from '../core/state';
 import type { GearAction } from '../game/trade';
 import { ACTION_LABELS, DEFAULT_BINDINGS, type Action } from '../game/input';
@@ -34,7 +36,7 @@ export function el(tag: string, attrs: Attrs = {}, ...kids: (Node | string | nul
 }
 
 const RARITY_NAMES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Uncanny'];
-const NPC_COLORS: Record<string, string> = { mara: '#C25F55', pell: '#4C5A66', wick: '#E86F6F', calloway: '#8E8A4E', 'packet-box': '#8A6A42' };
+const NPC_COLORS: Record<string, string> = { mara: '#C25F55', pell: '#4C5A66', wick: '#E86F6F', calloway: '#8E8A4E', 'packet-box': '#8A6A42', hollis: '#6F8A7C' };
 
 // ------------------------------------------------------------------ dialogue
 
@@ -67,7 +69,8 @@ export class Dialogue {
     this.conv = conv; this.onChoice = onChoice; this.onLinesDone = onLinesDone;
     this.isOpen = true; this.i = 0; this.gen++;
     const n = npc(conv.npc);
-    this.portrait.textContent = shortName(conv.npc)[0];
+    // The initial of the name they go by, not of a title (Mister Hollis is H).
+    this.portrait.textContent = shortName(conv.npc).split(' ').pop()![0];
     this.portrait.style.background = NPC_COLORS[conv.npc] ?? '#7A6390';
     this.nameEl.textContent = n.name;
     this.roleEl.textContent = n.role;
@@ -153,9 +156,14 @@ export interface UiHost {
   chart(): ChartView;
   /** Fast travel: sail the boat to a mooring. */
   sailTo(mooring: string): void;
+  /** Pell's boatyard: pay for a boat he has to offer, or change to the other one (the screen closes). */
+  buyBoat(id: string): void;
+  takeBoat(id: string): void;
+  /** What a deckhand is doing right now, in words. */
+  handState(id: string): string;
 }
 
-export type ScreenKind = 'shop' | 'board' | 'hold' | 'gear' | 'journal' | 'quests' | 'echoes' | 'bell' | 'pause' | 'settings' | 'chart';
+export type ScreenKind = 'shop' | 'board' | 'hold' | 'gear' | 'journal' | 'quests' | 'echoes' | 'crew' | 'bell' | 'pause' | 'settings' | 'chart' | 'boatyard';
 type ShopTab = 'rods' | 'tackle' | 'clothes' | 'pots';
 
 export class Screens {
@@ -206,7 +214,8 @@ export class Screens {
     this.card.className = 'screen-card sc-' + k;
     if (k === 'shop') this.renderShop();
     else if (k === 'board') this.renderBoard();
-    else if (k === 'hold' || k === 'gear' || k === 'journal' || k === 'quests' || k === 'echoes') this.renderSatchel(k);
+    else if (k === 'hold' || k === 'gear' || k === 'journal' || k === 'quests' || k === 'echoes' || k === 'crew') this.renderSatchel(k);
+    else if (k === 'boatyard') this.renderBoatyard();
     else if (k === 'bell') this.renderBell();
     else if (k === 'pause') this.renderPause();
     else if (k === 'settings') this.renderSettings();
@@ -335,6 +344,35 @@ export class Screens {
     this.card.append(el('div', { class: 'shop-cols' }, left, right));
   }
 
+  // ---- Pell's boatyard
+  private renderBoatyard() {
+    const s = this.host.state;
+    this.card.append(this.header('Pell’s Boatyard'));
+    this.card.append(el('div', { class: 'shop-bar' }, el('div', { class: 'sc-coins' }, `◉ ${fmt(s.coins)}`),
+      el('p', { class: 'muted' }, 'One boat in the water at a time. Pell minds the other, and brings her round when you ask.')));
+    const stat = (label: string, v: number, max: number, text: string) => el('div', { class: 'stat' }, el('span', {}, label), el('div', { class: 'stat-bar' }, el('i', { style: `width:${Math.min(100, (v / max) * 100)}%` })), el('em', {}, text));
+    const cards = BOATS.filter((b) => s.boats.owned.includes(b.id) || boatOnOffer(s, b.id)).map((b) => {
+      const owned = s.boats.owned.includes(b.id), current = s.boats.current === b.id;
+      const main = current ? el('button', { class: 'btn ghost', disabled: true }, 'In the water')
+        : owned ? el('button', { class: 'btn', onclick: () => this.host.takeBoat(b.id) }, 'Take her out')
+        : el('button', { class: 'btn gold', disabled: s.coins < b.price, onclick: () => this.host.buyBoat(b.id) }, `Fit her out ◉ ${fmt(b.price)}`);
+      return el('div', { class: 'item boat' + (current ? ' sel' : '') },
+        el('div', { class: 'item-top' }, el('b', {}, b.name), main),
+        el('div', { class: 'item-desc' }, b.desc),
+        el('div', { class: 'stats' },
+          stat('Speed', b.speed, 12, `${(b.speed * 1.94).toFixed(0)} kn`), stat('Handiness', b.turn, 1.2, b.turn >= 0.9 ? 'quick' : 'steady'),
+          stat('Hold', b.hold, 20, `+${b.hold} fish`), stat('Draws', b.draft, 1, `${b.draft.toFixed(1)} m`)),
+        el('div', { class: 'item-blurb' }, `${b.crew === 1 ? 'One berth' : `${b.crew} berths`} for crew · crew basket of ${b.crewHold}`),
+        !owned && s.coins < b.price ? el('div', { class: 'muted' }, `◉ ${fmt(b.price - s.coins)} short.`) : null);
+    });
+    this.card.append(el('div', { class: 'boat-cols' }, ...cards));
+    const signed = hired(s);
+    if (signed.length) {
+      const waiting = signed.slice(berths(s)).map((c) => c.name);
+      this.card.append(el('p', { class: 'muted' }, waiting.length ? `${waiting.join(' and ')} ${waiting.length === 1 ? 'has' : 'have'} no berth in the boat you have in the water.` : 'Your crew sail in whichever boat you take.'));
+    }
+  }
+
   // ---- notice board
   private renderBoard() {
     const s = this.host.state;
@@ -358,28 +396,36 @@ export class Screens {
   }
 
   // ---- satchel
-  private renderSatchel(kind: 'hold' | 'gear' | 'journal' | 'quests' | 'echoes') {
+  private renderSatchel(kind: 'hold' | 'gear' | 'journal' | 'quests' | 'echoes' | 'crew') {
     const s = this.host.state, st = this.host.stats();
     const tabs: [ScreenKind, string][] = [['hold', 'Hold'], ['gear', 'Gear'], ['journal', 'Journal'], ['quests', 'Quests']];
+    if (s.crew.hired.length) tabs.push(['crew', 'Crew']);
     if (s.flags.includes(BELL_FLAG) || s.lifetime.echoes > 0) tabs.push(['echoes', 'Echoes']);
     this.card.append(this.header('Satchel', tabs));
     if (kind === 'hold') {
       const total = s.hold.reduce((a, c) => a + c.value, 0);
       this.card.append(el('p', { class: 'muted' }, s.hold.length ? `${s.hold.length} of ${this.host.stats().hold} slots · worth ◉ ${fmt(total)} at Mara’s stall` : 'Your hold is empty. The sea is not.'));
+      // What rides beside the hold is said before it: a big hold fills the page.
+      if (s.pots.hold.length) {
+        const worth = s.pots.hold.reduce((a, c) => a + c.value, 0);
+        this.card.append(el('p', { class: 'muted hold-also' }, el('b', {}, 'From the pots: '), `${s.pots.hold.length} fish hauled from your Lantern Pots, worth ◉ ${fmt(worth)}. They ride in the pot basket, not your hold, and Mara takes them with the rest.`));
+      }
+      if (s.crew.hold.length) {
+        const bk = basket(s);
+        this.card.append(el('p', { class: 'muted hold-also' }, el('b', {}, 'From the crew: '), `${bk.fish} of ${bk.room} fish in the crew basket, worth ◉ ${fmt(bk.value)}. Mara takes them with the rest.`));
+      }
       this.card.append(el('div', { class: 'hold-grid' }, ...Array.from({ length: this.host.stats().hold }, (_, i) => {
         const c = s.hold[i];
         if (!c) return el('div', { class: 'slot empty' });
         const f = fishDef(c.fishId);
         return el('div', { class: `slot r${rarityIndex(c.fishId)}` }, el('b', {}, f.name), el('span', {}, `${c.weight.toFixed(2)} kg`), c.trait ? el('em', {}, c.trait) : null, el('span', { class: 'val' }, `◉ ${fmt(c.value)}`));
       })));
-      if (s.pots.hold.length) {
-        const worth = s.pots.hold.reduce((a, c) => a + c.value, 0);
-        this.card.append(el('h3', {}, 'From the pots'), el('p', { class: 'muted' }, `${s.pots.hold.length} fish hauled from your Lantern Pots, worth ◉ ${fmt(worth)}. They ride in the pot basket, not your hold, and Mara takes them with the rest.`));
-      }
     } else if (kind === 'gear') {
       this.renderGear(s, st);
     } else if (kind === 'echoes') {
       this.renderEchoes(s);
+    } else if (kind === 'crew') {
+      this.renderCrew(s);
     } else if (kind === 'journal') {
       const region = FISH.filter((f) => f.region === s.world.region);
       const found = region.filter((f) => s.journal[f.id]).length;
@@ -419,6 +465,27 @@ export class Screens {
         for (const b of board) this.card.append(el('div', { class: 'qobj' }, `○ ${b.objective.label} (${b.progress}/${objectiveTarget(b.objective)})`));
       }
       if (done.length) this.card.append(el('h3', {}, 'Done'), el('div', { class: 'muted' }, done.map((q) => q.title).join(' · ')));
+    }
+  }
+
+  // ---- crew
+  private renderCrew(s: GameState) {
+    const bk = basket(s), boat = s.boats.current ? BOATS_BY_ID.get(s.boats.current) : null, on = aboard(s);
+    this.card.append(el('p', { class: 'muted' }, 'Your crew fish from the boat while she lies still and the game is running: only fish that are in your journal, of the water under her. Their catch goes in the crew basket, and they stop when it is full.'));
+    this.card.append(el('div', { class: 'sum' },
+      el('div', { class: 'sum-i' }, el('span', {}, 'Boat'), el('b', {}, boat?.name ?? 'None')),
+      el('div', { class: 'sum-i' }, el('span', {}, 'Berths'), el('b', {}, `${on.length} of ${berths(s)} taken`)),
+      el('div', { class: 'sum-i' + (bk.full ? ' warn' : '') }, el('span', {}, 'Crew basket'), el('b', {}, `${bk.fish}/${bk.room}${bk.full ? ' · full' : ''}`)),
+      el('div', { class: 'sum-i' }, el('span', {}, 'Worth'), el('b', {}, `◉ ${fmt(bk.value)}`))));
+    for (const c of hired(s)) {
+      const t = s.crew.tally[c.id] ?? { fish: 0, coins: 0, eaten: 0 }, isOn = on.some((x) => x.id === c.id);
+      const what = c.eatsEvery ? `A fish about every ${c.interval} seconds, worth ${Math.round(c.value * 100)}% of yours. Eats one in ${c.eatsEvery}.` : `A fish about every ${c.interval} seconds, worth ${Math.round(c.value * 100)}% of yours.`;
+      this.card.append(el('div', { class: 'item hand' + (isOn ? ' sel' : '') },
+        el('div', { class: 'item-top' }, el('b', {}, c.name, el('span', { class: 'slot-tag' }, c.role)), el('span', { class: 'have' }, this.host.handState(c.id))),
+        el('div', { class: 'item-blurb' }, c.blurb),
+        el('div', { class: 'item-desc' }, `${c.desc} ${what}`),
+        isOn ? el('div', { class: 'bar' }, el('i', { style: `width:${Math.round(crewProgress(s, c) * 100)}%` })) : null,
+        el('div', { class: 'muted' }, `Landed ${fmt(t.fish)} fish for ◉ ${fmt(t.coins)}` + (c.eatsEvery ? ` · ate ${fmt(t.eaten)}` : ''))));
     }
   }
 
@@ -506,10 +573,10 @@ export class Screens {
     const li = (items: string[]) => el('ul', {}, ...items.map((t) => el('li', {}, t)));
     this.card.append(el('div', { class: 'bell-cols' },
       el('div', { class: 'bell-col takes' }, el('h3', {}, 'The tide takes'), li([
-        `Your coins (◉ ${fmt(s.coins)} now${catchWorth ? `, plus ◉ ${fmt(catchWorth)} for the catch in your hold, which is sold first` : ''})`,
+        `Your coins (◉ ${fmt(s.coins)} now${catchWorth ? `, plus ◉ ${fmt(catchWorth)} for the catch in your hold and baskets, which is sold first` : ''})`,
         'Rod tuning', 'Your creel, back to the basket', 'Bait', 'Pot upgrades, and pots in the water come home', 'Notice board jobs and your Rhythm'])),
       el('div', { class: 'bell-col keeps' }, el('h3', {}, 'You keep'), li([
-        'Rods, lures, clothes and the keeper’s things', 'The skiff', 'Your Lantern Pots', 'Relics and Moonpearls', 'The journal, the chart and the story', 'Echoes, and everything they have bought']))));
+        'Rods, lures, clothes and the keeper’s things', s.boats.owned.length > 1 ? 'Your boats' : 'The skiff', ...(s.crew.hired.length ? ['Your crew'] : []), 'Your Lantern Pots', 'Relics and Moonpearls', 'The journal, the chart and the story', 'Echoes, and everything they have bought']))));
     this.card.append(el('div', { class: 'bell-give' + (can ? ' can' : '') }, can
       ? el('div', {}, 'The Bell will give ', el('b', {}, `✺ ${give} Echo${give === 1 ? '' : 'es'}`), el('div', { class: 'muted' }, `The next one is ◉ ${fmt(coinsToNextEcho(s))} of fish away. Waiting never loses any.`))
       : el('div', {}, 'The bay has not given enough yet.', el('div', { class: 'muted' }, `◉ ${fmt(coinsToNextEcho(s))} more earned, and the Bell will have an Echo for you.`))));

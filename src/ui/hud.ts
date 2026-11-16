@@ -6,6 +6,7 @@ import { fish } from '../core/content';
 import { fmt, rarityIndex, rhythmMult } from '../core/economy';
 import type { Stats } from '../core/gear';
 import { potsWaiting } from '../core/pots';
+import { basket } from '../core/crew';
 import { FEEL, STRANGE_TRAITS, type FishingSession } from '../core/fishing';
 import type { CatchItem, GameState } from '../core/state';
 
@@ -24,8 +25,8 @@ const h = (tag: string, cls: string, parent?: HTMLElement, html = '') => {
 
 export class Hud {
   readonly root: HTMLElement;
-  private coins: HTMLElement; private hold: HTMLElement; private rhythm: HTMLElement; private pots: HTMLElement; private echoes: HTMLElement;
-  private potsWas = ''; private echoesWas = '';
+  private coins: HTMLElement; private hold: HTMLElement; private rhythm: HTMLElement; private pots: HTMLElement; private echoes: HTMLElement; private crew: HTMLElement;
+  private potsWas = ''; private echoesWas = ''; private crewWas = '';
   private goal: HTMLElement; private goalText: HTMLElement;
   private power: HTMLElement; private powerFill: HTMLElement;
   private bite: HTMLElement;
@@ -45,16 +46,20 @@ export class Hud {
   private fadeEl: HTMLElement;
   private compass: HTMLElement; private cpStrip: HTMLElement; private cpMarks: HTMLElement; private cpKnots: HTMLElement;
   private cpMarkEls: HTMLElement[] = [];
+  private tr: HTMLElement; private cpLow = false; private cpDown = false; private cpCheck = 0;
 
   constructor(parent: HTMLElement) {
     this.root = h('div', 'hud', parent);
-    const tr = h('div', 'hud-tr', this.root);
+    const tr = this.tr = h('div', 'hud-tr', this.root);
     this.echoes = h('div', 'pill echoes', tr, '<span class="ico">✺</span><b>0</b>');
     this.echoes.title = 'Echoes: spend them in the satchel';
     this.coins = h('div', 'pill coins', tr, '<span class="ico">◉</span><b>0</b>');
     this.hold = h('div', 'pill hold', tr, '<span class="ico">⛁</span><b>0/12</b>');
     this.pots = h('div', 'pill pots', tr, '<span class="ico lant"></span><b>0/3</b>');
     this.pots.title = 'Fish waiting in your Lantern Pots';
+    this.crew = h('div', 'pill crew', tr, '<span class="ico bask"></span><b>0/8</b>');
+    this.crew.title = 'Fish in the crew basket';
+    this.crew.style.display = 'none';
     this.rhythm = h('div', 'pill rhythm', tr, '<span class="ico">♪</span><b>×1.00</b>');
     this.pots.style.display = 'none'; this.echoes.style.display = 'none';
     this.goal = h('div', 'goal', this.root, '<div class="goal-k">Next</div>');
@@ -144,6 +149,11 @@ export class Hud {
    */
   setCompass(c: { yaw: number; knots: number; marks: { bearing: number; kind: 'goal' | 'mooring' | 'pot' }[] } | null) {
     this.compass.classList.toggle('on', !!c);
+    // The row of pills grows with the game (echoes, pots, a crew basket): where it reaches the compass, the compass
+    // sits under it, and the toasts under that.
+    if (c && --this.cpCheck <= 0) { this.cpCheck = 30; this.cpLow = this.tr.offsetLeft < this.compass.offsetLeft + CP_W + 14; }
+    const down = !!c && this.cpLow;
+    if (down !== this.cpDown) { this.cpDown = down; this.root.classList.toggle('cp-low', down); }
     if (!c) return;
     const deg = (((Math.PI - c.yaw) * 180) / Math.PI % 360 + 360) % 360;
     this.cpStrip.style.transform = `translateX(${(CP_W / 2 - (deg + 90) * CP_PX).toFixed(1)}px)`;
@@ -220,6 +230,15 @@ export class Hud {
       (this.pots.querySelector('b') as HTMLElement).textContent = pots.replace(' full', '');
       this.pots.classList.toggle('full', pots.endsWith(' full'));
       this.pots.classList.toggle('idle', !set);
+    }
+    // The crew basket, once somebody has signed on.
+    const bk = s.crew.hired.length ? basket(s) : null;
+    const crew = bk && bk.room ? `${bk.fish}/${bk.room}${bk.full ? ' full' : ''}` : '';
+    if (crew !== this.crewWas) {
+      this.crewWas = crew;
+      this.crew.style.display = crew ? '' : 'none';
+      (this.crew.querySelector('b') as HTMLElement).textContent = crew.replace(' full', '');
+      this.crew.classList.toggle('full', crew.endsWith(' full'));
     }
     const echoes = s.lifetime.echoes > 0 || s.echoes > 0 ? String(s.echoes) : '';
     if (echoes !== this.echoesWas) {

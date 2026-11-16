@@ -12,14 +12,16 @@ import { Dialogue, Screens, type ScreenKind, type UiHost } from '../ui/screens';
 import { converse, afterDecline, afterSale, afterTurnIn, textHash, type Conversation, type Line, type TalkAction } from './talk';
 import {
   BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, count, currentGoal, describeRewards, handsInTo, npc, npcOffer, shortName, onQuestEvent, questStatus,
-  readyText, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
+  newlyReady, readySet, readyText, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
 } from '../core/quests';
-import { BAITS_BY_ID, REGIONS, REGIONS_BY_ID, findMooring, placeOfIsland, regionAt, regionOfNpc, regionOfPlace, roadToward, roadsOf, type FerryPoint, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
+import { BAITS_BY_ID, REGIONS, REGIONS_BY_ID, findMooring, placeOfIsland, regionAt, regionOfNpc, regionOfPlace, roadToward, roadsOf, type FerryPoint, type HailDef, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
 import { LANDING } from '../core/landing';
 import { DAY_LENGTH_S } from '../render/daycycle';
 import type { ChartRaster, ChartView } from '../ui/chart';
 import { earn, fmt, sellAll } from '../core/economy';
-import { LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable, hasFogLamp, type CollectionDef } from '../core/gear';
+import { LURES_BY_ID, WEARABLES_BY_ID, buyBoat, grantLure, grantWearable, hasFogLamp, takeBoat, type CollectionDef } from '../core/gear';
+import { CREW_BY_ID, isAboard } from '../core/crew';
+import { handStateText } from './hands';
 import { BELL_FLAG, canRing, echoesFor, ringBell, turnings } from '../core/bell';
 import { trade } from './trade';
 import { keyLabel, saveSettings, type Settings } from './settings';
@@ -32,7 +34,8 @@ interface Interactable {
 interface Step { at: number; run: () => void }
 
 export class Town {
-  readonly npcs = new Map<string, { fig: NpcFigure; spots: NpcSpot[] }>();
+  /** Everybody in this region. `hail`: they stand on the water and are spoken to from the boat. */
+  readonly npcs = new Map<string, { fig: NpcFigure; spots: NpcSpot[]; hail?: HailDef }>();
   readonly critters: { island: string; cat: Cat }[] = [];
   readonly dialogue: Dialogue;
   readonly screens: Screens;
@@ -65,6 +68,9 @@ export class Town {
       ringBell: () => this.ringBell(),
       acceptBoard: (id) => { acceptBoard(g.state, id); },
       abandonBoard: (id) => { abandonBoard(g.state, id); },
+      buyBoat: (id) => this.buyBoat(id),
+      takeBoat: (id) => this.takeBoat(id),
+      handState: (id) => { const def = CREW_BY_ID.get(id); return def ? handStateText(g.hands.state(def)) : ''; },
       applySettings: (k) => this.applySettings(k),
       quit: () => { void g.save().then(() => window.mwNative?.quit()); },
       close: () => this.closeScreens(),
@@ -100,6 +106,11 @@ export class Town {
       if (!e) { e = { fig: new NpcFigure(sp.npc, sp.yaw), spots: [] }; this.npcs.set(sp.npc, e); g.world.scene.add(e.fig.root); }
       e.spots.push(sp);
     }
+    // Somebody met from the water: they stand on the sea where the region's data says.
+    for (const h of this.region.hails ?? []) {
+      const e = { fig: new NpcFigure(h.npc, h.yaw), spots: [{ npc: h.npc, island: '', x: h.x, z: h.z, yaw: h.yaw }], hail: h };
+      this.npcs.set(h.npc, e); g.world.scene.add(e.fig.root);
+    }
     for (const c of this.region.critters ?? []) {
       if (c.kind !== 'cat' || !Cat.available()) continue;
       const cat = new Cat(new Vector3(c.x, 0, c.z), c.r, (x, z) => g.groundAt(x, z), hashString(c.id));
@@ -109,6 +120,7 @@ export class Town {
     g.world.placeFerry(this.island);
     g.world.lighthouseLit = this.lampLit;
     if (g.world.kettle) g.world.kettle.visible = !g.state.flags.includes('kettle-taken');
+    g.world.showProps(g.state.flags);
     this.showChests();
   }
 
@@ -159,11 +171,12 @@ export class Town {
 
   private placeNpcs() {
     const s = this.g.state, owner = s.boats.owned.length > 0;
-    for (const [, e] of this.npcs) {
+    for (const [id, e] of this.npcs) {
       // Most people keep to one spot. The ferryman has two: he goes where he rows the player, until they sail themselves.
       const at = !owner ? this.island : s.flags.includes('pell-home') ? e.spots[0].island : 'gull-point';
       const sp = e.spots.length === 1 ? e.spots[0] : e.spots.find((x) => x.island === at) ?? null;
-      e.fig.root.visible = !!sp;
+      // Somebody who has a berth aboard is in it, not where they used to wait.
+      e.fig.root.visible = !!sp && !isAboard(s, id);
       if (!sp) continue;
       const y = this.g.groundAt(sp.x, sp.z) ?? Math.max(0, this.g.world.hf.height(sp.x, sp.z));
       e.fig.root.position.set(sp.x, y, sp.z);
@@ -178,6 +191,8 @@ export class Town {
     return v;
   }
   private spots = new Map<string, Vector3>();
+  /** Is this place still there? One that waits on a flag is gone once the flag is set. */
+  private there(p: PlaceDef): boolean { return !p.until || !this.g.state.flags.includes(p.until); }
 
   private interactables(): Interactable[] {
     const out: Interactable[] = [];
@@ -185,6 +200,16 @@ export class Town {
     // In the boat there is one thing to do with your feet: step off, where there is somewhere to stand.
     if (sail.aboard) {
       if (sail.canLand) out.push({ kind: 'ashore', id: 'ashore', pos: this.g.pos, r: 1, prompt: 'Step ashore', dist: 0 });
+      // And two with the boat herself, once she has all but stopped: hail somebody who stands on the water, and
+      // look over something that stands in it. Both are measured from her hull.
+      if (Math.abs(sail.boat.speed) < 2.5) {
+        for (const [id, e] of this.npcs) {
+          if (e.hail && e.fig.root.visible) out.push({ kind: 'npc', id, pos: e.fig.root.position, r: e.hail.r, prompt: `Hail ${npc(id).name}`, dist: sail.distanceTo(e.fig.root.position) + 0.01 });
+        }
+        for (const p of this.region.places ?? []) {
+          if (p.fromBoat && p.prompt && this.there(p)) out.push({ kind: 'place', id: p.id, pos: this.spot(p), r: p.r, prompt: p.prompt, dist: sail.distanceTo(this.spot(p)) + 0.01 });
+        }
+      }
       return out;
     }
     if (sail.boardable) {
@@ -204,7 +229,7 @@ export class Town {
       out.push({ kind: 'bell', id: bell.id, pos: this.spot(bell), r: bell.r, prompt: !found ? 'Look at the bell' : canRing(s) ? 'Take hold of the bell rope' : 'The Drowned Bell' });
     }
     for (const [id, e] of this.npcs) {
-      if (!e.fig.root.visible) continue;
+      if (!e.fig.root.visible || e.hail) continue;
       out.push({ kind: 'npc', id, pos: e.fig.root.position, r: 2.8, prompt: `Talk to ${npc(id).name}` });
     }
     const v = (p: PlaceDef) => this.spot(p);
@@ -214,7 +239,7 @@ export class Town {
     const box = this.places.get('packet-box');
     if (box) out.push({ kind: 'npc', id: 'packet-box', pos: v(box), r: box.r, prompt: 'Open Mara’s packet box' });
     // Things to look at.
-    for (const p of this.region.places ?? []) if (p.prompt) out.push({ kind: 'place', id: p.id, pos: v(p), r: p.r, prompt: p.prompt });
+    for (const p of this.region.places ?? []) if (p.prompt && !p.fromBoat && this.there(p)) out.push({ kind: 'place', id: p.id, pos: v(p), r: p.r, prompt: p.prompt });
     const board = this.places.get('notice-board');
     if (board) out.push({ kind: 'board', id: 'notice-board', pos: v(board), r: board.r, prompt: 'Read the notice board' });
     const lamp = this.places.get('lighthouse-lamp');
@@ -314,6 +339,8 @@ export class Town {
     const got = describeRewards(r);
     if (got.length) setTimeout(() => this.g.hud.toast(got.join(' · '), 'good'), 450);
     if (r.flags?.includes('hb-lighthouse-lit')) this.g.world.lighthouseLit = true;
+    // Somebody who signs on goes to their berth: off the dock, off the road.
+    if (r.crew?.length) { this.placeNpcs(); for (const id of r.crew) if (isAboard(s, id)) setTimeout(() => this.g.hud.toast(`${CREW_BY_ID.get(id)?.name ?? id} goes aboard ${BOATS_BY_ID.get(s.boats.current ?? '')?.name.replace(/^The /, 'the ') ?? 'your boat'}`, 'gold'), 1400); }
     // Bait, relics and the keeper's things all change what the next cast can do.
     this.g.refreshSession();
     if (r.boats?.length) {
@@ -355,7 +382,7 @@ export class Town {
         break;
       }
       case 'sell': {
-        const n = s.hold.length + s.pots.hold.length, to = this.talking ?? 'mara';
+        const n = s.hold.length + s.pots.hold.length + s.crew.hold.length, to = this.talking ?? 'mara';
         const total = sellAll(s);
         if (npc(to).thing) g.audio.packetBox(n); else g.audio.coin(n);
         g.hud.toast(`Sold ${n} fish for ◉ ${fmt(total)}`, 'gold');
@@ -373,6 +400,7 @@ export class Town {
       }
       case 'shop': this.endConversation(false); this.openScreen('shop'); break;
       case 'ferry': this.endConversation(false); this.ferry(a.to); break;
+      case 'boatyard': this.endConversation(false); this.openScreen('boatyard'); break;
       default: this.endConversation();
     }
   }
@@ -519,6 +547,7 @@ export class Town {
       void g.save();
     };
     if (!p.dark) {
+      if (p.fromBoat) g.lookToward(this.spot(p), 0.2);
       if (first) g.audio.discover();
       lines.forEach((t, i) => setTimeout(() => g.hud.toast(t), i * 2800));
       seen();
@@ -664,6 +693,54 @@ export class Town {
     ]);
   }
 
+  // ------------------------------------------------------------------ Pell's boatyard
+  /** Pays Pell for a boat: the yard is heard under a dark screen, and in the morning she lies off the dock. */
+  buyBoat(id: string) {
+    const g = this.g, s = g.state, def = BOATS_BY_ID.get(id);
+    if (!def || this.seq.length || g.sailing.aboard) return;
+    const before = readySet(s);
+    if (!buyBoat(s, id)) return;
+    this.closeScreens();
+    g.audio.coin(8);
+    const work = id === 'puffin' ? 'Pell takes the skiff out to the flats at slack water, with a mast, a suit of sails and a great deal of paint.' : `Pell goes to work on ${def.name}.`;
+    this.run([
+      { at: 0, run: () => g.hud.fade(true, work) },
+      { at: 0.9, run: () => g.audio.boatyard() },
+      { at: 6.6, run: () => {
+        // It is the next morning, and she is in the water where the other boat lay.
+        s.hour = 7.5; g.rushSky(0); g.world.hour = s.hour;
+        g.world.showProps(s.flags);
+        g.sailing.launch();
+        g.refreshSession(); this.arrive(); g.snapCamera();
+        void g.save();
+      } },
+      { at: 7.6, run: () => { g.hud.fade(false); g.input.requestLock(); } },
+      { at: 8.6, run: () => {
+        g.audio.discover();
+        g.hud.toast(`${def.name} is afloat. She lies off the landing, and Pell minds the other boat.`, 'gold');
+        for (const q of newlyReady(s, before)) setTimeout(() => { g.audio.questReady(); g.hud.toast(readyText(QUESTS_BY_ID.get(q)!), 'gold'); }, 1600);
+      } },
+    ]);
+  }
+
+  /** Changes boats at the yard: Pell brings the other one round, and keeps the one that was in the water. */
+  takeBoat(id: string) {
+    const g = this.g, s = g.state, def = BOATS_BY_ID.get(id);
+    if (!def || this.seq.length || g.sailing.aboard) return;
+    const before = readySet(s);
+    if (!takeBoat(s, id)) return;
+    this.closeScreens();
+    this.run([
+      { at: 0, run: () => { g.hud.fade(true, `Pell brings ${def.name.replace(/^The /, 'the ')} round.`); g.audio.oars(); } },
+      { at: 1.6, run: () => { g.sailing.launch(); g.refreshSession(); this.arrive(); void g.save(); } },
+      { at: 2.6, run: () => { g.hud.fade(false); g.input.requestLock(); } },
+      { at: 3.3, run: () => {
+        g.hud.toast(`${def.name} lies off the landing`, 'good');
+        for (const q of newlyReady(s, before)) setTimeout(() => { g.audio.questReady(); g.hud.toast(readyText(QUESTS_BY_ID.get(q)!), 'gold'); }, 900);
+      } },
+    ]);
+  }
+
   // ------------------------------------------------------------------ screens
   openScreen(kind: ScreenKind) {
     if (this.dialogue.isOpen) return;
@@ -763,7 +840,8 @@ export class Town {
     const items: Parameters<typeof g.hud.setMarkers>[0] = [];
     for (const c of this.critters) {
       // Seen from the boat as well as on their own island, but not from across the bay.
-      c.cat.root.visible = c.island === this.island || c.cat.root.position.distanceTo(g.pos) < 140;
+      // The dock cat is the ship's cat once she has signed on: then she is aboard, not here.
+      c.cat.root.visible = !s.crew.hired.includes('biscuit') && (c.island === this.island || c.cat.root.position.distanceTo(g.pos) < 140);
       if (!c.cat.root.visible) continue;
       c.cat.update(dt, g.pos);
       // The cat says hello when you walk up to it.
@@ -776,6 +854,8 @@ export class Town {
       const f = e.fig;
       f.update(dt, f.root.visible ? g.pos : null, this.talking === id);
       if (!f.root.visible) continue;
+      // Somebody who stands on the water rides it.
+      if (e.hail) f.root.position.y = g.waveY(e.hail.x, e.hail.z) + 0.03;
       const d = f.root.position.distanceTo(g.pos);
       if (d > 45) continue;
       const p = f.root.position.clone(); p.y += f.labelHeight;

@@ -6,7 +6,7 @@
  */
 import { Vector3 } from 'three';
 import type { Game } from './game';
-import { BoatRig } from '../render/boat-rig';
+import { makeBoatRig, type BoatRig } from '../render/boat-rig';
 import { assets, freeOwn } from '../render/assets';
 import { clearance, fogAt, nearestFloat, newBoat, stepBoat, type BoatEnv, type BoatState } from '../core/boat';
 import { LANDING, boatEnv, hullDistance, landingSpot } from '../core/landing';
@@ -96,15 +96,22 @@ export class Sailing {
     }
     this.boat = newBoat(at.x, at.z, at.heading);
     s.boats.at = { x: at.x, z: at.z, heading: at.heading };
-    if (!this.rig) {
-      const w = g.world;
-      w.ferryHeld = true;
-      this.rig = new BoatRig(w.ferryBoat, w.ferryIsModel, assets.instance('sailRig'));
-      w.scene.add(this.rig.root);
-    }
-    this.rig.wake.reset();
+    if (!this.rig || this.rig.boatId !== def.id) this.fitOut(def.id);
+    this.rig!.wake.reset();
     this.aboard = s.world.onBoat;
-    if (this.aboard) { this.rig.personAt(this.boat, g.pos, this.seat); g.yaw = this.boat.heading; }
+    if (this.aboard) { this.rig!.personAt(this.boat, g.pos, this.seat); g.yaw = this.boat.heading; }
+  }
+
+  /** Puts the hull of the boat she has now in the scene, in place of whichever was there. */
+  private fitOut(id: string) {
+    const g = this.g, w = g.world;
+    // The first skiff is the ferry Pell rowed the player about in. Any other boat is built, and the ferry put away.
+    const ferry = !this.rig && id === 'skiff' && !w.ferryHeld ? { hull: w.ferryBoat, isModel: w.ferryIsModel } : undefined;
+    if (this.rig) { (g.hands as Game['hands'] | undefined)?.unship(); this.rig.root.removeFromParent(); freeOwn(this.rig.root); }
+    if (!ferry && !w.ferryHeld) { w.ferryBoat.removeFromParent(); freeOwn(w.ferryBoat); }
+    w.ferryHeld = true;
+    this.rig = makeBoatRig(id, ferry);
+    w.scene.add(this.rig.root);
   }
 
   /** Writes the boat into the save state. */
@@ -296,7 +303,7 @@ export class Sailing {
     const furl = !this.aboard || this.restT > 1.2;
     this.rig.update(dt, this.boat, { time: g.world.time, waveY: (x, z) => g.waveY(x, z), night: g.world.light.night, throttle: this.throttle, rudder: this.rudder, water: g.world.water, furl, fog: this.fog }, g.fx, this.def.speed);
     // The Fog Lamp goes on the bow as soon as she has one, and lights itself when the fog closes in.
-    if (!this.rig.hasFogLamp && hasFogLamp(g.state)) this.rig.shipFogLamp(assets.instance('fogLamp'), g.world.ferryIsModel);
+    if (!this.rig.hasFogLamp && hasFogLamp(g.state)) this.rig.shipFogLamp(assets.instance('fogLamp'));
     if (this.rig.fogLampLit) { this.rig.fogLampLit = false; if (this.aboard) g.audio.fogLampLight(); }
     g.world.lampAt = this.rig.hasFogLamp ? this.boat : null;
     const road = g.world.seaRoad;
@@ -310,7 +317,7 @@ export class Sailing {
       this.reedT -= dt * Math.min(2.2, Math.abs(this.boat.speed) / 2.5);
       if (this.reedT <= 0 && g.world.fen.inReeds(this.boat.x, this.boat.z)) { this.reedT = 0.55 + Math.random() * 0.4; g.audio.reedBrush(0.6 + 0.4 * this.pace); }
     }
-    if (this.rig.sailMoved) { if (this.aboard) { if (this.rig.sailMoved === 'up') g.audio.sailFlap(); else g.audio.ropeCreak(); } this.rig.sailMoved = null; }
+    if (this.rig.sailMoved) { if (this.aboard) { if (this.rig.sailMoved !== 'up') g.audio.ropeCreak(); else if (this.def.id === 'puffin') g.audio.sloopSail(); else g.audio.sailFlap(); } this.rig.sailMoved = null; }
     // The player rides the boat's rise and fall.
     if (this.aboard && !this.hop) this.rig.personAt(this.boat, g.pos, this.seat);
   }

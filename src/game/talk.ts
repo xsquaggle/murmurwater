@@ -13,6 +13,7 @@ export type TalkAction =
   | { type: 'sell' }
   | { type: 'shop' }
   | { type: 'ferry'; to: string }
+  | { type: 'boatyard' }
   | { type: 'bye' };
 export interface Choice { label: string; action: TalkAction }
 export interface Conversation {
@@ -24,6 +25,9 @@ export interface Conversation {
   /** The speaker used their line about nearly remembering the keeper (said once each tide). */
   deja?: boolean;
 }
+
+/** Set when Pell has agreed to refit the Puffin (the reward of `fen-03b-wreck`). */
+export const BOATYARD_FLAG = 'boatyard-open';
 
 const q = (id: string) => QUESTS.find((x) => x.id === id)!;
 export const introLines = (quest: QuestDef): Line[] => quest.intro.map((text, i) => ({ npc: quest.giver, text, voice: `${quest.giver}/${quest.id}.intro.${i}` }));
@@ -72,7 +76,7 @@ function hub(s: GameState, npcId: string, island: string): Choice[] {
   const c: Choice[] = [];
   // Mara buys at her stall, and through the boxes she keeps on other landings: the same prices, the same shelf.
   if (npcId === 'mara' || npcId === 'packet-box') {
-    const n = s.hold.length + s.pots.hold.length;
+    const n = s.hold.length + s.pots.hold.length + s.crew.hold.length;
     if (n) c.push({ label: `Sell my catch (${n} fish)`, action: { type: 'sell' } });
     if (s.flags.includes('shop-open')) c.push({ label: npcId === 'mara' ? 'Show me the good shelf.' : 'Look through the shelf in the lid.', action: { type: 'shop' } });
   }
@@ -83,6 +87,9 @@ function hub(s: GameState, npcId: string, island: string): Choice[] {
       const r = FERRY_ROUTE[island];
       if (r) c.push({ label: r.label, action: { type: 'ferry', to: r.to } });
     }
+    // Once the Puffin has been found he keeps a boatyard, of a sort, at the home dock: he fits her out, and after
+    // that he minds whichever boat is not in the water.
+    if (s.flags.includes(BOATYARD_FLAG) && island === 'hearthbay') c.push({ label: s.boats.owned.length > 1 ? 'About the boats.' : 'About the Puffin.', action: { type: 'boatyard' } });
   }
   c.push({ label: npc(npcId).thing ? 'Shut the lid.' : 'Bye for now.', action: { type: 'bye' } });
   return c;
