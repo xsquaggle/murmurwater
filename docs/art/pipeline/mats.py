@@ -16,6 +16,7 @@ Needs paintkit.py beside it.
 import numpy as np
 from paintkit import (hexc, mix, smooth, fbm, stretch, blur, emboss, chips, strokes, shade, tint, paintify, speckle,
                       polymask, linemask)
+from fishmats import FISH
 
 ALGAE, SCUM, BARNACLE = hexc('#58724A'), hexc('#3B4734'), hexc('#DAD8C2')
 
@@ -420,6 +421,7 @@ def dial(H, W, seed=0, marks=36, metal='#C9CDD0', **_):
 PAINT = {'iron': iron, 'brass': brass, 'copper': copper, 'floats': floats, 'tin': tin, 'bark': bark, 'canopy': canopy, 'strands': strands, 'blade': blade, 'thatch': thatch, 'staff': staff, 'ruler': ruler, 'jar': jar, 'dial': dial,
          'bulrush': bulrush, 'lilypad': lilypad, 'bud': bud, 'wood': wood, 'endgrain': endgrain, 'cork': cork, 'rope': rope,
          'glass': glass, 'glow': glow, 'cloth': cloth, 'flat': flat}
+PAINT.update(FISH)                                                   # skins, fins and eyes for the fish (fishmats.py)
 
 
 # ------------------------------------------------------------------------------------------------ what happens to a patch afterwards
