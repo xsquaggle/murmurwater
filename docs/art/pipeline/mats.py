@@ -18,6 +18,7 @@ from paintkit import (hexc, mix, smooth, fbm, stretch, blur, emboss, chips, stro
                       polymask, linemask)
 from fishmats import FISH
 from callomats import CALLO
+from boatmats import BOAT
 
 ALGAE, SCUM, BARNACLE = hexc('#58724A'), hexc('#3B4734'), hexc('#DAD8C2')
 
@@ -108,7 +109,7 @@ def tin(H, W, seed=0, colour='#8E979A', tile_x=False, **_):
 # ------------------------------------------------------------------------------------------------ wood, cork, rope
 WOODS = {'drift': ('#8A6A4F', '#5E4532', '#B08D68'), 'dark': ('#5A4233', '#3A2A20', '#7A5C46'), 'pale': ('#B79B76', '#8A6F50', '#D8C19A'),
          'grey': ('#8C8578', '#5F594F', '#AEA795'), 'red': ('#8E4A3A', '#5E2E26', '#B46A55'), 'tar': ('#3B332D', '#221D1A', '#5A4E44'),
-         'teal': ('#4F7C78', '#33514F', '#86ABA4'), 'cream': ('#D9CDAE', '#A89C7E', '#EFE6CC')}
+         'teal': ('#4F7C78', '#33514F', '#86ABA4'), 'cream': ('#D9CDAE', '#A89C7E', '#EFE6CC'), 'oiled': ('#9A6A44', '#6B452B', '#C08E60')}
 
 
 def wood(H, W, seed=0, planks=0, along='y', tone='drift', weather=0.4, gap=1.6, nails=0, tile_x=False, **_):
@@ -424,6 +425,7 @@ PAINT = {'iron': iron, 'brass': brass, 'copper': copper, 'floats': floats, 'tin'
          'glass': glass, 'glow': glow, 'cloth': cloth, 'flat': flat}
 PAINT.update(FISH)                                                   # skins, fins and eyes for the fish (fishmats.py)
 PAINT.update(CALLO)                                                  # skin, hair, straw and cloth for a person (callomats.py)
+PAINT.update(BOAT)                                                   # painted planking, name boards, sailcloth (boatmats.py)
 
 
 # ------------------------------------------------------------------------------------------------ what happens to a patch afterwards

@@ -93,6 +93,8 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `props/notice-board.glb` | 2,817 | 1.75 x 2.20 x 0.98 | base centre | no | `notice-board` | `a22e9d6d-7ed3-4da4-a3cc-71f2fadc5c87` |
 | `props/sketchbook.glb` | 914 | 0.24 x 0.25 x 0.055 | centre, cover on +Z | no | `sketchbook` | `3d645d40-ba8f-41e2-9531-2100077904f1` |
 | `boats/sail-rig.glb` | 1,092 | 0.21 x 3.49 x 2.32 | mast foot | no | `sail-rig` | built in code, no 3D job (see below) |
+| `boats/puffin.glb` | 3,061 | 1.99 x 1.95 x 5.40 | waterline, on the centre line, half way along her; 0.60 m of her is below it | stern lantern's panes (material `Glass`) | `puffin` | none: built and painted in code (see "The Puffin" below) |
+| `boats/puffin-rig.glb` | 746 | 1.97 x 5.67 x 4.90 | mast foot | no | `puffin` | none: built and painted in code (see "The Puffin" below) |
 | `props/chest.glb` | 1,860 | 0.85 x 0.49 x 0.52 (body 0.66 wide, rope handles beyond) | base centre, lock on +Z | no | `chest` | `a459bd33-43af-415d-a0db-75dacd4cf31b` |
 | `props/chest-open.glb` | 2,446 | 0.85 x 0.78 x 0.75 (lid open 105°, reaching 0.48 m behind the centre) | base centre, lock on +Z, the box exactly where `chest.glb` has it | no | `chest-open` | none: cut from `chest.glb` |
 | `props/buoy.glb` | 1,892 | 0.87 x 1.81 x 0.87 | waterline, on the axis: 1.20 m above it, 0.61 m below | no | `buoy` | `e544a9f1-80bc-442e-8a17-4d1860ce02af` |
@@ -159,6 +161,42 @@ A plant that lights up after dark has a second material, `Glow`, with a glow map
 `props/packet-box.glb`: Mara's packet box. A sea crate 0.9 x 0.6 m on four legs, its lid 0.71 m above the origin, with battens on the corners, two iron straps, rope handles, a brass hasp and padlock, and "M.T." and a fish stencilled on the front (+Z); the letters are drawn in `paint-packet-box.py` as polygons with a stencil's bridges, so no font is used. A brass scale pan stands on the lid at (-0.19, 0.71, 0.02), 0.13 m high and 0.37 m across. A pole clipped to the +X end at (0.485, 0, -0.19) is 1.8 m tall with a brass ball on top. 1024 x 512 px atlas. One material, `main`. The pennant (0.62 m long, 0.28 m at the hoist, seven red and cream stripes, both faces modelled) is a child node `Pennant` with its origin on the pole's axis at (0.485, 1.60, -0.19); it flies toward +X and turns about its own Y.
 
 `props/listening-post.glb`: Isolde's listening post. A platform 2.4 m square of twelve weathered planks on three beams, its deck 0.45 m above the origin, on four piles at (+-1.07, +-1.07) that stand 0.2 to 0.3 m above the deck and go down to 1.5 m below the origin; the tenth plank from the back is broken off, which leaves a gap from x = 0.18 to 1.2 between z = 0.6 and 0.8. The ear trumpet is 1.6 m long with a bell 0.92 m across, hung in a brass yoke on a post; its pivot is at (0, 1.30, 0.55), it points along +Z and 28 degrees down, its mouth is centred on (0, 0.95, 1.21) over the front edge and its earpiece is at (0, 1.70, -0.20). Behind the earpiece a three-legged stool (seat 0.92 m above the origin) at (-0.04, -0.52); a dead lantern 0.42 m tall at (-0.72, -0.18); a coil of rope at (0.76, 0.18). 1024 px atlas. One material, `main`: the lantern's panes are painted dull and nothing glows. The tin box for the logbook (0.37 x 0.23 x 0.25 m, turned 24 degrees) is a child node `LogBox` with its origin on the deck under the middle of the box, at (0.56, 0.45, -0.62).
+
+### The Puffin
+
+`boats/puffin.glb` and `boats/puffin-rig.glb` (2026-11-16), the gaff sloop of v0.5.0, are original work built and painted in code, with no generation job and no credits. Her hull is data in `docs/art/pipeline/puffin.mjs`: a table of lines (half breadth, sheer height, depth of body and fullness at nine places along her), sections drawn from it as superellipses, and the pieces made on them (the shell in four bands, keel and stem, transom, rail, rubbing strake, ceiling, cockpit, deck, cuddy). `build-puffin.mjs` adds her fittings and lays out a 2048 px atlas, which `paint-atlas.py` paints from `boatmats.py` (painted lapped planking, bottom paint, a name board with the letters drawn as polygons, a round badge with a puffin on it, portholes, wickerwork, sailcloth) and `mats.py`. `build-puffin-rig.mjs` builds the rig on the same lines, with a 1024 px atlas. `make-puffin.sh` builds both twice (each repeats byte for byte) and renders them together; the glTF validator finds no errors and no warnings in either. Sheet: `docs/art/sheets/puffin.webp` (under sail on both tacks, furled, and her deck from above).
+
+**The hull.** 5.40 m from the stem to the trailing edge of the rudder, 1.99 m in the beam over the rubbing strakes, 0.60 m of draft, 0.55 m of freeboard amidships (the top of the rail is at 0.59). +X is port, +Z the bow, y = 0 the waterline. Bone-white lapped topsides, an ink sheer strake, a coral boot-top and rudder, red-brown bottom paint, oiled wood inside. Open cockpit with side benches (z -1.44 to -0.55), stern sheets abaft them and an open well before them as far as a bulkhead at z 0.37 (a teal door, a ring buoy); a bridge deck with the mast's tabernacle; a cuddy from z 0.66 to 1.92 with four portholes and a hatch; a foredeck with a samson post, a coil and an anchor. On the transom the name board `PUFFIN` (port half, because the rudder hangs on the middle) and a badge with a puffin (starboard half). A crab pot and a float lie on the starboard stern sheets, a bucket stands in the well and a boat hook lies along the starboard side. Nothing overhangs the box 5.4 x 2.0 m.
+
+Materials: `main` (the atlas), `Glass` (the six panes of the stern lantern, warm, #FFC98A at the middle of a pane, with the atlas as its emissive texture) and `HullMask`. Mesh nodes besides the root:
+
+| Node | Origin (x, y, z) m | What it is |
+|---|---|---|
+| `Tiller` | 0, 0.535, -2.452 | The tiller **and the rudder**, which turn together about Y on the pintles' axis. With the helm amidships the grip is at (0, 0.37, -1.81): 0.62 m above the sole and 0.09 m abaft `Helm`; the bar goes on 0.10 m beyond the hand. 136 triangles. |
+| `HullMask` | 0, 0, 0 | A lid of 30 triangles that follows her outline 5 cm under the sheer, with a material of its own name for the game to replace. |
+
+Empty nodes (the +Z of each is the way to face there):
+
+| Node | Place (x, y, z) m | Faces | Notes |
+|---|---|---|---|
+| `Helm` | 0.26, -0.25, -1.72 | the bow | On the sole; the stern sheets above it are at y 0.215, which is 0.465 m above the sole. |
+| `Stand` | 0, -0.25, -0.12 | the bow | On the sole in the well. A person 1.75 m tall has their head at y 1.50; the underside of the boom passes at 1.68. |
+| `MastStep` | 0, 0.60, 0.515 | the bow | On the bridge deck between the tabernacle's cheeks: the rig's origin. |
+| `BowStem` | 0, 0.99, 2.625 | the bow | The stem head. The forestay comes down 0.125 m abaft it. |
+| `Lantern` | -0.365, 1.048, -2.238 | the bow | The middle of the stern lantern's glass. The lantern hangs inboard from a post on the starboard quarter (top of the post at y 1.33). |
+| `Crew1` | -0.26, 0.937, 1.27 | starboard (-X) | On the cuddy roof, starboard side. The foot of the jib passes about 1.6 m above the waterline here. |
+| `Crew2` | 0.62, -0.25, -0.70 | port (+X) | On the sole under the forward end of the port bench, whose top is 0.465 m above it. The bench is 0.45 m deep with the hull behind it, so nobody can sit square to the side on it with their legs before them: the sitter's legs go forward into the well (see Mister Hollis's `sit`). |
+
+The sole is at y -0.25 (below the waterline, hence the mask) and every bench top at y 0.215.
+
+**The rig.** Origin at the mast foot; in the hull's coordinates that is `MastStep`. One material, `main`. The root mesh stands still: the mast (5.20 m, oiled below the hounds at 4.56 m, bone paint above, a coral truck, a burgee), two shrouds that come down to the hull's chainplates at (±0.964, -0.008, -0.165) in the rig's coordinates, and the forestay to (0, 0.348, 1.985). Two mesh nodes move, each with two morph targets in this order:
+
+| Node | Origin m | Target 0 `belly` | Target 1 `furl` |
+|---|---|---|---|
+| `Main` (boom, gaff, mainsail, peak halyard; 422 triangles) | 0, 1.10, 0: on the mast's axis at the boom, to be turned about Y | Starts at 1: the sail filled toward +X. -1 fills it toward -X, 0 leaves it flat. | Starts at 0. At 1 the gaff has come down the mast and lies along the boom on a roll of cloth, which reaches 0.30 m above the boom's centre line. |
+| `Jib` (140 triangles) | 0, 0.658, 1.845: its tack on the forestay | Starts at 1: filled toward +X, the clew 0.2 m off the centre line; -1 is the mirror image. | Starts at 0. At 1 it is a roll round the stay from tack to head. |
+
+The targets add up, so belly goes to 0 as furl goes to 1, as on the skiff's rig. The boom's centre line runs from (0, 1.10, -0.10) to (0, 1.28, -2.90), radius 0.058, with its jaws round the mast; the gaff's peak is at (0, 5.56, -1.77). The sails are two-sided grids (mainsail 8 x 10, jib 5 x 8), tanbark with sewn cloths, a doubled edge and two rows of reef points, and the mainsail has one cream patch. Morph targets are new in `kit.mjs`: `Model.morphs(node, names, weights)` names them and a corner says where it goes, or a part gives one function for all its corners (the gaff's descent); normals are worked out again at each target.
 
 ### Player rig and animation clips
 
