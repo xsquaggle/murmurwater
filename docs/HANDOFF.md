@@ -37,13 +37,14 @@ Last updated: 2026-11-16, phase 2 third slice (the Fog Lamp, the sea-road, Mossg
 | `sail.cjs` | The skiff from Pell, sailed with the real helm keys along routes through the water: Kettle Isle, the kettle, home, the Teeth, a flounder from the boat, the chest on Pip's Bar, the chart and fast travel, running at a beach, the Murmur Fog, a save made at sea (SAIL OK). Helpers in `sail-helpers.cjs` |
 | `tide.cjs` | The second half of Hearthbay: the pot job, F to set and haul from the dock and from the boat, every page of the shelf, the Gear page, the belfry by boat and its chest, the first ring of the Bell, what the tide took and kept, an Echo spent, the lines after a Turning, save and reload (TIDE OK) |
 | `fog.cjs` | The way to Mossglass Fen: Pell's lamp job, the fog turning her back without it, the Fog Lamp bought with Echoes, the sea-road sailed with the real helm, the change of waters in the thick of the fog (and that the ground was ready before it), Calloway, fish off the jetty, the packet box and its shelf, the Fen's notice board, the stake, the ear trumpet, the chart across the fog both ways, a save made in the Fen, a v4 save from before the Fen (FOG OK). Helpers `window.fog` at the top of the file |
+| `tester.cjs` | The tester's start: F8 on the title screen, the simulator's save as the game reads it (the lamp, the road job, Pell home, the kettle gone), Mara spoken to, the road sailed and Pell's errand handed to Calloway, and the player's own save untouched throughout (about 2 minutes) |
 | `play.cjs` | Core loop: cast, hook, fight, land, sell |
 | `walk.cjs` | Walking with the real keys: props, houses and people are solid, everyone is reachable; shots of the dock, night, lighthouse and conversations |
 | `shadows.cjs` | A shadow reaches the float before the bite; top-down and in-game frames |
 | `audio.cjs` | Every sound loads, the game triggers the recordings, night brings the night theme, mix levels (peak and RMS) |
 | `cast.cjs` | Frame-by-frame sheets of a cast from three cameras (for judging feel) |
 | `poses.cjs`, `shot.cjs` | Player pose sheet; one screenshot with `?cam=x,y,z&look=x,y,z` |
-| `electron-smoke.cjs` | The packaged entry boots and has every model, voice, sound and music file |
+| `electron-smoke.cjs` | The packaged entry boots and has every model, voice, sound and music file; F8 brings up the tester's start and saving there leaves the real save alone |
 
 ## Companion thread
 The asset thread ("Generate and import game assets") makes models, clips, voice, music and sound with Higgsfield, Blender and CC0 sources and pushes them to main. It documents every file in `docs/ASSETS.md`.
@@ -78,7 +79,7 @@ The asset thread ("Generate and import game assets") makes models, clips, voice,
 - A boat's place is saved in `boats.at`, whether the player is in it in `world.onBoat`, found places in `world.charted`. A save made in the middle of the step between boat and shore is written as already arrived.
 - Landing and boarding share one reach, measured from the hull (`core/landing.ts`): a landing is never offered further off than `LANDING.reach`, and boarding reaches `LANDING.slack` further, so the player can always get back aboard from where she put them ashore. Before this rule a reviewer found shores on Kettle Isle and Hearthbay where the player was stranded for good. `tests/content.test.ts` drives the skiff at every island from all round to hold it.
 - Content rules are tests: every boat must float at every mooring with somewhere to step off, reach every mooring, chart place and quest ground from the home dock, and every chest must be landable (`tests/content.test.ts`).
-- Bots drive the boat with `window.bot.sailTo(x, z)` from `e2e/sail-helpers.cjs`, which follows `findRoute` with the helm keys. Set `g.skipRender = true` in long loops.
+- Bots drive the boat with `window.bot.sailTo(x, z)` from `e2e/sail-helpers.cjs`, which follows `findRoute` with the helm keys. Installing those helpers also grants the sail bot's starting state and puts the player on Gull Point, unless called with `{ grant: false }`. `e2e/fog-helpers.cjs` adds `window.fog` (the road pilot, the chart's buttons, talking). Set `g.skipRender = true` in long loops.
 - The wake is foam in the water shader (`water.ts wakeFoam`) fed by the track `boat-rig.ts Wake` records; there is no wake mesh. The Murmur Fog's look is `WorldScene.murk` (scene fog plus the sky's `uMurk`).
 - The sail rig has two morph targets, `belly` (0) and `furl` (1). `Sailing.restT` decides when the sail is down: nobody aboard, or still for 1.2 s with no call for way. It is the player's sign that she has settled and a cast will be allowed.
 - Sea chests are data (`regions.json chests`: place, coins, baits, a line of text); `town.ts openChest` pays them once (flag `chest:<id>`), and `world-scene.ts` swaps the shut model for the open one.
