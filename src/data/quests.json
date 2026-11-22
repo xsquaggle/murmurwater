@@ -801,7 +801,7 @@
       "giver": "calloway",
       "receiver": "hollis",
       "title": "A Gentleman on the Road",
-      "summary": "A gentleman waits by the eighth light of the sea-road, out from the Fen. Bring a boat with a berth to spare and offer it to him.",
+      "summary": "A gentleman waits by the eighth light of the sea-road, out from the Fen. Bring a boat with a berth he can call his own and offer it to him.",
       "requires": [
         "fen-04-glows"
       ],
@@ -813,7 +813,7 @@
       "objectives": [
         {
           "type": "berth",
-          "label": "Have a berth to spare aboard (the Puffin has two)"
+          "label": "Have a berth of his own to offer (the Puffin has a bench for one)"
         }
       ],
       "reminder": "The eighth light out along the sea-road, on your right hand as you leave. He wants a berth of his own. He was most particular.",

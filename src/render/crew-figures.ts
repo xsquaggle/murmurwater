@@ -8,7 +8,7 @@ import {
   AnimationAction, AnimationMixer, Box3, BoxGeometry, BufferAttribute, BufferGeometry, CapsuleGeometry, Color, ConeGeometry, CylinderGeometry, Group, Line, LineBasicMaterial, LoopOnce,
   LoopRepeat, Material, Mesh, MeshStandardMaterial, Object3D, SphereGeometry, TorusGeometry, Vector3,
 } from 'three';
-import { assets } from './assets';
+import { assets, freeOwn } from './assets';
 
 const flat = (hex: string, rough = 0.85) => new MeshStandardMaterial({ color: new Color(hex), roughness: rough, flatShading: true });
 
@@ -112,6 +112,7 @@ export function dressHollis(root: Object3D): (presence: number) => void {
   const mats: { m: MeshStandardMaterial; base: number; kind: 'main' | 'fog' | 'glass'; glow: number }[] = [];
   const own = new Map<Material, MeshStandardMaterial>();
   const thin = { value: 0 };
+  const casters: Mesh[] = [];
   root.traverse((o) => {
     const mesh = o as Mesh;
     if (!mesh.isMesh) return;
@@ -137,11 +138,11 @@ export function dressHollis(root: Object3D): (presence: number) => void {
       return m;
     };
     mesh.material = Array.isArray(mesh.material) ? mesh.material.map(swap) : swap(mesh.material);
-    mesh.userData.castWhenThick = mesh.castShadow;
+    if (mesh.castShadow) casters.push(mesh);
     // The fog of his face is blended, and the sea is drawn late (render order 5): his face is drawn after it.
     if ((Array.isArray(mesh.material) ? mesh.material : [mesh.material]).some((m) => m.transparent)) mesh.renderOrder = 5.5;
   });
-  let was = -1;
+  let was = -1, casting = true;
   return (presence: number) => {
     const p = Math.min(1, Math.max(0, presence));
     if (Math.abs(p - was) < 0.004) return;
@@ -153,7 +154,7 @@ export function dressHollis(root: Object3D): (presence: number) => void {
       else if (x.kind === 'glass') x.m.emissiveIntensity = x.glow * (0.5 + 0.5 * p);
     }
     // An outline casts no shadow.
-    root.traverse((o) => { const mesh = o as Mesh; if (mesh.isMesh && mesh.userData.castWhenThick !== undefined) mesh.castShadow = mesh.userData.castWhenThick && p > 0.6; });
+    if (casting !== p > 0.6) { casting = p > 0.6; for (const mesh of casters) mesh.castShadow = casting; }
   };
 }
 
@@ -216,6 +217,14 @@ export class HollisAboard {
   }
   private dropHeld() { this.held?.dispose(); this.held = null; }
 
+  /** He leaves the boat (she is being changed for another, or the crew has): what this figure made for itself is freed. */
+  dispose() {
+    this.dropHeld();
+    this.mixer?.stopAllAction();
+    this.root.removeFromParent();
+    freeOwn(this.root);
+  }
+
   /**
    * `thick`: 0 (thinned out by daylight) .. 1 (all there). `fishing`: his line is over the side. `waterY`: the
    * water's height where the line goes in, in the berth's own frame.
@@ -242,7 +251,7 @@ export class HollisAboard {
     this.lineMat.opacity += (show * 0.85 - this.lineMat.opacity) * Math.min(1, dt * 3);
     this.line.visible = this.lineMat.opacity > 0.02;
     if (this.line.visible) {
-      this.root.updateMatrixWorld();
+      // (Asking where his hand is brings the matrices above it up to date, his own root's among them.)
       const h = this.root.worldToLocal(this.hand.getWorldPosition(this.v));
       const p = this.line.geometry.getAttribute('position') as BufferAttribute;
       const twitch = 0.02 * Math.sin(this.t * 2.3) * Math.sin(this.t * 0.7);
@@ -285,6 +294,8 @@ export class CatAboard {
   private swatT = 9; private eatT = 9; private watch = 0;
   private meal: { obj: Object3D; dispose(): void } | null = null; private mealSize = 1;
   private box = new Box3(); private v = new Vector3();
+  /** Which of her movements this build has clips for (the rest tip her whole body). */
+  private made = { swat: false, eat: false, watch: false };
 
   constructor() {
     this.root.add(this.pose);
@@ -302,6 +313,15 @@ export class CatAboard {
     };
     if (sit) play(sit, 'biscuitSit'); else if (stand) play(stand, 'biscuit');
     if (sit && stand) { this.standing = stand; stand.visible = false; this.pose.add(stand); play(stand, 'biscuit'); }
+    this.made.swat = !!this.clip.swat; this.made.eat = !!this.clip.eat; this.made.watch = !!this.clip.watch;
+  }
+
+  /** She leaves the boat (it is being changed for another, or the crew has): what this figure made for itself is freed. */
+  dispose() {
+    this.meal?.dispose(); this.meal = null;
+    for (const m of this.mixers) m.stopAllAction();
+    this.root.removeFromParent();
+    freeOwn(this.root);
   }
 
   /** She hooks one out: up, a paw over the side, and back. */
@@ -330,7 +350,7 @@ export class CatAboard {
       this.meal.obj.scale.setScalar(Math.max(0.001, this.mealSize * Math.min(1, Math.max(0, 1 - (this.eatT - 1.1) / 1.0))));
       if (this.eatT > 2.1) { this.meal.dispose(); this.meal = null; }
     }
-    const made = { swat: !!this.clip.swat, eat: !!this.clip.eat, watch: !!this.clip.watch };
+    const made = this.made;
     // On her feet for the swat (the standing sculpt), sitting otherwise.
     if (this.standing) { const up = swat > 0.05; this.standing.visible = up; this.sitting.visible = !up; }
     // `watch` and `eat` turn the same joints: she stops watching to eat.

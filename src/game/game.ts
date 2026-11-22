@@ -19,6 +19,7 @@ import { defaultSettings, keyLabel, type Settings } from './settings';
 import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
 import { Rng } from '../core/rng';
+import { frameTime } from '../core/clock';
 import { FishingSession, type FishingInput, type SpotInfo } from '../core/fishing';
 import { REGIONS_BY_ID, bait, crossingAt, regionAcross, regionAhead, rod, zoneAt } from '../core/content';
 import { RegionPrep } from '../render/region-prep';
@@ -258,7 +259,7 @@ export class Game {
     let last = performance.now();
     const loop = (now: number) => {
       const real = (now - last) / 1000;
-      const dt = Math.min(0.1, real);
+      const dt = frameTime(real);
       last = now;
       if (!this.halted) {
         const t0 = performance.now();

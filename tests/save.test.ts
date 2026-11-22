@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { deserialize, loadGame, looksReadable, serialize, SaveError, type SaveStore } from '../src/core/save';
+import { deserialize, loadGame, localStorageStore, looksReadable, serialize, SaveError, type SaveStore } from '../src/core/save';
 import { newGame, SAVE_VERSION } from '../src/core/state';
 
 const mem = (main: string | null, backup: string | null): SaveStore & { written?: string } => ({
@@ -85,6 +85,50 @@ describe('unreadable saves', () => {
     expect(r.source).toBe('new');
     expect(quarantined).toBe(1);
     expect(r.warning).toMatch(/kept aside/);
+  });
+  it('a main save that cannot be read is kept aside when the backup is played from, and the backup is left where it is', async () => {
+    const good = serialize(Object.assign(newGame(1), { coins: 77 }));
+    const asked: (string | undefined)[] = [];
+    const r = await loadGame({ async read() { return { main: '{half a sa', backup: good }; }, async write() {}, async quarantine(only) { asked.push(only); } });
+    expect(r.source).toBe('backup');
+    expect(r.state.coins).toBe(77);
+    expect(asked).toEqual(['main']);
+    expect(r.warning).toMatch(/restored the backup.*kept aside/);
+    // A store that cannot keep files aside still loads the backup, and says only what it did.
+    const plain = await loadGame(mem('{half a sa', good));
+    expect(plain.source).toBe('backup');
+    expect(plain.warning).toMatch(/restored the backup\.$/);
+    // And one whose keeping-aside fails does not lose the backup with it.
+    const failing = await loadGame({ async read() { return { main: '{half a sa', backup: good }; }, async write() {}, async quarantine() { throw new Error('disk full'); } });
+    expect(failing.source).toBe('backup');
+    expect(failing.state.coins).toBe(77);
+  });
+  it('the browser store keeps aside only what it is asked to, and the next save does not rotate over the good backup', async () => {
+    const box = new Map<string, string>();
+    (globalThis as any).localStorage = { getItem: (k: string) => box.get(k) ?? null, setItem: (k: string, v: string) => { box.set(k, v); }, removeItem: (k: string) => { box.delete(k); } };
+    try {
+      const store = localStorageStore('t.save');
+      const good = serialize(Object.assign(newGame(1), { coins: 77 }));
+      box.set('t.save', '{half a sa'); box.set('t.save.bak', good);
+      const r = await loadGame(store);
+      expect(r.source).toBe('backup');
+      expect(box.has('t.save')).toBe(false);
+      expect(box.get('t.save.bak')).toBe(good);
+      const aside = [...box.keys()].filter((k) => k.startsWith('t.save.corrupt-'));
+      expect(aside.length).toBe(1);
+      expect(box.get(aside[0])).toBe('{half a sa');
+      // The first autosave after that: the backup is still the good copy, and the unreadable file is still aside.
+      const next = serialize(Object.assign(r.state, { coins: 78 }));
+      await store.write(next);
+      expect(box.get('t.save')).toBe(next);
+      expect(box.get('t.save.bak')).toBe(good);
+      expect(box.get(aside[0])).toBe('{half a sa');
+      // Both unreadable: both are kept aside.
+      box.clear(); box.set('t.save', '{a'); box.set('t.save.bak', '{b');
+      expect((await loadGame(store)).source).toBe('new');
+      expect([...box.keys()].filter((k) => k.includes('.corrupt-')).length).toBe(2);
+      expect(box.has('t.save') || box.has('t.save.bak')).toBe(false);
+    } finally { delete (globalThis as any).localStorage; }
   });
   it('are not quarantined when there was simply no save', async () => {
     let quarantined = 0;

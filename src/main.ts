@@ -17,7 +17,7 @@ declare global {
     mwNative?: {
       readSave(): Promise<{ main: string | null; backup: string | null }>;
       writeSave(text: string): Promise<boolean>;
-      quarantineSave?(): Promise<string[]>;
+      quarantineSave?(only?: 'main'): Promise<string[]>;
       readSettings(): Promise<string | null>;
       writeSettings(text: string): Promise<boolean>;
       setWindowMode(mode: string): Promise<void>;
@@ -33,7 +33,7 @@ const params = new URLSearchParams(location.search);
 const nativeStore = (): SaveStore => ({
   read: () => window.mwNative!.readSave(),
   write: async (t) => { await window.mwNative!.writeSave(t); },
-  quarantine: async () => { await window.mwNative!.quarantineSave?.(); },
+  quarantine: async (only) => { await window.mwNative!.quarantineSave?.(only); },
 });
 // ?fresh starts a new test game in a separate slot; ?keepfresh reloads that test slot (for the story bot).
 const testSlot = params.has('fresh') || params.has('keepfresh');

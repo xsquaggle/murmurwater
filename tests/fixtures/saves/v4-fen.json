@@ -1,0 +1,583 @@
+{
+ "format": "murmurwater-save",
+ "version": 4,
+ "savedAt": "2026-11-16T00:00:00.000Z",
+ "state": {
+  "version": 4,
+  "seed": 3,
+  "playTime": 8618.98618647943,
+  "hour": 8.926503363432907,
+  "coins": 527,
+  "moonpearls": 2,
+  "echoes": 1,
+  "lifetime": {
+   "coins": 37761,
+   "catches": 148,
+   "perfectHooks": 47,
+   "snaps": 0,
+   "echoes": 23
+  },
+  "run": {
+   "number": 3,
+   "coins": 13676,
+   "startedAt": 7033.395984664638
+  },
+  "nextUid": 325,
+  "hold": [
+   {
+    "uid": 313,
+    "fishId": "mudlark",
+    "weight": 0.31,
+    "trait": null,
+    "value": 52,
+    "perfect": false
+   },
+   {
+    "uid": 314,
+    "fishId": "glowbelly",
+    "weight": 2.25,
+    "trait": null,
+    "value": 1047,
+    "perfect": false
+   },
+   {
+    "uid": 315,
+    "fishId": "mudlark",
+    "weight": 0.47,
+    "trait": null,
+    "value": 72,
+    "perfect": true
+   },
+   {
+    "uid": 316,
+    "fishId": "mudlark",
+    "weight": 0.78,
+    "trait": null,
+    "value": 84,
+    "perfect": false
+   },
+   {
+    "uid": 317,
+    "fishId": "glowbelly",
+    "weight": 1.98,
+    "trait": null,
+    "value": 1108,
+    "perfect": false
+   },
+   {
+    "uid": 318,
+    "fishId": "mudlark",
+    "weight": 0.87,
+    "trait": null,
+    "value": 97,
+    "perfect": false
+   },
+   {
+    "uid": 319,
+    "fishId": "mudlark",
+    "weight": 0.53,
+    "trait": null,
+    "value": 88,
+    "perfect": true
+   },
+   {
+    "uid": 320,
+    "fishId": "mudlark",
+    "weight": 0.31,
+    "trait": null,
+    "value": 77,
+    "perfect": true
+   },
+   {
+    "uid": 321,
+    "fishId": "mudlark",
+    "weight": 0.32,
+    "trait": null,
+    "value": 80,
+    "perfect": true
+   },
+   {
+    "uid": 322,
+    "fishId": "mudlark",
+    "weight": 0.36,
+    "trait": null,
+    "value": 86,
+    "perfect": true
+   },
+   {
+    "uid": 323,
+    "fishId": "mudlark",
+    "weight": 0.53,
+    "trait": null,
+    "value": 89,
+    "perfect": false
+   },
+   {
+    "uid": 324,
+    "fishId": "bottomless-eel",
+    "weight": 12.07,
+    "trait": null,
+    "value": 3008,
+    "perfect": false
+   }
+  ],
+  "journal": {
+   "pebble-goby": {
+    "caught": 10,
+    "bestWeight": 0.4,
+    "traits": [],
+    "firstAt": 44.24093627089961
+   },
+   "butterperch": {
+    "caught": 9,
+    "bestWeight": 1.28,
+    "traits": [],
+    "firstAt": 64.99481227140663
+   },
+   "kettle-carp": {
+    "caught": 10,
+    "bestWeight": 2.94,
+    "traits": [
+     "hollow"
+    ],
+    "firstAt": 91.98225019941867
+   },
+   "coral-snapper": {
+    "caught": 30,
+    "bestWeight": 2.56,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 444.68012902679067
+   },
+   "lampjaw": {
+    "caught": 21,
+    "bestWeight": 1.93,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 798.5922382096073
+   },
+   "moss-eel": {
+    "caught": 1,
+    "bestWeight": 2.93,
+    "traits": [],
+    "firstAt": 1081.750279433438
+   },
+   "twofold-flounder": {
+    "caught": 13,
+    "bestWeight": 5.92,
+    "traits": [],
+    "firstAt": 1843.0923795650046
+   },
+   "hollow-lantern": {
+    "caught": 2,
+    "bestWeight": 4.78,
+    "traits": [],
+    "firstAt": 2665.3438448839897
+   },
+   "mudlark": {
+    "caught": 30,
+    "bestWeight": 1.17,
+    "traits": [],
+    "firstAt": 5014.9665517343565
+   },
+   "bottomless-eel": {
+    "caught": 2,
+    "bestWeight": 12.07,
+    "traits": [],
+    "firstAt": 5158.626344916937
+   },
+   "glassfin": {
+    "caught": 1,
+    "bestWeight": 0.19,
+    "traits": [],
+    "firstAt": 5457.284298438326
+   },
+   "mossback-tench": {
+    "caught": 9,
+    "bestWeight": 2.87,
+    "traits": [],
+    "firstAt": 6148.102504506861
+   },
+   "stilt-gar": {
+    "caught": 7,
+    "bestWeight": 6.3,
+    "traits": [],
+    "firstAt": 6269.725330596313
+   },
+   "glowbelly": {
+    "caught": 3,
+    "bestWeight": 2.25,
+    "traits": [
+     "two-faced"
+    ],
+    "firstAt": 7971.055651388481
+   }
+  },
+  "gear": {
+   "rods": [
+    "driftwood-rod",
+    "harbour-rod",
+    "gullwing-rod"
+   ],
+   "rodLevels": {
+    "driftwood-rod": 0,
+    "harbour-rod": 0,
+    "gullwing-rod": 3
+   },
+   "rod": "gullwing-rod",
+   "baits": {
+    "breadcrumb": "__inf__",
+    "glowgrub": 10,
+    "marsh-worm": 44
+   },
+   "bait": "marsh-worm",
+   "lures": [
+    "tin-minnow",
+    "brass-spinner",
+    "moth-lure"
+   ],
+   "lure": "tin-minnow",
+   "wearables": [
+    "keepers-boots",
+    "wool-cap",
+    "gull-feather",
+    "keepers-oilskin",
+    "keepers-souwester",
+    "keepers-whistle",
+    "fen-waders",
+    "field-hat"
+   ],
+   "worn": {
+    "hat": "wool-cap",
+    "coat": "keepers-oilskin",
+    "boots": "keepers-boots",
+    "charm": "gull-feather"
+   },
+   "creel": 4
+  },
+  "pots": {
+   "owned": 3,
+   "placed": [
+    {
+     "id": 7,
+     "region": "mossglass-fen",
+     "zone": "fen-grove",
+     "x": 0,
+     "z": 42,
+     "fish": [
+      {
+       "uid": 298,
+       "fishId": "mudlark",
+       "weight": 0.31,
+       "trait": null,
+       "value": 29,
+       "perfect": false
+      },
+      {
+       "uid": 299,
+       "fishId": "mudlark",
+       "weight": 0.43,
+       "trait": null,
+       "value": 32,
+       "perfect": false
+      },
+      {
+       "uid": 300,
+       "fishId": "mossback-tench",
+       "weight": 1.03,
+       "trait": null,
+       "value": 124,
+       "perfect": false
+      },
+      {
+       "uid": 307,
+       "fishId": "mudlark",
+       "weight": 0.44,
+       "trait": null,
+       "value": 32,
+       "perfect": false
+      },
+      {
+       "uid": 310,
+       "fishId": "stilt-gar",
+       "weight": 2.02,
+       "trait": null,
+       "value": 287,
+       "perfect": false
+      }
+     ],
+     "t": 0,
+     "n": 19
+    },
+    {
+     "id": 8,
+     "region": "mossglass-fen",
+     "zone": "fen-grove",
+     "x": 6,
+     "z": 48,
+     "fish": [
+      {
+       "uid": 301,
+       "fishId": "mudlark",
+       "weight": 1.2,
+       "trait": null,
+       "value": 51,
+       "perfect": false
+      },
+      {
+       "uid": 302,
+       "fishId": "mudlark",
+       "weight": 0.32,
+       "trait": null,
+       "value": 29,
+       "perfect": false
+      },
+      {
+       "uid": 303,
+       "fishId": "mudlark",
+       "weight": 0.33,
+       "trait": null,
+       "value": 29,
+       "perfect": false
+      },
+      {
+       "uid": 308,
+       "fishId": "mudlark",
+       "weight": 0.31,
+       "trait": null,
+       "value": 29,
+       "perfect": false
+      },
+      {
+       "uid": 311,
+       "fishId": "mudlark",
+       "weight": 0.78,
+       "trait": null,
+       "value": 46,
+       "perfect": false
+      }
+     ],
+     "t": 0,
+     "n": 19
+    },
+    {
+     "id": 9,
+     "region": "mossglass-fen",
+     "zone": "fen-grove",
+     "x": 12,
+     "z": 54,
+     "fish": [
+      {
+       "uid": 304,
+       "fishId": "stilt-gar",
+       "weight": 3.16,
+       "trait": null,
+       "value": 339,
+       "perfect": false
+      },
+      {
+       "uid": 305,
+       "fishId": "mudlark",
+       "weight": 0.41,
+       "trait": null,
+       "value": 31,
+       "perfect": false
+      },
+      {
+       "uid": 306,
+       "fishId": "mudlark",
+       "weight": 0.48,
+       "trait": null,
+       "value": 33,
+       "perfect": false
+      },
+      {
+       "uid": 309,
+       "fishId": "mudlark",
+       "weight": 1.02,
+       "trait": null,
+       "value": 47,
+       "perfect": false
+      },
+      {
+       "uid": 312,
+       "fishId": "mossback-tench",
+       "weight": 1,
+       "trait": null,
+       "value": 138,
+       "perfect": false
+      }
+     ],
+     "t": 0,
+     "n": 19
+    }
+   ],
+   "hold": [],
+   "levels": {
+    "speed": 3,
+    "size": 2,
+    "quality": 2
+   },
+   "nextId": 10
+  },
+  "boats": {
+   "owned": [
+    "skiff"
+   ],
+   "current": "skiff",
+   "upgrades": {},
+   "at": null
+  },
+  "world": {
+   "region": "mossglass-fen",
+   "pos": [
+    -118,
+    1.4,
+    22
+   ],
+   "yaw": -1.5707963267948966,
+   "discovered": [
+    "hearthbay",
+    "mossglass-fen"
+   ],
+   "charted": [
+    "hearthbay",
+    "gull-point",
+    "kettle-isle",
+    "pips-bar",
+    "the-teeth",
+    "drowned-belfry",
+    "sedge-landing",
+    "the-sump",
+    "glasswater",
+    "reed-maze",
+    "standing-trees"
+   ],
+   "onBoat": false
+  },
+  "quests": {
+   "active": {
+    "fen-05-sump": {
+     "0": 1
+    }
+   },
+   "done": [
+    "hb-01-salt",
+    "hb-02-supper",
+    "hb-04-drawing",
+    "hb-03-proper-rod",
+    "hb-05-dark-lamp",
+    "hb-06-relight",
+    "hb-07-kettle",
+    "hb-08-teeth",
+    "hb-p1-pots",
+    "hb-08b-stall",
+    "hb-09-bell",
+    "hb-10-turning",
+    "hb-11-lamp",
+    "hb-12-road",
+    "fen-01-scale",
+    "fen-02-glass",
+    "fen-03-tape",
+    "fen-04-glows"
+   ],
+   "board": {
+    "quests": [
+     {
+      "id": "board-14",
+      "title": "A Big One",
+      "objective": {
+       "type": "catch",
+       "fish": "pebble-goby",
+       "minWeight": 0.3,
+       "count": 1,
+       "label": "Catch a Pebble Goby over 0.3 kg"
+      },
+      "reward": {
+       "coins": 15
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-16",
+      "title": "Wanted: Mossback Tench",
+      "objective": {
+       "type": "catch",
+       "fish": "mossback-tench",
+       "count": 3,
+       "label": "Catch 3 Mossback Tench"
+      },
+      "reward": {
+       "coins": 745
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-17",
+      "title": "Wanted: Reedling",
+      "objective": {
+       "type": "catch",
+       "fish": "reedling",
+       "count": 5,
+       "label": "Catch 5 Reedling"
+      },
+      "reward": {
+       "coins": 240,
+       "items": {
+        "marsh-worm": 5
+       }
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     }
+    ],
+    "timer": 480,
+    "serial": 17
+   }
+  },
+  "flags": [
+   "shop-open",
+   "board-open",
+   "has-lampjaw-light",
+   "lamp-lit",
+   "seen:lighthouse-lamp",
+   "hb-lighthouse-lit",
+   "seen:keepers-kettle",
+   "chest:pips-bar-chest",
+   "chest:belfry-chest",
+   "chest:kettle-west-chest",
+   "pots-open",
+   "page:hearthbay-page",
+   "seen:drowned-bell",
+   "bell-found",
+   "tide-turned",
+   "reached:mossglass-fen",
+   "chest:sump-chest",
+   "chest:glass-bar-chest",
+   "seen:survey-stake",
+   "chest:grove-chest",
+   "reached:hearthbay"
+  ],
+  "relics": [
+   "wicks-drawing",
+   "keepers-kettle"
+  ],
+  "echoUpgrades": {
+   "fog-lamp": 1,
+   "tidewise": 2,
+   "quick-hands": 2,
+   "steady-line": 2,
+   "patient-float": 2,
+   "deep-pockets": 1,
+   "maras-ledger": 1
+  },
+  "rhythm": 10
+ }
+}

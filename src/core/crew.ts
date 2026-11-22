@@ -13,6 +13,9 @@ import type { CatchItem, GameState } from './state';
 
 export interface CrewDef {
   id: string; name: string; /** What they are aboard, for the Crew page. */ role: string;
+  /** 'she' or 'he', for what the keeper is told of them. */ pronoun: string;
+  /** Which of a boat's berths is theirs, counted from 0 (the cat's perch, then the side bench). A boat with fewer has no place for them, whoever else is or is not aboard. */
+  berth: number;
   /** Seconds of still water between fish. */ interval: number;
   /** The best fish they can bring up. */ maxRarity: Rarity;
   /** How fast the odds fall with each step of rarity (1 = as on a rod with no luck). */ rarityFalloff: number;
@@ -40,18 +43,25 @@ export interface CrewEnv {
   /** She is lying still: at anchor, moored or drifting, not under way. */ still: boolean;
 }
 
+/** Berths in a boat of this kind (none in no boat). */
+export function berthsOf(boatId: string | null): number { return boatId ? BOATS.get(boatId)?.crew ?? 0 : 0; }
+/** Has a boat of this kind a berth of this hand's own? */
+export function berthIn(boatId: string | null, def: CrewDef): boolean { return def.berth < berthsOf(boatId); }
 /** Berths in the boat the keeper has now (none without a boat). */
-export function berths(s: GameState): number { return s.boats.current ? BOATS.get(s.boats.current)?.crew ?? 0 : 0; }
+export function berths(s: GameState): number { return berthsOf(s.boats.current); }
 /** How many fish the boat's crew basket holds. */
 export function basketSize(s: GameState): number { return s.boats.current ? BOATS.get(s.boats.current)?.crewHold ?? 0 : 0; }
 /** The hands who have signed on, in order of seniority (the cat first). */
 export function hired(s: GameState): CrewDef[] { return CREW.filter((c) => s.crew.hired.includes(c.id)); }
-/** The hands aboard: as many of those signed on as the boat has berths for. */
-export function aboard(s: GameState): CrewDef[] { return hired(s).slice(0, berths(s)); }
-/** Signed on, and no berth in this boat: they wait at the boatyard. */
-export function ashore(s: GameState): CrewDef[] { return hired(s).slice(berths(s)); }
-export function freeBerths(s: GameState): number { return Math.max(0, berths(s) - s.crew.hired.length); }
-export function isAboard(s: GameState, id: string): boolean { return aboard(s).some((c) => c.id === id); }
+/** The hands aboard: those signed on whose own berth this boat has. */
+export function aboard(s: GameState): CrewDef[] { const n = berths(s); return hired(s).filter((c) => c.berth < n); }
+/** Signed on, and no berth of theirs in this boat: they wait at the boatyard. */
+export function ashore(s: GameState): CrewDef[] { const n = berths(s); return hired(s).filter((c) => c.berth >= n); }
+/** Has the boat the keeper has now a berth for this hand (signed on or not)? */
+export function berthFor(s: GameState, id: string): boolean { const def = CREW_BY_ID.get(id); return !!def && berthIn(s.boats.current, def); }
+export function isAboard(s: GameState, id: string): boolean { return s.crew.hired.includes(id) && berthFor(s, id); }
+/** Have they signed on? Then they are aboard or at the boatyard, and no longer where they used to wait. */
+export function signedOn(s: GameState, id: string): boolean { return s.crew.hired.includes(id); }
 
 /** Signs a hand on. They go aboard at once if there is a berth. */
 export function hire(s: GameState, id: string): boolean {
@@ -117,22 +127,28 @@ function bringUp(s: GameState, def: CrewDef, env: CrewEnv, kit: CrewKit): CrewCa
  * (`crewKit(stats(s))`). A hand's clock stands still while the boat is under way, while it is too light for
  * them, and while the basket is full. Returns what was caught.
  */
-export function tickCrew(s: GameState, dt: number, env: CrewEnv, kit: CrewKit): CrewCatch[] {
-  if (!s.crew.hired.length) return [];
-  const out: CrewCatch[] = [], size = basketSize(s);
-  for (const def of aboard(s)) {
+export function tickCrew(s: GameState, dt: number, env: CrewEnv, kit: CrewKit): readonly CrewCatch[] {
+  if (!s.crew.hired.length) return NOTHING;
+  // This runs every step of the game: it makes nothing unless a fish comes up.
+  let out: CrewCatch[] | null = null;
+  const size = basketSize(s), n = berths(s);
+  for (const def of CREW) {
+    if (def.berth >= n || !s.crew.hired.includes(def.id)) continue;
     if (!working(def, env) || s.crew.hold.length >= size) continue;
     const clock = clockOf(s, def.id);
     clock.t += dt;
     while (clock.t >= def.interval && s.crew.hold.length < size) {
-      clock.t -= def.interval;
       const c = bringUp(s, def, env, kit);
-      if (c) out.push(c); else { clock.t = Math.min(clock.t, def.interval * 0.5); break; } // nothing they know here: try again in a while
+      // Nothing they know here: they try again in half the time, and the wait they had done is not thrown away with it.
+      if (!c) { clock.t = def.interval * 0.5; break; }
+      clock.t -= def.interval;
+      (out ??= []).push(c);
     }
     if (s.crew.hold.length >= size) clock.t = Math.min(clock.t, def.interval);
   }
-  return out;
+  return out ?? NOTHING;
 }
+const NOTHING: readonly CrewCatch[] = Object.freeze([]);
 
 /** The keeper's numbers the crew fish with, from `stats()`. */
 export function crewKit(st: { value: number; luck: number; rod: { luck: number } }): CrewKit { return { value: st.value, luck: st.luck + st.rod.luck }; }
@@ -140,6 +156,8 @@ export function crewKit(st: { value: number; luck: number; rod: { luck: number }
 /** 0..1: how far a hand is toward their next fish. */
 export function crewProgress(s: GameState, def: CrewDef): number { return Math.min(1, (s.crew.clocks[def.id]?.t ?? 0) / def.interval); }
 
+/** Is the crew basket full? (Asked every step and every frame: `basket` adds up what is in it.) */
+export function basketFull(s: GameState): boolean { const room = basketSize(s); return room > 0 && s.crew.hold.length >= room; }
 /** The crew basket: fish in it, room, and what they would fetch. */
 export function basket(s: GameState): { fish: number; room: number; value: number; full: boolean } {
   const room = basketSize(s);
@@ -160,7 +178,10 @@ export function validateCrew(): string[] {
     if (!(c.value > 0 && c.value < 1)) errs.push(`deckhand ${c.id}: a hand's fish must be worth less than the keeper's`);
     if (!(c.rarityFalloff > 0 && c.rarityFalloff <= 1)) errs.push(`deckhand ${c.id}: rarer fish may not be likelier than on a rod`);
     if (!(c.luck >= 0 && c.luck <= 1)) errs.push(`deckhand ${c.id}: borrows between none and all of the keeper's luck`);
-    if (!c.blurb || !c.desc || !c.role) errs.push(`deckhand ${c.id}: needs a role, a blurb and a description`);
+    if (!c.blurb || !c.desc || !c.role || !c.pronoun) errs.push(`deckhand ${c.id}: needs a role, a pronoun, a blurb and a description`);
+    if (!Number.isInteger(c.berth) || c.berth < 0) errs.push(`deckhand ${c.id}: needs a berth, counted from 0`);
+    else if (CREW.some((o) => o !== c && o.berth === c.berth)) errs.push(`deckhand ${c.id}: shares berth ${c.berth} with somebody`);
+    else if (![...BOATS.values()].some((b) => (b.crew ?? 0) > c.berth)) errs.push(`deckhand ${c.id}: no boat has berth ${c.berth}`);
   }
   for (const [id, b] of BOATS) {
     if (!((b.crew ?? 0) >= 0 && (b.crewHold ?? 0) >= 0)) errs.push(`boat ${id}: bad crew numbers`);

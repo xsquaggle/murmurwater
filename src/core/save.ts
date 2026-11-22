@@ -4,6 +4,9 @@
  * Loading tries the main save, then the backup. A save from a newer game version is never overwritten.
  */
 import { SAVE_VERSION, newGame, type GameState } from './state';
+import boatsJson from '../data/boats.json';
+
+const KNOWN_BOATS = new Set((boatsJson.boats as { id: string }[]).map((b) => b.id));
 
 export const SAVE_FORMAT = 'murmurwater-save';
 
@@ -37,11 +40,15 @@ export const MIGRATIONS: Record<number, Migration> = {
   },
   // v4 → v5: deckhands. Nobody has signed on in an older save, and the crew basket is empty. A boat that was
   // "current" without being owned (never written by the game, but cheap to mend) is put right, because the
-  // crew's berths are counted from the current boat.
+  // crew's berths are counted from the current boat: a boat the game knows is the keeper's from now on (they
+  // may be sitting in it), and one it does not know gives way to one they own.
   4: (s) => {
     s.crew = { hired: [], hold: [], clocks: {}, tally: {} };
     const b = (s.boats ??= { owned: [], current: null, upgrades: {}, at: null });
-    if (b.current && !(b.owned ?? []).includes(b.current)) b.current = (b.owned ?? [])[0] ?? null;
+    b.owned ??= [];
+    if (b.current && !b.owned.includes(b.current)) {
+      if (KNOWN_BOATS.has(b.current)) b.owned.push(b.current); else b.current = b.owned[0] ?? null;
+    }
     return s;
   },
 };
@@ -93,8 +100,11 @@ function fillDefaults(s: any): GameState {
 export interface SaveStore {
   read(): Promise<{ main: string | null; backup: string | null }>;
   write(text: string): Promise<void>;
-  /** Moves unreadable save files aside so a new game's autosave can't overwrite them. */
-  quarantine?(): Promise<void>;
+  /**
+   * Moves unreadable save files aside so the next autosave can't overwrite them: both of them, or with `'main'`
+   * only the main save (its backup was readable, is being played from, and stays where it is).
+   */
+  quarantine?(only?: 'main'): Promise<void>;
 }
 
 export interface LoadResult { state: GameState; source: 'main' | 'backup' | 'new'; warning?: string }
@@ -110,8 +120,17 @@ export async function loadGame(store: SaveStore): Promise<LoadResult> {
     }
   }
   if (backup) {
-    try { return { state: deserialize(backup), source: 'backup', warning }; }
+    let state: GameState | null = null;
+    try { state = deserialize(backup); }
     catch (e) { if (e instanceof SaveError && e.kind === 'future') throw e; }
+    if (state) {
+      // The main save could not be read and the game goes on from the backup. The unreadable file may still hold
+      // something a person could get back, so it is kept aside before the first autosave is written in its place.
+      if (main && warning) {
+        try { if (store.quarantine) { await store.quarantine('main'); warning += ' The unreadable file has been kept aside (save.corrupt-…).'; } } catch { /* the backup still loads */ }
+      }
+      return { state, source: 'backup', warning };
+    }
   }
   if (!main && !backup) return { state: newGame(), source: 'new' };
   // Neither file could be read. Keep them aside before the new game starts saving over them.
@@ -130,9 +149,9 @@ export function localStorageStore(key = 'murmurwater.save'): SaveStore {
   return {
     async read() { return { main: localStorage.getItem(key), backup: localStorage.getItem(key + '.bak') }; },
     async write(text) { const prev = localStorage.getItem(key); if (prev && looksReadable(prev)) localStorage.setItem(key + '.bak', prev); localStorage.setItem(key, text); },
-    async quarantine() {
+    async quarantine(only) {
       const stamp = Date.now();
-      for (const k of [key, key + '.bak']) { const v = localStorage.getItem(k); if (v !== null) { localStorage.setItem(`${k}.corrupt-${stamp}`, v); localStorage.removeItem(k); } }
+      for (const k of only === 'main' ? [key] : [key, key + '.bak']) { const v = localStorage.getItem(k); if (v !== null) { localStorage.setItem(`${k}.corrupt-${stamp}`, v); localStorage.removeItem(k); } }
     },
   };
 }

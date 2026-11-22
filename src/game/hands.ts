@@ -7,7 +7,8 @@ import type { Game } from './game';
 import type { BoatRig } from '../render/boat-rig';
 import { CatAboard, HollisAboard } from '../render/crew-figures';
 import { makeFish, type FishObject } from '../render/fish-models';
-import { CREW_BY_ID, aboard, basket, crewKit, crewKnows, darkEnough, tickCrew, working, type CrewCatch, type CrewDef, type CrewEnv } from '../core/crew';
+import { CREW_BY_ID, aboard, basket, basketFull, berthIn, crewKit, crewKnows, darkEnough, hired, isAboard, tickCrew, working, type CrewCatch, type CrewDef, type CrewEnv, type CrewKit } from '../core/crew';
+import type { GameState } from '../core/state';
 import { fogAt } from '../core/boat';
 import { REGIONS_BY_ID, fish, zoneAt } from '../core/content';
 import { fmt } from '../core/economy';
@@ -27,6 +28,12 @@ export class Hands {
   env: CrewEnv | null = null;
   private rig: BoatRig | null = null;
   private shown = '';
+  /** What `shown` was worked out from: it is looked at again only when one of these changes. */
+  private seen: { s: GameState | null; hired: number } = { s: null, hired: -1 };
+  /** Made once and written over every step: the step makes nothing new unless a fish comes up. */
+  private envNow: CrewEnv = { region: '', zone: null, hour: 0, fog: 0, still: false };
+  private kit: CrewKit = { value: 1, luck: 0 }; private kitOf: object | null = null;
+  private region = '';
   private cat: CatAboard | null = null; private hollis: HollisAboard | null = null;
   private catBerth: Group | null = null; private hollisBerth: Group | null = null;
   private zone: string | null = null; private zoneT = 0;
@@ -43,22 +50,26 @@ export class Hands {
     this.fullTold = basket(g.state).full;
   }
 
-  /** The boat is being changed for another (see Sailing.fitOut): the hands step off before the old hull is broken up. */
+  /**
+   * The boat is being changed for another (see Sailing.fitOut), or the crew has changed: the figures are taken out
+   * of the hull and what they made for themselves (their own materials, the line, their bones' textures, a fish in
+   * a mitten or under a nose) is freed with them.
+   */
   unship() {
     for (const f of this.flying) f.fish.dispose();
     this.flying.length = 0;
-    this.cat?.root.removeFromParent(); this.hollis?.root.removeFromParent();
+    this.cat?.dispose(); this.hollis?.dispose();
     this.cat = null; this.hollis = null; this.catBerth = null; this.hollisBerth = null;
-    this.rig = null; this.shown = '';
+    this.rig = null; this.shown = ''; this.seen.s = null;
   }
 
   /** What each hand signed on is doing right now. */
   state(def: CrewDef): HandState {
     const s = this.g.state, env = this.env;
-    if (!env || !aboard(s).some((c) => c.id === def.id)) return 'ashore';
+    if (!env || !isAboard(s, def.id)) return 'ashore';
     if (!env.still) return 'under way';
     if (def.when === 'dark' && !darkEnough(env)) return 'too light';
-    if (basket(s).full) return 'full';
+    if (basketFull(s)) return 'full';
     return crewKnows(s, def, env.region, env.zone) > 0 ? 'fishing' : 'nothing here';
   }
 
@@ -67,17 +78,23 @@ export class Hands {
     const g = this.g, s = g.state, sail = g.sailing;
     if (!s.crew.hired.length || !sail.owned) { this.env = null; return; }
     const b = sail.boat;
+    // The zone under the keel is looked up four times a second, and at once in a new water: a zone of the water
+    // she has just left names no fish of this one.
     this.zoneT -= dt;
-    if (this.zoneT <= 0) { this.zoneT = 0.25; const r = REGIONS_BY_ID.get(s.world.region); this.zone = r ? zoneAt(r, b.x, b.z)?.id ?? null : null; }
-    const env = this.env = { region: s.world.region, zone: this.zone, hour: s.hour, fog: fogAt(sail.env, b.x, b.z), still: Math.abs(b.speed) < 0.5 && !sail.busy };
-    for (const c of tickCrew(s, dt, env, crewKit(g.stats))) this.landed(c);
+    if (this.zoneT <= 0 || s.world.region !== this.region) { this.zoneT = 0.25; this.region = s.world.region; const r = REGIONS_BY_ID.get(s.world.region); this.zone = r ? zoneAt(r, b.x, b.z)?.id ?? null : null; }
+    const env = this.envNow;
+    env.region = s.world.region; env.zone = this.zone; env.hour = s.hour; env.fog = fogAt(sail.env, b.x, b.z); env.still = Math.abs(b.speed) < 0.5 && !sail.busy;
+    this.env = env;
+    if (g.stats !== this.kitOf) { this.kitOf = g.stats; this.kit = crewKit(g.stats); }
+    for (const c of tickCrew(s, dt, env, this.kit)) this.landed(c);
 
-    const bk = basket(s);
-    if (bk.full && !this.fullTold) {
+    const full = basketFull(s);
+    if (full && !this.fullTold) {
       this.fullTold = true;
+      const bk = basket(s);
       g.audio.basketFull();
       g.hud.toast(`The crew basket is full: ${bk.fish} fish, ◉ ${fmt(bk.value)} at the stall`, 'good');
-    } else if (!bk.full) this.fullTold = false;
+    } else if (!full) this.fullTold = false;
 
     // Lying still with the keeper aboard, somewhere the journal knows nothing for a hand: said once for each water.
     this.stillT = env.still && sail.aboard ? this.stillT + dt : 0;
@@ -87,7 +104,7 @@ export class Hands {
         const key = `${def.id}:${env.region}:${env.zone}`;
         if (this.told.has(key) || !working(def, env) || crewKnows(s, def, env.region, env.zone) > 0) continue;
         this.told.add(key);
-        g.hud.toast(`${def.name} has nothing to fish for here: your journal knows no fish of this water that ${def.id === 'biscuit' ? 'she' : 'he'} can land`);
+        g.hud.toast(`${def.name} has nothing to fish for here: your journal knows no fish of this water that ${def.pronoun} can land`);
         break;
       }
     }
@@ -106,7 +123,7 @@ export class Hands {
         if (gain > 0) g.audio.catCatch(gain);
         if (this.catBerth) this.flick(this.catBerth, c);
       }
-    } else {
+    } else if (c.who === 'hollis') {
       this.hollis?.pull(c.item ? makeFish(c.fishId, c.item.weight) : null);
       if (gain > 0) g.audio.hollisCatch(gain);
       if (this.hollis && this.hollisBerth) { const [x, z] = this.hollis.lineEnd(); this.ring(this.hollisBerth, x, z, 0.8); }
@@ -143,19 +160,26 @@ export class Hands {
     this.unship();
     this.rig = rig; this.shown = want;
     if (!rig || !want) return;
-    want.split(',').forEach((id, i) => {
-      const berth = rig.berth(i);
-      if (!berth) return;
+    for (const id of want.split(',')) {
+      // Each hand has a berth of their own (the cat's perch, the side bench), whoever else is aboard.
+      const def = CREW_BY_ID.get(id), berth = def ? rig.berth(def.berth) : null;
+      if (!berth) continue;
       if (id === 'biscuit') { this.cat = new CatAboard(); this.catBerth = berth; berth.add(this.cat.root); }
       else if (id === 'hollis') { this.hollis = new HollisAboard(); this.hollisBerth = berth; berth.add(this.hollis.root); }
-    });
+    }
     this.thick = null;
   }
 
   present(dt: number) {
     const g = this.g, s = g.state, sail = g.sailing, rig = sail.owned ? sail.rig : null;
-    const want = rig ? aboard(s).map((c) => c.id).join(',') : '';
-    if (rig !== this.rig || want !== this.shown) this.ship(rig, want);
+    // Who is seen aboard goes by the hull that is in the water, not by the one the save has already changed to:
+    // while Pell brings the other boat round the hands sit where they sat, and are built once, into the new hull.
+    if (rig !== this.rig || s !== this.seen.s || s.crew.hired.length !== this.seen.hired) {
+      this.seen.s = s; this.seen.hired = s.crew.hired.length;
+      const want = rig ? hired(s).filter((c) => berthIn(rig.boatId, c)).map((c) => c.id).join(',') : '';
+      if (rig !== this.rig || want !== this.shown) this.ship(rig, want);
+      this.seen.s = s;
+    }
     if (!rig) return;
     const env = this.env, time = g.world.time;
     if (this.cat) {
@@ -166,7 +190,7 @@ export class Hands {
     }
     if (this.hollis && this.hollisBerth) {
       const thick = !!env && darkEnough(env);
-      const fishing = thick && !!env?.still && !basket(s).full;
+      const fishing = thick && !!env?.still && !basketFull(s);
       this.hollis.update(dt, thick ? 1 : 0, fishing, this.waterIn(this.hollisBerth, 0.1, 1.2));
       // He thins with the light and is there again with the dark or the fog: heard, and said the first time.
       if (this.thick !== null && thick !== this.thick) {

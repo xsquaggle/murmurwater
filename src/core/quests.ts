@@ -14,11 +14,11 @@ import boatsJson from '../data/boats.json';
 import { BAITS, BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, REGIONS, REGIONS_BY_ID, RODS_BY_ID, fish, inHours, regionOfNpc } from './content';
 import { ECHOES_BY_ID, LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable } from './gear';
 import { earn } from './economy';
-import { CREW_BY_ID, freeBerths, hire } from './crew';
+import { CREW_BY_ID, berthFor, hire } from './crew';
 import { Rng, hashString } from './rng';
 import type { GameState } from './state';
 
-/** `berth`: the boat has a berth free for one more hand (read live from the state, as `own` is). */
+/** `berth`: the boat has the berth of the hand this job signs on (read live from the state, as `own` is). */
 export type ObjectiveType = 'catch' | 'sell' | 'earn' | 'perfect' | 'own' | 'visit' | 'haul' | 'ring' | 'berth';
 const OBJECTIVE_TYPES: ObjectiveType[] = ['catch', 'sell', 'earn', 'perfect', 'own', 'visit', 'haul', 'ring', 'berth'];
 export interface ObjectiveDef {
@@ -102,7 +102,7 @@ export function questStatus(s: GameState, id: string): QuestStatus {
 export function objectiveProgress(s: GameState, q: QuestDef, i: number): number {
   const o = q.objectives[i];
   if (o.type === 'own') return owns(s, o.item!) ? 1 : 0;
-  if (o.type === 'berth') return s.quests.done.includes(q.id) || freeBerths(s) > 0 ? 1 : 0;
+  if (o.type === 'berth') return s.quests.done.includes(q.id) || (!!q.rewards.crew?.length && q.rewards.crew.every((id) => berthFor(s, id))) ? 1 : 0;
   return Math.min(objectiveTarget(o), s.quests.active[q.id]?.[i] ?? (s.quests.done.includes(q.id) ? objectiveTarget(o) : 0));
 }
 export function objectiveTarget(o: ObjectiveDef): number { return o.type === 'own' || o.type === 'visit' || o.type === 'berth' ? 1 : o.count ?? 1; }
@@ -413,6 +413,7 @@ export function validateQuests(placeIds: Set<string>): string[] {
     if (!q.objectives.length) errs.push(`${q.id}: no objectives`);
     for (const o of q.objectives) {
       if (!OBJECTIVE_TYPES.includes(o.type)) errs.push(`${q.id}: bad objective type ${o.type}`);
+      if (o.type === 'berth' && !q.rewards.crew?.length) errs.push(`${q.id}: asks for a berth and signs nobody on`);
       if (o.fish && !FISH_BY_ID.has(o.fish)) errs.push(`${q.id}: unknown fish ${o.fish}`);
       if (o.region && !REGIONS_BY_ID.has(o.region)) errs.push(`${q.id}: unknown region ${o.region}`);
       if (o.fish && o.region && fish(o.fish).region !== o.region) errs.push(`${q.id}: ${o.fish} does not live in ${o.region}`);

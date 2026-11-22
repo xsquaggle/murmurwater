@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { newGame, SAVE_VERSION, type GameState } from '../src/core/state';
 import {
-  CREW, CREW_BY_ID, FOG_ENOUGH, aboard, ashore, basket, basketSize, berths, crewKnows, crewProgress, crewTable, freeBerths, hire, isAboard, spotting,
+  CREW, CREW_BY_ID, FOG_ENOUGH, aboard, ashore, basket, basketFull, basketSize, berthFor, berthIn, berths, crewKnows, crewProgress, crewTable, hire, isAboard, signedOn, spotting,
   crewKit, crewOdds, tickCrew, validateCrew, working, type CrewEnv,
 } from '../src/core/crew';
+import { MAX_FRAME, frameTime } from '../src/core/clock';
 import { FISH, RARITIES, fish } from '../src/core/content';
 import { boatOnOffer, buyBoat, stats, takeBoat } from '../src/core/gear';
 import { sellAll } from '../src/core/economy';
@@ -48,7 +49,7 @@ describe('deckhands', () => {
     hire(s, 'hollis');
     expect(aboard(s).map((c) => c.id)).toEqual(['biscuit']);
     expect(ashore(s).map((c) => c.id)).toEqual(['hollis']);
-    expect(freeBerths(s)).toBe(0);
+    expect(berthFor(s, 'hollis')).toBe(false);
     s.boats.owned.push('puffin'); s.boats.current = 'puffin';
     expect(berths(s)).toBe(2); expect(basketSize(s)).toBe(PUFFIN_BASKET);
     expect(aboard(s).map((c) => c.id)).toEqual(['biscuit', 'hollis']);
@@ -58,13 +59,43 @@ describe('deckhands', () => {
     expect(s.crew.hired).toEqual(['biscuit', 'hollis']);
   });
 
-  it('the cat has seniority whatever order they signed on in', () => {
+  it('each hand has a berth of their own: the cat her perch, Mister Hollis the bench, whoever else is aboard', () => {
+    expect([BISCUIT.berth, HOLLIS.berth]).toEqual([0, 1]);
+    // The skiff has the perch and no bench: with no cat at all he is still ashore in her, and his berth in the
+    // Puffin is the bench, not the cuddy roof.
     const s = withSkiff();
     hire(s, 'hollis');
-    expect(aboard(s).map((c) => c.id)).toEqual(['hollis']);
+    expect(berthIn('skiff', HOLLIS)).toBe(false); expect(berthIn('puffin', HOLLIS)).toBe(true); expect(berthIn(null, BISCUIT)).toBe(false);
+    expect(aboard(s)).toEqual([]);
+    expect(ashore(s).map((c) => c.id)).toEqual(['hollis']);
+    expect(isAboard(s, 'hollis')).toBe(false);
+    // Signed on is signed on: he is at the boatyard, not back where he used to wait.
+    expect(signedOn(s, 'hollis')).toBe(true); expect(signedOn(s, 'biscuit')).toBe(false);
+    know(s, ...FISH.filter((f) => f.region === 'mossglass-fen').map((f) => f.id));
+    expect(tickCrew(s, 600, fen(), { value: 1, luck: 0 })).toEqual([]);
+    // The cat signing on later changes nothing for him, in either boat.
     hire(s, 'biscuit');
     expect(aboard(s).map((c) => c.id)).toEqual(['biscuit']);
-    expect(ashore(s).map((c) => c.id)).toEqual(['hollis']);
+    s.boats.owned.push('puffin'); s.boats.current = 'puffin';
+    expect(aboard(s).map((c) => c.id)).toEqual(['biscuit', 'hollis']);
+    // Somebody who has not signed on is not aboard, berth or no berth.
+    expect(berthFor(s, 'hollis')).toBe(true);
+    s.crew.hired = ['biscuit'];
+    expect(isAboard(s, 'hollis')).toBe(false);
+  });
+
+  it('a hand whose clock comes due where the journal knows nothing waits half the time again, not the whole of it', () => {
+    const s = withSkiff();
+    hire(s, 'biscuit'); know(s, 'butterperch');
+    run(s, BISCUIT.interval - 1, bay());
+    expect(s.crew.clocks.biscuit.t).toBe(BISCUIT.interval - 1);
+    // Due, over water she knows nothing of (the zone of a water just left, say): nothing comes up...
+    expect(run(s, 1, bay({ zone: 'no-such-zone' }))).toEqual([]);
+    expect(s.crew.clocks.biscuit.t).toBe(BISCUIT.interval / 2);
+    expect(s.crew.clocks.biscuit.n).toBe(0);
+    // ...and back over her own water the fish is half an interval off, not a whole one.
+    expect(run(s, BISCUIT.interval / 2 - 1, bay())).toEqual([]);
+    expect(run(s, 1, bay()).length).toBe(1);
   });
 
   it('a hand fishes only while the boat lies still, and only fish the journal knows from the water under her', () => {
@@ -78,8 +109,9 @@ describe('deckhands', () => {
     // Under way: nothing, and the clock does not move.
     expect(run(s, 600, bay({ still: false }))).toEqual([]);
     expect(crewProgress(s, BISCUIT)).toBeLessThanOrEqual(0.5);
+    const head = crewProgress(s, BISCUIT) * BISCUIT.interval;
     const got = run(s, 4000, bay());
-    expect(got.length).toBe(Math.floor((4000 + crewProgress(s, BISCUIT) * 0) / BISCUIT.interval));
+    expect(got.length).toBe(Math.floor((4000 + head) / BISCUIT.interval));
     // Common and uncommon only: never the eel (rare) though it is known and lives here, never the flounder (not this water).
     expect(new Set(got.map((c) => c.fishId))).toEqual(new Set(['butterperch', 'kettle-carp']));
     for (const c of got) if (c.item) { expect(c.item.trait).toBeNull(); expect(c.item.perfect).toBe(false); }
@@ -121,6 +153,7 @@ describe('deckhands', () => {
     run(s, 3600, bay(), false);
     expect(s.crew.hold.length).toBe(SKIFF_BASKET);
     expect(basket(s)).toMatchObject({ fish: SKIFF_BASKET, room: SKIFF_BASKET, full: true });
+    expect(basketFull(s)).toBe(true);
     const n = s.crew.clocks.biscuit.n;
     expect(run(s, 3600, bay(), false)).toEqual([]);
     expect(s.crew.clocks.biscuit.n).toBe(n);
@@ -134,14 +167,40 @@ describe('deckhands', () => {
     expect(run(s, BISCUIT.interval + 1, bay(), false).length).toBe(1);
   });
 
-  it('nothing is earned while the game is closed: a save and a load a week apart change nothing', () => {
+  it('nothing is earned while the game is closed', () => {
+    // A save made years ago loads as it was saved (the load reads no clock: this one is long past whenever the test runs).
     const s = withSkiff();
     hire(s, 'biscuit'); know(s, 'butterperch');
     run(s, 100, bay(), false);
-    const text = serialize(s, new Date('2026-11-16T00:00:00Z'));
+    const text = serialize(s, new Date('2020-01-01T00:00:00Z'));
     const back = deserialize(text);
     expect(back.crew).toEqual(s.crew);
+    expect(back.playTime).toBe(s.playTime); expect(back.hour).toBe(s.hour); expect(back.coins).toBe(s.coins);
     expect(serialize(back, new Date('2026-11-23T00:00:00Z')).replace(/"savedAt":"[^"]+"/, '')).toBe(text.replace(/"savedAt":"[^"]+"/, ''));
+    // The open game's clock: a frame is worth a tenth of a second at most, however long the window was away.
+    expect(MAX_FRAME).toBeLessThanOrEqual(0.1);
+    for (const away of [0.5, 3600, 7 * 24 * 3600]) expect(frameTime(away)).toBe(MAX_FRAME);
+    expect(frameTime(1 / 60)).toBeCloseTo(1 / 60); expect(frameTime(-5)).toBe(0);
+    // And nothing that runs the game reads the wall clock, or the hour a save was made: play time comes from frames
+    // alone. (The save file's stamp is written in save.ts and read by nobody; a new game's seed is the only other clock.)
+    const src = join(__dirname, '..', 'src');
+    // The lines that may: the stamp written into a save and onto a file kept aside, and the seed of a new game.
+    const allowed: Record<string, RegExp> = {
+      'core/save.ts': /^ \* Versioned saves\. Format on disk|^export function serialize\(state: GameState, now = new Date\(\)\)|savedAt: now\.toISOString\(\)|const stamp = Date\.now\(\);$/,
+      'core/state.ts': /^export function newGame\(seed = Date\.now\(\) % 1_000_000\)/,
+    };
+    let read = 0, let_off = 0;
+    for (const dir of ['core', 'game']) for (const f of readdirSync(join(src, dir)).filter((n) => n.endsWith('.ts'))) {
+      const name = `${dir}/${f}`, ok = allowed[name];
+      for (const line of readFileSync(join(src, dir, f), 'utf8').split('\n')) {
+        if (ok?.test(line)) { let_off++; continue; }
+        expect(line, `${name} reads a clock that runs while the game is closed`).not.toMatch(/savedAt|Date\.now|new Date|toISOString|getTime\(/);
+      }
+      read++;
+    }
+    expect(read).toBeGreaterThan(20);
+    expect(let_off).toBe(5);
+    expect(readFileSync(join(src, 'game', 'game.ts'), 'utf8')).toContain('const dt = frameTime(real);');
   });
 
   it('Mister Hollis fishes only after dark or in fog, up to epic fish, with rare ones as likely as on a rod', () => {
@@ -209,7 +268,7 @@ describe('deckhands', () => {
     expect(spotting(s)).toBeCloseTo(0.15);
     expect(stats(s, { afloat: true }).biteWindow).toBeCloseTo(base + 0.15);
     expect(stats(s, { afloat: false }).biteWindow).toBeCloseTo(base);
-    // Not aboard, not watching: with Mister Hollis in the skiff's one berth... the cat still has seniority.
+    // Not aboard, not watching: with no boat in the water she has no berth.
     s.boats.current = null;
     expect(stats(s, { afloat: true }).biteWindow).toBeCloseTo(base);
   });
@@ -328,7 +387,7 @@ describe('the jobs that bring them aboard', () => {
     for (const said of [wreck.outro.join(' '), refit.intro.join(' '), refit.reminder!]) expect(said.toLowerCase()).toContain(words[price]);
   });
 
-  it('Mister Hollis comes when there is a berth to spare, and not before', () => {
+  it('Mister Hollis comes when there is a berth of his own, and not before', () => {
     const s = withSkiff();
     hire(s, 'biscuit');
     done(s, 'fen-04-glows');
@@ -343,16 +402,21 @@ describe('the jobs that bring them aboard', () => {
     expect(currentGoal(s).npc).toBe('hollis');
     turnIn(s, 'fen-s1-gentleman');
     expect(aboard(s).map((c) => c.id)).toEqual(['biscuit', 'hollis']);
-    // Done is done: the job does not come undone because the berth is now taken.
+    // Done is done: the job does not come undone in a boat with no berth for him.
+    takeBoat(s, 'skiff');
     expect(objectiveProgress(s, q, 0)).toBe(1);
-    expect(freeBerths(s)).toBe(0);
+    expect(isAboard(s, 'hollis')).toBe(false);
   });
 
-  it('a keeper with no cat can offer him the skiff', () => {
+  it('a keeper with no cat cannot offer him the skiff either: her one berth is a cat\'s perch', () => {
     const s = withSkiff();
     s.quests.done.push('fen-04-glows');
     accept(s, 'fen-s1-gentleman');
+    expect(questStatus(s, 'fen-s1-gentleman')).toBe('active');
+    s.boats.owned.push('puffin'); s.boats.current = 'puffin';
     expect(questStatus(s, 'fen-s1-gentleman')).toBe('ready');
+    turnIn(s, 'fen-s1-gentleman');
+    expect(aboard(s).map((c) => c.id)).toEqual(['hollis']);
   });
 });
 
@@ -369,5 +433,46 @@ describe('saves from before the crew', () => {
     expect(s.pots.owned).toBe(old.state.pots.owned);
     expect(Object.keys(s.journal).length).toBe(Object.keys(old.state.journal).length);
     expect(tickCrew(s, 600, bay(), { value: 1, luck: 0 })).toEqual([]);
+  });
+
+  it('a save made in Mossglass Fen by v0.4.0 loads as it was left, and the new people can be met from it', () => {
+    // Made by the v0.4.0 simulator's keeper (seed 3): 144 minutes in, in the Fen with fish in the hold, three
+    // pots, an Echo unspent and Dr. Calloway's fifth job ready to hand in.
+    const text = readFileSync(join(__dirname, 'fixtures', 'saves', 'v4-fen.json'), 'utf8');
+    const old = JSON.parse(text, (_k, v) => (v === '__inf__' ? Infinity : v)).state;
+    expect(JSON.parse(text).version).toBe(4);
+    expect(old.world.region).toBe('mossglass-fen');
+    expect(old.crew).toBeUndefined();
+    const s = deserialize(text);
+    expect(s.version).toBe(SAVE_VERSION);
+    expect(s.crew).toEqual({ hired: [], hold: [], clocks: {}, tally: {} });
+    for (const k of ['coins', 'echoes', 'moonpearls', 'playTime', 'hour', 'hold', 'journal', 'gear', 'relics', 'flags', 'lifetime', 'world', 'pots', 'boats'] as const) expect(s[k], k).toEqual(old[k]);
+    expect(s.quests.done).toEqual(old.quests.done);
+    expect(s.quests.active).toEqual(old.quests.active);
+    expect(questStatus(s, 'fen-05-sump')).toBe('ready');
+    // One boat, one berth, nobody in it, and nothing earned by nobody.
+    expect(berths(s)).toBe(1); expect(aboard(s)).toEqual([]);
+    expect(tickCrew(s, 600, fen(), { value: 1, luck: 0 })).toEqual([]);
+    // The slice's jobs open from where this keeper stands: the gentleman is Calloway's to mention now, the wreck
+    // too, and the cat is Wick's.
+    for (const id of ['fen-s1-gentleman', 'fen-03b-wreck', 'hb-s1-cat']) expect(questStatus(s, id), id).toBe('available');
+    expect(accept(s, 'fen-s1-gentleman')).toBe(true);
+    expect(questStatus(s, 'fen-s1-gentleman')).toBe('active');
+  });
+
+  it('a save whose boat in the water was never marked as owned keeps the boat', () => {
+    const doc = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'saves', 'v4.json'), 'utf8'));
+    const mend = (boats: object, onBoat = true) => { const d = structuredClone(doc); d.state.boats = { upgrades: {}, at: { x: 10, z: 20, heading: 0 }, ...boats }; d.state.world.onBoat = onBoat; return deserialize(JSON.stringify(d)); };
+    // The game never wrote this, but a keeper sitting in a boat must not load into the sea beside it.
+    let s = mend({ owned: [], current: 'skiff' });
+    expect(s.boats.owned).toEqual(['skiff']); expect(s.boats.current).toBe('skiff'); expect(s.world.onBoat).toBe(true); expect(berths(s)).toBe(1);
+    // A boat the game has never heard of gives way to one that is owned, or to none.
+    s = mend({ owned: ['skiff'], current: 'ark' });
+    expect(s.boats.owned).toEqual(['skiff']); expect(s.boats.current).toBe('skiff');
+    s = mend({ owned: [], current: 'ark' }, false);
+    expect(s.boats.owned).toEqual([]); expect(s.boats.current).toBeNull(); expect(berths(s)).toBe(0);
+    // And a save in good order is left alone.
+    s = mend({ owned: ['skiff'], current: 'skiff' });
+    expect(s.boats.owned).toEqual(['skiff']); expect(s.boats.current).toBe('skiff');
   });
 });

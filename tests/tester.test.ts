@@ -4,7 +4,7 @@ import { TESTER_STARTS, testerFile, testerSaveText } from '../tools/tester-save'
 import { deserialize } from '../src/core/save';
 import { SAVE_VERSION } from '../src/core/state';
 import { boatOnOffer, hasFogLamp } from '../src/core/gear';
-import { freeBerths, isAboard } from '../src/core/crew';
+import { berthFor, isAboard } from '../src/core/crew';
 import { BOATS_BY_ID, currentGoal, npcOffer, questStatus } from '../src/core/quests';
 import { regionOfNpc, regionOfPlace } from '../src/core/content';
 
@@ -46,7 +46,7 @@ describe("the tester's starts", () => {
     expect(s.boats.owned).toEqual(['skiff']);
     expect(s.boats.current).toBe('skiff');
     expect(isAboard(s, 'biscuit')).toBe(true);
-    expect(freeBerths(s)).toBe(0);
+    expect(berthFor(s, 'hollis')).toBe(false);
     expect(s.crew.hold).toEqual([]);
     // The wreck is found and Pell will do the work: the boat is on offer and can be paid for at once.
     for (const flag of ['puffin-found', 'boatyard-open', 'reached:mossglass-fen']) expect(s.flags).toContain(flag);

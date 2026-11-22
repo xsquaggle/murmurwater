@@ -11,7 +11,7 @@ import {
 import { BELL_FLAG, canRing, coinsToNextEcho, echoCost, echoRank, echoesFor, startCoins, turnings, unsoldValue } from '../core/bell';
 import { potInterval, potsInHand } from '../core/pots';
 import { BOARD, BOATS, BOATS_BY_ID, QUESTS, RELICS_BY_ID, boardOpen, count, currentGoal, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus, shortName } from '../core/quests';
-import { aboard, basket, berths, crewProgress, hired } from '../core/crew';
+import { aboard, ashore, basket, berths, crewProgress, hired } from '../core/crew';
 import { boatOnOffer } from '../core/gear';
 import type { GameState } from '../core/state';
 import type { GearAction } from '../game/trade';
@@ -368,7 +368,7 @@ export class Screens {
     this.card.append(el('div', { class: 'boat-cols' }, ...cards));
     const signed = hired(s);
     if (signed.length) {
-      const waiting = signed.slice(berths(s)).map((c) => c.name);
+      const waiting = ashore(s).map((c) => c.name);
       this.card.append(el('p', { class: 'muted' }, waiting.length ? `${waiting.join(' and ')} ${waiting.length === 1 ? 'has' : 'have'} no berth in the boat you have in the water.` : 'Your crew sail in whichever boat you take.'));
     }
   }
@@ -404,7 +404,10 @@ export class Screens {
     this.card.append(this.header('Satchel', tabs));
     if (kind === 'hold') {
       const total = s.hold.reduce((a, c) => a + c.value, 0);
-      this.card.append(el('p', { class: 'muted' }, s.hold.length ? `${s.hold.length} of ${this.host.stats().hold} slots · worth ◉ ${fmt(total)} at Mara’s stall` : 'Your hold is empty. The sea is not.'));
+      // A hold brought over from a bigger boat can be over what this one carries: every fish is shown, and said.
+      const room = this.host.stats().hold, over = s.hold.length > room;
+      this.card.append(el('p', { class: 'muted' }, s.hold.length ? `${s.hold.length} ${over ? `fish in a hold for ${room}` : `of ${room} slots`} · worth ◉ ${fmt(total)} at Mara’s stall` : 'Your hold is empty. The sea is not.'));
+      if (over) this.card.append(el('p', { class: 'muted hold-also' }, 'They came over from the bigger boat. Nothing more goes in until there is room.'));
       // What rides beside the hold is said before it: a big hold fills the page.
       if (s.pots.hold.length) {
         const worth = s.pots.hold.reduce((a, c) => a + c.value, 0);
@@ -414,7 +417,7 @@ export class Screens {
         const bk = basket(s);
         this.card.append(el('p', { class: 'muted hold-also' }, el('b', {}, 'From the crew: '), `${bk.fish} of ${bk.room} fish in the crew basket, worth ◉ ${fmt(bk.value)}. Mara takes them with the rest.`));
       }
-      this.card.append(el('div', { class: 'hold-grid' }, ...Array.from({ length: this.host.stats().hold }, (_, i) => {
+      this.card.append(el('div', { class: 'hold-grid' }, ...Array.from({ length: Math.max(room, s.hold.length) }, (_, i) => {
         const c = s.hold[i];
         if (!c) return el('div', { class: 'slot empty' });
         const f = fishDef(c.fishId);

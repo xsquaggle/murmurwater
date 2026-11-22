@@ -51,11 +51,13 @@ ipcMain.handle('save:write', (_e, text) => {
   return true;
 });
 // When neither the save nor its backup could be read, the game starts fresh; keep the unreadable files
-// aside first so the new game's autosave can't destroy what might still be recoverable.
-ipcMain.handle('save:quarantine', () => {
+// aside first so the new game's autosave can't destroy what might still be recoverable. With `only` 'main'
+// the backup was readable and is being played from: just the unreadable main save is kept aside.
+ipcMain.handle('save:quarantine', (_e, only) => {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const kept = [];
   for (const [p, name] of [[savePath(), 'save'], [backupPath(), 'save.bak']]) {
+    if (only === 'main' && name !== 'save') continue;
     if (!fs.existsSync(p)) continue;
     const to = path.join(app.getPath('userData'), `${name}.corrupt-${stamp}.json`);
     try { fs.renameSync(p, to); kept.push(to); } catch { /* leave it where it is */ }

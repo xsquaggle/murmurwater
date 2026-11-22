@@ -20,7 +20,7 @@ import { DAY_LENGTH_S } from '../render/daycycle';
 import type { ChartRaster, ChartView } from '../ui/chart';
 import { earn, fmt, sellAll } from '../core/economy';
 import { LURES_BY_ID, WEARABLES_BY_ID, buyBoat, grantLure, grantWearable, hasFogLamp, takeBoat, type CollectionDef } from '../core/gear';
-import { CREW_BY_ID, isAboard } from '../core/crew';
+import { CREW_BY_ID, isAboard, signedOn } from '../core/crew';
 import { handStateText } from './hands';
 import { BELL_FLAG, canRing, echoesFor, ringBell, turnings } from '../core/bell';
 import { trade } from './trade';
@@ -49,6 +49,8 @@ export class Town {
   private seq: Step[] = []; private seqT = 0;
   private focus: Interactable | null = null;
   private expectUnlock = false;
+  /** The window is not the one in front (see the listeners in the constructor). */
+  private away = false;
   private wasLocked = false;
   private chartRaster: ChartRaster | null = null;
   private steamT = 0;
@@ -95,6 +97,11 @@ export class Town {
       this.expectUnlock = false;
       this.wasLocked = locked;
     });
+    // Leaving the window in the middle of play frees the mouse, and that opens the pause screen. In a conversation
+    // the mouse is free already, so the window's own focus is watched: the world stands still behind a
+    // conversation nobody is looking at, and the pots and the crew with it.
+    window.addEventListener('blur', () => { this.away = true; });
+    window.addEventListener('focus', () => { this.away = false; });
   }
 
   /** Puts the region's people, animals and places where they belong, and shows its fixtures as the save has them. */
@@ -145,7 +152,7 @@ export class Town {
   /** True while a conversation, screen or cutscene has the player's attention. */
   get blocking() { return this.dialogue.isOpen || this.screens.isOpen || this.seq.length > 0; }
   /** Screens pause the world; conversations don't. */
-  get pausesWorld() { return this.screens.isOpen; }
+  get pausesWorld() { return this.screens.isOpen || (this.away && this.dialogue.isOpen); }
 
   // ------------------------------------------------------------------ where things are
   /** The island nearest a point (the Teeth count as one place). */
@@ -175,8 +182,9 @@ export class Town {
       // Most people keep to one spot. The ferryman has two: he goes where he rows the player, until they sail themselves.
       const at = !owner ? this.island : s.flags.includes('pell-home') ? e.spots[0].island : 'gull-point';
       const sp = e.spots.length === 1 ? e.spots[0] : e.spots.find((x) => x.island === at) ?? null;
-      // Somebody who has a berth aboard is in it, not where they used to wait.
-      e.fig.root.visible = !!sp && !isAboard(s, id);
+      // Somebody who has signed on is aboard, or at the boatyard when this boat has no berth of theirs: either way
+      // they are no longer where they used to wait.
+      e.fig.root.visible = !!sp && !signedOn(s, id);
       if (!sp) continue;
       const y = this.g.groundAt(sp.x, sp.z) ?? Math.max(0, this.g.world.hf.height(sp.x, sp.z));
       e.fig.root.position.set(sp.x, y, sp.z);
@@ -841,7 +849,7 @@ export class Town {
     for (const c of this.critters) {
       // Seen from the boat as well as on their own island, but not from across the bay.
       // The dock cat is the ship's cat once she has signed on: then she is aboard, not here.
-      c.cat.root.visible = !s.crew.hired.includes('biscuit') && (c.island === this.island || c.cat.root.position.distanceTo(g.pos) < 140);
+      c.cat.root.visible = !signedOn(s, 'biscuit') && (c.island === this.island || c.cat.root.position.distanceTo(g.pos) < 140);
       if (!c.cat.root.visible) continue;
       c.cat.update(dt, g.pos);
       // The cat says hello when you walk up to it.

@@ -3,7 +3,7 @@
  * vertex-shader swim (a travelling wave that grows toward the tail), or the stand-in when a model is missing.
  */
 import { Group, Mesh, MeshStandardMaterial, Object3D } from 'three';
-import { assets } from './assets';
+import { assets, freeOwn } from './assets';
 import { placeholderFish } from './avatar';
 import { fish as fishDef } from '../core/content';
 
@@ -50,7 +50,8 @@ export function makeFish(id: string, weight?: number): FishObject {
   const model = assets.instance(`fish:${id}`);
   if (!model) {
     const g = placeholderFish(STANDIN_COLORS[id] ?? '#8C8A86', len);
-    return { obj: g, animate: () => {}, dispose: () => {} };
+    // The stand-in is made new each time: it is taken out and freed like any other fish.
+    return { obj: g, animate: () => {}, dispose: () => { g.removeFromParent(); freeOwn(g); } };
   }
   const root = new Group();
   model.scale.setScalar(len);
