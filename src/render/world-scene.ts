@@ -431,6 +431,8 @@ export class WorldScene {
   private untilProps: { flag: string; object: Object3D }[] = [];
   /** Shows what the save says is still there: a prop that waits on a flag goes when the flag is set. */
   showProps(flags: string[]) { for (const p of this.untilProps) p.object.visible = !flags.includes(p.flag); }
+  /** The same, to be read (the bots ask whether the wreck is still on its bar). */
+  get waitingProps(): { flag: string; shown: boolean }[] { return this.untilProps.map((p) => ({ flag: p.flag, shown: p.object.visible })); }
 
   /** Strikes the bell: it swings and settles (the sound is the game's business). */
   tollBell(strength = 1) { if (this.bell) { this.bell.t = 0; this.bell.amp = 0.42 * strength; } }

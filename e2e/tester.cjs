@@ -1,8 +1,9 @@
-// Tester's-start bot: F8 on the title screen, through the real game. The game comes back as the keeper the
-// simulator played to the doorstep of the newest slice (src/data/tester/fen.json): she has the Fog Lamp and
-// Pell's road job, Hearthbay knows her, and nothing she does is written to the player's own save. Then the
-// save is proved to be one the game can play on from: she boards the skiff, sails the old sea-road by the
-// helm, comes out in Mossglass Fen and hands Pell's errand to Calloway.
+// Tester's-start bot: F8 on the title screen, through the real game. F8 once is the newest slice's start (the
+// crew's: see crew.cjs, which plays it), F8 again the one before: the keeper the simulator played to the doorstep
+// of Mossglass Fen (src/data/tester/fen.json). She has the Fog Lamp and Pell's road job, Hearthbay knows her, and
+// nothing she does is written to the player's own save. Then the save is proved to be one the game can play on
+// from: she boards the skiff, sails the old sea-road by the helm, comes out in Mossglass Fen and hands Pell's
+// errand to Calloway. A third F8 is the player's own game again.
 // Exits 1 on any failure. Usage: node e2e/tester.cjs [outdir]
 const { chromium } = require('playwright');
 (async () => {
@@ -32,10 +33,16 @@ const { chromium } = require('playwright');
   await up();
   let r = await ev(async () => { const g = window.__MW__.game; g.state.coins = 4321; await g.save(); return { tester: window.__MW__.tester, own: localStorage.getItem('murmurwater.save')?.length ?? 0 }; });
   check(r.tester === false && r.own > 100, `the player's own game is running and saved (${r.own} bytes)`);
+  const testerUp = (id) => page.waitForFunction((id) => window.__MW__ && window.__MW__.tester === true && window.__MW__.testerStart === id && window.__MW__.frames > 2, id, { timeout: 180000 });
   await page.keyboard.press('F8');
-  await page.waitForFunction(() => window.__MW__ && window.__MW__.tester === true && window.__MW__.frames > 2, null, { timeout: 180000 });
+  await testerUp('crew');
+  r = await ev(() => ({ url: location.search, note: document.querySelector('.title-tester')?.textContent ?? '', coins: window.__MW__.state.coins, crew: window.__MW__.state.crew.hired }));
+  check(r.url === '?tester' && /1 of 2/.test(r.note) && /Nothing here is saved/.test(r.note) && r.coins >= 40000 && r.crew.includes('biscuit'), `F8 on the title screen opens the newest tester's start, and the title says so ("${r.note.slice(0, 60)}…")`);
+  await shot('00-title-crew', 4);
+  await page.keyboard.press('F8');
+  await testerUp('fen');
   r = await ev(() => ({ url: location.search, note: document.querySelector('.title-tester')?.textContent ?? '' }));
-  check(/tester/.test(r.url) && /Nothing here is saved/.test(r.note), `F8 on the title screen opens the tester's start, and the title says so ("${r.note.slice(0, 60)}…")`);
+  check(r.url === '?tester=fen' && /2 of 2/.test(r.note) && /Nothing here is saved/.test(r.note), `F8 again opens the start before it, and the title says so ("${r.note.slice(0, 60)}…")`);
   await shot('01-title', 4);
   await page.click('.title');
   await page.waitForTimeout(1200);
@@ -83,12 +90,12 @@ const { chromium } = require('playwright');
   // 6. Still nothing written, and F8 on the title screen goes back to the player's own game.
   r = await ev(async () => { await window.__MW__.game.save(); return JSON.parse(localStorage.getItem('murmurwater.save')).state.coins; });
   check(r === 4321, 'after all that the player\'s own save is still theirs');
-  await page.goto(`http://localhost:${port}/?tester&${q}`);
-  await page.waitForFunction(() => window.__MW__ && window.__MW__.tester === true && window.__MW__.frames > 2, null, { timeout: 180000 });
+  await page.goto(`http://localhost:${port}/?tester=fen&${q}`);
+  await testerUp('fen');
   await page.keyboard.press('F8');
   await page.waitForFunction(() => window.__MW__ && window.__MW__.tester === false && window.__MW__.frames > 2, null, { timeout: 180000 });
   r = await ev(() => ({ coins: window.__MW__.state.coins, region: window.__MW__.state.world.region }));
-  check(r.coins === 4321 && r.region === 'hearthbay', `F8 again goes back to the player's own game (${r.coins} coins, ${r.region})`);
+  check(r.coins === 4321 && r.region === 'hearthbay', `F8 on the last start goes back to the player's own game (${r.coins} coins, ${r.region})`);
 
   check(errors.length === 0, `no page errors (${errors.slice(0, 3).join(' | ')})`);
   await browser.close();

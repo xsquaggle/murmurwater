@@ -4,7 +4,7 @@ import { accept, onQuestEvent, turnIn, QUESTS } from '../src/core/quests';
 import { REGIONS } from '../src/core/content';
 import { Heightfield } from '../src/core/world';
 import { dockDeckAt } from '../src/core/dock';
-import { afterDecline, afterTurnIn, allVoiceLines, converse, textHash } from '../src/game/talk';
+import { BOATYARD_FLAG, afterDecline, afterTurnIn, allVoiceLines, converse, textHash } from '../src/game/talk';
 
 describe('conversations', () => {
   it('turning a job down leaves the stall open: Mara still buys the catch and shows the shelf', () => {
@@ -58,6 +58,33 @@ describe('conversations', () => {
     accept(s, 'hb-06-relight');
     expect(ferry('hearthbay')?.action).toEqual({ type: 'ferry', to: 'gull-point' });
     expect(ferry('gull-point')?.action).toEqual({ type: 'ferry', to: 'hearthbay' });
+  });
+
+  it('Pell keeps a boatyard at the home dock once the Puffin is found, and nowhere else', () => {
+    const s = newGame(1);
+    s.boats.owned.push('skiff'); s.boats.current = 'skiff';
+    const yard = (island: string) => converse(s, 'pell', island).choices.find((c) => c.action.type === 'boatyard');
+    expect(yard('hearthbay')).toBeUndefined();
+    s.flags.push(BOATYARD_FLAG);
+    expect(yard('hearthbay')?.label).toBe('About the Puffin.');
+    expect(yard('gull-point')).toBeUndefined();
+    s.boats.owned.push('puffin');
+    expect(yard('hearthbay')?.label).toBe('About the boats.');
+    // He rows nobody who has a boat of their own.
+    expect(converse(s, 'pell', 'hearthbay').choices.some((c) => c.action.type === 'ferry')).toBe(false);
+  });
+
+  it('what the crew and the pots have landed is sold with the catch, at the stall and at the box', () => {
+    const s = newGame(1);
+    s.quests.done.push('hb-01-salt'); accept(s, 'hb-02-supper');
+    const sell = (who: string) => converse(s, who, 'hearthbay', 0, 0, true).choices.find((c) => c.action.type === 'sell');
+    expect(sell('mara')).toBeUndefined();
+    s.crew.hold.push({ uid: 1, fishId: 'butterperch', weight: 1, trait: null, value: 5, perfect: false });
+    expect(sell('mara')?.label).toBe('Sell my catch (1 fish)');
+    s.pots.hold.push({ uid: 2, fishId: 'butterperch', weight: 1, trait: null, value: 5, perfect: false });
+    s.hold.push({ uid: 3, fishId: 'butterperch', weight: 1, trait: null, value: 5, perfect: false });
+    expect(sell('mara')?.label).toBe('Sell my catch (3 fish)');
+    expect(sell('packet-box')?.label).toBe('Sell my catch (3 fish)');
   });
 
   it('barks rotate without repeating back to back', () => {

@@ -202,8 +202,9 @@ describe.each(REGIONS.map((r) => [r.name, r] as const))('the sea of %s', (_name,
       expect(fogAt(env, h.x, h.z), `${h.npc} stands in the fog`).toBeGreaterThan(FOG_ENOUGH + 0.2);
     }
   });
-  it('a prop that goes away waits on something that can happen', () => {
+  it('a prop or a place that goes away waits on something that can happen', () => {
     const set = new Set(BOATS.flatMap((b) => (b.sets ? [b.sets] : [])).concat(QUESTS.flatMap((q) => q.rewards.flags ?? [])));
     for (const p of region.props ?? []) if (p.until) expect(set.has(p.until), `${p.model} waits on ${p.until}`).toBe(true);
+    for (const p of region.places ?? []) if (p.until) expect(set.has(p.until), `${p.id} waits on ${p.until}`).toBe(true);
   });
 });

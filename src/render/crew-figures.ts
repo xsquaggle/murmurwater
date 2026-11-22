@@ -193,7 +193,8 @@ export class HollisAboard {
       this.body.rotation.x = -0.16 * k + 0.012 * Math.sin(this.t * 1.1);
       this.body.position.y = 0.01 * Math.sin(this.t * 1.4);
     }
-    if (this.held && this.pullT > 1.7) this.dropHeld();
+    // The fish is in his mitten until the pull is nearly done (the stand-in's pull is 1.6 s).
+    if (this.held && this.pullT > (this.pullAct ? this.pullAct.getClip().duration * 0.9 : 1.7)) this.dropHeld();
     // The line: from his hand out over the rail and down to the water, a little slack, twitching now and then.
     const show = fishing && this.presence > 0.5 ? 1 : 0;
     this.lineMat.opacity += (show * 0.85 - this.lineMat.opacity) * Math.min(1, dt * 3);
