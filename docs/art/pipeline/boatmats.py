@@ -270,11 +270,17 @@ def _age(img, seed, v, algae=0.4, lichen=0.25, fade=0.3, low=0.5, droppings=0.0,
     return img
 
 
-def aged(H, W, seed=0, of='wood', algae=0.4, lichen=0.25, fade=0.3, low=0.5, droppings=0.0, tile_x=False, **kw):
-    """Any other material (`of`, with its own options) after forty years in the weather: see _age."""
+def aged(H, W, seed=0, of='wood', algae=0.4, lichen=0.25, fade=0.3, low=0.5, droppings=0.0, bleach=0.0, bleach_from=0.0, bleach_over=0.33, tile_x=False, **kw):
+    """Any other material (`of`, with its own options) after forty years in the weather: see _age.
+    bleach: 0..1, how far its paint and bare wood have first gone toward silver-grey (so that a side in shade is not
+    black), above the height bleach_from (v) and coming in over the next bleach_over of the patch; algae, lichen and what
+    grows below stay as dark as they were, because they are laid on afterwards."""
     from mats import PAINT
     img = PAINT[of](H, W, seed=seed, tile_x=tile_x, **kw)
-    return _age(img, seed, _grid(H, W)[2], algae, lichen, fade, low, droppings, tile_x)
+    v = _grid(H, W)[2]
+    if bleach:
+        img = mix(img, hexc('#B4B6AE'), bleach * smooth(v, bleach_from, bleach_from + bleach_over))
+    return _age(img, seed, v, algae, lichen, fade, low, droppings, tile_x)
 
 
 def nest(H, W, seed=0, tile_x=True, **_):
