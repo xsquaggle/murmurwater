@@ -270,10 +270,10 @@ function catStandIn(): Group {
 }
 
 /**
- * Biscuit in her berth. She sits and watches the water; leans to it when a bite is coming to the keeper's float;
- * is up on her feet with a paw over the side when she hooks one out; and puts her head down to every fourth.
- * Her models have no clips for this yet (asked for: `watch`, `swat`, `eat`), so until they do her whole body is
- * tipped and bobbed.
+ * Biscuit in her berth. She sits and watches the water; leans to it when a bite is coming to the keeper's float
+ * (`watch`, on the sitting sculpt); is up on her feet with a paw over the side when she hooks one out (`swat`, on
+ * the standing one); and puts her head down to every fourth (`eat`). A build without those clips tips and bobs
+ * her whole body instead.
  */
 export class CatAboard {
   readonly root = new Group();
@@ -283,6 +283,8 @@ export class CatAboard {
   private clip: Record<string, AnimationAction> = {};
   private t = Math.random() * 10;
   private swatT = 9; private eatT = 9; private watch = 0;
+  private meal: { obj: Object3D; dispose(): void } | null = null; private mealSize = 1;
+  private box = new Box3(); private v = new Vector3();
 
   constructor() {
     this.root.add(this.pose);
@@ -304,8 +306,17 @@ export class CatAboard {
 
   /** She hooks one out: up, a paw over the side, and back. */
   swat() { this.swatT = 0; this.clip.swat?.reset().play(); }
-  /** One for her. */
-  eat() { this.eatT = 0; this.clip.eat?.reset().play(); }
+  /** One for her: `fish` lies on the boards under her nose, and there is less of it as she goes. */
+  eat(fish?: { obj: Object3D; dispose(): void }) {
+    this.eatT = 0; this.clip.eat?.reset().play();
+    this.meal?.dispose(); this.meal = null;
+    if (!fish) return;
+    const len = this.box.setFromObject(fish.obj).getSize(this.v).z;
+    if (len > 0.2) fish.obj.scale.multiplyScalar(0.2 / len);
+    this.mealSize = fish.obj.scale.x;
+    fish.obj.position.set(0.01, 0.02, 0.2); fish.obj.rotation.set(0, 1.1, Math.PI / 2);
+    this.root.add(fish.obj); this.meal = fish;
+  }
   get busy() { return this.swatT < 1 || this.eatT < 2.5; }
 
   /** `watching`: 0..1, how near a bite is to the keeper's float (she knows before the float does). */
@@ -314,17 +325,23 @@ export class CatAboard {
     this.watch += (watching - this.watch) * Math.min(1, dt * 5);
     const swat = this.swatT < 1 ? Math.sin(this.swatT * Math.PI) : 0;
     const eat = this.eatT < 2.5 ? Math.min(1, this.eatT * 4, (2.5 - this.eatT) * 3) : 0;
+    if (this.meal) {
+      // Whole until her first tug at it, gone by the time her head comes up.
+      this.meal.obj.scale.setScalar(Math.max(0.001, this.mealSize * Math.min(1, Math.max(0, 1 - (this.eatT - 1.1) / 1.0))));
+      if (this.eatT > 2.1) { this.meal.dispose(); this.meal = null; }
+    }
     const made = { swat: !!this.clip.swat, eat: !!this.clip.eat, watch: !!this.clip.watch };
     // On her feet for the swat (the standing sculpt), sitting otherwise.
     if (this.standing) { const up = swat > 0.05; this.standing.visible = up; this.sitting.visible = !up; }
-    if (made.watch) this.clip.watch.setEffectiveWeight(this.watch);
+    // `watch` and `eat` turn the same joints: she stops watching to eat.
+    if (made.watch) this.clip.watch.setEffectiveWeight(this.watch * (1 - eat));
     if (made.swat) this.clip.swat.setEffectiveWeight(swat > 0 ? 1 : 0);
     if (made.eat) this.clip.eat.setEffectiveWeight(eat);
     // Where she has no clip for it, the whole cat is tipped: toward the water to watch and to swat (she faces
     // over the side), head down and working at it to eat.
     const lean = (made.watch ? 0 : 0.2 * this.watch) + (made.swat ? 0 : 0.55 * swat) + (made.eat ? 0 : 0.38 * eat);
     this.pose.rotation.x = lean + (made.eat ? 0 : 0.05 * eat * Math.sin(this.t * 19)) + (made.watch ? 0 : 0.012 * this.watch * Math.sin(this.t * 9));
-    this.pose.position.set(0, 0.03 * swat, (made.swat ? 0 : 0.1 * swat) + (made.watch ? 0 : 0.03 * this.watch));
+    this.pose.position.set(0, made.swat ? 0 : 0.03 * swat, (made.swat ? 0 : 0.1 * swat) + (made.watch ? 0 : 0.03 * this.watch));
     for (const m of this.mixers) m.update(dt);
   }
 }

@@ -98,7 +98,7 @@ export class Hands {
     const d = Math.hypot(sail.boat.x - g.pos.x, sail.boat.z - g.pos.z), gain = Math.max(0, 1 - d / 45), name = fish(c.fishId).name;
     if (c.who === 'biscuit') {
       if (c.eaten) {
-        this.cat?.eat();
+        this.cat?.eat(makeFish(c.fishId));
         if (gain > 0) g.audio.catEat(gain);
         if (tally?.eaten === 1) g.hud.toast('Biscuit ate that one. Every fourth fish is hers: those are her wages.');
       } else {
