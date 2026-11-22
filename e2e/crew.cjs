@@ -210,6 +210,18 @@ const { chromium } = require('playwright');
   const grew = (x, y) => y[0] > x[0] || y[1] > x[1];
   check(r.rig === 'puffin' && r.berths[0] > 0 && r.berths[1] > 0 && !(grew(r.a, r.b) && grew(r.b, r.c)), `twelve more changes of boat leave nothing behind on the graphics card (geometries and textures: ${j(r.a)}, ${j(r.b)} after six, ${j(r.c)} after twelve)`);
 
+  // 11. A conversation left open with the window not in front: the world stands still behind it (pots and crew
+  // with it), and goes on when the window is in front again.
+  r = await ev(() => { const g = window.__MW__.game, s = g.state; window.crew.hub('pell', 'Talk to Pell'); const open = g.town.dialogue.isOpen;
+    // (The helpers hold the game paused and step it by hand: for this it is let run as it does for a player.)
+    const run = () => { const t0 = s.playTime; g.paused = false; for (let i = 0; i < 6; i++) g.frame(0.1); g.paused = true; return +(s.playTime - t0).toFixed(3); };
+    const front = run(); window.dispatchEvent(new Event('blur')); const away = run(); window.dispatchEvent(new Event('focus')); const back = run();
+    if (g.town.dialogue.isOpen) window.bot.choose('Bye');
+    // With no conversation open, losing the window does not stop frames that are asked for (the pause screen is the mouse's business).
+    window.dispatchEvent(new Event('blur')); const closed = run(); window.dispatchEvent(new Event('focus'));
+    return { open, front, away, back, closed }; });
+  check(r.open && r.front > 0.5 && r.away === 0 && r.back > 0.5 && r.closed > 0.5, `the world stands still behind a conversation while the window is not in front (${j(r)})`);
+
   check(errors.length === 0, `no page errors (${errors.slice(0, 3).join(' | ')})`);
   await browser.close();
   console.log(problems.length ? `CREW FAILED: ${problems.length}\n - ${problems.join('\n - ')}` : 'CREW OK');

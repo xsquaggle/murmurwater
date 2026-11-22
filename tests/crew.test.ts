@@ -192,7 +192,7 @@ describe('deckhands', () => {
     let read = 0, let_off = 0;
     for (const dir of ['core', 'game']) for (const f of readdirSync(join(src, dir)).filter((n) => n.endsWith('.ts'))) {
       const name = `${dir}/${f}`, ok = allowed[name];
-      for (const line of readFileSync(join(src, dir, f), 'utf8').split('\n')) {
+      for (const line of readFileSync(join(src, dir, f), 'utf8').split(/\r?\n/)) {
         if (ok?.test(line)) { let_off++; continue; }
         expect(line, `${name} reads a clock that runs while the game is closed`).not.toMatch(/savedAt|Date\.now|new Date|toISOString|getTime\(/);
       }
