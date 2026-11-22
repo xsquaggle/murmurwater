@@ -2,6 +2,21 @@
 
 Newest first. Each entry: date, decision, why.
 
+## 2026-11-22 — Mister Hollis thins by dither, not by fading
+By daylight there is not enough of him to hold a line, and he was first drawn faded to an eighth. Two things were wrong with that, both from how the boat is drawn. The well of a boat is kept dry by a lid that writes depth and no colour, drawn before the sea; a blended figure is drawn after it, so everything of him below the gunwale was cut off, and what was left was drawn before the sea and painted over by it. He is now thinned in the solid pass: a 4 by 4 ordered dither removes what faces the eye and keeps his edges, in the colour of fog, so he sits whole in the well as an outline and comes back from the edges inward at dusk. Why not move the lid or split him at it: either works only for one boat and one seat. Only the fog of his face is still blended, and it is drawn after the sea.
+
+## 2026-11-22 — Two tester's starts, newest first
+F8 on the title screen now steps through a start for each slice that has one (hands aboard, then Mossglass Fen) and then back to the player's own game, and the title says which one is up. The older start is kept because it is the only quick way to the first crossing of the fog, which a later save has already made.
+
+## 2026-11-22 — Deckhands earn a twentieth, not a tenth
+The first design asked the crew for 8 to 15% of all coins. The simulator showed that by the time there is a crew, a fish caught by hand with Rhythm, a trait or a legendary's price behind it is worth so much that a share like that needs hands who fish better than the keeper. The crew are held to between 2 and 10% (3 to 6% in practice), and crew and pots together under 35%, so fishing by hand stays the best coins a minute at every stage, which is a fixed point of the brief. What makes them worth having is the basket: it fills while the keeper does something else nearby and pays for coming back to sell it, and it stops when full, so leaving the game open all night earns twenty fish and no more.
+
+## 2026-11-22 — Who is aboard is worked out, and the basket is the keeper's
+A save holds who is hired and one basket. Who sits in a berth is the hired hands in a fixed order cut to the boat's berths, worked out when asked; nothing records a seat. Swapping boats therefore cannot lose a hand or a fish: the basket comes too, and if it holds more than the smaller boat's size the hands simply wait until it is sold. Mister Hollis will not sit where a cat has sat, which is the story's way of saying the cat was hired first and the skiff has one berth.
+
+## 2026-11-22 — The wreck is read from the boat
+The Puffin lies on a bar that will not carry a person, in reeds. Look-at places can now be read from the helm (`fromBoat`) once the boat has all but stopped, and can stand only until a flag is set (`until`: she is gone from the bar when she is afloat). The reeds are kept back from her so she can be seen, and the bar was left with one pocket of open water beside her so the skiff can get alongside.
+
 ## 2026-11-16 — A tester's start, played by the simulator
 The Fen is 75 minutes into the game, and each slice from here lies further in. Nobody can be asked to play an hour to look at five new minutes, so the title screen has a way in: F8 loads a save at the start of the newest slice. The save is not written by hand. The simulator's keeper plays to that point by the real rules and her state is written out (`npm run tester-save`), so it is a save the game could really have made: her journal, her gear, her Echoes spent the way the model spends them, no coins after the Turning. A test makes it again and compares, so it cannot fall behind the rules. In a tester's start the save store keeps nothing, which is the whole of the safety: the player's own save is never read or written. Why F8 and not a button: it is for whoever is checking the build, and a player should not find a door past the first hour by accident.
 

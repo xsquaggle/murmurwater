@@ -2,7 +2,7 @@
 
 A cozy-but-weird fishing incremental for Windows PC. Stylized low-poly 3D, built with three.js and Electron.
 
-> Status: two waters. Hearthbay with a boat of your own, gear worth choosing, Lantern Pots and the Drowned Bell; then a lamp for the fog and Mossglass Fen beyond it (v0.4.0). See `docs/ROADMAP.md`.
+> Status: two waters, two boats and a crew. Hearthbay with a boat of your own, gear worth choosing, Lantern Pots and the Drowned Bell; a lamp for the fog and Mossglass Fen beyond it; a cat and a gentleman of fog who fish from your boat, and the Puffin to carry them (v0.5.0). See `docs/ROADMAP.md`.
 
 ## Play it on Windows
 1. Open the [Releases page](https://github.com/xsquaggle/murmurwater/releases) and take the newest release.
@@ -40,13 +40,14 @@ npm run voice         # voice script (docs/voice) and recording status
 npm run electron:dev  # build and run the desktop app
 npm run dist:win      # Windows installer and portable exe (on Windows)
 ```
-A tester's start: F8 on the title screen opens a save at the start of the newest slice (nothing in it is saved, and your own save is not touched). `npm run tester-save` makes that save again from the simulator.
+Tester's starts: F8 on the title screen opens a save at the start of the newest slice, F8 again the slice before it, and once more your own game (nothing in a tester's start is saved, and your own save is not touched). `npm run tester-save` makes those saves again from the simulator.
 
 Bots (need `npx vite build && npx vite preview --port 4173` running):
 - `node e2e/story.cjs shots/story` plays the whole Hearthbay story
 - `node e2e/sail.cjs shots/sail` takes the skiff round Hearthbay Waters with the real helm keys
 - `node e2e/tide.cjs shots/tide` Lantern Pots, the shelf, the Drowned Bell and the first Turning
 - `node e2e/fog.cjs shots/fog` the Fog Lamp, the sea-road and Mossglass Fen
+- `node e2e/crew.cjs shots/crew` the cat at work, Pell's boatyard, the Puffin, Mister Hollis (from the tester's start)
 - `node e2e/play.cjs shots` the core loop
 - `node e2e/walk.cjs shots/walk` walks into everything solid and up to everyone
 - `node e2e/shadows.cjs shots/shadows` follows a fish shadow to the bite

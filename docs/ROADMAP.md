@@ -6,7 +6,7 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 |---|---|---|---|
 | 0 | Pre-production | Vision, design, art bible, tech plan, repo, CI skeleton, style refs | Done (v0.0.1) |
 | 1 | Vertical slice | Hearthbay at final quality: water, sky/time, lighthouse, dock, cast/bite/hook/fight feel, 8 fish, sell, 2 rods, first quest chain, save/load, settings, Windows build on a Release | Done (v0.1.0) |
-| 2 | Production A | Economy core + simulator, gear/bait/lures/wearables, boats + free sailing + discovery + fast travel, Mossglass Fen, automation, the Bell (prestige), notice board | In progress (v0.2.0: boats; v0.3.0: economy, gear, Lantern Pots, the Bell; v0.4.0: Mossglass Fen) |
+| 2 | Production A | Economy core + simulator, gear/bait/lures/wearables, boats + free sailing + discovery + fast travel, Mossglass Fen, automation, the Bell (prestige), notice board | In progress (v0.2.0: boats; v0.3.0: economy, gear, Lantern Pots, the Bell; v0.4.0: Mossglass Fen; v0.5.0: deckhands and the Puffin) |
 | 3 | Production B | Saltbone Reach, The Hush, Sunken Lanterns; relics, chests, crates fully populated; story chain through act 4 | |
 | 4 | Alpha (content complete) | Still Eye finale + ending + postgame; all fish/gear/quests in; automated full playthrough passes | |
 | 5 | Beta (balance + polish) | Simulator-tuned 10–15 h arc, audio pass, VFX pass, perf pass, onboarding pass, controller decision, reviewer playtests | |
@@ -46,7 +46,8 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 - [x] Story quests 8b, 9 and 10 and the pot job; tide bot; save v4 (v0.3.0)
 - [x] Mossglass Fen behind the fog: the Fog Lamp (Echoes), the sea-road, the region, Dr. Calloway's six jobs, ten fish, Mara's packet box, the chart across regions (v0.4.0)
 - [x] Fog bot; region tests (roads, terrain, the hand-over at the crossing); the simulator plays through the Fen (v0.4.0)
-- [ ] Deckhands (Biscuit, Mister Hollis) and the second boat
+- [x] Deckhands (Biscuit, Mister Hollis) who fish from the boat while the game is open, the crew basket, the second boat (the Puffin) and Pell's boatyard; save v5 (v0.5.0)
+- [x] Crew bot; two tester's starts; the simulator hires the crew and buys the Puffin (v0.5.0)
 - [x] Dr. Calloway's model, built in code by the asset thread (v0.4.0)
-- [ ] The Fen's music, voices for the 90 unvoiced lines (wait on credits)
+- [ ] The Fen's music, voices for the 121 unvoiced lines (wait on credits)
 - [ ] More chests, crates and relics
