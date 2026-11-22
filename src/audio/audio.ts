@@ -27,7 +27,8 @@ const SFX = {
   // The sea-road and Mossglass Fen
   'fog-lamp-light': [1, 0.9], 'sea-road-chime': [3, 0.7], 'fog-cross': [1, 0.9], 'packet-box': [1, 0.8], 'reed-brush': [2, 0.6],
   // Hands aboard, the boatyard and the Puffin
-  'cat-catch': [2, 0.75], 'cat-eat': [1, 0.7], 'hollis-catch': [2, 0.75], 'hollis-thin': [1, 0.8], 'hollis-thick': [1, 0.8],
+  // (The cat's two are recorded 4 to 7 dB under the rest, held down by sharp peaks, and play at full gain for it.)
+  'cat-catch': [2, 1], 'cat-eat': [1, 1], 'hollis-catch': [2, 0.75], 'hollis-thin': [1, 0.8], 'hollis-thick': [1, 0.8],
   'crew-basket-full': [1, 0.8], 'boatyard': [1, 0.9], 'sloop-sail': [1, 0.75],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
@@ -39,7 +40,7 @@ type Loop = (typeof LOOPS)[number];
  * such a sound is not fetched and not counted as missing, and its synth stand-in plays; from the first build
  * after they land it is used, with nothing to change here.
  */
-const PENDING: ReadonlySet<string> = new Set<string>(['cat-catch', 'cat-eat', 'hollis-catch', 'hollis-thin', 'hollis-thick', 'crew-basket-full', 'boatyard', 'sloop-sail']);
+const PENDING: ReadonlySet<string> = new Set<string>([]);
 const BUILT_IN: ReadonlySet<string> = new Set(present);
 /** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
 const wanted = (name: string) => !PENDING.has(name) || BUILT_IN.has(`audio/sfx/${name}_1.ogg`);
@@ -391,7 +392,7 @@ export class AudioEngine {
   /** A hull pushing through reeds. */
   reedBrush(gain = 1) { if (!this.sfx('reed-brush', { gain, vary: 0.12 })) this.noise(0.7, 2600, 0.6, 0.1 * gain, 'bandpass', 1500); }
 
-  // ---- hands aboard, the boatyard and the Puffin (synth stand-ins until the recordings land) ----
+  // ---- hands aboard, the boatyard and the Puffin (each with a synth stand-in for a build without its recording) ----
   /** Biscuit hooks a fish out: a small quick splash, a wet flap on wood, a chirrup. */
   catCatch(gain = 1) {
     if (this.sfx('cat-catch', { gain, vary: 0.06 })) return;

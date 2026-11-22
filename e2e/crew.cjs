@@ -2,7 +2,8 @@
 // keeper has the cat signed on, the wreck of the Puffin found and the price of her refit. She watches Biscuit
 // fish from the skiff, looks the wreck over from the boat, pays Pell at his boatyard, sails the Puffin, takes
 // Mister Hollis off the sea-road, sees him fish after dark and not by day, fills the crew basket, sells it with
-// her own catch, and changes boats at the yard (which leaves Mister Hollis ashore: the skiff has one berth).
+// her own catch, and changes boats at the yard (which leaves Mister Hollis ashore: the skiff has one berth), and
+// then changes them six times more to see that nothing is left behind on the graphics card.
 // Exits 1 on any failure. Usage: node e2e/crew.cjs [outdir]
 const { chromium } = require('playwright');
 (async () => {
@@ -131,7 +132,7 @@ const { chromium } = require('playwright');
   check(r.rig === 'puffin' && r.model && !r.screen && r.hour > 7 && r.hour < 9, `it is the next morning and she lies off the dock, the made model (${r.hour.toFixed(1)} h)`);
   check(r.berths[0] > 0 && r.berths[1] === 0 && /\/20$/.test(r.pill.text), `Biscuit has moved to the Puffin's first berth, the second is empty, and the basket is the bigger one (${j(r.berths)}, ${r.pill.text})`);
   check(r.toasts.some((t) => /The Puffin is afloat/.test(t)), `the game says so (${r.toasts.join(' | ').slice(0, 120)})`);
-  check((await status('hb-13-refit')) === 'ready' && (await status('fen-s1-gentleman')) === 'ready', 'Pell\'s job is ready to hand in, and with a berth to spare so is the gentleman\'s');
+  check((await status('hb-13-refit')) === 'ready' && (await status('fen-s1-gentleman')) === 'ready', 'Pell\'s job is ready to hand in, and with a berth of his own aboard so is the gentleman\'s');
   await shot('04-puffin-afloat');
   r = await ev(() => { const lines = window.crew.hub('pell', 'Talk to Pell') ?? []; const g = window.__MW__.game; if (g.town.dialogue.isOpen) window.bot.choose('Bye'); return { lines }; });
   check((await status('hb-13-refit')) === 'done' && r.lines.some((c) => /About the boats/.test(c)), `Pell is told she floats, and now talks of the boats (${r.lines.join(' | ')})`);
@@ -195,6 +196,16 @@ const { chromium } = require('playwright');
     [...document.querySelectorAll('.item.boat .btn')].find((b) => b.textContent === 'Take her out')?.click(); window.fog.wait(5); return { current: s.boats.current, rig: g.sailing.rig.boatId, berths: window.crew.berths() }; });
   check(r.current === 'puffin' && r.rig === 'puffin' && r.berths[0] > 0 && r.berths[1] > 0, `and the Puffin again, with both hands aboard (${j(r.berths)})`);
   await shot('09-both-aboard');
+
+  // 10. Changing boats again and again leaves nothing behind on the graphics card: the hull, her rig and the
+  // hands' figures (their own materials, his line, their bones) are freed each time. One pair of changes first,
+  // so that anything made once and kept is already made.
+  r = await ev(() => { const g = window.__MW__.game;
+    const mem = () => { for (let i = 0; i < 4; i++) g.presentOnce(1 / 30); const m = g.renderer.gl.info.memory; return [m.geometries, m.textures]; };
+    const change = () => { window.crew.hub('pell', 'Talk to Pell'); window.bot.choose('About the boats'); g.simulate(0.2); [...document.querySelectorAll('.item.boat .btn')].find((b) => b.textContent === 'Take her out')?.click(); window.fog.wait(5); };
+    change(); change(); const before = mem(); for (let i = 0; i < 6; i++) change(); const after = mem();
+    return { before, after, rig: g.sailing.rig.boatId, berths: window.crew.berths() }; });
+  check(r.rig === 'puffin' && r.berths[0] > 0 && r.berths[1] > 0 && r.after[0] <= r.before[0] && r.after[1] <= r.before[1], `six more changes of boat leave nothing behind on the graphics card (geometries and textures: ${j(r.before)} before, ${j(r.after)} after)`);
 
   check(errors.length === 0, `no page errors (${errors.slice(0, 3).join(' | ')})`);
   await browser.close();
