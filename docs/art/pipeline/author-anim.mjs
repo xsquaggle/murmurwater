@@ -9,6 +9,12 @@
 // motion-captured body movement. Angles are degrees: [pitch, yaw, roll] = [lean forward, turn left, tilt right].
 // Positions and directions are in metres in "chest" space (bind-pose coordinates that follow the chest), unless the
 // hand says space: 'world' or 'socket' (the RodSocket frame, for a second hand on the rod).
+// Joints beyond the biped's (something carried that has a joint of its own, such as Mister Hollis's bag) keep their rest
+// relation to their parent unless a spec places them: spec.extra = { Bag: { pos, rot } }, both in the model's space,
+// pos a point and rot [pitch, yaw, roll] away from the rest pose (or a quaternion); either may be a function of the
+// solved pose ({ X, D, palm(side) }), so that a thing can follow a hand. The clips module names them in `moving`
+// and they then get a translation channel as well as a rotation.
+// HANDS=1 in the environment prints what was measured of each hand (finger and palm directions, the palm's surface).
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { prune, dedup, resample } from '@gltf-transform/functions';
@@ -33,7 +39,10 @@ const FINGER = { knuckle: 0.10, mid: 0.15, blendK: 0.012, blendM: 0.010, cut: 0.
 const handInfo = {};
 {
   const v3 = (m) => vec3.fromValues(m[12], m[13], m[14]);
-  const prim = root.listMeshes()[0].listPrimitives()[0];
+  // the hands are measured on the primitive that holds them (a figure may have others: a face of fog, a pair of lights)
+  const prim = (() => { const hands = new Set(['RightHand', 'LeftHand'].map(n => skin.listJoints().findIndex(j => j.getName() === n))); let best = null, most = -1;
+    for (const pr of root.listMeshes()[0].listPrimitives()) { const ja = pr.getAttribute('JOINTS_0'), wa = pr.getAttribute('WEIGHTS_0'); if (!ja || !wa) continue; const jj = ja.getArray(), ww = wa.getArray(); let n = 0; for (let k = 0; k < jj.length; k++) if (ww[k] > 0.3 && hands.has(jj[k])) n++; if (n > most) { most = n; best = pr; } }
+    return best; })();
   const posA = prim.getAttribute('POSITION'), jA = prim.getAttribute('JOINTS_0'), wA = prim.getAttribute('WEIGHTS_0'), idx = prim.getIndices();
   const jl = skin.listJoints(); const nm = jl.map(j => j.getName()); const ibm0 = skin.getInverseBindMatrices().getArray();
   const Wj = (i) => mat4.invert(mat4.create(), ibm0.subarray(i * 16, i * 16 + 16));
@@ -134,6 +143,7 @@ const twistAbout = (q, axis) => { const d = q[0] * axis[0] + q[1] * axis[1] + q[
 
 // ---------- hands ----------
 const HAND = {}; for (const side of ['Right', 'Left']) HAND[side] = { ...handInfo[side], hi: J(side + 'Hand'), fa: index.has(side + 'Fingers') ? J(side + 'Fingers') : -1, fb: index.has(side + 'FingerTips') ? J(side + 'FingerTips') : -1 };
+if (process.env.HANDS) for (const k of ['Right', 'Left']) console.error(k, JSON.stringify({ f0: Array.from(HAND[k].f0), n0: Array.from(HAND[k].n0), t0: Array.from(HAND[k].t0), curl: Array.from(HAND[k].curl), surf: HAND[k].surf, fa: HAND[k].fa, fb: HAND[k].fb }, (key, v) => typeof v === 'number' ? +v.toFixed(3) : v));
 const GRIP = { radius: 0.025, a: 0.059, curlA: 70, curlB: 65 };   // handle radius the closed hand is shaped for, where it sits along the palm, and the closed curl angles
 
 // ---------- existing clips (for spec.base) ----------
@@ -177,6 +187,7 @@ const sockR0 = (() => { const z = cross(sockX0, rod0); const m = mat3.fromValues
 
 // ---------- solver ----------
 const warn = new Set();
+let moving = [];                                    // joints (besides the root) whose place the clips animate
 function solve(spec = {}, tag = '') {
   const base = spec.base ? evalClip(spec.base.clip, spec.base.t || 0) : bindBase;
   const Db = (i) => qmul(base.Rw[i], conj(Rb[i]));
@@ -249,10 +260,17 @@ function solve(spec = {}, tag = '') {
     if (index.has(side + 'ToeBase')) { place(toe); D[toe] = qmul(D[ft], Rel(toe)); }
   };
   leg('Right'); leg('Left');
+  // joints the solver knows nothing about: where the spec puts them, else as they stand on their parent
+  for (const i of order) if (D[i] === undefined) {
+    const ex = spec.extra && spec.extra[names[i]], pose = { X, D, palm: (side) => palmCentre({ X, D }, side) };
+    place(i); D[i] = qmul(D[parent[i]], Rel(i));
+    if (ex) { const pv = typeof ex.pos === 'function' ? ex.pos(pose) : ex.pos, rv = typeof ex.rot === 'function' ? ex.rot(pose) : ex.rot; if (pv) X[i] = V(pv); if (rv) D[i] = rv.length === 4 ? quat.normalize(quat.create(), rv) : eulerQ(rv); }
+  }
   // local rotations
   const q = new Float32Array(N * 4); const Rw = D.map((d, i) => qmul(d, Rb[i]));
   for (let i = 0; i < N; i++) { const l = parent[i] < 0 ? Rw[i] : qmul(conj(Rw[parent[i]]), Rw[i]); quat.normalize(l, l); q.set(l, i * 4); }
-  return { q, hips: X[hips], X, D, sock };
+  const tr = new Map(); for (const i of moving) tr.set(i, rotv(conj(Rw[parent[i]]), sub(X[i], X[parent[i]])));
+  return { q, hips: X[hips], X, D, sock, tr };
 }
 
 // a pose function may return { blend: [A, B, k] }: both sides are solved and mixed joint by joint (exact at k = 0 and 1)
@@ -260,7 +278,8 @@ function solveAny(x, tag) {
   if (!x || !x.blend) return solve(x, tag);
   const [A, B, k] = x.blend; const a = solveAny(A, tag), b = solveAny(B, tag); const q = new Float32Array(N * 4);
   for (let i = 0; i < N; i++) { const qa = a.q.subarray(i * 4, i * 4 + 4), qb = b.q.subarray(i * 4, i * 4 + 4); const o = quat.create(); quat.slerp(o, qa, qb, k); q.set(o, i * 4); }
-  return { q, hips: vec3.lerp(vec3.create(), a.hips, b.hips, k) };
+  const tr = new Map(); for (const i of moving) tr.set(i, vec3.lerp(vec3.create(), a.tr.get(i), b.tr.get(i), k));
+  return { q, hips: vec3.lerp(vec3.create(), a.hips, b.hips, k), tr };
 }
 // ---------- spec helpers handed to the clip file ----------
 const lerp = (a, b, k) => {
@@ -281,6 +300,7 @@ const ctx = { blend, palmCentre, solve, lerp, ease, keys, names, P, Rb, HAND, GR
 
 const mod = await import(pathToFileURL(path.resolve(clipsFile)).href);
 const def = mod.default(ctx);
+moving = (def.moving || []).map(J);
 const only = new Set(String(opt.only).split(',').filter(Boolean));
 if (only.size) { def.clips = def.clips.filter(c => only.has(c.name)); def.sockets = []; def.rodSocket = false; for (const n of only) if (!def.clips.some(c => c.name === n)) throw new Error('no clip ' + n + ' in ' + clipsFile); }
 
@@ -311,17 +331,17 @@ for (const a of root.listAnimations()) {
 }
 for (const clip of def.clips) {
   const frames = Math.max(2, Math.round(clip.duration * opt.fps) + 1);
-  const times = new Float32Array(frames); const rot = joints.map(() => new Float32Array(frames * 4)); const hipsT = new Float32Array(frames * 3);
+  const times = new Float32Array(frames); const rot = joints.map(() => new Float32Array(frames * 4)); const hipsT = new Float32Array(frames * 3); const movT = new Map(moving.map((i) => [i, new Float32Array(frames * 3)]));
   for (let f = 0; f < frames; f++) {
     const t = Math.min(clip.duration, f / opt.fps); times[f] = t; const pose = solveAny(clip.pose(t), clip.name);
     for (let i = 0; i < N; i++) { const r = pose.q.subarray(i * 4, i * 4 + 4); if (f > 0) { const p = rot[i].subarray((f - 1) * 4, f * 4); if (quat.dot(p, r) < 0) quat.scale(r, r, -1); } rot[i].set(r, f * 4); }
-    hipsT.set(pose.hips, f * 3);
+    hipsT.set(pose.hips, f * 3); for (const i of moving) movT.get(i).set(pose.tr.get(i), f * 3);
   }
   const A = doc.createAnimation(clip.name); const inAcc = doc.createAccessor().setType('SCALAR').setArray(times).setBuffer(buffer);
   joints.forEach((j, i) => {
     const o = doc.createAccessor().setType('VEC4').setArray(rot[i]).setBuffer(buffer); const s = doc.createAnimationSampler().setInput(inAcc).setOutput(o).setInterpolation('LINEAR');
     A.addSampler(s).addChannel(doc.createAnimationChannel().setTargetNode(j).setTargetPath('rotation').setSampler(s));
-    if (parent[i] < 0) { const o2 = doc.createAccessor().setType('VEC3').setArray(hipsT).setBuffer(buffer); const s2 = doc.createAnimationSampler().setInput(inAcc).setOutput(o2).setInterpolation('LINEAR'); A.addSampler(s2).addChannel(doc.createAnimationChannel().setTargetNode(j).setTargetPath('translation').setSampler(s2)); }
+    if (parent[i] < 0 || movT.has(i)) { const o2 = doc.createAccessor().setType('VEC3').setArray(parent[i] < 0 ? hipsT : movT.get(i)).setBuffer(buffer); const s2 = doc.createAnimationSampler().setInput(inAcc).setOutput(o2).setInterpolation('LINEAR'); A.addSampler(s2).addChannel(doc.createAnimationChannel().setTargetNode(j).setTargetPath('translation').setSampler(s2)); }
   });
 }
 for (const w of warn) console.error('warn', w);

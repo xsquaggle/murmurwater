@@ -63,6 +63,7 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `characters/pell.glb` | 13,896 | 1.15 x 1.88 x 0.75 (A-pose) | feet | hand lantern | `pell-sheet` | `dfb779a3-05c1-4861-8ec2-d1458f8b9501` |
 | `characters/wick.glb` | 12,860 | 0.79 x 1.25 x 0.48 (A-pose) | feet | no | `wick-sheet` | `133831b3-7f36-42d3-97ad-25fa271a66a3` |
 | `characters/calloway.glb` | 7,458 | 0.96 x 1.68 x 0.54 (A-pose) | feet | no | `calloway`, `calloway-clips`, `calloway-lineup` | none: built and painted in code (see "Dr. Calloway" below) |
+| `characters/hollis.glb` | 5,993 | 1.23 x 2.02 x 0.57 (A-pose, bag in hand) | feet | two lights (`Glass`) | `hollis`, `hollis-clips`, `hollis-aboard`, `hollis-lineup` | none: built and painted in code (see "Mister Hollis" below) |
 | `characters/biscuit.glb` | 7,514 | 0.29 x 0.55 x 0.47 (standing, to the tail tip) | feet | no | `biscuit-stand-sheet` | `ff65ea63-ffb6-474d-9a32-49c25cf6f9d4` |
 | `characters/biscuit-sit.glb` | 5,749 | 0.33 x 0.45 x 0.31 (sitting) | base | no | `biscuit-sit-sheet` | `7df5fd5e-8374-44bd-b907-f3d047d7845b` |
 | `fish/butterperch.glb` | 2,958 | 0.54 x 0.79 x 1.00 | centre | no | `butterperch` | `fd9ea949-0241-4ba0-af03-fac94c86777a` |
@@ -274,6 +275,46 @@ She is skinned to the skeleton the generated characters share: the 24 joints of 
 | `wave` | 2.80 s | Her right hand goes up beside her hat and waves, four quick strokes; meant to be played once | Authored the same way |
 
 No sockets, and her hands are empty in every clip. Contact sheets: `docs/art/sheets/calloway.webp` (rest pose, eight views), `calloway-clips.webp` (six frames of each clip) and `calloway-lineup.webp` (beside Mara, the player and Pell, from the front and from three quarters, everyone in their idle).
+
+### Mister Hollis
+
+`characters/hollis.glb` (2026-11-16), the gentleman made of fog who waits on the old sea-road for the packet, is original work built and painted in code, with no generation job and no credits. `docs/art/pipeline/build-hollis.mjs` holds his whole shape and the layout of his atlas, on `kit.mjs` and `figure.mjs` as Dr. Calloway's builder does. `hollismats.py` paints what he needed that was not there yet: oilskin, knitting, the carpet of a carpet bag, a watch's dial, a luggage label. `make-hollis.sh` runs it all and checks that the result repeats byte for byte. 5,993 triangles, 2.02 m to the button of his sou'wester (the lights in his face are at 1.74 m), one 1024 px WebP atlas painted at 2048 px, 740 KB.
+
+| Material | What it is | Values |
+|---|---|---|
+| `main` | Everything he wears and carries | The atlas, roughness 0.8 |
+| `Fog` | His head and the two whiskers of fog | Plain, base colour `#C3BBD8`, roughness 1, opaque (the game makes it soft and thins it) |
+| `Glass` | The two lights where eyes would be | Base colour `#6A4A22` (dark amber, so that what shows is the light's own colour), emissive `#FFD9A0`, roughness 0.4 |
+
+What he wears, for whoever writes about him: a sou'wester of sea-green oilskin in six gores with a button on top, its brim turned up in front and long behind, violet-grey underneath. Where a face would be there is a head of pale violet-grey fog with no features but two small warm lights, and a whisker of fog curling up on either side like a moustache. A muffler in coral and cream stripes, wound twice, with one fringed tail down his front and a shorter one down his back. A long sea-green oilskin to below the knee, with a stand-up collar, a fly front with seven brass buttons, a flap pocket on either side of the skirt, a half belt behind and buttoned cuffs, lined violet-grey. Cream knitted mittens with ribbed wrists; dark trousers; black sea boots with long feet. No skin shows anywhere. In his right hand a carpet bag: madder red with a cream lattice, a rose in every diamond and a small blue flower where the diamonds meet, a leather foot, a brass frame and catch, two leather handles and a luggage label on a string. In his breast a brass pocket watch with a cream dial.
+
+His skeleton is his own. `make-hollis-rig.mjs` takes the 24 joints of the biped (`biped-rig.json`) and moves them to his proportions (a quarter longer in the leg and the trunk, narrower in the hip and the shoulder, longer in the arm and the foot), keeping their names, their order and the way each is turned at rest, so `borrow-clips.mjs` still carries any other character's clip over to him. Six joints are added. `LeftFingers`, `LeftFingerTips`, `RightFingers` and `RightFingerTips` close the mittens, with the names and the meaning they have on the generated characters. `Bag` (child of `Hips`, its origin the middle of the bag's handles) carries the carpet bag, and `Watch` (child of `Spine`) the pocket watch. Bag and watch are parts of the one skinned mesh, each bound whole to its joint, and every clip of his has a translation channel for `Hips`, `Bag` and `Watch` and a rotation channel for all 30 joints: the clips put the bag in his right fist ashore and on his knees aboard, and the watch in his left palm when he reads it. At rest the watch lies in his breast, 4 cm under the oilskin, face forward: nobody sees it while he is solid, and when the game thins him to an outline it shows as a watch in a breast pocket. A clip borrowed from another character leaves `Bag` where it is at rest, beside his right hip, so a borrowed clip needs the bag placed (`spec.extra` in `author-anim.mjs`). The root node is `hollis`, with the skeleton and the mesh node `hollis-mesh` (three primitives) under it.
+
+| Clip | Length | Plays | What he does |
+|---|---|---|---|
+| `idle` | 12.07 s | loop | Stands with the bag in his right hand. Looks up the road, then down it, for the packet; takes the watch from his breast with his left hand, reads it with his head bowed (7.6 to 9.8 s) and puts it away |
+| `talk` | 6.03 s | loop | Small, exact gestures with the left hand before his chest, a nod now and then, and once he touches the brim of his hat (3.9 to 4.3 s) |
+| `wave` | 2.80 s | once | The left hand goes up beside his hat and moves three times, no more than is polite |
+| `sit` | 8.00 s | loop | Aboard: seated upright, the bag on his knees under his right hand, his left fist out over the side with the line in it. Twice in a round he lifts the line a hand's breadth (2.4 to 5.1 s), once he looks ahead (5.6 to 7.6 s) |
+| `pull` | 2.00 s | once | Aboard, from the pose `sit` has at its start and back to it: the left fist brings the line up and in by two heaves and a lift, the right hand leaves the bag to take up the slack between them, and what is on the line is held up inboard from 1.60 to 1.76 s |
+
+The three standing clips are authored with `author-anim.mjs` + `hollis-clips.mjs` over the sway of the player's `idle`, which `borrow-clips.mjs` carries over; the two seated ones are authored whole.
+
+**Aboard.** In `sit` and `pull` his origin stays where the game puts it, on the sole, and he is built for the Puffin's `Crew2`, which faces port: his own +Z is then outboard and his -X the bow. In his own coordinates, in metres:
+
+| What | Where |
+|---|---|
+| Seat | A bench top 0.465 above his origin, under him from x 0.20 to x -0.15, where the Puffin's port bench ends; his `Hips` joint is at (0.030, 0.655, -0.006) |
+| How he sits | Hips toward -X, the thighs out over the forward end of the bench, the shins down before it; chest turned 40° and head 66° toward +Z (in `pull` the chest up to 56°) |
+| Feet | Ankles at (-0.460, 0.170, 0.015) and (-0.430, 0.170, -0.135), soles flat on y 0, toes to x -0.69: he needs the sole clear from x -0.25 to x -0.70 |
+| Bag | `Bag` at (-0.225, 1.012, -0.005): the bag lies across his knees, from z -0.22 to z 0.21, its foot on his thighs at y 0.66 |
+| The line arm | Wrist at (-0.070, 0.985, 0.465), elbow at (-0.105, 0.894, 0.229): the sleeve crosses a rail between z 0.29 and z 0.38 with its underside at 0.86 or higher (the Puffin's rail top is at 0.84) |
+| `LineHand` in `sit` | (-0.112, 0.985, 0.521); up to (-0.112, 1.043, 0.501) when he lifts the line |
+| `LineHand` in `pull` | 0 s (-0.112, 0.985, 0.521); 0.5 s (-0.132, 1.060, 0.451); 0.8 s (-0.129, 1.042, 0.463); 1.1 s (-0.157, 1.109, 0.382); 1.3 s (-0.153, 1.093, 0.396); 1.6 to 1.76 s (-0.192, 1.195, 0.291); 2.0 s where it began |
+
+`LineHand` is an empty node on `LeftHand`, in the middle of his closed left fist (translation 0.0340, 0.0609, -0.0057 and rotation 0.1164, 0.6577, 0.7332, -0.1278 on that joint). Its +Y runs up through the fist the way a line held in it runs, and in `sit` and `pull` that is exactly up; its +Z is the way the knuckles point, which aboard is outboard and 6° toward the bow. The fist is closed only in `sit` and `pull`. `pull` is made for a catch hung a little under `LineHand` from the start of the clip, as the game hangs it (0.12 m under): the fist never goes back out once it has come in, so the catch rises from just outside the rail, over it and inboard.
+
+Contact sheets: `docs/art/sheets/hollis.webp` (four views in `idle`, his head, from behind, the bag in his fist, the watch in his palm), `hollis-clips.webp` (six moments each of `idle`, `talk` and `wave`), `hollis-aboard.webp` (on the Puffin at `Crew2`: `sit` from the bow with a white line where his line hangs, `pull` from outside and from above with a red slab where the game hangs the catch) and `hollis-lineup.webp` (Wick, Mara, the player, Hollis, Dr. Calloway and Pell, from the front and from three quarters, everyone in their idle).
 
 ### Biscuit the cat
 
