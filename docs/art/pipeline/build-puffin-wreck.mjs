@@ -15,16 +15,17 @@ const HEEL = 20, LIFT = 0.30, DEEP = -0.6;
 const lay = compose(move([0, LIFT, 0]), rotZ(rad(HEEL)));            // from the hull's own coordinates to the wreck's: +Y of the hull leans toward -X (starboard)
 const { ZT, SOLE, SEAT, DECK_Z, disc, slabZY, all } = P, S0 = P.lines(ZT).S;
 const PAINT = '#A3A990', INK = '#4B4650', CORAL = '#B08878', BOTTOM = '#5A4A3C', GREY = '#7A746B';      // what is left of bone, ink, coral and bottom paint; bare wood
+const LIFT_GREY = 0.6, LIFT_INK = 0.33;            // how far the planking's paint (and the ink of her sheer strake) is taken toward silver-grey above the waterline before the weather is laid on it: what is seen comes out about a third of the way, so that her shaded side is not black against bright reeds
 const old = (o = {}) => ({ mat: 'aged', of: 'wood', tone: 'grey', along: 'x', weather: 0.75, algae: 0.35, lichen: 0.3, fade: 0.1, ...o });
 const paint = (o = {}) => ({ mat: 'aged', of: 'planked', colour: PAINT, under: GREY, wear: 0.34, grime: 0.4, algae: 0.5, lichen: 0.12, fade: 0.15, ...o });
 const R = pack(...ATLAS, {
-  topsides: [1520, 150, paint({ planks: 4, first: true, low: 0.9 })], sheer: [1520, 40, paint({ colour: INK, planks: 0, wear: 0.45, algae: 0.25 })],
+  topsides: [1520, 150, paint({ planks: 4, first: true, low: 0.9, bleach: LIFT_GREY })], sheer: [1520, 40, paint({ colour: INK, planks: 0, wear: 0.45, algae: 0.25, bleach: LIFT_INK, bleach_from: -0.4 })],
   boot: [1520, 36, { mat: 'planked', colour: CORAL, under: GREY, planks: 0, wear: 0.5, water: [-0.16, -0.03], barnacles: 1.6 }],
   bottom: [1520, 170, { mat: 'antifoul', colour: BOTTOM, slime: 0.9, water: [-0.60, -0.14], barnacles: 1.5 }],
   rub: [1520, 20, old({ weather: 0.8 })], rail: [1520, 50, old({ edge: 0.25, lichen: 0.45, droppings: 0.25 })],
   keel: [600, 60, { mat: 'antifoul', colour: BOTTOM, slime: 0.9, water: [-0.75, -0.2] }],
-  stem: [150, 320, { mat: 'aged', of: 'bands', ys: [P.STEM_BOX.y0, P.STEM_BOX.y1], colour: PAINT, boot: CORAL, bottom: BOTTOM, top_colour: INK, top: 0.955 - P.STRAKE, wood_from: 0.95, wear: 0.22, algae: 0.3, lichen: 0.12, fade: 0.25, water: [P.STEM_BOX.y0 - 0.06, P.STEM_BOX.y1 - 0.06], barnacles: 0.42 }],
-  transomOut: [560, 300, { mat: 'aged', of: 'bands', ys: [P.TRANSOM.y0, P.TRANSOM.y1], colour: PAINT, boot: CORAL, bottom: BOTTOM, top_colour: INK, planks: 4, top: S0 - P.STRAKE, wear: 0.22, algae: 0.35, lichen: 0.12, fade: 0.25, water: [P.TRANSOM.y0 - 0.06, P.TRANSOM.y1 - 0.06], barnacles: 0.42 }],
+  stem: [150, 320, { mat: 'aged', of: 'bands', ys: [P.STEM_BOX.y0, P.STEM_BOX.y1], colour: PAINT, boot: CORAL, bottom: BOTTOM, top_colour: INK, top: 0.955 - P.STRAKE, wood_from: 0.95, wear: 0.22, algae: 0.3, lichen: 0.12, fade: 0.25, bleach: LIFT_GREY, bleach_from: 0.39, bleach_over: 0.12, water: [P.STEM_BOX.y0 - 0.06, P.STEM_BOX.y1 - 0.06], barnacles: 0.42 }],
+  transomOut: [560, 300, { mat: 'aged', of: 'bands', ys: [P.TRANSOM.y0, P.TRANSOM.y1], colour: PAINT, boot: CORAL, bottom: BOTTOM, top_colour: INK, planks: 4, top: S0 - P.STRAKE, wear: 0.22, algae: 0.35, lichen: 0.12, fade: 0.25, bleach: LIFT_GREY, bleach_from: 0.30, bleach_over: 0.15, water: [P.TRANSOM.y0 - 0.06, P.TRANSOM.y1 - 0.06], barnacles: 0.42 }],
   transomIn: [400, 200, old({ planks: 5, ao: { bottom: 0.3 } })], cap: [300, 22, old()],
   ceiling: [1000, 210, old({ planks: 5, ao: { bottom: 0.35 }, low: 0.9, algae: 0.5 })],
   sole: [660, 300, old({ planks: 9, weather: 0.9, algae: 0.6, lichen: 0, light: 0.8 })],
