@@ -318,12 +318,31 @@ Contact sheets: `docs/art/sheets/hollis.webp` (four views in `idle`, his head, f
 
 ### Biscuit the cat
 
-The auto-rigger only handles bipeds, so `rig-cat.mjs` builds the cat's skeleton, skin weights and clips in code (original work, no generation job). Weights come from a geometric segmentation of the mesh smoothed by Laplacian diffusion.
+The auto-rigger only handles bipeds, so `rig-cat.mjs` builds the cat's skeleton, skin weights and clips in code (original work, no generation job). Weights come from a geometric segmentation of the mesh smoothed by Laplacian diffusion. For v0.5.0 (2026-11-22) the sitting sculpt got joints for her small parts, laid over those weights afterwards: her ears, the end of her tail where it lies on the ground round her right side and stops beside her right front paw, and her two front paws. Each takes its share of a vertex out of what the vertex had, so `sit` moves the mesh exactly as it did before (compared picture for picture, as were `walk` and `idle` on the standing sculpt). Both sculpts also have a joint `Neck` between `Chest` and `Head`, at the same place as `Head` and with no vertices of its own.
 
 | Model | Joints | Clips |
 |---|---|---|
-| `biscuit.glb` | Root, Body, Hips, Chest, Head, Tail1 to Tail3, FrontLeftLeg, FrontRightLeg, HindLeftLeg, HindRightLeg | `walk` 0.72 s loop, in place, one stride covers about 0.17 m; `idle` 4.0 s loop |
-| `biscuit-sit.glb` | Root, Body, Chest, Head | `sit` 5.0 s loop, breathing and a slow head sway |
+| `biscuit.glb` | Root, Body, Hips, Chest, Neck, Head, Tail1 to Tail3, FrontLeftLeg, FrontRightLeg, HindLeftLeg, HindRightLeg | `walk` 0.72 s loop, in place, one stride covers about 0.17 m; `idle` 4.0 s loop; `swat` 1.0 s, once |
+| `biscuit-sit.glb` | Root, Body, Chest, Neck, Head, EarLeft, EarRight, TailEnd, TailTip, FrontLeftPaw, FrontRightPaw | `sit` 5.0 s loop, breathing and a slow head sway; `watch` 2.4 s loop; `eat` 2.5 s, once |
+
+**Laid over `sit` and `idle`.** The game plays `sit` and `idle` all the time at full weight and lays the three working clips over them by weight, and in three.js two clips that drive the same property of a joint each get their share of it by weight. So the working clips keep off what the standing ones drive. `sit` drives the scale of `Chest` and the rotation and position of `Head`; `watch` and `eat` turn `Body`, `Chest` and `Neck` and move the ears, tail and paws, so at weight 1 they are seen in full with the breathing and the head's sway still going under them. `idle` drives `Body`, `Chest`, `Head` and the tail; `swat` moves the whole cat by `Root` (which is the same as moving `Body`), turns the rump back by `Hips`, turns the head by `Neck` and drives the four legs. Only the lash of her tail in `swat` shares joints with `idle`, and shows at half strength while `idle` is at full weight. `watch` and `eat` drive the same joints as each other: while `eat` plays, `watch` should be faded out.
+
+**`watch`** (loop): she leans out to look over the side, ears forward, and the tip of her tail goes. Body 5°, chest 9° more and neck 27° more forward, with a slow sway and a few degrees of looking from side to side; her nose goes from (0.01, 0.32, 0.15) to about (0.01, 0.22, 0.19) in her own frame (+Z ahead, +X her left), 0.10 m lower and 0.04 m further out. Ears 9° forward and 5° toward each other; the right ear flicks back and out once (1.02 to 1.24 s). The end of her tail flicks four times a loop (from 0.16, 0.58, 1.38 and 1.92 s, each about 0.3 s, the first and third the big ones), which lifts its tip from 0.03 m to 0.09 m beside her paw.
+
+**`eat`** (once): head down, working at something between her paws. It carries its own way down (0.38 s) and back up (the last 0.42 s), so it can be played at full weight from start to end or faded as well. Body 11°, chest 24° and neck 48° forward: her nose is at about (0.01, 0.125, 0.165), 0.20 m lower than sitting. She chews (nods of up to 5° at 4.6 a second), gnaws from side to side, tugs once (1.16 to 1.52 s, the nose comes up to 0.15 m), her ears go out to the sides, her front paws press in turn and the tip of her tail lifts once.
+
+**`swat`** (once, on the standing sculpt, which the game shows only while it plays): she hooks a fish out. The game throws the fish from the water ahead of her to the boards behind her left shoulder in the first half second, so the clip opens with her already down and the right paw in, scoops, and sends her head round after the fish. In her own frame:
+
+| When | What |
+|---|---|
+| 0 to 0.06 s | Chest down (13° to 16°), both front paws ahead of her: the left one braced at z 0.19, the right one reaching, its sole at (-0.07, -0.004, 0.214) and lowest at 0.06 s, (-0.07, -0.024, 0.21): 24 mm below her feet. Head down 28°, nose at (-0.06, 0.20, 0.31). |
+| 0.06 to 0.2 s | The scoop: the paw comes up to (-0.03, 0.14, 0.21), pads forward, and she comes up with it. The left paw is back in its place by 0.2 s. |
+| 0.2 to 0.52 s | The paw stays up and drifts across to her left (0.01, 0.12, 0.22 at 0.4 s) while her head goes up and round to her left after the fish: 56° at the neck and 12° more at the chest by 0.5 s, nose at (0.15, 0.37, 0.14). |
+| 0.52 to 0.94 s | The paw comes down to its own place (down by 0.76 s), the head comes back, and from 0.96 s she stands square as in `idle`. |
+
+Her hind feet do not move in `swat`, and a front foot that is down is held to the ground: the legs are one bone each, so the script aims each at its place and lets it out or in by a few millimetres (the function `foot` in `rig-cat.mjs`). If she stands further than 0.2 m from an edge the reaching paw dips those 24 mm into what she stands on for the first tenth of a second. The game should not lift or tip her while `swat` plays: the clip does that.
+
+Contact sheets (`biscuit-sheets.sh`): `docs/art/sheets/biscuit-clips.webp` (`walk`, `idle`, and `swat` from her right and from her left) and `biscuit-sit-clips.webp` (`sit`, `watch` with a close view of the tail, and `eat` from two sides); each row's label gives its moments in seconds. `joint-track.mjs` gave the positions above.
 
 ## Voice lines (`public/audio/voice/`)
 
