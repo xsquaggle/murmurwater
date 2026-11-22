@@ -10,6 +10,8 @@ const { chromium } = require('playwright');
 (async () => {
   const port = process.env.MW_PORT || 4173;
   const outDir = process.argv[2] || 'shots/tide';
+  // The save version the game writes now, read from the source so that this bot does not go stale when it moves on.
+  const SAVE_VERSION = +/SAVE_VERSION = (\d+)/.exec(require('fs').readFileSync(require('path').join(__dirname, '../src/core/state.ts'), 'utf8'))[1];
   require('fs').mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
@@ -294,7 +296,7 @@ const { chromium } = require('playwright');
   await page.goto(`http://localhost:${port}/?notitle&quality=low&keepfresh`);
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 1, null, { timeout: 180000 });
   r = await ev(() => { const s = window.__MW__.state; return { v: s.version, run: s.run.number, echoes: s.echoes, tidewise: s.echoUpgrades.tidewise, owned: s.pots.owned, done: s.quests.done.length, worn: s.gear.worn }; });
-  check(r.v === 4 && r.run === 2 && r.tidewise === 1 && r.owned === 2 && r.done === 12, `the reload keeps the second tide (${JSON.stringify(r)})`);
+  check(r.v === SAVE_VERSION && r.run === 2 && r.tidewise === 1 && r.owned === 2 && r.done === 12, `the reload keeps the second tide (${JSON.stringify(r)})`);
 
   // 20. A save from before this slice (version 3) loads into it with nothing lost: the hold comes from gear now,
   // and there are no pots yet.
@@ -305,8 +307,8 @@ const { chromium } = require('playwright');
   await page.goto(`http://localhost:${port}/?notitle&quality=low&keepfresh`);
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 1, null, { timeout: 180000 });
   r = await ev(() => { const g = window.__MW__.game, s = g.state; g.town.openScreen('gear'); const sums = document.querySelectorAll('.sum-i').length; g.town.closeScreens(); return { v: s.version, coins: s.coins, rods: s.gear.rods.length, done: s.quests.done.length, journal: Object.keys(s.journal).length, hold: g.holdCapacity, pots: s.pots.owned, creel: s.gear.creel, sums }; });
-  check(r.v === 4 && r.coins === was.coins && r.rods === was.gear.rods.length && r.done === was.quests.done.length && r.journal === Object.keys(was.journal).length && r.pots === 0 && r.creel === 0 && r.hold >= 12 && r.sums >= 7,
-    `a version 3 save loads as version 4 with its coins, rods, journal and story (${JSON.stringify(r)})`);
+  check(r.v === SAVE_VERSION && r.coins === was.coins && r.rods === was.gear.rods.length && r.done === was.quests.done.length && r.journal === Object.keys(was.journal).length && r.pots === 0 && r.creel === 0 && r.hold >= 12 && r.sums >= 7,
+    `a version 3 save loads as version ${SAVE_VERSION} with its coins, rods, journal and story (${JSON.stringify(r)})`);
   check(errors.length === 0, `no page errors (${errors.join(' | ')})`);
 
   if (problems.length) { console.error(`TIDE FAILED: ${problems.length} problem(s)\n - ${problems.join('\n - ')}`); await browser.close(); process.exit(1); }
