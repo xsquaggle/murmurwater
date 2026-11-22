@@ -79,6 +79,7 @@ export class WorldScene {
   private buoys: { obj: Object3D; x: number; z: number; ph: number }[] = [];
   /** Lamps and lit windows of delivered props, and pennants that stir. */
   private glassMats: MeshStandardMaterial[] = [];
+  private fillMats: { mat: MeshStandardMaterial; k: number }[] = [];
   private pennants: Object3D[] = [];
   private vanes: Object3D[] = [];
   /** The Drowned Bell, where the region has one: the part that swings, how long since it was struck, and how hard. */
@@ -304,7 +305,7 @@ export class WorldScene {
       o.position.set(p.x, built.aground !== null ? Math.max(bed, -built.aground) : Math.max(0, bed, dockDeckAt(L.dock, p.x, p.z) ?? 0), p.z); o.rotation.y = p.yaw;
       if (p.until) this.untilProps.push({ flag: p.until, object: o });
       s.add(o); o.updateMatrixWorld(true);
-      this.propMats.push(...built.mats); this.glassMats.push(...built.glass);
+      this.propMats.push(...built.mats); this.glassMats.push(...built.glass); this.fillMats.push(...built.fill);
       if (built.pennant) { built.pennant.userData.rest = built.pennant.rotation.y; this.pennants.push(built.pennant); }
       if (built.vane) { built.vane.userData.rest = built.vane.rotation.y; this.vanes.push(built.vane); }
       if (built.lamp) this.lanterns.push(addLanternLight(s, o.localToWorld(built.lamp.clone()), 7, 16));
@@ -502,6 +503,7 @@ export class WorldScene {
       l.intensity = (1.5 + 9 * glow) * flick;
     });
     for (const m of this.glassMats) m.emissiveIntensity = 0.12 + 2.6 * glow * (0.9 + 0.1 * Math.sin(this.time * 7.3));
+    for (const f of this.fillMats) f.mat.emissiveIntensity = f.k * (1 - 0.85 * lt.night);
     this.pennants.forEach((p, i) => { p.rotation.y = (p.userData.rest as number) + 0.3 * Math.sin(this.time * 1.7 + i) + 0.1 * Math.sin(this.time * 4.3 + i * 2); });
     for (const v of this.vanes) v.rotation.y = (v.userData.rest as number) + 0.7 * Math.sin(this.time * 0.19) + 0.07 * Math.sin(this.time * 2.3);
     if (this.lighthouseGlass) this.lighthouseGlass.emissiveIntensity = this.lighthouseLit ? 4 : 0.06 + 0.04 * Math.sin(this.time * 0.7);

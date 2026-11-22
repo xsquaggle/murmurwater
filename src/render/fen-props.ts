@@ -20,6 +20,8 @@ export interface PropBuild {
   mats: MeshStandardMaterial[];
   /** `Glass` materials of a delivered model (lamps, lit windows): the game turns them up after dark. */
   glass: MeshStandardMaterial[];
+  /** Materials that lend their own colour a little light by day (see `Spec.fill`), with how much. */
+  fill: { mat: MeshStandardMaterial; k: number }[];
   /** A pennant to stir in the wind, if it flies one, and a wind vane to turn. */
   pennant: Object3D | null;
   vane: Object3D | null;
@@ -40,6 +42,11 @@ interface Spec {
   aground?: number;
   /** Reeds are kept this far back from it (metres), so that it can be seen for them. */
   clearing?: number;
+  /**
+   * A made model's own colours shine by this much by day. For a thing whose seen side is turned from the sky (a
+   * hull heeled toward the eye): it gets a third of the sky's light and reads as a hole in the picture without it.
+   */
+  fill?: number;
 }
 
 /** Mara's packet box: a lidded sea crate on short legs, a scale pan on the lid, her pennant on a pole. */
@@ -220,7 +227,7 @@ const SPECS: Record<string, Spec> = {
   crate: { asset: 'crate', standIn: crate },
   barrel: { asset: 'barrel', standIn: barrel },
   tackleBox: { asset: 'tackleBox', standIn: tackleBox },
-  puffinWreck: { asset: 'puffinWreck', standIn: puffinWreck, aground: 0.2, clearing: 4.6 },
+  puffinWreck: { asset: 'puffinWreck', standIn: puffinWreck, aground: 0.2, clearing: 4.6, fill: 0.22 },
 };
 export const PROP_MODELS = Object.keys(SPECS);
 /** How far reeds are kept back from a prop of this kind, if at all. */
@@ -235,13 +242,20 @@ export function buildProp(model: string): PropBuild | null {
   if (made) {
     // Lamps and lit windows get a material of their own, so this copy can be turned up and down.
     const glass = new Map<MeshStandardMaterial, MeshStandardMaterial>();
+    const lit = new Map<MeshStandardMaterial, MeshStandardMaterial>();
     made.traverse((o) => {
       const m = o as Mesh, mat = m.material as MeshStandardMaterial;
-      if (!m.isMesh || mat.name !== 'Glass') return;
+      if (!m.isMesh) return;
+      if (mat.name !== 'Glass') {
+        if (!spec.fill || !mat.map) return;
+        if (!lit.has(mat)) { const own = mat.clone(); own.emissiveMap = own.map; own.emissive = new Color(1, 1, 1); own.emissiveIntensity = spec.fill; lit.set(mat, own); }
+        m.material = lit.get(mat)!;
+        return;
+      }
       if (!glass.has(mat)) glass.set(mat, mat.clone());
       m.material = glass.get(mat)!;
     });
-    return { object: made, mats: [], glass: [...glass.values()], pennant: made.getObjectByName('Pennant') ?? null, vane: made.getObjectByName('Vane') ?? null, lamp, aground: spec.aground ?? null };
+    return { object: made, mats: [], glass: [...glass.values()], fill: [...lit.values()].map((mat) => ({ mat, k: spec.fill! })), pennant: made.getObjectByName('Pennant') ?? null, vane: made.getObjectByName('Vane') ?? null, lamp, aground: spec.aground ?? null };
   }
   const g = new Group(), mat = createPropMaterial();
   let pennant: Object3D | null = null;
@@ -252,5 +266,5 @@ export function buildProp(model: string): PropBuild | null {
     if (part.name) { m.name = part.name; if (part.name === 'Pennant') pennant = m; }
     g.add(m);
   }
-  return { object: g, mats: [mat], glass: [], pennant, vane: null, lamp, aground: spec.aground ?? null };
+  return { object: g, mats: [mat], glass: [], fill: [], pennant, vane: null, lamp, aground: spec.aground ?? null };
 }
