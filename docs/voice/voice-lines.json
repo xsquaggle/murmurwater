@@ -1,5 +1,5 @@
 {
-  "count": 142,
+  "count": 173,
   "lines": [
     {
       "key": "mara/hb-01-salt.intro.0",
@@ -488,6 +488,69 @@
       "hash": "b5ce8b7f"
     },
     {
+      "key": "wick/hb-s1-cat.intro.0",
+      "file": "public/audio/voice/wick/hb-s1-cat.intro.0.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "Biscuit isn't anybody's. I asked. She said she'd think about it if there was fish.",
+      "hash": "a2a65e34"
+    },
+    {
+      "key": "wick/hb-s1-cat.intro.1",
+      "file": "public/audio/voice/wick/hb-s1-cat.intro.1.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "She wants one of each. A butterperch, a pebble goby and a coral snapper. The ones off her own dock. I drew them so you'd know. She sat on the drawing.",
+      "hash": "a657c036"
+    },
+    {
+      "key": "wick/hb-s1-cat.intro.2",
+      "file": "public/audio/voice/wick/hb-s1-cat.intro.2.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "She keeps looking at your boat. She's never been on a boat. I think she's been on yours, though. Before.",
+      "hash": "2a84c968"
+    },
+    {
+      "key": "wick/hb-s1-cat.reminder",
+      "file": "public/audio/voice/wick/hb-s1-cat.reminder.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "One of each! Butterperch, pebble goby, coral snapper. Off the dock. She's counting. She can count to three.",
+      "hash": "b0a0b9a3"
+    },
+    {
+      "key": "wick/hb-s1-cat.outro.0",
+      "file": "public/audio/voice/wick/hb-s1-cat.outro.0.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "She ate the butterperch first. That means yes. The goby's for later and the snapper's for looking at.",
+      "hash": "828bbceb"
+    },
+    {
+      "key": "wick/hb-s1-cat.outro.1",
+      "file": "public/audio/voice/wick/hb-s1-cat.outro.1.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "She's your boat's cat now. When the boat's stopped she'll hook fish out for you. She eats some. That's her wages.",
+      "hash": "3f74aa8c"
+    },
+    {
+      "key": "wick/hb-s1-cat.outro.2",
+      "file": "public/audio/voice/wick/hb-s1-cat.outro.2.mp3",
+      "npc": "wick",
+      "speaker": "Wick",
+      "voiceStyle": "excited young child, quick and breathless",
+      "text": "Watch her tail when you're fishing. It goes before the float does. She knows already. She always knows already.",
+      "hash": "38cc7f39"
+    },
+    {
       "key": "pell/hb-09-bell.intro.0",
       "file": "public/audio/voice/pell/hb-09-bell.intro.0.mp3",
       "npc": "pell",
@@ -740,6 +803,60 @@
       "hash": "510c98ff"
     },
     {
+      "key": "pell/hb-13-refit.intro.0",
+      "file": "public/audio/voice/pell/hb-13-refit.intro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "She wants a mast, a suit of sails and a great deal of paint. I want forty thousand. One of us will be disappointed, and it won't be her.",
+      "hash": "65a32d87"
+    },
+    {
+      "key": "pell/hb-13-refit.intro.1",
+      "file": "public/audio/voice/pell/hb-13-refit.intro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "She'll carry more than the skiff and go quicker, and there's room aboard for two besides you. She draws more water, mind. The reeds will tell you where.",
+      "hash": "074f164c"
+    },
+    {
+      "key": "pell/hb-13-refit.reminder",
+      "file": "public/audio/voice/pell/hb-13-refit.reminder.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Forty thousand for the Puffin. Ask me about the boatyard. The skiff stays yours. I'll mind whichever you're not sailing.",
+      "hash": "7564cecc"
+    },
+    {
+      "key": "pell/hb-13-refit.outro.0",
+      "file": "public/audio/voice/pell/hb-13-refit.outro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "There. She floats. She's a little surprised, I think. So am I.",
+      "hash": "9f856fea"
+    },
+    {
+      "key": "pell/hb-13-refit.outro.1",
+      "file": "public/audio/voice/pell/hb-13-refit.outro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "I put the moorhen's nest back on the bar. She watched me do it. She'll be telling the reeds.",
+      "hash": "a9367def"
+    },
+    {
+      "key": "pell/hb-13-refit.outro.2",
+      "file": "public/audio/voice/pell/hb-13-refit.outro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "My brother's name is on the tiller still, underneath. Don't sand it. I can't read it either.",
+      "hash": "9bfc748d"
+    },
+    {
       "key": "calloway/fen-01-scale.intro.0",
       "file": "public/audio/voice/calloway/fen-01-scale.intro.0.mp3",
       "npc": "calloway",
@@ -902,6 +1019,69 @@
       "hash": "769ab543"
     },
     {
+      "key": "calloway/fen-03b-wreck.intro.0",
+      "file": "public/audio/voice/calloway/fen-03b-wreck.intro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "While you were at the stake, did you see a boat? West of it, on the flats. A fat little sloop with her mast down. I take bearings off her.",
+      "hash": "bc8d39ac"
+    },
+    {
+      "key": "calloway/fen-03b-wreck.intro.1",
+      "file": "public/audio/voice/calloway/fen-03b-wreck.intro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "She has PUFFIN on the transom and a moorhen in the cockpit. She has not moved in my time, which is more than I can say for the fen.",
+      "hash": "0998e8ec"
+    },
+    {
+      "key": "calloway/fen-03b-wreck.intro.2",
+      "file": "public/audio/voice/calloway/fen-03b-wreck.intro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Your ferryman would know whose she was. Look her over, and ask him. I should like one thing out here to have an explanation.",
+      "hash": "67a0d937"
+    },
+    {
+      "key": "calloway/fen-03b-wreck.reminder",
+      "file": "public/audio/voice/calloway/fen-03b-wreck.reminder.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The sloop on the flats, west of my stake in the Reed Maze. Bring the skiff alongside and look her over. Then ask your ferryman.",
+      "hash": "3c1e9d80"
+    },
+    {
+      "key": "pell/fen-03b-wreck.outro.0",
+      "file": "public/audio/voice/pell/fen-03b-wreck.outro.0.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "The Puffin. My brother's. He took her into the Fen for eels the autumn the fog came down, and he walked home. He never said how.",
+      "hash": "aec0227a"
+    },
+    {
+      "key": "pell/fen-03b-wreck.outro.1",
+      "file": "public/audio/voice/pell/fen-03b-wreck.outro.1.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "A moorhen in the cockpit? Good. They won't nest in a boat that's finished. I can float her off and fit her out.",
+      "hash": "013db8ef"
+    },
+    {
+      "key": "pell/fen-03b-wreck.outro.2",
+      "file": "public/audio/voice/pell/fen-03b-wreck.outro.2.mp3",
+      "npc": "pell",
+      "speaker": "Pell",
+      "voiceStyle": "very old, slow, gentle man; deep, dry, a little amused",
+      "text": "Forty thousand, and that's a brother's price. Ask me about the boatyard. I haven't got one. I shall have by the time you ask.",
+      "hash": "22ed7286"
+    },
+    {
       "key": "calloway/fen-04-glows.intro.0",
       "file": "public/audio/voice/calloway/fen-04-glows.intro.0.mp3",
       "npc": "calloway",
@@ -1062,6 +1242,69 @@
       "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
       "text": "And if something with no eyes comes up by the post at night, don't tell me how big it was. I shan't be able to stop myself.",
       "hash": "e02981b8"
+    },
+    {
+      "key": "calloway/fen-s1-gentleman.intro.0",
+      "file": "public/audio/voice/calloway/fen-s1-gentleman.intro.0.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "There is a gentleman on the sea-road. By the eighth light out from this end, standing on the water, with a bag. I have counted him four nights running.",
+      "hash": "7e778dba"
+    },
+    {
+      "key": "calloway/fen-s1-gentleman.intro.1",
+      "file": "public/audio/voice/calloway/fen-s1-gentleman.intro.1.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "He is waiting for the packet. I had not the heart to tell him, and I rather think he would not hear it. He is mostly fog.",
+      "hash": "c187c882"
+    },
+    {
+      "key": "calloway/fen-s1-gentleman.intro.2",
+      "file": "public/audio/voice/calloway/fen-s1-gentleman.intro.2.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "Offer him a berth, would you? One of his own. He will not sit where a cat has sat. He was most particular, and I have not got a cat.",
+      "hash": "7137ce8d"
+    },
+    {
+      "key": "calloway/fen-s1-gentleman.reminder",
+      "file": "public/audio/voice/calloway/fen-s1-gentleman.reminder.mp3",
+      "npc": "calloway",
+      "speaker": "Dr. Ines Calloway",
+      "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
+      "text": "The eighth light out along the sea-road, on your right hand as you leave. He wants a berth of his own. He was most particular.",
+      "hash": "f4f5ba31"
+    },
+    {
+      "key": "hollis/fen-s1-gentleman.outro.0",
+      "file": "public/audio/voice/hollis/fen-s1-gentleman.outro.0.mp3",
+      "npc": "hollis",
+      "speaker": "Mister Hollis",
+      "voiceStyle": "elderly gentleman, slow and courteous, soft and a little far away, as if heard through fog",
+      "text": "Good evening. You are not the packet. No. But you have a seat, and I have been standing some time.",
+      "hash": "85e82d21"
+    },
+    {
+      "key": "hollis/fen-s1-gentleman.outro.1",
+      "file": "public/audio/voice/hollis/fen-s1-gentleman.outro.1.mp3",
+      "npc": "hollis",
+      "speaker": "Mister Hollis",
+      "voiceStyle": "elderly gentleman, slow and courteous, soft and a little far away, as if heard through fog",
+      "text": "Hollis. I shall pay my passage in fish, if fish are acceptable. I keep a line in the bag. After dark, you understand. By day I am not at my best.",
+      "hash": "99827661"
+    },
+    {
+      "key": "hollis/fen-s1-gentleman.outro.2",
+      "file": "public/audio/voice/hollis/fen-s1-gentleman.outro.2.mp3",
+      "npc": "hollis",
+      "speaker": "Mister Hollis",
+      "voiceStyle": "elderly gentleman, slow and courteous, soft and a little far away, as if heard through fog",
+      "text": "Pray do not trouble about the hour. It was a quarter past when I arrived, and I see it is a quarter past still.",
+      "hash": "f983e124"
     },
     {
       "key": "mara/bark.0",
@@ -1278,6 +1521,42 @@
       "voiceStyle": "brisk, cheerful, practical woman in her forties; clipped, precise, quick to laugh",
       "text": "My notebook has your catches in it, dated next week. I shall assume I was being optimistic.",
       "hash": "940dff78"
+    },
+    {
+      "key": "hollis/bark.0",
+      "file": "public/audio/voice/hollis/bark.0.mp3",
+      "npc": "hollis",
+      "speaker": "Mister Hollis",
+      "voiceStyle": "elderly gentleman, slow and courteous, soft and a little far away, as if heard through fog",
+      "text": "Good evening. I am waiting for the packet. She is a little behind her time. Forty years, I am told, but one does not like to fuss.",
+      "hash": "08642a99"
+    },
+    {
+      "key": "hollis/bark.1",
+      "file": "public/audio/voice/hollis/bark.1.mp3",
+      "npc": "hollis",
+      "speaker": "Mister Hollis",
+      "voiceStyle": "elderly gentleman, slow and courteous, soft and a little far away, as if heard through fog",
+      "text": "I should be glad of a seat, when there is one going. I do not take up much room. Less by day.",
+      "hash": "2b0900b0"
+    },
+    {
+      "key": "hollis/bark.2",
+      "file": "public/audio/voice/hollis/bark.2.mp3",
+      "npc": "hollis",
+      "speaker": "Mister Hollis",
+      "voiceStyle": "elderly gentleman, slow and courteous, soft and a little far away, as if heard through fog",
+      "text": "Is that the packet's light? No. It is yours. Forgive me. One hopes.",
+      "hash": "1ac06ab1"
+    },
+    {
+      "key": "hollis/turned.0",
+      "file": "public/audio/voice/hollis/turned.0.mp3",
+      "npc": "hollis",
+      "speaker": "Mister Hollis",
+      "voiceStyle": "elderly gentleman, slow and courteous, soft and a little far away, as if heard through fog",
+      "text": "Have we been introduced? I feel sure I have declined your kind offer before. More than once. How tiresome for you.",
+      "hash": "d001e385"
     }
   ]
 }
