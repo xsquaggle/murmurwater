@@ -33,6 +33,12 @@ PACKS = {   # path prefix -> (short name, title, author, page)
     'oga/crickets-ambient-noise-loopable/': ('wolfgang-crickets', 'Crickets Ambient Noise - loopable', 'Wolfgang_', OGA + 'crickets-ambient-noise-loopable'),
     'oga/ambient-bird-sounds/': ('isaiah658-birds', 'Ambient Bird Sounds', 'isaiah658', OGA + 'ambient-bird-sounds'),
     'oga/sack-of-gold/': ('amarikah-gold', 'Sack of Gold', 'Amarikah', OGA + 'sack-of-gold'),
+    'oga/68-workshop-sounds/': ('bart-workshop', '68 Workshop Sounds', 'bart', OGA + '68-workshop-sounds'),
+    'oga/saw-or-wood-impact/': ('starninjas-saw', 'Saw or Wood Impact', 'StarNinjas', OGA + 'saw-or-wood-impact'),
+    'oga/7-eating-crunches/': ('starninjas-crunch', '7 Eating Crunches', 'StarNinjas', OGA + '7-eating-crunches'),
+    'oga/ghost-breath/': ('qubodup-breath', 'Ghost breath', 'qubodup', OGA + 'ghost-breath'),
+    'oga/fabric-rustling/': ('glaucus-fabric', 'Fabric Rustling', 'Iochi Glaucus', OGA + 'fabric-rustling'),
+    'oga/thwack-sounds/': ('antumdeluge-thwack', 'Thwack Sounds', 'AntumDeluge', OGA + 'thwack-sounds'),
 }
 BAM = 'oga/swish-bamboo-stick-weapon-swhoshes/swoshes.x/swosh-%02d.flac'
 FISH = 'oga/fisheefects/FisheefectsComplete.x/'
@@ -266,4 +272,8 @@ def build(B):
     # ---- Mossglass Fen: eight sounds and two ambience loops, in sfx_fen.py ----
     import sfx_fen
     sfx_fen.build(B, add, label, dict(DROPS=DROPS, DRIP=DRIP, FLAME=FLAME, KR=KR, WM=WM, TREE=TREE, SKIP=SKIP, EZWA=EZWA, murmur=murmur))
+
+    # ---- hands aboard: ten sounds for the crew, Pell's boatyard and the Puffin's sail, in sfx_crew.py ----
+    import sfx_crew
+    sfx_crew.build(B, add, label, dict(DROPS=DROPS, DRIP=DRIP, KR=KR, WM=WM, TREE=TREE, SKIP=SKIP, EZWA=EZWA, CAT=CAT, TK=TK, MIR=MIR))
     return items

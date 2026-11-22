@@ -197,6 +197,28 @@
    ]
   ]
  },
+ "boatyard_1.ogg": {
+  "rank": 1,
+  "top": "boatyard",
+  "tags": [
+   [
+    "Wood",
+    0.18
+   ],
+   [
+    "Sound effect",
+    0.07
+   ],
+   [
+    "Sawing",
+    0.05
+   ],
+   [
+    "Rub",
+    0.04
+   ]
+  ]
+ },
  "bobber-plop_1.ogg": {
   "rank": 1,
   "top": "bobber-plop",
@@ -348,6 +370,72 @@
    [
     "Zipper (clothing)",
     0.03
+   ]
+  ]
+ },
+ "cat-catch_1.ogg": {
+  "rank": 11,
+  "top": "pot-set",
+  "tags": [
+   [
+    "Cat",
+    0.58
+   ],
+   [
+    "Meow",
+    0.52
+   ],
+   [
+    "Domestic animals, pets",
+    0.38
+   ],
+   [
+    "Animal",
+    0.26
+   ]
+  ]
+ },
+ "cat-catch_2.ogg": {
+  "rank": 3,
+  "top": "cat-meow",
+  "tags": [
+   [
+    "Cat",
+    0.78
+   ],
+   [
+    "Domestic animals, pets",
+    0.72
+   ],
+   [
+    "Meow",
+    0.71
+   ],
+   [
+    "Animal",
+    0.59
+   ]
+  ]
+ },
+ "cat-eat_1.ogg": {
+  "rank": 1,
+  "top": "cat-eat",
+  "tags": [
+   [
+    "Crunch",
+    0.75
+   ],
+   [
+    "Sound effect",
+    0.08
+   ],
+   [
+    "Biting",
+    0.06
+   ],
+   [
+    "Chewing, mastication",
+    0.04
    ]
   ]
  },
@@ -637,6 +725,28 @@
    ]
   ]
  },
+ "crew-basket-full_1.ogg": {
+  "rank": 3,
+  "top": "chest-open",
+  "tags": [
+   [
+    "Knock",
+    0.5
+   ],
+   [
+    "Sound effect",
+    0.17
+   ],
+   [
+    "Door",
+    0.03
+   ],
+   [
+    "Music",
+    0.02
+   ]
+  ]
+ },
  "dock-creak_1.ogg": {
   "rank": 1,
   "top": "dock-creak",
@@ -770,8 +880,8 @@
   ]
  },
  "fen-night_1.ogg": {
-  "rank": 2,
-  "top": "fen-day",
+  "rank": 1,
+  "top": "fen-night",
   "tags": [
    [
     "Insect",
@@ -1011,6 +1121,94 @@
    ]
   ]
  },
+ "hollis-catch_1.ogg": {
+  "rank": 4,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Sound effect",
+    0.35
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.13
+   ],
+   [
+    "Speech",
+    0.03
+   ],
+   [
+    "Music",
+    0.02
+   ]
+  ]
+ },
+ "hollis-catch_2.ogg": {
+  "rank": 3,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Sound effect",
+    0.15
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.15
+   ],
+   [
+    "Sigh",
+    0.07
+   ],
+   [
+    "Scrape",
+    0.04
+   ]
+  ]
+ },
+ "hollis-thick_1.ogg": {
+  "rank": 3,
+  "top": "dock-creak",
+  "tags": [
+   [
+    "Sound effect",
+    0.51
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.25
+   ],
+   [
+    "Breathing",
+    0.21
+   ],
+   [
+    "Snort",
+    0.1
+   ]
+  ]
+ },
+ "hollis-thin_1.ogg": {
+  "rank": 1,
+  "top": "hollis-thin",
+  "tags": [
+   [
+    "Sound effect",
+    0.24
+   ],
+   [
+    "Breathing",
+    0.13
+   ],
+   [
+    "Gasp",
+    0.13
+   ],
+   [
+    "Snort",
+    0.13
+   ]
+  ]
+ },
  "hook-set_1.ogg": {
   "rank": 2,
   "top": "cast-swish",
@@ -1078,7 +1276,7 @@
   ]
  },
  "hull-wash_1.ogg": {
-  "rank": 11,
+  "rank": 12,
   "top": "oars",
   "tags": [
    [
@@ -1320,7 +1518,7 @@
   ]
  },
  "line-snap_2.ogg": {
-  "rank": 27,
+  "rank": 32,
   "top": "cast-swish",
   "tags": [
    [
@@ -1342,7 +1540,7 @@
   ]
  },
  "line-snap_3.ogg": {
-  "rank": 32,
+  "rank": 37,
   "top": "cast-swish",
   "tags": [
    [
@@ -2002,8 +2200,8 @@
   ]
  },
  "sail-flap_1.ogg": {
-  "rank": 1,
-  "top": "sail-flap",
+  "rank": 2,
+  "top": "sloop-sail",
   "tags": [
    [
     "Wind noise (microphone)",
@@ -2024,8 +2222,8 @@
   ]
  },
  "sail-flap_2.ogg": {
-  "rank": 3,
-  "top": "lamp-ignite",
+  "rank": 4,
+  "top": "sloop-sail",
   "tags": [
    [
     "Wind noise (microphone)",
@@ -2046,8 +2244,8 @@
   ]
  },
  "sail-flap_3.ogg": {
-  "rank": 1,
-  "top": "sail-flap",
+  "rank": 2,
+  "top": "sloop-sail",
   "tags": [
    [
     "Sliding door",
@@ -2130,6 +2328,28 @@
    [
     "Ding-dong",
     0.01
+   ]
+  ]
+ },
+ "sloop-sail_1.ogg": {
+  "rank": 2,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Door",
+    0.17
+   ],
+   [
+    "Slam",
+    0.11
+   ],
+   [
+    "Sliding door",
+    0.07
+   ],
+   [
+    "Whack, thwack",
+    0.03
    ]
   ]
  },
@@ -2398,7 +2618,7 @@
   ]
  },
  "step-wood_1.ogg": {
-  "rank": 3,
+  "rank": 4,
   "top": "boat-board",
   "tags": [
    [
@@ -2442,7 +2662,7 @@
   ]
  },
  "step-wood_3.ogg": {
-  "rank": 6,
+  "rank": 7,
   "top": "cast-swish",
   "tags": [
    [
@@ -2464,7 +2684,7 @@
   ]
  },
  "step-wood_4.ogg": {
-  "rank": 4,
+  "rank": 5,
   "top": "ui-click",
   "tags": [
    [

@@ -2996,5 +2996,488 @@
   "loud100_db": -17.4,
   "bytes": 364905,
   "rotated": 0
+ },
+ {
+  "name": "hollis-catch_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "glaucus-fabric",
+    "file": "rustling.ogg",
+    "cut": [
+     18.55,
+     19.42
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "drawKnife2.ogg",
+    "speed": 0.6
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     5.0,
+     5.45
+    ]
+   },
+   {
+    "kind": "synth",
+    "what": "one low breathy note (D3) on \"ah\", 0.9 s long from 0.52 s, sagging a semitone as it goes: three voices a few cents apart, each a stack of harmonics that falls away fast under the three formants of a mouth opening from \"uh\" to \"ah\", with a slow vibrato and a pitch that wanders a few cents, and noise through the same formants for their breath, which starts 90 ms before the tone; the top taken off by distance, and a diffuse tail"
+   }
+  ],
+  "how": "cloth rubbed, with a knife drawn from its sheath played at a little over half speed under it, for the line through a mitten; one recorded drop; the note is synthesised in sfx_crew.py, on the notes of the murmur",
+  "file": "hollis-catch_1.ogg",
+  "seconds": 1.654,
+  "samples": 72941,
+  "decoded": 72941,
+  "peak_db": -5.5,
+  "loud100_db": -17.0,
+  "bytes": 14817
+ },
+ {
+  "name": "hollis-catch_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "glaucus-fabric",
+    "file": "rustling.ogg",
+    "cut": [
+     17.46,
+     18.01
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "drawKnife1.ogg",
+    "speed": 0.55
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     1.99,
+     2.3
+    ],
+    "speed": 0.92
+   },
+   {
+    "kind": "synth",
+    "what": "one low breathy note (A2) on \"ah\", 0.9 s long from 0.52 s, sagging a semitone as it goes: three voices a few cents apart, each a stack of harmonics that falls away fast under the three formants of a mouth opening from \"uh\" to \"ah\", with a slow vibrato and a pitch that wanders a few cents, and noise through the same formants for their breath, which starts 90 ms before the tone; the top taken off by distance, and a diffuse tail"
+   }
+  ],
+  "how": "cloth rubbed, with a knife drawn from its sheath played at a little over half speed under it, for the line through a mitten; one recorded drop; the note is synthesised in sfx_crew.py, on the notes of the murmur",
+  "file": "hollis-catch_2.ogg",
+  "seconds": 1.654,
+  "samples": 72941,
+  "decoded": 72941,
+  "peak_db": -6.6,
+  "loud100_db": -17.0,
+  "bytes": 14050
+ },
+ {
+  "name": "hollis-thin_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-breath",
+    "file": "ghostbreath.flac",
+    "cut": [
+     0.2,
+     2.7
+    ]
+   },
+   {
+    "kind": "synth",
+    "what": "one breathy note on \"ah\" that sinks a fourth, D3 to A2, as it fades: three voices a few cents apart, each a stack of harmonics that falls away fast under the three formants of a mouth opening from \"uh\" to \"ah\", with a slow vibrato and a pitch that wanders a few cents, and noise through the same formants for their breath, which starts 90 ms before the tone; the top taken off by distance, and a diffuse tail"
+   }
+  ],
+  "how": "a recorded breath out; under it the note, there at once, falling away for two seconds and sinking a fourth as it goes; synthesised in sfx_crew.py",
+  "file": "hollis-thin_1.ogg",
+  "seconds": 2.754,
+  "samples": 121451,
+  "decoded": 121451,
+  "peak_db": -6.6,
+  "loud100_db": -17.1,
+  "bytes": 23933
+ },
+ {
+  "name": "hollis-thick_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "qubodup-breath",
+    "file": "ghostbreath.flac",
+    "cut": [
+     0.12,
+     2.02
+    ]
+   },
+   {
+    "kind": "synth",
+    "what": "one breathy note on \"ah\" (D3) that comes up a tone into its pitch as it arrives: three voices a few cents apart, each a stack of harmonics that falls away fast under the three formants of a mouth opening from \"uh\" to \"ah\", with a slow vibrato and a pitch that wanders a few cents, and noise through the same formants for their breath, which starts 90 ms before the tone; the top taken off by distance, and a diffuse tail"
+   }
+  ],
+  "how": "the same recorded breath played backwards with everything below 500 Hz taken off, so it swells and stops like a breath in; the note comes as the breath ends, in half a second, and is let go; synthesised in sfx_crew.py",
+  "file": "hollis-thick_1.ogg",
+  "seconds": 2.754,
+  "samples": 121451,
+  "decoded": 121451,
+  "peak_db": -6.6,
+  "loud100_db": -17.0,
+  "bytes": 23571
+ },
+ {
+  "name": "cat-catch_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "transitking",
+    "file": "wave_04_cc0-11505__transitking__wavesound.flac",
+    "cut": [
+     0,
+     0.5
+    ],
+    "speed": 1.4
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge-thwack",
+    "file": "thwack-01.wav"
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_hit_05.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "waterReentry.wav",
+    "speed": 1.4
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge-thwack",
+    "file": "thwack-01.wav",
+    "speed": 1.15
+   },
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "water.wav",
+    "speed": 1.6
+   },
+   {
+    "kind": "generated",
+    "name": "cat-meow.p",
+    "job": "26e620ba-b2bd-43ad-b370-15a7b07c66b9",
+    "cut": [
+     0.41,
+     0.9
+    ],
+    "speed": 1.25
+   }
+  ],
+  "how": "a short splash played faster, so it is small; two soft slaps, each over a knock on wood with water on it, the second smaller; then a meow cut short or played faster, so it is a quick mew",
+  "file": "cat-catch_1.ogg",
+  "seconds": 0.955,
+  "samples": 42115,
+  "decoded": 41987,
+  "peak_db": -8.3,
+  "loud100_db": -21.4,
+  "bytes": 14682
+ },
+ {
+  "name": "cat-catch_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "ezwa",
+    "file": "water_splash-02.flac",
+    "speed": 1.35
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge-thwack",
+    "file": "thwack-01.wav",
+    "speed": 0.9
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_hit_05.ogg"
+   },
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "water.wav",
+    "speed": 1.4
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge-thwack",
+    "file": "thwack-01.wav",
+    "speed": 1.1
+   },
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "waterReentry.wav",
+    "speed": 1.6
+   },
+   {
+    "kind": "generated",
+    "name": "cat-meow.b",
+    "job": "3f4685ab-edf7-4e85-b2ab-8ccf2a20e86b",
+    "cut": [
+     0.42,
+     1.04
+    ],
+    "speed": 1.5
+   }
+  ],
+  "how": "a short splash played faster, so it is small; two soft slaps, each over a knock on wood with water on it, the second smaller; then a meow cut short or played faster, so it is a quick mew",
+  "file": "cat-catch_2.ogg",
+  "seconds": 0.93,
+  "samples": 41028,
+  "decoded": 42048,
+  "peak_db": -2.2,
+  "loud100_db": -21.4,
+  "bytes": 15227
+ },
+ {
+  "name": "cat-eat_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kerzoven",
+    "file": "cat_purractive_loop.wav",
+    "cut": [
+     1.0,
+     3.1
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "starninjas-crunch",
+    "file": "crunch.3.ogg",
+    "speed": 1.25
+   },
+   {
+    "kind": "cc0",
+    "pack": "starninjas-crunch",
+    "file": "crunch.5.ogg",
+    "speed": 1.45
+   },
+   {
+    "kind": "cc0",
+    "pack": "starninjas-crunch",
+    "file": "crunch.3.ogg",
+    "speed": 1.4
+   },
+   {
+    "kind": "cc0",
+    "pack": "starninjas-crunch",
+    "file": "crunch.6.ogg",
+    "speed": 1.5
+   },
+   {
+    "kind": "cc0",
+    "pack": "starninjas-crunch",
+    "file": "crunch.5.ogg",
+    "speed": 1.6
+   }
+  ],
+  "how": "five recorded bites played a quarter to a half faster with everything below 500 Hz taken off, so they are small, a third of a second apart, over two seconds of purr",
+  "file": "cat-eat_1.ogg",
+  "seconds": 2.104,
+  "samples": 92786,
+  "decoded": 92786,
+  "peak_db": -1.6,
+  "loud100_db": -23.6,
+  "bytes": 32204
+ },
+ {
+  "name": "crew-basket-full_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak2.ogg",
+    "speed": 1.3
+   },
+   {
+    "kind": "cc0",
+    "pack": "starninjas-crunch",
+    "file": "crunch.7.ogg",
+    "cut": [
+     0,
+     0.45
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-workshop",
+    "file": "workshop - wood on wood thuds.wav",
+    "cut": [
+     0.36,
+     0.68
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-workshop",
+    "file": "workshop - wood on wood thuds.wav",
+    "cut": [
+     0.91,
+     1.18
+    ]
+   }
+  ],
+  "how": "two squeaks of a creak played faster, so it is light, with a crackle on it for the wicker; then two knocks of wood on wood, the second a little softer",
+  "file": "crew-basket-full_1.ogg",
+  "seconds": 0.924,
+  "samples": 40748,
+  "decoded": 41664,
+  "peak_db": -1.8,
+  "loud100_db": -17.2,
+  "bytes": 14994
+ },
+ {
+  "name": "boatyard_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "bart-workshop",
+    "file": "workshop - wood hammering.wav",
+    "cut": [
+     0.95,
+     2.25
+    ],
+    "speed": 0.8
+   },
+   {
+    "kind": "cc0",
+    "pack": "starninjas-saw",
+    "file": "saw_-_starninjas_0.ogg",
+    "cut": [
+     0.24,
+     1.48
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-workshop",
+    "file": "workshop - scrapes.wav",
+    "cut": [
+     0.5,
+     1.4
+    ],
+    "speed": 1.4
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-workshop",
+    "file": "workshop - scrape5.wav",
+    "cut": [
+     0.9,
+     1.85
+    ],
+    "speed": 1.5
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-workshop",
+    "file": "workshop - scrapes.wav",
+    "cut": [
+     8.5,
+     9.4
+    ],
+    "speed": 0.8
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     0.08,
+     1.0
+    ],
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "transitking",
+    "file": "wave_01_cc0-11505__transitking__wavesound.flac",
+    "cut": [
+     0,
+     1.4
+    ],
+    "speed": 0.9
+   }
+  ],
+  "how": "three knocks of a hammer on wood played at 0.8 of their speed, so it is a mallet; three strokes of a hand saw; two scrapes of wood played faster, each swelling and stopping, for the plane; a heavier scrape and a creak, both played slower, for the hull starting down the slip, and a wave played a little slower as she takes the water",
+  "file": "boatyard_1.ogg",
+  "seconds": 5.94,
+  "samples": 261933,
+  "decoded": 261933,
+  "peak_db": -1.9,
+  "loud100_db": -17.0,
+  "bytes": 63329
+ },
+ {
+  "name": "sloop-sail_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "generated",
+    "name": "sail-flap.a",
+    "job": "50ddc212-e03b-4855-a199-86411c940cc9",
+    "cut": [
+     2.75,
+     3.55
+    ],
+    "speed": 0.72
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "cloth1.ogg",
+    "speed": 0.5
+   },
+   {
+    "kind": "generated",
+    "name": "dock-creak.c",
+    "job": "874e39b9-857f-4700-9699-dd73d86017cb",
+    "cut": [
+     1.95,
+     2.6
+    ],
+    "speed": 1.15
+   }
+  ],
+  "how": "a flap of cloth played at half speed, so it is a big sail filling with a thump, over the gust of the sail-flap take played at 0.72 of its speed; then a short wooden creak for the gaff jaws on the mast",
+  "file": "sloop-sail_1.ogg",
+  "seconds": 1.304,
+  "samples": 57506,
+  "decoded": 57506,
+  "peak_db": -3.8,
+  "loud100_db": -17.0,
+  "bytes": 15357
  }
 ]
