@@ -44,11 +44,9 @@ export const MODEL_PATHS = {
  * Models that have been asked for and may not be made yet (docs/briefs): used from the build after they land,
  * with nothing to change here, and not counted as missing meanwhile.
  */
-export const PENDING_MODELS: Record<string, string> = {
-  'npc:hollis': 'models/characters/hollis.glb',
-};
+export const PENDING_MODELS: Record<string, string> = {};
 /** Optional NPC models; each falls back to a procedural stand-in until its file exists. */
-export const NPC_MODEL_IDS = ['mara', 'pell', 'wick', 'calloway'];
+export const NPC_MODEL_IDS = ['mara', 'pell', 'wick', 'calloway', 'hollis'];
 export const FISH_MODEL_IDS = [
   'butterperch', 'pebble-goby', 'kettle-carp', 'coral-snapper', 'lampjaw', 'moss-eel', 'twofold-flounder', 'hollow-lantern', 'manyeye',
   'reedling', 'mudlark', 'glassfin', 'sedge-pike', 'mossback-tench', 'glowbelly', 'stilt-gar', 'bottomless-eel', 'old-mossglass', 'the-listener',

@@ -107,7 +107,7 @@ export class Hands {
         if (this.catBerth) this.flick(this.catBerth, c);
       }
     } else {
-      this.hollis?.pull(c.item ? makeFish(c.fishId, c.item.weight).obj : null);
+      this.hollis?.pull(c.item ? makeFish(c.fishId, c.item.weight) : null);
       if (gain > 0) g.audio.hollisCatch(gain);
       if (this.hollis && this.hollisBerth) { const [x, z] = this.hollis.lineEnd(); this.ring(this.hollisBerth, x, z, 0.8); }
     }

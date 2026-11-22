@@ -5,7 +5,7 @@
  * fishing, thinned out by daylight.
  */
 import {
-  AnimationAction, AnimationMixer, BoxGeometry, BufferAttribute, BufferGeometry, CapsuleGeometry, Color, ConeGeometry, CylinderGeometry, Group, Line, LineBasicMaterial, LoopOnce,
+  AnimationAction, AnimationMixer, Box3, BoxGeometry, BufferAttribute, BufferGeometry, CapsuleGeometry, Color, ConeGeometry, CylinderGeometry, Group, Line, LineBasicMaterial, LoopOnce,
   LoopRepeat, Material, Mesh, MeshStandardMaterial, Object3D, SphereGeometry, TorusGeometry, Vector3,
 } from 'three';
 import { assets } from './assets';
@@ -15,8 +15,7 @@ const flat = (hex: string, rough = 0.85) => new MeshStandardMaterial({ color: ne
 // ------------------------------------------------------------------ Mister Hollis
 
 /**
- * TEMPORARY stand-in for Mister Hollis (models/characters/hollis.glb is asked for in docs/briefs/crew-assets.md):
- * a tall narrow gentleman in an oilskin and sou'wester, mittens, a muffler and a carpet bag, with fog and two
+ * Stand-in for Mister Hollis, used only if models/characters/hollis.glb is not in the build: a tall narrow gentleman in an oilskin and sou'wester, mittens, a muffler and a carpet bag, with fog and two
  * small warm lights where a face would be. Origin at his feet, facing +Z. `seated` puts him on a seat 0.465 m
  * above his origin with the bag on his knees and one hand out for the line. `hand` is where the line leaves it.
  */
@@ -82,6 +81,29 @@ export function hollisStandIn(seated = false): { group: Group; body: Group; hand
   return { group: g, body, hand };
 }
 
+/** A 4 x 4 ordered dither, by the pixel: 16 even steps from 1/32 to 31/32. */
+const BAYER = `
+float hollisBayer(vec2 p) {
+  const float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+  ivec2 i = ivec2(mod(p, 4.0));
+  return (m[i.x + i.y * 4] + 0.5) / 16.0;
+}`;
+/**
+ * How he thins (`uThin` 0 = all there, 1 = thinned out by daylight): what faces the eye goes first and his edges
+ * last, so that what is left of him is his outline, in the colour of fog. Nothing is blended: each pixel of him is
+ * there or is not, so he is drawn with everything solid, in front of what is behind him and behind what is in
+ * front, and the boat's well (whose lid hides the sea from it) holds him like anybody else.
+ */
+const THIN = `
+if (uThin > 0.004) {
+  float hRim = 1.0 - abs(dot(normalize(vViewPosition), normal));
+  float hThere = mix(1.0, clamp(pow(hRim, 2.2) * 2.2, 0.05, 1.0), uThin);
+  if (hThere < hollisBayer(gl_FragCoord.xy)) discard;
+  const vec3 hFog = vec3(0.546, 0.497, 0.686);
+  diffuseColor.rgb = mix(diffuseColor.rgb, hFog, 0.5 * uThin);
+  totalEmissiveRadiance += hFog * 0.2 * uThin;
+}`;
+
 /**
  * Makes a figure of Mister Hollis (model or stand-in) into fog: its materials become its own, the `Fog` of the
  * face is made soft, and the returned function sets how much of him there is, 0 (an outline by daylight) to 1.
@@ -89,6 +111,7 @@ export function hollisStandIn(seated = false): { group: Group; body: Group; hand
 export function dressHollis(root: Object3D): (presence: number) => void {
   const mats: { m: MeshStandardMaterial; base: number; kind: 'main' | 'fog' | 'glass'; glow: number }[] = [];
   const own = new Map<Material, MeshStandardMaterial>();
+  const thin = { value: 0 };
   root.traverse((o) => {
     const mesh = o as Mesh;
     if (!mesh.isMesh) return;
@@ -99,6 +122,15 @@ export function dressHollis(root: Object3D): (presence: number) => void {
         const kind = src.name === 'Fog' ? 'fog' : src.name === 'Glass' ? 'glass' : 'main';
         if (kind === 'fog') { m.transparent = true; m.opacity = Math.min(m.opacity, 0.82); m.depthWrite = false; if (m.emissive.getHex() === 0) { m.emissive = new Color('#8C7FA6'); m.emissiveIntensity = 0.25; } }
         if (kind === 'glass' && m.emissive.getHex() === 0) m.emissive = new Color('#FFD9A0');
+        if (kind === 'main') {
+          m.onBeforeCompile = (shader) => {
+            shader.uniforms.uThin = thin;
+            shader.fragmentShader = shader.fragmentShader
+              .replace('#include <common>', `#include <common>\nuniform float uThin;${BAYER}`)
+              .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>${THIN}`);
+          };
+          m.customProgramCacheKey = () => 'hollis-thin';
+        }
         own.set(src, m);
         mats.push({ m, base: m.opacity, kind, glow: kind === 'glass' ? Math.max(2.2, m.emissiveIntensity) : m.emissiveIntensity });
       }
@@ -106,21 +138,19 @@ export function dressHollis(root: Object3D): (presence: number) => void {
     };
     mesh.material = Array.isArray(mesh.material) ? mesh.material.map(swap) : swap(mesh.material);
     mesh.userData.castWhenThick = mesh.castShadow;
+    // The fog of his face is blended, and the sea is drawn late (render order 5): his face is drawn after it.
+    if ((Array.isArray(mesh.material) ? mesh.material : [mesh.material]).some((m) => m.transparent)) mesh.renderOrder = 5.5;
   });
   let was = -1;
   return (presence: number) => {
     const p = Math.min(1, Math.max(0, presence));
     if (Math.abs(p - was) < 0.004) return;
     was = p;
-    const thin = p < 0.995;
+    thin.value = 1 - p;
     for (const x of mats) {
       // His lights are the last of him to go.
-      const a = x.kind === 'glass' ? 0.35 + 0.65 * p : 0.14 + 0.86 * p;
-      x.m.opacity = x.base * a;
-      x.m.transparent = thin || x.kind === 'fog' || x.base < 1;
-      x.m.depthWrite = !thin && x.kind !== 'fog';
-      if (x.kind === 'glass') x.m.emissiveIntensity = x.glow * (0.3 + 0.7 * p);
-      x.m.needsUpdate = true;
+      if (x.kind === 'fog') x.m.opacity = x.base * (0.35 + 0.65 * p);
+      else if (x.kind === 'glass') x.m.emissiveIntensity = x.glow * (0.5 + 0.5 * p);
     }
     // An outline casts no shadow.
     root.traverse((o) => { const mesh = o as Mesh; if (mesh.isMesh && mesh.userData.castWhenThick !== undefined) mesh.castShadow = mesh.userData.castWhenThick && p > 0.6; });
@@ -139,8 +169,10 @@ export class HollisAboard {
   private line: Line;
   private lineMat = new LineBasicMaterial({ color: new Color('#E8E2D0'), transparent: true, opacity: 0 });
   private pullT = 9; private t = Math.random() * 10;
-  private held: Object3D | null = null;
-  private v = new Vector3();
+  private held: { obj: Object3D; animate(t: number, swim: number): void; dispose(): void } | null = null;
+  /** How far out from his fist the line goes into the water: the made figure's fist is out over the rail. */
+  private reach = 0.3;
+  private v = new Vector3(); private box = new Box3();
 
   constructor() {
     const model = assets.instance('npc:hollis');
@@ -156,7 +188,7 @@ export class HollisAboard {
       this.hand = model.getObjectByName('LineHand') ?? model;
     } else {
       const s = hollisStandIn(true);
-      fig = s.group; this.body = s.body; this.hand = s.hand;
+      fig = s.group; this.body = s.body; this.hand = s.hand; this.reach = 0.75;
     }
     this.root.add(fig);
     this.setPresence = dressHollis(fig);
@@ -167,14 +199,22 @@ export class HollisAboard {
     this.root.add(this.line);
   }
 
-  /** A fish on his line: he draws it in hand over hand, and it is in his mitten for a moment (`fish` is shown there). */
-  pull(fish: Object3D | null) {
+  /**
+   * A fish on his line: he draws it in hand over hand and holds it up inboard for a moment. `fish` hangs under his
+   * fist by its mouth, flapping, and no bigger than a gentleman can hold up in one mitten.
+   */
+  pull(fish: { obj: Object3D; animate(t: number, swim: number): void; dispose(): void } | null) {
     this.pullT = 0;
     this.dropHeld();
-    if (fish) { this.held = fish; this.hand.add(fish); fish.position.set(0, -0.12, 0); fish.rotation.set(Math.PI / 2, 0, 0); }
+    if (fish) {
+      const len = this.box.setFromObject(fish.obj).getSize(this.v).z;
+      if (len > 0.36) fish.obj.scale.multiplyScalar(0.36 / len);
+      this.held = fish; this.hand.add(fish.obj);
+      fish.obj.position.set(0, -0.14, 0); fish.obj.rotation.set(-Math.PI / 2, 0, 0);
+    }
     if (this.pullAct) { this.pullAct.reset().play(); }
   }
-  private dropHeld() { this.held?.removeFromParent(); this.held = null; }
+  private dropHeld() { this.held?.dispose(); this.held = null; }
 
   /**
    * `thick`: 0 (thinned out by daylight) .. 1 (all there). `fishing`: his line is over the side. `waterY`: the
@@ -193,10 +233,12 @@ export class HollisAboard {
       this.body.rotation.x = -0.16 * k + 0.012 * Math.sin(this.t * 1.1);
       this.body.position.y = 0.01 * Math.sin(this.t * 1.4);
     }
-    // The fish is in his mitten until the pull is nearly done (the stand-in's pull is 1.6 s).
-    if (this.held && this.pullT > (this.pullAct ? this.pullAct.getClip().duration * 0.9 : 1.7)) this.dropHeld();
+    // The fish is on his line until he has held it up inboard (1.60 to 1.76 s of his `pull`), and then it is in the basket.
+    if (this.held && this.pullT > 1.72) this.dropHeld();
+    this.held?.animate(this.t, 0.8);
     // The line: from his hand out over the rail and down to the water, a little slack, twitching now and then.
-    const show = fishing && this.presence > 0.5 ? 1 : 0;
+    // While a fish hangs from his fist the line is in with it.
+    const show = fishing && this.presence > 0.5 && !this.held ? 1 : 0;
     this.lineMat.opacity += (show * 0.85 - this.lineMat.opacity) * Math.min(1, dt * 3);
     this.line.visible = this.lineMat.opacity > 0.02;
     if (this.line.visible) {
@@ -205,7 +247,7 @@ export class HollisAboard {
       const p = this.line.geometry.getAttribute('position') as BufferAttribute;
       const twitch = 0.02 * Math.sin(this.t * 2.3) * Math.sin(this.t * 0.7);
       p.setXYZ(0, h.x, h.y, h.z);
-      p.setXYZ(1, h.x * 0.6 + twitch, waterY, Math.max(1.05, h.z + 0.75));
+      p.setXYZ(1, h.x + (this.reach > 0.5 ? -0.4 * h.x : -0.06) + twitch, waterY, Math.max(this.reach > 0.5 ? 1.05 : 0, h.z + this.reach));
       p.needsUpdate = true;
     }
   }
