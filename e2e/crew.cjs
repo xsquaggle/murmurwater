@@ -3,7 +3,7 @@
 // fish from the skiff, looks the wreck over from the boat, pays Pell at his boatyard, sails the Puffin, takes
 // Mister Hollis off the sea-road, sees him fish after dark and not by day, fills the crew basket, sells it with
 // her own catch, and changes boats at the yard (which leaves Mister Hollis ashore: the skiff has one berth), and
-// then changes them six times more to see that nothing is left behind on the graphics card.
+// then changes them twelve times more to see that nothing is left behind on the graphics card.
 // Exits 1 on any failure. Usage: node e2e/crew.cjs [outdir]
 const { chromium } = require('playwright');
 (async () => {
@@ -199,13 +199,16 @@ const { chromium } = require('playwright');
 
   // 10. Changing boats again and again leaves nothing behind on the graphics card: the hull, her rig and the
   // hands' figures (their own materials, his line, their bones) are freed each time. One pair of changes first,
-  // so that anything made once and kept is already made.
+  // so that anything made once and kept is already made; then two rounds of six. Something else in the bay may
+  // be drawn for the first time during one round (a count that goes up once), but what is not freed goes up in both.
   r = await ev(() => { const g = window.__MW__.game;
     const mem = () => { for (let i = 0; i < 4; i++) g.presentOnce(1 / 30); const m = g.renderer.gl.info.memory; return [m.geometries, m.textures]; };
     const change = () => { window.crew.hub('pell', 'Talk to Pell'); window.bot.choose('About the boats'); g.simulate(0.2); [...document.querySelectorAll('.item.boat .btn')].find((b) => b.textContent === 'Take her out')?.click(); window.fog.wait(5); };
-    change(); change(); const before = mem(); for (let i = 0; i < 6; i++) change(); const after = mem();
-    return { before, after, rig: g.sailing.rig.boatId, berths: window.crew.berths() }; });
-  check(r.rig === 'puffin' && r.berths[0] > 0 && r.berths[1] > 0 && r.after[0] <= r.before[0] && r.after[1] <= r.before[1], `six more changes of boat leave nothing behind on the graphics card (geometries and textures: ${j(r.before)} before, ${j(r.after)} after)`);
+    const six = () => { for (let i = 0; i < 6; i++) change(); return mem(); };
+    change(); change(); const a = mem(), b = six(), c = six();
+    return { a, b, c, rig: g.sailing.rig.boatId, berths: window.crew.berths() }; });
+  const grew = (x, y) => y[0] > x[0] || y[1] > x[1];
+  check(r.rig === 'puffin' && r.berths[0] > 0 && r.berths[1] > 0 && !(grew(r.a, r.b) && grew(r.b, r.c)), `twelve more changes of boat leave nothing behind on the graphics card (geometries and textures: ${j(r.a)}, ${j(r.b)} after six, ${j(r.c)} after twelve)`);
 
   check(errors.length === 0, `no page errors (${errors.slice(0, 3).join(' | ')})`);
   await browser.close();
