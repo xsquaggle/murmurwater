@@ -7,7 +7,7 @@
  */
 import {
   BufferAttribute, BufferGeometry, Color, CylinderGeometry, DoubleSide, DynamicDrawUsage, Group, Mesh, MeshBasicMaterial,
-  AdditiveBlending, MeshStandardMaterial, Object3D, PointLight, Shape, ShapeGeometry, Sprite, SpriteMaterial, Vector3, BoxGeometry,
+  AdditiveBlending, MeshStandardMaterial, Object3D, PointLight, ShaderChunk, Shape, ShapeGeometry, Sprite, SpriteMaterial, Vector3, BoxGeometry,
 } from 'three';
 import { haloTexture } from './sea-road';
 import { Builder } from './builder';
@@ -26,6 +26,9 @@ const REST_RING = new Color(0.42, 0.46, 0.45), _ring = new Color();
 
 /** Hull outline at the gunwale, as [z, half-width] from stern to bow (measured from the skiff model). */
 const OUTLINE: [number, number][] = [[-1.86, 0.5], [-1.5, 0.74], [-1.0, 1.0], [-0.5, 1.06], [0, 1.08], [0.5, 1.07], [1.0, 0.92], [1.5, 0.68], [1.86, 0.34]];
+
+/** The most any one lamp may light a sail or its spars by (see where the sloop's cloth is given its own materials). */
+const NEAR_LAMP = 1.3;
 
 /**
  * An invisible lid just under the gunwale that writes depth only. It is drawn after the hull and before the
@@ -222,11 +225,12 @@ export interface BoatFit {
   /** A model's lamp panes (`Glass`), turned up after dark. */
   glass: MeshStandardMaterial[];
   /**
-   * Where the stern lantern's light is cast from, as an offset from the flame, and how bright (1 is the skiff's).
-   * The Puffin's lantern hangs a hand's breadth from her furled boom: cast from the flame itself it burns a white
-   * patch into the spar and leaves the cockpit dark.
+   * Where the stern lantern's light is cast from, as an offset from the flame (out from the centre line, up,
+   * forward), how bright (1 is the skiff's) and how fast it falls away with distance. The Puffin's lantern hangs a
+   * hand's breadth from her furled boom: cast from the flame itself it burns a white patch into the sail's roll
+   * and leaves the cockpit dark, so hers is cast from further off and falls away more slowly.
    */
-  lampOff: Spot; lampGain: number;
+  lampOff: Spot; lampGain: number; lampDecay: number;
 }
 
 function skiffFit(isModel: boolean): BoatFit {
@@ -252,7 +256,7 @@ function skiffFit(isModel: boolean): BoatFit {
     stem: [0, isModel ? 1.6 : 0.55, isModel ? 1.95 : 1.8],
     lantern: [0.25, isModel ? 1.85 : 0.9, -1.75],
     crew: [{ at: isModel ? [-0.56, 1.09, 0.5] : [-0.4, -0.11, 0.3], yaw: -Math.PI / 2 }],
-    lampOff: [0, 0, 0], lampGain: 1,
+    lampOff: [0, 0, 0], lampGain: 1, lampDecay: 1.6,
     bow: 1.8, stern: 1.55, side: 0.9, glass: [],
   };
 }
@@ -265,7 +269,7 @@ const PUFFIN_STANDIN: Omit<BoatFit, 'tiller' | 'glass'> = {
   mast: [0, -0.2, 0.95], sewn: [0, -0.3, 0.95], stem: [0, 0.15, 2.5], lantern: [0.3, 0.9, -2.3],
   crew: [{ at: [-0.3, -0.12, 1.5], yaw: -Math.PI / 2 }, { at: [0.5, -0.2, -0.2], yaw: Math.PI / 2 }],
   bow: 2.6, stern: 2.45, side: 0.95,
-  lampOff: [0.03, -0.25, 0.14], lampGain: 0.5,
+  lampOff: [0.2, -0.3, -0.15], lampGain: 0.34, lampDecay: 1,
 };
 
 /** Reads a hull model's named places. `hull` must be untouched: at the origin, facing +Z, not yet in a scene. */
@@ -290,7 +294,7 @@ function socketFit(hull: Object3D, like: Omit<BoatFit, 'tiller' | 'glass'>): Boa
     tiller: node('Tiller'), tillerSwing: like.tillerSwing,
     mast: at('MastStep', like.mast), sewn: at('MastStep', like.sewn), stem: at('BowStem', like.stem), lantern: at('Lantern', like.lantern),
     crew: like.crew.map((b, i) => berth(`Crew${i + 1}`, b)),
-    bow: like.bow, stern: like.stern, side: like.side, glass: [...glass.values()], lampOff: like.lampOff, lampGain: like.lampGain,
+    bow: like.bow, stern: like.stern, side: like.side, glass: [...glass.values()], lampOff: like.lampOff, lampGain: like.lampGain, lampDecay: like.lampDecay,
   };
 }
 
@@ -383,6 +387,15 @@ export class BoatRig {
           mat.emissiveMap = mat.map; mat.emissive = new Color(1, 1, 1); mat.emissiveIntensity = 0;
           // Canvas and oiled spars are matt: a lantern a yard off must not strike a white streak from them.
           mat.roughness = Math.max(mat.roughness, 0.94); mat.metalness = 0;
+          // And the furled boom swings to within a hand of the stern lantern, where a point light is many times
+          // brighter than in the cockpit it is there to light: on these, no lamp counts for more than `NEAR_LAMP`.
+          mat.onBeforeCompile = (shader) => {
+            shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_begin>', ShaderChunk.lights_fragment_begin.replace(
+              'getPointLightInfo( pointLight, geometryPosition, directLight );',
+              `getPointLightInfo( pointLight, geometryPosition, directLight );
+		directLight.color *= min( 1.0, ${NEAR_LAMP.toFixed(2)} / max( max( directLight.color.r, directLight.color.g ), max( directLight.color.b, 0.0001 ) ) );`));
+          };
+          mat.customProgramCacheKey = () => 'cloth-near-lamp';
           m.material = mat; this.clothGlow.push(mat);
         }
       }
@@ -406,7 +419,9 @@ export class BoatRig {
       this.root.add(rig);
     }
     // The stern lantern (the model has the lamp; this is its light).
-    this.lamp.position.set(fit.lantern[0] + fit.lampOff[0], fit.lantern[1] + fit.lampOff[1], fit.lantern[2] + fit.lampOff[2]);
+    // The offset's first number is away from the centre line, whichever side the lantern hangs.
+    this.lamp.position.set(fit.lantern[0] + Math.sign(fit.lantern[0] || 1) * fit.lampOff[0], fit.lantern[1] + fit.lampOff[1], fit.lantern[2] + fit.lampOff[2]);
+    this.lamp.decay = fit.lampDecay;
     this.root.add(this.lamp);
   }
 
