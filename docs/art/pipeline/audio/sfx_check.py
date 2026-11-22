@@ -19,7 +19,10 @@ WHAT = {
     'pot-haul': 'hauling a wet basket out of the sea, water pouring off it', 'echo-buy': 'a soft glassy chime, a ding', 'tide-turn': 'a long ocean wave washing in and pulling back',
     'fog-lamp-light': 'a gas lamp lighting with a soft whoomp and a glassy ring', 'sea-road-chime': 'one distant glass bell note ringing far away', 'fog-cross': 'a low gust of wind with an eerie hum under it',
     'packet-box': 'a wooden box lid, a rope creak and a bag of coins', 'reed-brush': 'a boat pushing through reeds, rustling stalks', 'fen-day': 'a marsh by day with frogs, insects and a far bird',
-    'fen-night': 'a marsh at night with crickets and deep frogs'}
+    'fen-night': 'a marsh at night with crickets and deep frogs',
+    'cat-catch': 'a small splash, a wet slap on wood and a cat chirruping', 'cat-eat': 'a cat eating crunchy food and purring', 'hollis-catch': 'cloth rubbing, a drip, then a low breathy voice saying ah',
+    'hollis-thin': 'a long breath out with a low voice fading away', 'hollis-thick': 'a breath in, then a low voice arriving', 'crew-basket-full': 'a wicker basket creaking, then two knocks on wood',
+    'boatyard': 'a boatyard: hammering on wood, sawing, planing, then a boat sliding into the water', 'sloop-sail': 'a big canvas sail filling with wind with a thump, and a wooden creak'}
 names = list(WHAT); T = ears.embed_text([WHAT[n] for n in names]); out = {}
 for f in sorted(os.listdir(D)):
     if not f.endswith('.ogg'): continue
