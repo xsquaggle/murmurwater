@@ -19,7 +19,7 @@ const R = pack(...ATLAS, {
   cone: [176, 96, { mat: 'canvas', colour: '#47443E', seams: 4, along: 'y', stain: 0.5, tar: 0.7, tile_x: true }],
   coneBase: [72, 72, { mat: 'canvas', colour: '#4A4740', seams: 0, stain: 0.6, tar: 0.4 }],
   cairn: [220, 90, { mat: 'drystone', ppm: 150, lichen: 0.5, moss: 0.6, tile_x: true }],
-  rope: [128, 16, { mat: 'rope', pitch: 24 }],
+  rope: [480, 12, { mat: 'rope', pitch: 12 }],                                              // ROPE m of rope, laid end to end
   whale: [140, 64, { mat: 'copper', green: 0.72, top: 0.3 }],
   iron: [48, 48, { mat: 'iron', rust: 0.5 }], block: [48, 32, { mat: 'wood', tone: 'dark', along: 'x', weather: 0.3, edge: 0.4 }],
   stone: [64, 32, { mat: 'flat', colour: '#7B8089', var: 0.2, tile_x: true }],
@@ -29,7 +29,7 @@ m.material('main', { kind: 'texture', roughness: 0.9 });
 m.node('Vane', [0, TOP + 0.06, 0]).node('Cone', [0, LOW, HZ]);
 const spar = m.part('spar', { crease: 50 }), rig = m.part('rigging', { crease: 40 }), cones = m.part('cones', { crease: 35 });
 const vane = m.part('vane', { node: 'Vane', crease: 30 }), cone = m.part('cone', { node: 'Cone', crease: 35 });
-const line = (a, b, r = 0.011) => rig.tube([a, b], r, 3, R.rope, { lay: Math.max(1, Math.round(Math.hypot(...sub(b, a)) * 6)), open: true });
+const ROPE = 4.8, line = (a, b, r = 0.011) => rig.tube([a, b], r, 3, R.rope, { lay: Math.min(1, Math.hypot(...sub(b, a)) / ROPE), open: true });     // each line takes its length of the rope's rectangle
 const block = (c, k = 1) => rig.box(c, [0.04 * k, 0.065 * k, 0.03 * k], { pz: R.block, nz: R.block, px: R.block.sub(0, 0, 0.5, 1), nx: R.block.sub(0, 0, 0.5, 1), ny: R.block.sub(0, 0, 1, 0.3) });
 
 // ---- the cairn, the spar and its truck, the yard
