@@ -373,5 +373,18 @@ def sprig(H, W, seed=0, tone=('#3E6A35', '#7FA64A', '#C9D68A'), **_):
     return shade(img, 0.92 + 0.12 * strokes(H, W, seed, 'y', 4, 40))
 
 
+def lure(H, W, seed=0, colour='#FFC877', hot='#FFF0C8', deep='#E8892E', ribs=6, rib='#B8641E', rib_amount=0.45, rib_w=2.2, **_):
+    """The light at the end of a barbel, painted on its lathe (u round it, v from the stalk to the far tip): warm, hottest
+    round its middle and deeper toward the stalk and the tip, with `ribs` faint ribs running down it like a paper lantern's."""
+    yy, xx, v = _grid(H, W)
+    mid = np.exp(-((v - 0.52) / 0.26) ** 2)
+    img = mix(hexc(deep), hexc(colour), smooth(np.minimum(v, 1 - v), 0.0, 0.22))
+    img = mix(img, hexc(hot), 0.75 * mid)
+    k = xx * ribs
+    line = np.exp(-(((k - np.round(k)) * W / ribs) / rib_w) ** 2) * smooth(v, 0.04, 0.14) * (1 - smooth(v, 0.86, 0.96))
+    img = mix(img, hexc(rib), rib_amount * line * (1 - 0.55 * mid))
+    return shade(img, 0.94 + 0.1 * stretch(fbm(H, W, 3, 5, seed)))
+
+
 FISH = {'fishskin': fishskin, 'skinglow': skinglow, 'fin': fin, 'finglow': finglow, 'eye': eye, 'eyeglow': eyeglow, 'lid': lid, 'maw': maw,
-        'mosspad': mosspad, 'flower': flower, 'sprig': sprig}
+        'mosspad': mosspad, 'flower': flower, 'sprig': sprig, 'lure': lure}
