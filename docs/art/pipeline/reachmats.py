@@ -1,5 +1,6 @@
 """reachmats.py : painted materials for Saltbone Reach (mats.py takes them into its table): weathered bone, limpets,
-a gull's nest and its eggs, a cushion of sea-thrift.
+a gull's nest and its eggs, a cushion of sea-thrift; and for Tryworks Landing a dry-stone wall of slate, the tarred
+clinker planking of an upturned boat, glass net floats, old brick, canvas.
 
 Bone is painted by place, not by patch: paint_spec hands it `geo`, where every pixel of the patch lies on the model
 (geomap.mjs writes that map from the builder), and the paint is noise in space, so it does not stretch where a patch
@@ -8,7 +9,7 @@ carries its lichen high up, however the patch is laid out. Needs paintkit.py bes
 """
 import numpy as np
 from scipy.stats import norm
-from paintkit import hexc, mix, smooth, fbm, stretch, shade, strokes, speckle
+from paintkit import hexc, mix, smooth, fbm, stretch, shade, strokes, speckle, blur, chips, masonry, linemask
 
 
 # ------------------------------------------------------------------------------------------------ noise in space
@@ -257,4 +258,210 @@ def thrifthead(H, W, seed=0, n=12, tone=('#C65C8E', '#E889B0', '#F7BCD2'), **_):
     return mix(img, hi * 1.04, 0.5 * speckle(H, W, seed + 1, 0.06, (0.9, 1.1)))
 
 
-REACH = {'bone': bone, 'limpet': limpet, 'gullnest': gullnest, 'gullegg': gullegg, 'thriftdome': thriftdome, 'thrifthead': thrifthead}
+# ------------------------------------------------------------------------------------------------ Tryworks Landing
+SLATE = ('#6C727C', '#7B8089', '#5C626D', '#878B90', '#6A6C76', '#8E9093', '#7F7B74', '#646B70')
+MOSSY, MOSS_D = hexc('#6F8448'), hexc('#3F5232')
+
+
+def _yx(H, W):
+    yy = (np.arange(H)[:, None] + 0.5) / H * np.ones((1, W))
+    xx = (np.arange(W)[None, :] + 0.5) / W * np.ones((H, 1))
+    return yy, xx, 1 - yy
+
+
+def _per(ids, seed):
+    """A number 0..1 for every stone or brick (by its id)."""
+    return (np.sin(ids * 12.9898 + seed * 1.37) * 43758.5453) % 1.0
+
+
+def _growth(img, H, W, seed, v, lichen, moss, tile_x, j=None):
+    """What grows on a wall by the sea: moss low down and in the joints, grey crusts, dabs of orange lichen higher up."""
+    n = stretch(fbm(H, W, max(2, H / 30), max(2, W / 30), seed + 21, 3, 0.55, tile_x=tile_x))
+    if moss:
+        m = smooth(n + 0.9 * (0.30 - v) + (0.10 * j if j is not None else 0), 0.84 - 0.24 * moss, 0.98 - 0.24 * moss)
+        img = mix(img, mix(MOSS_D, MOSSY, stretch(fbm(H, W, max(2, H / 9), max(2, W / 9), seed + 22, 2, tile_x=tile_x))), 0.85 * m)
+    if lichen:                                                           # dabs a hand's breadth across, gathered in places
+        gate = smooth(stretch(fbm(H, W, max(2, H / 70), max(2, W / 70), seed + 23, 2, tile_x=tile_x)), 0.50, 0.80)
+        dab = stretch(fbm(H, W, max(2, H / 13), max(2, W / 13), seed + 24, 2, 0.45, tile_x=tile_x))
+        img = mix(img, CRUST, 0.6 * smooth(dab, 0.97 - 0.14 * lichen, 1.02 - 0.14 * lichen) * (0.25 + 0.75 * gate))
+        gate2 = smooth(stretch(fbm(H, W, max(2, H / 80), max(2, W / 80), seed + 26, 2, tile_x=tile_x)), 0.55, 0.85)
+        dab2 = stretch(fbm(H, W, max(2, H / 11), max(2, W / 11), seed + 25, 2, 0.45, tile_x=tile_x))
+        d = smooth(dab2, 0.97 - 0.14 * lichen, 1.03 - 0.14 * lichen) * gate2 * smooth(v, 0.2, 0.6)
+        img = mix(img, mix(LICHEN, LICHEN_L, smooth(d, 0.6, 1.0)), 0.9 * d)
+    return img
+
+
+def drystone(H, W, seed=0, ppm=120.0, course=(0.10, 0.23), block=(0.22, 0.62), lichen=0.5, moss=0.5, stones=SLATE, gap='#1E2026', tile_x=False, **_):
+    """A dry-stone wall of slate, foot at the bottom of the patch (ppm = pixels to a metre): thin courses of split
+    stone laid without mortar, dark in the gaps, a stone here and there stained with rust; moss low down and lichen."""
+    img, f = masonry(H, W, ppm, seed, course=course, block=block, stones=stones, mortar=gap, joint=1.5, warp=2.6, bevel=2.4, lit=0.30, shd=0.34,
+                     chip=0.45, rnd=4.0, tone=(0.80, 1.15), tile_x=tile_x)
+    yy, xx, v = _yx(H, W)
+    cleft = strokes(H, W, seed + 5, 'x', 9, 120, tile_x=tile_x)                      # slate splits in sheets: fine lines along every stone
+    img = shade(img, 0.93 + 0.12 * cleft)
+    r = _per(f['id'], seed)
+    img = mix(img, hexc('#8C7458'), 0.42 * (r > 0.88) * (1 - f['j']))                # iron in the stone
+    img = mix(img, hexc('#A9ADAE'), 0.30 * (r < 0.10) * (1 - f['j']))                # a pale one
+    img = shade(img, 1 - 0.30 * np.clip(blur(f['j'], 2.2, wrap_x=tile_x) - f['j'], 0, 1))      # each stone shades the gap's edges
+    return _growth(img, H, W, seed, v, lichen, moss, tile_x, f['j'])
+
+
+def brickwork(H, W, seed=0, ppm=150.0, lichen=0.3, moss=0.6, rust=0.0, tile_x=False, **_):
+    """Old brick laid in lime, foot at the bottom of the patch: soft reds gone brown and grey, the mortar worn back,
+    salt in pale blooms, moss in the joints and low down. rust: 0..1, stains run down from the top edge (iron above)."""
+    reds = ('#7C4E42', '#6E463C', '#845546', '#643F38', '#89604F', '#724A40', '#6E534D', '#7E5C52')
+    img, f = masonry(H, W, ppm, seed, course=(0.082, 0.088), block=(0.225, 0.235), stones=reds, mortar='#8B8778', joint=1.5, warp=1.2, bevel=1.8,
+                     lit=0.16, shd=0.22, chip=0.10, rnd=2.5, tone=(0.84, 1.12), tile_x=tile_x)
+    yy, xx, v = _yx(H, W)
+    img = shade(img, 0.93 + 0.12 * stretch(fbm(H, W, max(2, H / 5), max(2, W / 5), seed + 5, 2, tile_x=tile_x)))
+    img = mix(img, hexc('#B9B2A2'), 0.30 * smooth(stretch(fbm(H, W, max(2, H / 40), max(2, W / 40), seed + 6, 3, tile_x=tile_x)), 0.62, 0.92) * (1 - f['j']))     # salt
+    if rust:
+        run = strokes(H, W, seed + 7, 'y', 5, 34, tile_x=tile_x)
+        img = mix(img, hexc('#8A4A22'), rust * 0.75 * smooth(run + 0.9 * (v - 0.72), 0.55, 0.95))
+    img = shade(img, 1 - 0.22 * np.clip(blur(f['j'], 1.6, wrap_x=tile_x) - f['j'], 0, 1))
+    return _growth(img, H, W, seed, v, lichen, moss, tile_x, f['j'])
+
+
+TAR, TAR_L, TAR_B, BARE, SALT = hexc('#24211F'), hexc('#413C38'), hexc('#3C444C'), hexc('#7C7366'), hexc('#9A9B96')
+
+
+def tarred(H, W, seed=0, strakes=5, ppm=130.0, worn=0.35, lichen=0.3, moss=0.4, rivets=0.16, tile_x=False, **_):
+    """The planking of an upturned clinker boat under forty years of tar, unrolled: `strakes` planks along x, the
+    gunwale at the bottom of the patch and the keel at the top (ppm = pixels to a metre along it). Each plank's upper
+    edge is the one that stands proud: it is worn to the wood and carries a row of rivets; grey where the weather has
+    been, green toward the gunwale, a little lichen."""
+    yy, xx, v = _yx(H, W)
+    rs = np.random.default_rng(seed)
+    f = v * strakes
+    k = np.minimum(f.astype(int), strakes - 1)
+    t = f - k                                                              # 0 at a plank's lower edge, 1 at its upper edge
+    px = H / strakes
+    g = strokes(H, W, seed, 'x', 16, 120, tile_x=tile_x)
+    img = mix(TAR, TAR_L, 0.15 + 0.6 * g)
+    img = mix(img, TAR_B, 0.45 * smooth(stretch(fbm(H, W, max(2, H / 60), max(2, W / 90), seed + 1, 3, tile_x=tile_x)), 0.45, 0.9))      # a blue sheen where the tar is thick
+    img = shade(img, rs.uniform(0.86, 1.16, strakes)[k])
+    for i in range(strakes):                                                # butt joints: one or two to a plank
+        for x0 in rs.uniform(0.06, 0.94, rs.integers(1, 3)):
+            d = np.abs(xx - x0) * W
+            on = (k == i)
+            img = shade(img, 1 - 0.6 * on * np.exp(-(d / 1.2) ** 2))
+            img = mix(img, BARE, 0.35 * on * np.exp(-((d - 2.4) / 1.2) ** 2))
+    bias = 0.55 * np.exp(-((1 - t) * px / 5.0)) + 0.25 * smooth(v, 0.5, 1.0)
+    m = chips(H, W, (max(3, H / 10), max(6, W / 14)), seed + 3, amount=0.07 * worn / 0.35, tile_x=tile_x, crisp=0.05, bias=bias)
+    wood = mix(BARE, hexc('#5C5348'), 0.6 * strokes(H, W, seed + 4, 'x', 10, 140, tile_x=tile_x))
+    img = mix(img, wood, 0.85 * m)
+    img = mix(img, SALT, 0.26 * smooth(stretch(fbm(H, W, max(2, H / 50), max(2, W / 50), seed + 5, 3, tile_x=tile_x)) + 0.3 * (v - 0.5), 0.6, 0.95))   # weathered grey, more toward the keel
+    img = shade(img, 1 - 0.34 * np.exp(-(t * px / 3.5) ** 2))               # dirt lies where a plank meets the ledge of the one below
+    img = mix(img, hexc('#A39B8C'), 0.55 * np.exp(-((1 - t) * px / 1.5) ** 2))      # the proud edge catches the light
+    if rivets:                                                              # a row of rivets through the lap, under that edge
+        step = rivets * ppm
+        dx = (xx * W + 0.37 * step * k) % step - step / 2
+        dy = (1 - t) * px - min(7.0, 0.2 * px)
+        dot = np.exp(-(np.hypot(dx, dy) / 1.5) ** 2)
+        img = shade(img, 1 - 0.5 * np.exp(-(np.hypot(dx - 1.0, dy - 1.2) / 2.2) ** 2) * (1 - dot))
+        img = mix(img, hexc('#8FA596'), 0.8 * dot)
+    runs = strokes(H, W, seed + 6, 'y', 4, 60, tile_x=tile_x)
+    img = shade(img, 1 - 0.10 * smooth(runs, 0.55, 0.9))
+    img = _growth(img, H, W, seed, v, lichen, moss, tile_x)
+    return img
+
+
+def floatglass(H, W, seed=0, colour='#5FA892', net=5, tile_x=True, **_):
+    """A glass net float, unrolled (u round it, v from its foot to its top): thick sea-green glass, paler where the
+    light comes through, darker at top and bottom, bubbles; in a bag of tarred twine with `net` meshes round it."""
+    yy, xx, v = _yx(H, W)
+    c = hexc(colour)
+    img = mix(c * 0.55, c, smooth(np.sin(np.pi * v), 0.1, 0.9))
+    img = mix(img, mix(c, np.ones(3), 0.55), 0.55 * np.exp(-(((v - 0.36) / 0.20) ** 2)) * (0.6 + 0.4 * stretch(fbm(H, W, 3, 6, seed, tile_x=tile_x))))
+    img = shade(img, 0.92 + 0.12 * stretch(fbm(H, W, 4, 8, seed + 1, tile_x=tile_x)))
+    img = mix(img, np.ones(3), 0.55 * speckle(H, W, seed + 2, 0.004, (0.8, 1.1), tile_x=tile_x))                    # bubbles
+    for u0 in (0.2, 0.7):                                                                                           # the sky in the glass
+        img = mix(img, np.ones(3), 0.7 * np.exp(-(((xx - u0) / 0.035) ** 2 + ((v - 0.66) / 0.10) ** 2)))
+    a, b = (xx * net + v * net * 0.5) % 1.0, (xx * net - v * net * 0.5) % 1.0
+    d = np.minimum(np.minimum(a, 1 - a), np.minimum(b, 1 - b)) * W / net
+    w = max(1.1, W / 110.0)
+    twine = np.exp(-(d / w) ** 2)
+    twine = np.maximum(twine, smooth(v, 0.90, 0.94))                                                              # the bag is gathered at the top
+    img = shade(img, 1 - 0.35 * np.exp(-((d - 1.8 * w) / (1.4 * w)) ** 2) * (1 - twine))
+    return mix(img, mix(hexc('#3A2C1E'), hexc('#7C6642'), 0.5 + 0.5 * np.sin((xx * W + yy * H) * 1.3)), 0.95 * twine)
+
+
+def canvas(H, W, seed=0, colour='#C9B990', seams=3, along='y', stain=0.4, tar=0.0, tile_x=False, **_):
+    """Old canvas: a weave, `seams` sewn seams (they run along y, or x), stains and mildew. tar: 0..1, blackened with
+    tar toward the bottom of the patch (a storm cone is dipped point first)."""
+    yy, xx, v = _yx(H, W)
+    c = hexc(colour)
+    img = shade(c * np.ones((H, W, 3)), 0.90 + 0.18 * stretch(fbm(H, W, 3, 3, seed, tile_x=tile_x)))
+    weave = 0.5 + 0.5 * np.sin(yy * H * 2.1) * np.sin(xx * W * 2.1)
+    img = shade(img, 0.965 + 0.07 * weave)
+    if seams:
+        a, n = (xx, W) if along == 'y' else (yy, H)
+        f = a * seams
+        d = np.abs(f - np.round(f)) * n / seams
+        img = shade(img, 1 - 0.28 * np.exp(-(d / 1.4) ** 2))
+        st = (np.sin((yy if along == 'y' else xx) * (H if along == 'y' else W) * 0.9) > 0.1)
+        img = mix(img, mix(c, np.ones(3), 0.5), 0.5 * np.exp(-((d - 3.2) / 1.2) ** 2) * st)
+    img = mix(img, hexc('#7E7A62'), stain * 0.6 * smooth(stretch(fbm(H, W, 5, 5, seed + 1, 3, tile_x=tile_x)), 0.55, 0.92))
+    img = mix(img, hexc('#5C6450'), stain * 0.5 * smooth(speckle(H, W, seed + 2, 0.004, (1.4, 2.6), tile_x=tile_x), 0.4, 0.7))
+    if tar:
+        img = mix(img, TAR_L * 0.9, tar * smooth(0.45 - v + 0.25 * (stretch(fbm(H, W, 3, 8, seed + 3, 2, tile_x=tile_x)) - 0.5), -0.1, 0.25))
+    return img
+
+
+def trypot(H, W, seed=0, crack=None, rust=0.85, moss=0.3, tile_x=True, **_):
+    """A great iron try-pot gone to rust, unrolled (u round it, v up its outside, over the rim and down inside): rust in
+    blotches and runs, the rim worn smooth and darker, moss where water lies. crack: u of a crack that runs down from
+    the rim (the top third of the patch) through the wall."""
+    from mats import iron                                               # mats imports this file, so not at the top
+    yy, xx, v = _yx(H, W)
+    img = iron(H, W, seed, rust=rust, tile_x=tile_x, hammered=0.7)
+    img = mix(img, hexc('#5A2E1A'), 0.35 * smooth(stretch(fbm(H, W, max(2, H / 20), max(2, W / 20), seed + 7, 3, tile_x=tile_x)), 0.55, 0.9))
+    img = mix(img, mix(MOSS_D, MOSSY, 0.5), moss * smooth(stretch(fbm(H, W, max(2, H / 18), max(2, W / 30), seed + 8, 3, tile_x=tile_x)) - 0.6 * np.abs(v - 0.62), 0.55, 0.8))
+    if crack is not None:
+        rs = np.random.default_rng(seed + 9)
+        pts = []
+        for i in range(9):
+            t = i / 8
+            pts.append(((crack + 0.012 * rs.normal() * (i > 0)) * W, (0.18 + 0.55 * t) * H))
+
+        m = linemask(H, W, [pts], width=max(1.6, W / 260))
+        img = shade(img, 1 - 0.35 * np.clip(blur(m, 2.5, wrap_x=tile_x), 0, 1))
+        img = mix(img, hexc('#120E0C'), 0.95 * m)
+        img = mix(img, hexc('#9A4E26'), 0.6 * np.clip(blur(m, 1.2, wrap_x=tile_x) - m, 0, 1) * 3)
+    return img
+
+
+def skimmer(H, W, seed=0, holes=6, **_):
+    """The pan of a skimmer seen face on, filling the patch: a disc of rusted iron punched full of holes."""
+    from mats import iron
+    yy, xx, v = _yx(H, W)
+    img = iron(H, W, seed, rust=0.9)
+    r = np.hypot(xx - 0.5, yy - 0.5) * 2
+    gx, gy = (xx * holes * 1.15) % 1.0 - 0.5, (yy * holes * 1.15) % 1.0 - 0.5
+    hole = smooth(0.24 - np.hypot(gx, gy), -0.02, 0.02) * (r < 0.8)
+    img = mix(img, hexc('#0E0B0A'), 0.9 * hole)
+    return mix(img, hexc('#4A2A1A'), 0.6 * smooth(r, 0.86, 0.98))
+
+
+def wrapped(H, W, seed=0, colour='#D8CCA8', turns=5, ties=(0.25, 0.62), tile_x=True, **_):
+    """Sailcloth wound round something and tied, unrolled (u round it, v along it): strips laid on a slant, each overlapping
+    the last with a shadow under its edge, clean but old, and a few turns of tarred twine at every height in `ties`."""
+    yy, xx, v = _yx(H, W)
+    c = hexc(colour)
+    img = shade(c * np.ones((H, W, 3)), 0.92 + 0.14 * stretch(fbm(H, W, 3, 4, seed, tile_x=tile_x)))
+    img = shade(img, 0.97 + 0.06 * (0.5 + 0.5 * np.sin(yy * H * 2.2) * np.sin(xx * W * 2.2)))
+    f = (xx + v * turns) % 1.0                                                                      # 0 at one strip's edge, 1 where the next lies over it
+    img = shade(img, 0.80 + 0.20 * smooth(f, 0.0, 0.25))
+    img = mix(img, mix(c, np.ones(3), 0.45), 0.6 * np.exp(-((1 - f) * W / 2.0) ** 2))
+    img = mix(img, hexc('#9A8E70'), 0.35 * smooth(stretch(fbm(H, W, 5, 5, seed + 1, 3, tile_x=tile_x)), 0.6, 0.92))
+    for t in ties:
+        d = np.abs(v - t) * H
+        band = smooth(4.5 - d, -0.8, 0.8)
+        lay = 0.5 + 0.5 * np.sin((xx * W * 0.9 + d * 2.0))
+        img = shade(img, 1 - 0.35 * np.exp(-((d - 5.5) / 2.0) ** 2))
+        img = mix(img, mix(hexc('#2E2418'), hexc('#6C5636'), lay), 0.95 * band)
+    return img
+
+
+REACH = {'bone': bone, 'limpet': limpet, 'gullnest': gullnest, 'gullegg': gullegg, 'thriftdome': thriftdome, 'thrifthead': thrifthead,
+         'drystone': drystone, 'brickwork': brickwork, 'tarred': tarred, 'floatglass': floatglass, 'canvas': canvas, 'trypot': trypot, 'skimmer': skimmer, 'wrapped': wrapped}
