@@ -22,7 +22,10 @@ WHAT = {
     'fen-night': 'a marsh at night with crickets and deep frogs',
     'cat-catch': 'a small splash, a wet slap on wood and a cat chirruping', 'cat-eat': 'a cat eating crunchy food and purring', 'hollis-catch': 'cloth rubbing, a drip, then a low breathy voice saying ah',
     'hollis-thin': 'a long breath out with a low voice fading away', 'hollis-thick': 'a breath in, then a low voice arriving', 'crew-basket-full': 'a wicker basket creaking, then two knocks on wood',
-    'boatyard': 'a boatyard: hammering on wood, sawing, planing, then a boat sliding into the water', 'sloop-sail': 'a big canvas sail filling with wind with a thump, and a wooden creak'}
+    'boatyard': 'a boatyard: hammering on wood, sawing, planing, then a boat sliding into the water', 'sloop-sail': 'a big canvas sail filling with wind with a thump, and a wooden creak',
+    'find-drag': 'one long low gulp of water as something sinks slowly', 'haul-knock': 'a dull wooden thud heard under water, with a short low ring',
+    'haul-snag': 'a heavy thud under water, then a taut line creaking tighter', 'haul-free': 'a soft scrape under water and a few bubbles rising',
+    'find-surface': 'a heavy box lifted out of the sea, water streaming off it and then dripping'}
 names = list(WHAT); T = ears.embed_text([WHAT[n] for n in names]); out = {}
 for f in sorted(os.listdir(D)):
     if not f.endswith('.ogg'): continue
