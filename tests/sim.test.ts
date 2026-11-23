@@ -149,9 +149,12 @@ describe('the first hours, by simulation', () => {
   it('a keeper who meets finds earns no less than one who never does', () => {
     const none = SEEDS.map((seed) => simulate({ seed, skill: 0.7, minutes: 240, noFinds: true }));
     const mean = (rs: SimReport[]) => rs.reduce((a, r) => a + r.totals.coins, 0) / rs.length;
-    // A crate is reckoned from the fish it came up instead of, so it is never a tax; following rumours takes time.
-    expect(mean(play(0.7)) / mean(none)).toBeGreaterThan(0.85);
-    expect(mean(play(0.7)) / mean(none)).toBeLessThan(1.3);
+    // A crate is reckoned from the fish it came up instead of, and the relics the rumours lead to give their
+    // gifts, so the keeper who meets finds is ahead: by about a fifth over these seeds. (Seed by seed the two
+    // differ far more than that, either way, which is why it is the mean that is held, and held above one.)
+    // Much more than that and finds would be the game, not a change of pace in it.
+    expect(mean(play(0.7)) / mean(none)).toBeGreaterThan(1);
+    expect(mean(play(0.7)) / mean(none)).toBeLessThan(1.45);
   }, 240000);
 
   it('the relics are found by following what is said of them: most in four hours, all but one or so in seven', () => {
@@ -191,6 +194,7 @@ describe('the first hours, by simulation', () => {
     // The mean, not the median: with five seeds apiece the middle one of each moves by more than the two differ.
     const best = play(0.95);
     const mean = (rs: SimReport[], what: string) => rs.reduce((a, r) => a + (when(r, what) ?? Infinity), 0) / rs.length;
+    expect(Number.isFinite(mean(best, 'RANG THE BELL')), 'every one of the best keepers rings the Bell').toBe(true);
     expect(mean(best, 'RANG THE BELL')).toBeLessThanOrEqual(mean(play(0.4), 'RANG THE BELL'));
     expect(median(play(0.4).map((r) => r.totals.coins))).toBeLessThanOrEqual(median(best.map((r) => r.totals.coins)) * 1.1);
   }, 120000);

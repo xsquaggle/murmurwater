@@ -44,8 +44,8 @@ type Loop = (typeof LOOPS)[number];
  * after they land it is used, with nothing to change here.
  */
 const PENDING: ReadonlySet<string> = new Set<string>([
-  // docs/briefs/finds-assets.md
-  'find-drag', 'haul-knock', 'haul-snag', 'haul-free', 'find-surface', 'crate-open', 'relic-found', 'rumour', 'pearl-set', 'pearl-lift',
+  // docs/briefs/finds-assets.md: the five heard on every haul are in; these five are still to come
+  'crate-open', 'relic-found', 'rumour', 'pearl-set', 'pearl-lift',
 ]);
 const BUILT_IN: ReadonlySet<string> = new Set(present);
 /** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
@@ -350,7 +350,8 @@ export class AudioEngine {
   /** It knocks on the bottom, felt up the line: the warning to let go of the reel. */
   knock() {
     if (this.sfx('haul-knock', { vary: 0.07 })) return;
-    if (!this.sfx('boat-bump', { gain: 0.42, rate: 0.72 })) { this.tone(96, 0.16, 0.34, 'sine', 0, 60); this.noise(0.08, 380, 1.2, 0.18, 'lowpass'); }
+    // Only if the recording will not play. Not the hull's bump: the player knows that sound as something else.
+    this.tone(96, 0.16, 0.34, 'sine', 0, 60); this.noise(0.08, 380, 1.2, 0.18, 'lowpass');
     this.tone(196, 0.09, 0.1, 'triangle', 0, 150);
   }
   /** It has caught fast. */
@@ -360,7 +361,7 @@ export class AudioEngine {
     this.tone(70, 0.32, 0.34, 'sine', 0, 44); this.noise(0.2, 300, 1, 0.2, 'lowpass');
   }
   /** It comes free of the bottom, or slides over what it knocked on. */
-  eased() { if (!this.sfx('haul-free', { vary: 0.08 })) { this.tone(392, 0.12, 0.09, 'sine', 0, 523); this.noise(0.35, 1200, 0.7, 0.07, 'lowpass', 400); } }
+  eased() { if (!this.sfx('haul-free', { vary: 0.08 })) { this.tone(330, 0.16, 0.07, 'sine', 0, 262); this.noise(0.35, 1200, 0.7, 0.07, 'lowpass', 400); } }
   /** A heavy thing breaking the surface with the water running off it. */
   findUp() { if (!this.sfx('find-surface')) { this.landSplash(); this.noise(0.9, 1800, 0.6, 0.11, 'bandpass', 500, 0.15); } }
   /** A crate prised open, or a sea chest's lid: wood, and what is inside. */
