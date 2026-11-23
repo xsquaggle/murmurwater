@@ -39,6 +39,8 @@ PACKS = {   # path prefix -> (short name, title, author, page)
     'oga/ghost-breath/': ('qubodup-breath', 'Ghost breath', 'qubodup', OGA + 'ghost-breath'),
     'oga/fabric-rustling/': ('glaucus-fabric', 'Fabric Rustling', 'Iochi Glaucus', OGA + 'fabric-rustling'),
     'oga/thwack-sounds/': ('antumdeluge-thwack', 'Thwack Sounds', 'AntumDeluge', OGA + 'thwack-sounds'),
+    'oga/40-cc0-water-splash-slime-sfx/': ('rubberduck-water', '40 CC0 water / splash / slime SFX', 'rubberduck', OGA + '40-cc0-water-splash-slime-sfx'),
+    'oga/bubble-sound-effects/': ('bmaczero-bubbles', 'Bubble Sound Effects', 'BMacZero', OGA + 'bubble-sound-effects'),
 }
 BAM = 'oga/swish-bamboo-stick-weapon-swhoshes/swoshes.x/swosh-%02d.flac'
 FISH = 'oga/fisheefects/FisheefectsComplete.x/'
@@ -276,4 +278,8 @@ def build(B):
     # ---- hands aboard: ten sounds for the crew, Pell's boatyard and the Puffin's sail, in sfx_crew.py ----
     import sfx_crew
     sfx_crew.build(B, add, label, dict(DROPS=DROPS, DRIP=DRIP, KR=KR, WM=WM, TREE=TREE, SKIP=SKIP, EZWA=EZWA, CAT=CAT, TK=TK, MIR=MIR))
+
+    # ---- things fished up: the sounds of a find on the line, in sfx_finds.py ----
+    import sfx_finds
+    sfx_finds.build(B, add, label, dict(DROPS=DROPS, DRIP=DRIP, KR=KR, KU=KU, WM=WM, TREE=TREE, SKIP=SKIP, PEL=PEL, PAPER=PAPER, MIR=MIR))
     return items

@@ -3479,5 +3479,425 @@
   "peak_db": -3.8,
   "loud100_db": -17.0,
   "bytes": 15357
+ },
+ {
+  "name": "find-drag_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "bubble_03.ogg",
+    "speed": 0.5
+   }
+  ],
+  "how": "one bubble played two to three times slower, so it is a long, low gulp with no splash in it",
+  "file": "find-drag_1.ogg",
+  "seconds": 1.049,
+  "samples": 46246,
+  "decoded": 46246,
+  "peak_db": -1.2,
+  "loud100_db": -19.7,
+  "bytes": 13889
+ },
+ {
+  "name": "find-drag_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "bmaczero-bubbles",
+    "file": "bubbles-single1.wav",
+    "speed": 0.3
+   }
+  ],
+  "how": "one bubble played two to three times slower, so it is a long, low gulp with no splash in it",
+  "file": "find-drag_2.ogg",
+  "seconds": 0.951,
+  "samples": 41934,
+  "decoded": 41806,
+  "peak_db": -7.6,
+  "loud100_db": -19.6,
+  "bytes": 10221
+ },
+ {
+  "name": "haul-knock_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep02.ogg",
+    "speed": 0.6
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "bubble_02.ogg",
+    "speed": 0.8
+   }
+  ],
+  "how": "a wooden knock played slower with the top taken off, ringing on through two low resonances (near 120 and 330 Hz, gone in a fifth of a second), with one small bubble behind it; cut at 0.48 s",
+  "file": "haul-knock_1.ogg",
+  "seconds": 0.484,
+  "samples": 21344,
+  "decoded": 21216,
+  "peak_db": -3.0,
+  "loud100_db": -17.0,
+  "bytes": 6436
+ },
+ {
+  "name": "haul-knock_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "bart-workshop",
+    "file": "workshop - wood on wood thuds.wav",
+    "cut": [
+     0.36,
+     0.68
+    ],
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "bubble_02.ogg",
+    "speed": 0.75
+   }
+  ],
+  "how": "a wooden knock played slower with the top taken off, ringing on through two low resonances (near 120 and 330 Hz, gone in a fifth of a second), with one small bubble behind it; cut at 0.48 s",
+  "file": "haul-knock_2.ogg",
+  "seconds": 0.484,
+  "samples": 21344,
+  "decoded": 21216,
+  "peak_db": -7.6,
+  "loud100_db": -17.1,
+  "bytes": 6307
+ },
+ {
+  "name": "haul-knock_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "bart-workshop",
+    "file": "workshop - wood on wood thuds.wav",
+    "cut": [
+     3.09,
+     3.36
+    ],
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "bubble_02.ogg",
+    "speed": 0.85
+   }
+  ],
+  "how": "a wooden knock played slower with the top taken off, ringing on through two low resonances (near 120 and 330 Hz, gone in a fifth of a second), with one small bubble behind it; cut at 0.48 s",
+  "file": "haul-knock_3.ogg",
+  "seconds": 0.484,
+  "samples": 21344,
+  "decoded": 21216,
+  "peak_db": -3.7,
+  "loud100_db": -17.1,
+  "bytes": 6057
+ },
+ {
+  "name": "haul-snag_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_hit_09.ogg",
+    "speed": 0.45
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "bubble_02.ogg",
+    "speed": 0.8
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak2.ogg",
+    "speed": 1.075
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     2.0,
+     2.8
+    ],
+    "speed": 1.15
+   }
+  ],
+  "how": "a wooden knock at less than half speed with the top taken off, so it is a heavy thud, ringing on near 80 and 220 Hz, with one small bubble; then two creaks together, a wooden one and a creaking tree, each played at a speed that climbs by half as it goes, so the creak tightens; cut at 0.9 s",
+  "file": "haul-snag_1.ogg",
+  "seconds": 0.904,
+  "samples": 39866,
+  "decoded": 39738,
+  "peak_db": -7.4,
+  "loud100_db": -16.9,
+  "bytes": 11687
+ },
+ {
+  "name": "haul-snag_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "footstep02.ogg",
+    "speed": 0.42
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "bubble_02.ogg",
+    "speed": 0.8
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak1.ogg",
+    "speed": 1.075
+   },
+   {
+    "kind": "cc0",
+    "pack": "antumdeluge",
+    "file": "tree_creak.flac",
+    "cut": [
+     2.0,
+     2.8
+    ],
+    "speed": 1.25
+   }
+  ],
+  "how": "a wooden knock at less than half speed with the top taken off, so it is a heavy thud, ringing on near 80 and 220 Hz, with one small bubble; then two creaks together, a wooden one and a creaking tree, each played at a speed that climbs by half as it goes, so the creak tightens; cut at 0.9 s",
+  "file": "haul-snag_2.ogg",
+  "seconds": 0.904,
+  "samples": 39866,
+  "decoded": 40768,
+  "peak_db": -7.2,
+  "loud100_db": -17.0,
+  "bytes": 11613
+ },
+ {
+  "name": "haul-free_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "sand_footsteps_0.mp3",
+    "cut": [
+     0.83,
+     1.5
+    ],
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "bubble_02.ogg",
+    "speed": 1.2
+   },
+   {
+    "kind": "cc0",
+    "pack": "bmaczero-bubbles",
+    "file": "bubbles-single2.wav"
+   },
+   {
+    "kind": "cc0",
+    "pack": "bmaczero-bubbles",
+    "file": "bubbles-single3.wav",
+    "speed": 1.2
+   }
+  ],
+  "how": "a footstep in sand played slower with the top taken off, so it is a soft scrape, and two or three single bubbles after it, each quieter than the last; cut at 0.78 s",
+  "file": "haul-free_1.ogg",
+  "seconds": 0.784,
+  "samples": 34574,
+  "decoded": 34446,
+  "peak_db": -1.8,
+  "loud100_db": -17.2,
+  "bytes": 10212
+ },
+ {
+  "name": "haul-free_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "peludo",
+    "file": "sand_footsteps_0.mp3",
+    "cut": [
+     2.55,
+     3.2
+    ],
+    "speed": 0.75
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "bubble_01.ogg",
+    "speed": 1.3
+   },
+   {
+    "kind": "cc0",
+    "pack": "bmaczero-bubbles",
+    "file": "bubbles-single1.wav",
+    "speed": 1.3
+   }
+  ],
+  "how": "a footstep in sand played slower with the top taken off, so it is a soft scrape, and two or three single bubbles after it, each quieter than the last; cut at 0.78 s",
+  "file": "haul-free_2.ogg",
+  "seconds": 0.784,
+  "samples": 34574,
+  "decoded": 34446,
+  "peak_db": -4.6,
+  "loud100_db": -17.1,
+  "bytes": 10806
+ },
+ {
+  "name": "find-surface_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "splash_02.ogg",
+    "speed": 0.8
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "splash_02.ogg",
+    "speed": 0.48
+   },
+   {
+    "kind": "cc0",
+    "pack": "skippy",
+    "file": "swim.wav",
+    "cut": [
+     0,
+     1.0
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     3.66,
+     3.97
+    ],
+    "speed": 0.95
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     6.53,
+     6.86
+    ],
+    "speed": 1.05
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     5.0,
+     5.45
+    ],
+    "speed": 1.15
+   }
+  ],
+  "how": "a splash played a little slower, with itself again an octave down and dulled under it for the weight; a second of running water that starts 0.2 s in and dies away; then three single drops, each quieter than the last; cut at 1.58 s",
+  "file": "find-surface_1.ogg",
+  "seconds": 1.584,
+  "samples": 69854,
+  "decoded": 69854,
+  "peak_db": -1.6,
+  "loud100_db": -17.5,
+  "bytes": 23171
+ },
+ {
+  "name": "find-surface_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "splash_02.ogg",
+    "speed": 0.72
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "splash_02.ogg",
+    "cut": [
+     0,
+     0.3
+    ],
+    "speed": 0.432
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "loop_water_01.ogg",
+    "cut": [
+     0,
+     1.0
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     1.99,
+     2.3
+    ],
+    "speed": 0.9
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     0.28,
+     0.62
+    ],
+    "speed": 1.1
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     3.66,
+     3.97
+    ]
+   }
+  ],
+  "how": "a splash played a little slower, with itself again an octave down and dulled under it for the weight; a second of running water that starts 0.2 s in and dies away; then three single drops, each quieter than the last; cut at 1.58 s",
+  "file": "find-surface_2.ogg",
+  "seconds": 1.584,
+  "samples": 69854,
+  "decoded": 69854,
+  "peak_db": -1.7,
+  "loud100_db": -17.6,
+  "bytes": 21837
  }
 ]

@@ -22,8 +22,8 @@
   ]
  },
  "bite-dunk_1.ogg": {
-  "rank": 8,
-  "top": "ui-open",
+  "rank": 10,
+  "top": "find-surface",
   "tags": [
    [
     "Drip",
@@ -44,7 +44,7 @@
   ]
  },
  "bite-dunk_2.ogg": {
-  "rank": 4,
+  "rank": 8,
   "top": "nibble",
   "tags": [
    [
@@ -66,8 +66,8 @@
   ]
  },
  "bite-dunk_3.ogg": {
-  "rank": 1,
-  "top": "bite-dunk",
+  "rank": 3,
+  "top": "haul-knock",
   "tags": [
    [
     "Water",
@@ -110,8 +110,8 @@
   ]
  },
  "boat-board_2.ogg": {
-  "rank": 2,
-  "top": "boat-bump",
+  "rank": 5,
+  "top": "haul-knock",
   "tags": [
    [
     "Sound effect",
@@ -176,8 +176,8 @@
   ]
  },
  "boat-bump_3.ogg": {
-  "rank": 1,
-  "top": "boat-bump",
+  "rank": 2,
+  "top": "haul-knock",
   "tags": [
    [
     "Knock",
@@ -374,7 +374,7 @@
   ]
  },
  "cat-catch_1.ogg": {
-  "rank": 11,
+  "rank": 14,
   "top": "pot-set",
   "tags": [
    [
@@ -901,6 +901,94 @@
    ]
   ]
  },
+ "find-drag_1.ogg": {
+  "rank": 3,
+  "top": "haul-knock",
+  "tags": [
+   [
+    "Water",
+    0.27
+   ],
+   [
+    "Slosh",
+    0.22
+   ],
+   [
+    "Gurgling",
+    0.15
+   ],
+   [
+    "Liquid",
+    0.14
+   ]
+  ]
+ },
+ "find-drag_2.ogg": {
+  "rank": 1,
+  "top": "find-drag",
+  "tags": [
+   [
+    "Stomach rumble",
+    0.21
+   ],
+   [
+    "Sound effect",
+    0.08
+   ],
+   [
+    "Music",
+    0.05
+   ],
+   [
+    "Speech",
+    0.04
+   ]
+  ]
+ },
+ "find-surface_1.ogg": {
+  "rank": 1,
+  "top": "find-surface",
+  "tags": [
+   [
+    "Drip",
+    0.32
+   ],
+   [
+    "Liquid",
+    0.3
+   ],
+   [
+    "Water",
+    0.21
+   ],
+   [
+    "Gurgling",
+    0.19
+   ]
+  ]
+ },
+ "find-surface_2.ogg": {
+  "rank": 1,
+  "top": "find-surface",
+  "tags": [
+   [
+    "Liquid",
+    0.29
+   ],
+   [
+    "Water",
+    0.2
+   ],
+   [
+    "Sound effect",
+    0.13
+   ],
+   [
+    "Drip",
+    0.12
+   ]
+  ]
+ },
  "fish-splash_1.ogg": {
   "rank": 1,
   "top": "fish-splash",
@@ -946,7 +1034,7 @@
   ]
  },
  "fish-splash_3.ogg": {
-  "rank": 5,
+  "rank": 6,
   "top": "pot-haul",
   "tags": [
    [
@@ -990,8 +1078,8 @@
   ]
  },
  "fog-cross_1.ogg": {
-  "rank": 1,
-  "top": "fog-cross",
+  "rank": 2,
+  "top": "find-drag",
   "tags": [
    [
     "Sound effect",
@@ -1012,7 +1100,7 @@
   ]
  },
  "fog-lamp-light_1.ogg": {
-  "rank": 7,
+  "rank": 8,
   "top": "ui-open",
   "tags": [
    [
@@ -1121,9 +1209,163 @@
    ]
   ]
  },
+ "haul-free_1.ogg": {
+  "rank": 8,
+  "top": "haul-knock",
+  "tags": [
+   [
+    "Plop",
+    0.09
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.04
+   ],
+   [
+    "Sound effect",
+    0.04
+   ],
+   [
+    "Gurgling",
+    0.03
+   ]
+  ]
+ },
+ "haul-free_2.ogg": {
+  "rank": 6,
+  "top": "find-surface",
+  "tags": [
+   [
+    "Drip",
+    0.25
+   ],
+   [
+    "Liquid",
+    0.18
+   ],
+   [
+    "Gurgling",
+    0.09
+   ],
+   [
+    "Water",
+    0.08
+   ]
+  ]
+ },
+ "haul-knock_1.ogg": {
+  "rank": 1,
+  "top": "haul-knock",
+  "tags": [
+   [
+    "Knock",
+    0.8
+   ],
+   [
+    "Door",
+    0.13
+   ],
+   [
+    "Slam",
+    0.05
+   ],
+   [
+    "Whack, thwack",
+    0.03
+   ]
+  ]
+ },
+ "haul-knock_2.ogg": {
+  "rank": 1,
+  "top": "haul-knock",
+  "tags": [
+   [
+    "Sound effect",
+    0.23
+   ],
+   [
+    "Plop",
+    0.09
+   ],
+   [
+    "Boing",
+    0.05
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.04
+   ]
+  ]
+ },
+ "haul-knock_3.ogg": {
+  "rank": 1,
+  "top": "haul-knock",
+  "tags": [
+   [
+    "Sound effect",
+    0.1
+   ],
+   [
+    "Bang",
+    0.1
+   ],
+   [
+    "Door",
+    0.07
+   ],
+   [
+    "Explosion",
+    0.04
+   ]
+  ]
+ },
+ "haul-snag_1.ogg": {
+  "rank": 5,
+  "top": "cast-swish",
+  "tags": [
+   [
+    "Sound effect",
+    0.2
+   ],
+   [
+    "Grunt",
+    0.08
+   ],
+   [
+    "Plop",
+    0.05
+   ],
+   [
+    "Boing",
+    0.03
+   ]
+  ]
+ },
+ "haul-snag_2.ogg": {
+  "rank": 5,
+  "top": "boat-bump",
+  "tags": [
+   [
+    "Sound effect",
+    0.21
+   ],
+   [
+    "Plop",
+    0.07
+   ],
+   [
+    "Grunt",
+    0.06
+   ],
+   [
+    "Speech",
+    0.05
+   ]
+  ]
+ },
  "hollis-catch_1.ogg": {
-  "rank": 4,
-  "top": "lamp-ignite",
+  "rank": 7,
+  "top": "haul-knock",
   "tags": [
    [
     "Sound effect",
@@ -1144,7 +1386,7 @@
   ]
  },
  "hollis-catch_2.ogg": {
-  "rank": 3,
+  "rank": 4,
   "top": "lamp-ignite",
   "tags": [
    [
@@ -1166,7 +1408,7 @@
   ]
  },
  "hollis-thick_1.ogg": {
-  "rank": 3,
+  "rank": 4,
   "top": "dock-creak",
   "tags": [
    [
@@ -1188,8 +1430,8 @@
   ]
  },
  "hollis-thin_1.ogg": {
-  "rank": 1,
-  "top": "hollis-thin",
+  "rank": 2,
+  "top": "find-drag",
   "tags": [
    [
     "Sound effect",
@@ -1276,7 +1518,7 @@
   ]
  },
  "hull-wash_1.ogg": {
-  "rank": 12,
+  "rank": 17,
   "top": "oars",
   "tags": [
    [
@@ -1518,7 +1760,7 @@
   ]
  },
  "line-snap_2.ogg": {
-  "rank": 32,
+  "rank": 37,
   "top": "cast-swish",
   "tags": [
    [
@@ -1540,7 +1782,7 @@
   ]
  },
  "line-snap_3.ogg": {
-  "rank": 37,
+  "rank": 38,
   "top": "cast-swish",
   "tags": [
    [
@@ -1584,8 +1826,8 @@
   ]
  },
  "nibble_1.ogg": {
-  "rank": 2,
-  "top": "bobber-plop",
+  "rank": 3,
+  "top": "haul-knock",
   "tags": [
    [
     "Plop",
@@ -1848,8 +2090,8 @@
   ]
  },
  "pot-haul_1.ogg": {
-  "rank": 1,
-  "top": "pot-haul",
+  "rank": 2,
+  "top": "find-surface",
   "tags": [
    [
     "Liquid",
@@ -1892,7 +2134,7 @@
   ]
  },
  "pot-set_1.ogg": {
-  "rank": 2,
+  "rank": 3,
   "top": "pot-haul",
   "tags": [
    [
@@ -2156,7 +2398,7 @@
   ]
  },
  "rope-creak_2.ogg": {
-  "rank": 5,
+  "rank": 6,
   "top": "hook-set",
   "tags": [
    [
@@ -2640,7 +2882,7 @@
   ]
  },
  "step-wood_2.ogg": {
-  "rank": 5,
+  "rank": 6,
   "top": "boat-board",
   "tags": [
    [
@@ -2662,8 +2904,8 @@
   ]
  },
  "step-wood_3.ogg": {
-  "rank": 7,
-  "top": "cast-swish",
+  "rank": 9,
+  "top": "haul-knock",
   "tags": [
    [
     "Knock",
@@ -2684,8 +2926,8 @@
   ]
  },
  "step-wood_4.ogg": {
-  "rank": 5,
-  "top": "ui-click",
+  "rank": 7,
+  "top": "haul-knock",
   "tags": [
    [
     "Door",
