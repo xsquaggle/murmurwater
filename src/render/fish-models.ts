@@ -49,6 +49,10 @@ function addSwim(mat: MeshStandardMaterial, eel: boolean, flat = false) {
   return u;
 }
 
+/** A fish whose lamp is to be brighter than its glow map makes it, so that the bloom takes it (the threshold is 0.82). */
+const GLOW: Record<string, number> = { 'lantern-ling': 1.5 };
+const GLOW_BASE = new WeakMap<object, number>();
+
 /** `held`: it is to be held up and looked at (a flat fish is turned to show its back, not its edge). */
 export function makeFish(id: string, weight?: number, held = false): FishObject {
   const def = fishDef(id);
@@ -70,7 +74,9 @@ export function makeFish(id: string, weight?: number, held = false): FishObject 
     const m = o as Mesh;
     if (m.isMesh) { const mat = m.material as MeshStandardMaterial; mats.push({ mat, u: addSwim(mat, EELS.has(id), FLAT.has(id)) }); }
   });
-  const glowBase = mats.map(({ mat }) => mat.emissiveIntensity);
+  // Copies of a fish share its material, and the flicker below moves its glow: the glow it came with is kept from
+  // the first time it is seen, or every new fish would start from wherever the last flicker left it.
+  const glowBase = mats.map(({ mat }) => { if (!GLOW_BASE.has(mat)) GLOW_BASE.set(mat, mat.emissiveIntensity * (GLOW[id] ?? 1)); return GLOW_BASE.get(mat)!; });
   let phase = 0, lastT = 0;
   return {
     obj: root,
