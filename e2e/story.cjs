@@ -58,6 +58,8 @@ const { chromium } = require('playwright');
       fish(n) {
         let landed = 0;
         for (let attempt = 0; attempt < n * 3 && landed < n; attempt++) {
+          // A crate or a chest may come up instead (it is hauled like anything else): only fish are counted.
+          const had = g.state.lifetime.catches;
           g.simulate(1 / 60, () => ({ ...NO, primary: true, primaryPressed: true }));
           let guard = 0;
           while (g.session.phase === 'charging' && g.session.power < 0.88 && guard++ < 200) g.simulate(1 / 60, () => ({ ...NO, primary: true }));
@@ -68,8 +70,8 @@ const { chromium } = require('playwright');
           g.simulate(0.15, () => NO);
           g.simulate(1 / 60, () => ({ ...NO, primary: true, primaryPressed: true }));
           guard = 0;
-          while (g.session.phase === 'fighting' && guard++ < 60 * 60) g.simulate(1 / 60, (gg) => { const f = gg.session.fight; if (!f) return NO; return { ...NO, primary: f.thrash <= 0 && f.tension < 0.7, steer: f.run ? -f.run : 0 }; });
-          if (g.session.phase === 'landed') landed++;
+          while ((g.session.phase === 'fighting' || g.session.phase === 'hauling') && guard++ < 60 * 60) g.simulate(1 / 60, (gg) => { const f = gg.session.fight, h = gg.session.haul; if (h) return { ...NO, primary: !h.snag && !h.warned && h.tension < 0.7 }; if (!f) return NO; return { ...NO, primary: f.thrash <= 0 && f.tension < 0.7, steer: f.run ? -f.run : 0 }; });
+          if (g.state.lifetime.catches > had) landed++;
           g.simulate(2.6, () => NO);
         }
         g.botInput = null;

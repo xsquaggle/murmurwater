@@ -1,6 +1,6 @@
 // Electron smoke test: launches the packaged app entry (dist/ via electron/main.cjs), waits for the game to
 // boot, and fails if any model, the voice index, a recorded sound or a music file can't load, or if the tester's
-// starts (F8 on the title screen, twice) do not come up or touch the save. Linux CI: run under xvfb-run.
+// starts (F8 on the title screen, three times) do not come up or touch the save. Linux CI: run under xvfb-run.
 const { _electron: electron } = require('playwright');
 (async () => {
   const app = await electron.launch({ args: ['.', '--no-sandbox'], env: { ...process.env, MW_SMOKE: '1' } });
@@ -22,15 +22,24 @@ const { _electron: electron } = require('playwright');
     return { url: location.href, missing: window.__MW__.assetsMissing ?? null, npcs: [...g.town.npcs.keys()], voiced, sounds, music };
   });
   console.log(JSON.stringify(r));
-  // The tester's starts: F8 on the title screen brings the game back as the keeper of the newest slice (the cat
-  // aboard, the Puffin found, her price in the purse), F8 again as the one before (the Fog Lamp and Pell's road
-  // job), and saving in either writes nothing to the player's own save.
+  // The tester's starts: F8 on the title screen brings the game back as the keeper of the newest slice (the
+  // Puffin afloat, four relics, three pearls never set), F8 again as the one before (the cat aboard, the Puffin
+  // found, her price in the purse), a third time as the oldest (the Fog Lamp and Pell's road job), and saving in
+  // any of them writes nothing to the player's own save.
   const testerUp = (id) => win.waitForFunction((id) => window.__MW__ && window.__MW__.tester === true && window.__MW__.testerStart === id && window.__MW__.frames > 3, id, { timeout: 180000 });
   const untouched = () => win.evaluate(async () => {
     const before = (await window.mwNative.readSave()).main;
     await window.__MW__.game.save();
     return before === (await window.mwNative.readSave()).main;
   });
+  await win.keyboard.press('F8');
+  await testerUp('finds');
+  const f = await win.evaluate(() => {
+    const MW = window.__MW__, s = MW.state;
+    return { url: location.href, relics: s.relics.length, pearls: s.moonpearls, boat: s.boats.current, version: s.version, told: document.querySelector('.title-tester')?.textContent ?? '', missing: MW.assetsMissing };
+  });
+  f.untouched = await untouched();
+  console.log(JSON.stringify(f));
   await win.keyboard.press('F8');
   await testerUp('crew');
   const c = await win.evaluate(() => {
@@ -47,8 +56,9 @@ const { _electron: electron } = require('playwright');
   });
   t.untouched = await untouched();
   console.log(JSON.stringify(t));
-  const testerOk = c.coins >= 40000 && c.crew.includes('biscuit') && c.yard && c.refit === 'active' && c.untouched && /1 of 2/.test(c.told) && c.missing.length === 0
-    && t.lamp === 1 && t.road === 'active' && t.untouched && /2 of 2/.test(t.told) && t.missing.length === 0;
+  const testerOk = f.relics === 4 && f.pearls === 3 && f.boat === 'puffin' && f.untouched && /1 of 3/.test(f.told) && f.missing.length === 0
+    && c.coins >= 40000 && c.crew.includes('biscuit') && c.yard && c.refit === 'active' && c.untouched && /2 of 3/.test(c.told) && c.missing.length === 0
+    && t.lamp === 1 && t.road === 'active' && t.untouched && /3 of 3/.test(t.told) && t.missing.length === 0;
   if (!testerOk) console.log("a tester's start is wrong");
   await app.close();
   const ok = Array.isArray(r.missing) && r.missing.length === 0 && typeof r.voiced === 'number' && r.voiced > 0

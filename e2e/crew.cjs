@@ -1,4 +1,4 @@
-// Hands-aboard bot: the newest tester's start (?tester, src/data/tester/crew.json), through the real game. The
+// Hands-aboard bot: the v0.5.0 tester's start (?tester=crew, src/data/tester/crew.json), through the real game. The
 // keeper has the cat signed on, the wreck of the Puffin found and the price of her refit. She watches Biscuit
 // fish from the skiff, looks the wreck over from the boat, pays Pell at his boatyard, sails the Puffin, takes
 // Mister Hollis off the sea-road, sees him fish after dark and not by day, fills the crew basket, sells it with
@@ -27,7 +27,7 @@ const { chromium } = require('playwright');
   const ev = (fn, ...a) => page.evaluate(fn, ...a);
   const j = (o) => JSON.stringify(o);
 
-  await page.goto(`http://localhost:${port}/?tester&notitle&hour=9&quality=${process.env.MW_QUALITY || 'medium'}`);
+  await page.goto(`http://localhost:${port}/?tester=crew&notitle&hour=9&quality=${process.env.MW_QUALITY || 'medium'}`);
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 2, null, { timeout: 180000 });
   await page.waitForTimeout(1200);
   await require('./sail-helpers.cjs').install(page, { grant: false });

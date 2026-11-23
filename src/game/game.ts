@@ -5,6 +5,7 @@ import { WorldScene } from '../render/world-scene';
 import { Avatar, type PlayerAvatar, type Pose } from '../render/avatar';
 import { ModelAvatar } from '../render/model-avatar';
 import { makeFish, type FishObject } from '../render/fish-models';
+import { makeFind } from '../render/find-models';
 import { FishingView } from '../render/fishing-view';
 import { FishShadows } from '../render/fish-shadows';
 import { Fx } from '../render/fx';
@@ -20,9 +21,12 @@ import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
 import { Rng } from '../core/rng';
 import { frameTime } from '../core/clock';
-import { FishingSession, type FishingInput, type SpotInfo } from '../core/fishing';
+import { FishingSession, type FindOffer, type FishingInput, type SpotInfo } from '../core/fishing';
+import { findName, lootLines, takeFind, withFinds } from '../core/finds';
+import { newRumours } from '../core/relics';
 import { REGIONS_BY_ID, bait, crossingAt, regionAcross, regionAhead, rod, zoneAt } from '../core/content';
 import { RegionPrep } from '../render/region-prep';
+import { PALETTE } from '../render/palette';
 import { addCatch, breakRhythm, rarityIndex, RHYTHM } from '../core/economy';
 import { claimCollections, fishingContext, isNight, spendBait, stats, type Stats } from '../core/gear';
 import { arriveIn } from '../core/quests';
@@ -31,6 +35,8 @@ import { serialize, type SaveStore } from '../core/save';
 import { walkableHeight } from '../core/landing';
 
 const STEP = 1 / 60;
+/** The light a find comes aboard in: lantern amber for a crate, pearl for a chest, the second moon's for a relic. */
+const FIND_GLOW = { crate: new Color(PALETTE.lantern), chest: new Color(PALETTE.wick), relic: new Color(PALETTE.dreamViolet) };
 
 export class Game {
   readonly camera = new PerspectiveCamera(55, 16 / 9, 0.2, 9000);
@@ -42,6 +48,7 @@ export class Game {
   readonly audio = new AudioEngine();
   readonly fx = new Fx();
   readonly avatar: PlayerAvatar = ModelAvatar.available() ? new ModelAvatar() : new Avatar();
+  /** What is being held up to be looked at: the fish just landed, or the thing just fished up. */
   private shown: FishObject | null = null;
   private showTimer = 0;
   private faceYaw = 0;
@@ -156,7 +163,7 @@ export class Game {
     const s = this.state;
     const region = REGIONS_BY_ID.get(s.world.region)!;
     this.refreshStats();
-    return new FishingSession(fishingContext(s, { hour: s.hour }, (dist: number): SpotInfo => {
+    const ctx = withFinds(fishingContext(s, { hour: s.hour }, (dist: number): SpotInfo => {
       // Walk back along the aim line until the lure lands in water at least 0.6 m deep.
       const dir = new Vector3(Math.sin(this.castYaw), 0, Math.cos(this.castYaw));
       for (let d = dist; d > 2; d -= 0.5) {
@@ -165,8 +172,14 @@ export class Game {
         if (depth >= 0.6) return { zoneId: zoneAt(region, x, z)?.id ?? null, depth, hotspot: false, distance: d };
       }
       return { zoneId: null, depth: 0, hotspot: false, distance: 0 };
-    }, this.stats), new Rng(this.rngSeed++));
+    }, this.stats), s, this.stats);
+    // A bot (or a picture) may say what the next cast comes down over.
+    const dice = ctx.find!;
+    ctx.find = (spot) => { const f = this.forcedFind; if (f === undefined) return dice(spot); this.forcedFind = undefined; return f; };
+    return new FishingSession(ctx, new Rng(this.rngSeed++));
   }
+  /** Test/bot hook: what the next cast comes down over (null: a fish, whatever the dice say). Used once. */
+  forcedFind: FindOffer | null | undefined = undefined;
 
   /**
    * Rebuild the fishing session after gear changes. A cast in the air or a fish on the line keeps what it was
@@ -305,7 +318,7 @@ export class Game {
 
     // Mouse look / aim.
     const [mdx, mdy] = inp.consumeMouse();
-    const fighting = this.session.phase === 'fighting';
+    const fighting = this.session.phase === 'fighting' || this.session.phase === 'hauling';
     const ui = this.town.blocking;
     if (!fighting && !ui) {
       this.camYaw -= mdx * 0.0026;
@@ -385,7 +398,7 @@ export class Game {
     else {
       // Steer in the fish's lateral space (+1 = screen-left): A pulls left, D pulls right, mouse too.
       const steerKeys = (inp.held('steerLeft') ? 1 : 0) - (inp.held('steerRight') ? 1 : 0);
-      const steerMouse = fighting ? Math.max(-1, Math.min(1, -mdx * 0.06)) : 0;
+      const steerMouse = this.session.phase === 'fighting' ? Math.max(-1, Math.min(1, -mdx * 0.06)) : 0;
       fi = {
         primary: inp.held('cast'), primaryPressed: inp.wasPressed('cast'), primaryReleased: inp.wasReleased('cast'),
         steer: Math.max(-1, Math.min(1, steerKeys + steerMouse)), cancel: inp.wasPressed('cancel'),
@@ -412,6 +425,9 @@ export class Game {
     this.pots.step(dt, (after === 'idle' || after === 'landed' || after === 'lost') && !this.town.blocking && !sail.busy);
     // The hands aboard fish on the game's clock while she lies still.
     this.hands.step(dt);
+    // What is said on the islands of things still in the water: passed on when its time has come.
+    this.rumourT -= dt;
+    if (this.rumourT <= 0 && after === 'idle' && !this.town.blocking && !sail.busy) { this.rumourT = 2; this.tellRumours(); }
 
     // Rhythm fades if you stop fishing for a while. Not while she is under way: sailing to the next ground is part of the work.
     const underWay = sail.aboard && (Math.abs(sail.boat.speed) > 0.9 || sail.throttle !== 0);
@@ -473,8 +489,25 @@ export class Game {
           void this.save();
           break;
         }
+        case 'drag':
+          this.audio.drag();
+          this.once('seen:drag', 'The float is going down slowly. That is no fish: strike, and haul it up.');
+          break;
+        case 'slipped': this.hud.toast('It slid off the hook. It is still down there.'); break;
+        case 'haul':
+          this.audio.hook(false); this.audio.haulStart(); this.shake = 0.2;
+          this.hud.toast('Something heavy!', 'good');
+          this.once('seen:haul', 'It will not run. Reel a little at a time, and let go when you feel it knock on the bottom.');
+          break;
+        case 'snagWarn': this.audio.knock(); this.view.knock(); this.shake = Math.max(this.shake, 0.12); break;
+        case 'snag': this.audio.snag(); this.shake = 0.45; this.hud.toast('It has caught on the bottom: let go of the reel', 'bad'); break;
+        case 'eased': this.audio.eased(); break;
+        case 'free': this.audio.eased(); break;
+        case 'found': this.foundFind(e.find); break;
         case 'lost':
-          if (e.reason === 'snap') { this.audio.snap(); this.hud.toast('Snap! The line broke', 'bad'); s.lifetime.snaps++; breakRhythm(s); }
+          if (e.find && e.reason === 'snap') { this.audio.snap(); this.hud.toast(`Snap! ${e.find.kind === 'relic' ? 'It went back down. It will be there yet' : 'It went back to the bottom'}`, 'bad'); s.lifetime.snaps++; breakRhythm(s); }
+          else if (e.find) this.audio.lose();
+          else if (e.reason === 'snap') { this.audio.snap(); this.hud.toast('Snap! The line broke', 'bad'); s.lifetime.snaps++; breakRhythm(s); }
           else if (e.reason === 'slack') { this.audio.lose(); this.hud.toast('Too much slack — it threw the hook', 'bad'); breakRhythm(s); }
           else this.audio.lose();
           break;
@@ -482,6 +515,53 @@ export class Game {
       }
     }
   }
+
+  /** Says a thing the first time only (the flag is kept in the save). */
+  private once(flag: string, text: string) {
+    const s = this.state;
+    if (s.flags.includes(flag)) return;
+    s.flags.push(flag);
+    this.hud.toast(text, '', 5200);
+  }
+
+  /** Something that is not a fish is aboard: it is opened, what was in it goes into the save, and it is shown off. */
+  private foundFind(find: FindOffer) {
+    const s = this.state, hadPearls = s.moonpearls, hadRelics = s.relics.length;
+    const loot = takeFind(s, find);
+    this.audio.findUp();
+    this.shown?.dispose(); this.shown = null;
+    if (loot) {
+      this.hud.showFind(loot, lootLines(loot));
+      const relic = loot.kind === 'relic', chest = loot.kind === 'chest';
+      if (relic) this.audio.relicFound(); else this.audio.crateOpen(chest);
+      const at = this.avatar.tipWorld().add(new Vector3(0, -0.5, 0));
+      this.fx.glow.burst(at, relic ? 70 : chest ? 50 : 26, relic ? FIND_GLOW.relic : chest ? FIND_GLOW.chest : FIND_GLOW.crate, 2.5, 3, relic ? 2.2 : 1.4, 0.18, relic ? 2.2 : 1.5);
+      this.shown = makeFind(find.kind, find.id);
+      this.avatar.holdFish(this.shown.obj);
+      this.showTimer = relic ? 4.2 : 2.8;
+      // What it changes, said once each: where relics stand, and what pearls are for.
+      if (s.relics.length > hadRelics) this.once('seen:shelf', 'It stands on the Shelf now, in your satchel, and gives its gift from there.');
+      if (s.moonpearls > hadPearls && s.relics.length) this.once('seen:pearl', 'A Moonpearl. Set it beside a relic on the Shelf and the relic gives half as much again.');
+      if (loot.kind === 'crate') this.once('seen:crate', 'Crates come up now and then, wherever you fish. Chests lie in fewer waters, and some things only come up at their own hour.');
+      if (loot.lures.length || loot.wearables.length) this.audio.discover();
+    } else this.hud.toast(`${findName(find)}: empty`);
+    this.session = this.newSession();
+    this.session.phase = 'landed';
+    (this.session as any).resultTimer = 1.0;
+    void this.save();
+  }
+
+  /** Passes on the rumours whose time has come: one is said out, several are counted. */
+  private tellRumours() {
+    const s = this.state, told = newRumours(s);
+    if (!told.length) return;
+    this.audio.rumour();
+    if (told.length === 1) this.hud.toast(`A rumour. ${told[0].hint.text}`, 'gold', 7000);
+    else this.hud.toast(`${told.length} rumours have reached you of things still in the water.`, 'gold');
+    this.hud.toast('What is said of each is on the Shelf, in your satchel.', '', 7000);
+    void this.save();
+  }
+  private rumourT = 3;
 
   /**
    * Conversation camera: a two-shot from one side of the line between the speakers, so the player never
@@ -535,6 +615,8 @@ export class Game {
     const s = this.state;
     const ph = this.session.phase;
     const fs = this.session.fight;
+    /** A fish or a find on the line: the rod is bent either way. */
+    const line = this.session.onLine, onLine = ph === 'fighting' || ph === 'hauling';
     const sail = this.sailing;
     sail.present(dt);
     // Avatar
@@ -546,10 +628,10 @@ export class Game {
     let dYaw = wantYaw - this.faceYaw; dYaw = Math.atan2(Math.sin(dYaw), Math.cos(dYaw));
     this.faceYaw += dYaw * Math.min(1, dt * (this.shown ? 7 : sail.aboard ? 12 : 30));
     this.avatar.root.rotation.y = this.faceYaw;
-    const pose: Pose = ph === 'charging' ? 'charge' : ph === 'casting' ? 'cast' : ph === 'waiting' || ph === 'bite' ? 'wait' : ph === 'fighting' ? 'fight' : ph === 'landed' ? 'cheer' : seated ? 'sit' : this.speed > 0.2 ? 'walk' : 'idle';
+    const pose: Pose = ph === 'charging' ? 'charge' : ph === 'casting' ? 'cast' : ph === 'waiting' || ph === 'bite' ? 'wait' : onLine ? 'fight' : ph === 'landed' ? 'cheer' : seated ? 'sit' : this.speed > 0.2 ? 'walk' : 'idle';
     const dbg = this.debugPose;
     if (dbg) this.avatar.update(dt, dbg.pose, dbg.speed ?? 0, dbg);
-    else this.avatar.update(dt, pose, this.speed, { power: this.session.power, tension: fs?.tension, lateral: fs ? (fs.run || 0) : 0, reeling: !!fs && this.input.held('cast') });
+    else this.avatar.update(dt, pose, this.speed, { power: this.session.power, tension: line?.tension, lateral: fs ? (fs.run || 0) : 0, reeling: !!line && this.input.held('cast') });
     this.avatar.root.updateMatrixWorld(true);
     if (this.shown) {
       this.shown.animate(this.time, 0.15);
@@ -562,9 +644,9 @@ export class Game {
     // water, half-way to the lure or the fish, so the angler, the line and the float share the frame; it
     // chases the lure through its flight.
     const head = this.pos.clone().add(new Vector3(0, 1.6, 0));
-    const fishingView = ph === 'fighting' || ph === 'waiting' || ph === 'bite' || ph === 'casting';
+    const fishingView = onLine || ph === 'waiting' || ph === 'bite' || ph === 'casting';
     const aim = head.clone(), pivot = head.clone();
-    if (fishingView) aim.lerp(this.view.bobberPos, ph === 'fighting' ? 0.45 : ph === 'casting' ? 0.5 : 0.56);
+    if (fishingView) aim.lerp(this.view.bobberPos, onLine ? 0.45 : ph === 'casting' ? 0.5 : 0.56);
     // In conversation: closer and lower, centred between the two and aimed below their heads, so both
     // stand clear above the dialogue box.
     const talk = fishingView ? null : this.town.talkingTo;
@@ -583,7 +665,7 @@ export class Game {
     this.camTarget.lerp(pivot, Math.min(1, dt * 5));
     this.camAim.lerp(aim, Math.min(1, dt * (ph === 'casting' ? 10 : 4)));
     const camYaw = fishingView ? this.castYaw : this.camYaw + this.talkSwing;
-    const dist = talk ? Math.min(this.camDist, 4.6) : this.camDist + (ph === 'fighting' ? 2.2 : ph === 'waiting' || ph === 'bite' ? 2.4 : fishingView ? 1.6 : 0) + this.helmView * (3.2 + 1.2 * sail.pace);
+    const dist = talk ? Math.min(this.camDist, 4.6) : this.camDist + (onLine ? 2.2 : ph === 'waiting' || ph === 'bite' ? 2.4 : fishingView ? 1.6 : 0) + this.helmView * (3.2 + 1.2 * sail.pace);
     // Low behind the angler for the throw, so the lure climbs against the sky; then it cranes up to look down
     // on the float, where the fish shadows are.
     const watching = ph === 'waiting' || ph === 'bite';
@@ -622,12 +704,12 @@ export class Game {
     want.y = Math.max(want.y, Math.max(ground, this.waveY(want.x, want.z)) + 0.6);
     this.camera.position.lerp(want, Math.min(1, dt * 6));
     this.shake = Math.max(0, this.shake - dt * 1.5);
-    const tension = fs?.tension ?? 0;
+    const tension = line?.tension ?? 0;
     const sh = (this.shake * 0.08 + Math.max(0, tension - 0.8) * 0.03 + (ph === 'charging' ? Math.max(0, this.session.power - 0.75) * 0.05 : 0)) * this.shakeScale;
     this.camera.lookAt(this.camAim.x + sideX + (Math.random() - 0.5) * sh, this.camAim.y + (Math.random() - 0.5) * sh, this.camAim.z + sideZ);
     if (this.debugCam) { this.camera.position.copy(this.debugCam.pos); this.camera.lookAt(this.debugCam.look); }
     // Field of view: closes in as the cast winds up, punches wide on release, tightens with line tension.
-    const fovWant = 55 + 6 * this.helmView * sail.pace + (ph === 'fighting' ? -4 * tension : 0) + (ph === 'charging' ? -5 * this.session.power : 0) + (ph === 'waiting' || ph === 'bite' ? -7 : 0);
+    const fovWant = 55 + 6 * this.helmView * sail.pace + (onLine ? -4 * tension : 0) + (ph === 'charging' ? -5 * this.session.power : 0) + (ph === 'waiting' || ph === 'bite' ? -7 : 0);
     this.fovBase += (fovWant - this.fovBase) * Math.min(1, dt * (ph === 'charging' ? 9 : 4));
     const fov = this.fovBase + this.fovKick * this.shakeScale;
     if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
@@ -648,8 +730,11 @@ export class Game {
     this.shadows.update(dt, {
       cx: this.pos.x, cz: this.pos.z,
       lure: ph === 'waiting' || ph === 'bite' ? this.view.target : null,
-      nextTug: this.session.nextTug, biting: ph === 'bite',
-      fish: fs && hooked ? { x: hooked.x, z: hooked.z, len: Math.max(1.2, Math.min(3.2, fs.fish.length * 3.6)) } : null,
+      // Over a find nothing alive comes to the float: no shadow stalks it, and none strikes.
+      nextTug: this.session.finding ? Infinity : this.session.nextTug, biting: ph === 'bite' && !this.session.finding,
+      // A find is a darker, squarer thing under the line until it is awash.
+      fish: fs && hooked ? { x: hooked.x, z: hooked.z, len: Math.max(1.2, Math.min(3.2, fs.fish.length * 3.6)) }
+        : ph === 'hauling' && hooked && this.view.sunk > 0.05 ? { x: hooked.x, z: hooked.z, len: 1.5 + 0.9 * this.view.sunk } : null,
     }, this.world.water.fishA, this.world.water.fishB, this.world.water.fishField);
     // The biter stirs the surface as it comes: slow rings while it circles, a quick wake when it darts.
     const bt = this.shadows.biter;
@@ -681,13 +766,14 @@ export class Game {
     this.hud.setHint(this.town.blocking ? '' : this.hint());
     this.hud.setCompass(sail.aboard && !this.town.blocking ? { yaw: camYaw, knots: sail.made * 1.94, marks: this.town.bearings() } : null);
     const fp = this.town.focusPrompt, pp = this.pots.prompt;
-    const prompts = this.town.blocking ? [] : [fp ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '', pp ? `<kbd>${keyName(this.input.bindings.pot[0])}</kbd> ${pp}` : ''].filter(Boolean);
+    // (Nothing is offered while a catch is being held up: the prompt would sit across it.)
+    const prompts = this.town.blocking || this.shown ? [] : [fp ? `<kbd>${keyName(this.input.bindings.interact[0])}</kbd> ${fp}` : '', pp ? `<kbd>${keyName(this.input.bindings.pot[0])}</kbd> ${pp}` : ''].filter(Boolean);
     // Aboard, and with a pot in reach, the prompt sits low: the thing it is about floats where it would otherwise be.
     this.hud.setPrompt(prompts.join('<br>'), sail.aboard || !!this.pots.near);
 
     const night = this.world.light.night, fen = !!this.world.fen;
     this.audio.update(dt, {
-      reeling: !!fs && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3, tension, fighting: !!fs, sea: 0.5,
+      reeling: !!line && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3 * (fs ? 1 : 0.6), tension, fighting: !!fs, sea: 0.5,
       charge: ph === 'charging' ? this.session.power : -1,
       // The night theme comes in once the sky is properly dark and leaves at first light.
       // By day the boat has her own tune; ashore each island keeps its own.
@@ -700,7 +786,7 @@ export class Game {
       day: 1 - night, onDock: !sail.riding && this.world.dockDeckAt(this.pos.x, this.pos.z) !== null, purr: this.town.catCloseness(),
       hull: sail.aboard ? sail.pace : undefined, murmur: sail.murmur,
     });
-    if (fs && tension > 0.9 && this.lastTension <= 0.9) this.audio.strain();
+    if (line && tension > 0.9 && this.lastTension <= 0.9) this.audio.strain();
     this.lastTension = tension;
 
     if (!this.skipRender) this.renderer.render(dt);
@@ -722,7 +808,8 @@ export class Game {
       }
       case 'charging': return 'Release in the bright band for a clean cast';
       case 'waiting': return `Watch the water… hook it when the float goes under · ${k('cancel')} reel in`;
-      case 'bite': return `${k('cast')} Hook it!`;
+      case 'bite': return this.session.finding ? `Something heavy… ${k('cast')} strike!` : `${k('cast')} Hook it!`;
+      case 'hauling': return `${k('cast')} hold to haul it up · let go at the knock, and when the tension peaks`;
       case 'fighting': return `${k('cast')} hold to reel · ${k('steerLeft')}/${k('steerRight')} steer against runs · let go when tension peaks`;
       default: return '';
     }

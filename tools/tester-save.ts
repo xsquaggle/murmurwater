@@ -42,8 +42,10 @@ function findsKeeper(): GameState {
   p.townBusiness();
   const s = p.s;
   if (!there() || s.world.region !== 'hearthbay' || s.finds.casts || s.relics.length !== 4 || Object.keys(s.pearls).length) throw new Error('the keeper is not on the home dock with nothing found');
-  // Nightfall: the spectacles lie in the cove beside the dock from now until morning.
+  // Nightfall, at the end of the dock, looking out over Lantern Cove: the spectacles lie there from now until
+  // morning, a fair cast out.
   s.hour = 20.25;
+  s.world.pos = [-129.6, 1.42, 20.6]; s.world.yaw = -Math.PI / 2;
   return s;
 }
 

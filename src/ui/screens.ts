@@ -10,8 +10,9 @@ import {
 } from '../core/gear';
 import { BELL_FLAG, canRing, coinsToNextEcho, echoCost, echoRank, echoesFor, startCoins, turnings, unsoldValue } from '../core/bell';
 import { potInterval, potsInHand } from '../core/pots';
-import { BOARD, BOATS, BOATS_BY_ID, QUESTS, RELICS_BY_ID, boardOpen, count, currentGoal, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus, shortName } from '../core/quests';
+import { BOARD, BOATS, BOATS_BY_ID, QUESTS, boardOpen, count, currentGoal, describeRewards, npc, objectiveProgress, objectiveTarget, questStatus, shortName } from '../core/quests';
 import { aboard, ashore, basket, berths, crewProgress, hired } from '../core/crew';
+import { PEARLS, giftText, pearlsFree, pearlsSet, relicGift, shelf, shelfOpen } from '../core/relics';
 import { boatOnOffer } from '../core/gear';
 import type { GameState } from '../core/state';
 import type { GearAction } from '../game/trade';
@@ -163,7 +164,7 @@ export interface UiHost {
   handState(id: string): string;
 }
 
-export type ScreenKind = 'shop' | 'board' | 'hold' | 'gear' | 'journal' | 'quests' | 'echoes' | 'crew' | 'bell' | 'pause' | 'settings' | 'chart' | 'boatyard';
+export type ScreenKind = 'shop' | 'board' | 'hold' | 'gear' | 'journal' | 'quests' | 'shelf' | 'echoes' | 'crew' | 'bell' | 'pause' | 'settings' | 'chart' | 'boatyard';
 type ShopTab = 'rods' | 'tackle' | 'clothes' | 'pots';
 
 export class Screens {
@@ -214,7 +215,7 @@ export class Screens {
     this.card.className = 'screen-card sc-' + k;
     if (k === 'shop') this.renderShop();
     else if (k === 'board') this.renderBoard();
-    else if (k === 'hold' || k === 'gear' || k === 'journal' || k === 'quests' || k === 'echoes' || k === 'crew') this.renderSatchel(k);
+    else if (k === 'hold' || k === 'gear' || k === 'journal' || k === 'quests' || k === 'shelf' || k === 'echoes' || k === 'crew') this.renderSatchel(k);
     else if (k === 'boatyard') this.renderBoatyard();
     else if (k === 'bell') this.renderBell();
     else if (k === 'pause') this.renderPause();
@@ -396,9 +397,11 @@ export class Screens {
   }
 
   // ---- satchel
-  private renderSatchel(kind: 'hold' | 'gear' | 'journal' | 'quests' | 'echoes' | 'crew') {
+  private renderSatchel(kind: 'hold' | 'gear' | 'journal' | 'quests' | 'shelf' | 'echoes' | 'crew') {
     const s = this.host.state, st = this.host.stats();
     const tabs: [ScreenKind, string][] = [['hold', 'Hold'], ['gear', 'Gear'], ['journal', 'Journal'], ['quests', 'Quests']];
+    // The Shelf is there from the first relic, or the first word of one still in the water.
+    if (shelfOpen(s) || kind === 'shelf') tabs.push(['shelf', 'Shelf']);
     if (s.crew.hired.length) tabs.push(['crew', 'Crew']);
     if (s.flags.includes(BELL_FLAG) || s.lifetime.echoes > 0) tabs.push(['echoes', 'Echoes']);
     this.card.append(this.header('Satchel', tabs));
@@ -425,6 +428,8 @@ export class Screens {
       })));
     } else if (kind === 'gear') {
       this.renderGear(s, st);
+    } else if (kind === 'shelf') {
+      this.renderShelf(s);
     } else if (kind === 'echoes') {
       this.renderEchoes(s);
     } else if (kind === 'crew') {
@@ -542,9 +547,46 @@ export class Screens {
       this.card.append(el('h3', {}, 'Lantern Pots'), el('p', { class: 'muted' },
         `${st.potCount} pot${st.potCount === 1 ? '' : 's'}: ${s.pots.placed.length} in the water, ${potsInHand(s, st)} in hand. Each traps a fish about every ${Math.round(potInterval(st))} seconds while you play, and holds ${st.potCapacity}.`));
     }
-    this.card.append(el('h3', {}, 'Relics'), s.relics.length
-      ? el('div', { class: 'relics' }, ...s.relics.map((id) => { const r = RELICS_BY_ID.get(id)!; return el('div', { class: 'relic' }, el('b', {}, r.name), el('div', { class: 'item-desc' }, r.lore)); }))
-      : el('p', { class: 'muted' }, 'Nothing strange in your pockets. Yet.'));
+    // Relics stand on the Shelf, a page of their own, once there is one (or word of one).
+    this.card.append(el('h3', {}, 'Relics'), el('p', { class: 'muted' }, shelfOpen(s)
+      ? `${s.relics.length ? `${s.relics.length} on the Keeper’s Shelf` : 'None yet, but something is said of one'}: see the Shelf page.`
+      : 'Nothing strange in your pockets. Yet.'));
+  }
+
+  // ---- the Keeper's Shelf
+  /**
+   * Every relic of the waters reached has a place: the thing itself with its two hollows for Moonpearls, what
+   * is said of it while it is still in the water, or a bare place nobody has spoken of yet.
+   */
+  private renderShelf(s: GameState) {
+    const places = shelf(s), found = places.filter((p) => p.state === 'found').length;
+    const set = pearlsSet(s), free = pearlsFree(s), have = set + free;
+    const half = PEARLS.each === 0.5 ? 'half as much again' : `${Math.round(PEARLS.each * 100)}% more`;
+    this.card.append(el('div', { class: 'shelf-head' },
+      el('div', { class: 'shelf-n' }, el('span', { class: 'pearl' }), String(free)),
+      el('div', {}, el('b', {}, `${found} of ${places.length} places on the Keeper’s Shelf are filled.`),
+        el('div', { class: 'muted' }, have ? `${have} Moonpearl${have === 1 ? '' : 's'}: ${set} set, ${free} in hand.` : 'No Moonpearls yet. Sea chests hold them, and some jobs pay in them.'),
+        el('div', { class: 'muted' }, `A pearl set beside a relic makes it give ${half}. Each relic has ${PEARLS.hollows} hollows, and a pearl can be lifted out and set somewhere else.`))));
+    const regions = [...new Set(places.map((p) => p.relic.region))];
+    for (const region of regions) {
+      if (regions.length > 1) this.card.append(el('h3', {}, REGIONS_BY_ID.get(region)?.name ?? region));
+      this.card.append(el('div', { class: 'shelf-grid' }, ...places.filter((p) => p.relic.region === region).map(({ relic: r, state }) => {
+        if (state === 'empty') return el('div', { class: 'place empty' }, el('div', { class: 'place-q' }, '·'), el('div', { class: 'item-desc' }, 'A bare place. Nobody has spoken of what stands here.'));
+        if (state === 'rumour') {
+          return el('div', { class: 'place rumour' },
+            el('div', { class: 'item-top' }, el('b', {}, r.where ? 'Still in the water' : 'Not yet given'), el('span', { class: 'place-q' }, '?')),
+            el('div', { class: 'item-desc' }, r.hint.text));
+        }
+        const n = s.pearls[r.id] ?? 0;
+        const hollows = Array.from({ length: PEARLS.hollows }, (_, i) => i < n
+          ? el('button', { class: 'hollow on', title: 'Lift this pearl out', onclick: () => { this.host.act({ type: 'liftPearl', id: r.id }); this.render(); } })
+          : el('button', { class: 'hollow', title: free ? 'Set a pearl here' : 'No pearl in hand', disabled: !free, onclick: () => { this.host.act({ type: 'setPearl', id: r.id }); this.render(); } }));
+        return el('div', { class: 'place found' + (n ? ' lit' : '') },
+          el('div', { class: 'item-top' }, el('b', {}, r.name), el('span', { class: 'hollows' }, ...hollows)),
+          el('div', { class: 'item-blurb' }, giftText(r.effect, relicGift(s, r.id))),
+          el('div', { class: 'item-desc' }, r.lore));
+      })));
+    }
   }
 
   // ---- Echoes

@@ -14,9 +14,10 @@ import {
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import type { FishingSession } from '../core/fishing';
+import type { FindOffer, FishingSession } from '../core/fishing';
 import type { Fx } from './fx';
 import { makeFish, type FishObject } from './fish-models';
+import { makeFind } from './find-models';
 import { PALETTE } from './palette';
 
 const LINE_PTS = 28;
@@ -28,6 +29,8 @@ const DANGLE = 0.5;
 const UP = new Vector3(0, 1, 0);
 const _v = new Vector3(), _w = new Vector3(), _n = new Vector3();
 const WHITE = new Color(PALETTE.bone), GOLD = new Color(PALETTE.lantern), FOAM = new Color(PALETTE.seafoam), CORAL = new Color(PALETTE.coral);
+/** What a thing dragged along the bottom sends up. */
+const SILT = new Color(PALETTE.driftwood).lerp(new Color(PALETTE.murmur), 0.35);
 const LINE_COL = new Color(0xf2ecdc), _col = new Color();
 /** Seconds for the lure to zip back to the rod when the line is reeled in. */
 const RETRIEVE = 0.3;
@@ -82,6 +85,13 @@ export class FishingView {
   private side = new Vector3(1, 0, 0);
   private wasPhase = 'idle';
   private wakeTimer = 0;
+  /** Seconds the float has been going under (a find draws it down slowly; a fish takes it at once). */
+  private dragT = 0;
+  /** 1 as a hauled thing knocks on the bottom, dying away. */
+  private judder = 0;
+  private haulYaw = 0; private haulEnd = new Vector3();
+  /** 1 while the thing being hauled is down out of sight, 0 once it is awash. */
+  private haulDeep = 0;
 
   constructor(private fx: Fx, private waveY: (x: number, z: number) => number, private floorY: (x: number, z: number) => number = waveY) {
     const red = new MeshStandardMaterial({ color: new Color(PALETTE.coral), roughness: 0.4, flatShading: true });
@@ -177,11 +187,17 @@ export class FishingView {
       }
       case 'waiting': case 'bite': {
         // Spring-damped bobbing on the waves; the landing plunges it, nibbles and bites kick it down.
-        const k = 140, damp = 9;
-        const restY = phase === 'bite' ? -0.32 + Math.sin(this.t * 30) * 0.05 : 0;
+        // Over a thing that is not a fish there is no snatch: the float is drawn under slowly, and stays under.
+        const drag = phase === 'bite' && !!s.finding;
+        if (drag) {
+          const was = this.dragT; this.dragT += dt;
+          if (Math.floor(this.dragT / 0.55) !== Math.floor(was / 0.55)) { _v.set(this.target.x, wy + 0.05, this.target.z); this.fx.ripples.spawn(_v, 0.9 + this.dragT * 0.35, 1.4); }
+        }
+        const k = drag ? 34 : 140, damp = drag ? 11 : 9;
+        const restY = drag ? -0.1 - 0.42 * clamp01(this.dragT / 1.8) : phase === 'bite' ? -0.32 + Math.sin(this.t * 30) * 0.05 : 0;
         this.bobberV += ((restY - this.bobberY) * k - this.bobberV * damp) * dt;
         this.bobberY += this.bobberV * dt;
-        end.set(this.target.x + (phase === 'bite' ? Math.sin(this.t * 17) * 0.06 : 0), wy + this.bobberY, this.target.z);
+        end.set(this.target.x + (phase === 'bite' && !drag ? Math.sin(this.t * 17) * 0.06 : 0), wy + this.bobberY, this.target.z);
         if (!this.surfaced && this.bobberY > -0.03 && this.bobberV > 0) {
           // It pops back up through the surface.
           this.surfaced = true;
@@ -193,8 +209,8 @@ export class FishingView {
         this.bobber.scale.setScalar(this.grow);
         this.bobber.rotation.set(Math.sin(this.t * 1.3) * 0.05, 0, Math.sin(this.t * 1.7) * 0.08 + this.bobberV * 0.02);
         // The line settles from its bow in the air onto the water; a bite pulls it nearly straight.
-        const rest = phase === 'bite' ? -0.012 : -0.045;
-        this.bowV += ((rest - this.bow) * (phase === 'bite' ? 90 : 26) - this.bowV * (phase === 'bite' ? 14 : 6)) * dt;
+        const rest = phase === 'bite' ? -0.012 : -0.045, snatch = phase === 'bite' && !drag;
+        this.bowV += ((rest - this.bow) * (snatch ? 90 : 26) - this.bowV * (snatch ? 14 : 6)) * dt;
         this.bow += this.bowV * dt;
         this.lure.copy(end);
         line = 'water';
@@ -234,9 +250,49 @@ export class FishingView {
         line = 'fish';
         break;
       }
+      case 'hauling': {
+        // Dead weight: it comes straight in under the line, along the bottom while it is far and up to the
+        // surface in the last few metres. It shudders when it knocks, and while it is caught.
+        const h = s.haul!;
+        const d = Math.max(1, h.distance);
+        this.judder = Math.max(0, this.judder - dt * 2.4);
+        const shake = h.snag ? 1 : this.judder;
+        // It comes no nearer than under the rod's tip: from there it is lifted, not dragged under the keeper's feet.
+        const reach = Math.hypot(tip.x - player.x, tip.z - player.z) + 0.1;
+        this.fishPos.copy(player).addScaledVector(this.dir, Math.max(d, reach)).addScaledVector(this.side, Math.sin(this.t * 31) * 0.05 * shake);
+        const sy = this.waveY(this.fishPos.x, this.fishPos.z);
+        // Down among the weed while it is far; awash at four metres; swung up clear of the water as it comes to hand.
+        const deep = clamp01((d - 4) / 5), lift = clamp01((3.6 - d) / 2);
+        this.haulDeep = deep;
+        const up = lift * lift * (3 - 2 * lift);
+        this.fishPos.y = sy - 0.1 - 0.9 * deep + Math.max(0.5, tip.y - sy - 1.4) * up + Math.sin(this.t * 43) * 0.05 * shake;
+        this.ensureFind(h.find);
+        const fo = this.fishObj!.obj;
+        this.fishObj!.animate(this.t, 0);
+        fo.position.copy(this.fishPos);
+        // It swings a little on the line, and rolls when it catches.
+        fo.rotation.set(Math.sin(this.t * 1.3) * 0.1 + shake * Math.sin(this.t * 37) * 0.12, this.haulYaw + Math.sin(this.t * 0.7) * 0.25, Math.sin(this.t * 1.1) * 0.12 + (h.snag ? 0.3 : 0));
+        // The line is made fast to the top of it.
+        end = this.haulEnd.copy(this.fishPos); end.y += h.find.kind === 'relic' ? 0.24 : 0.34;
+        this.lure.copy(end);
+        tension = h.tension;
+        this.bow = -0.1 * (1 - tension);
+        this.wakeTimer -= dt;
+        if (this.wakeTimer <= 0) {
+          this.wakeTimer = h.snag ? 0.12 : 0.3;
+          _v.set(this.fishPos.x, sy + 0.04, this.fishPos.z);
+          this.fx.ripples.spawn(_v, h.snag ? 1.5 : 0.9 + 0.5 * (1 - deep), 1.1);
+          // Silt and bubbles come up where it drags; white water once it is at the surface.
+          this.fx.spray.burst(_v, h.snag ? 7 : 2, deep > 0.4 ? SILT : FOAM, 0.7, h.snag ? 1.6 : 0.9, 0.5, 0.1);
+          // Out of the water it runs with it.
+          if (lift > 0.15) for (let i = 0; i < 3; i++) { _w.set((Math.random() - 0.5) * 0.6, -0.4, (Math.random() - 0.5) * 0.6); this.fx.spray.emit(this.fishPos, _w, FOAM, 0.45, 0.06, 9.8); }
+        }
+        line = 'fish';
+        break;
+      }
     }
     const show = !this.lureHidden;
-    this.bobber.visible = show && phase !== 'fighting';
+    this.bobber.visible = show && phase !== 'fighting' && phase !== 'hauling';
     this.line.visible = show;
     if (!show) this.lureReady = false;
     else if (line === 'flight') this.flightLine(tip, this.flightK, wy);
@@ -475,7 +531,9 @@ export class FishingView {
 
   private onPhase(from: string, to: string, s: FishingSession) {
     if (to === 'waiting' && from === 'casting') this.land();
-    if (to === 'bite') { this.splash(this.target, 0.9); }
+    // A fish takes the float with a splash; a find only begins to draw it down.
+    if (to === 'bite') { this.dragT = 0; if (!s.finding) this.splash(this.target, 0.9); }
+    if (to === 'hauling') { this.judder = 0.6; this.haulYaw = Math.atan2(this.dir.x, this.dir.z) + 0.6; this.ensureFind(s.haul!.find); this.splash(this.target, 0.7); }
     if (to === 'landed') { this.splash(this.fishPos, 1.0); this.clearFish(); this.lureReady = false; this.retrieve = -1; }
     if (to === 'lost') { this.clearFish(); this.startRetrieve(this.fishPos); }
     if (to === 'fighting') { this.lateral = 0; this.jump = -1; this.ensureFish(s.fight!.fish.id); }
@@ -484,6 +542,8 @@ export class FishingView {
 
   /** The hooked fish's position while fighting. */
   get hooked(): Vector3 | null { return this.fishObj ? this.fishPos : null; }
+  /** How far down the thing on the line is, 0 (awash) .. 1 (on the bottom): what is deep is only a shadow. */
+  get sunk(): number { return this.haulDeep; }
 
   nibble() {
     this.bobberV -= 2.2; this.bowV += 0.05;
@@ -495,6 +555,21 @@ export class FishingView {
     this.fx.spray.burst(p, Math.round(18 * size), FOAM, 1.6 * size, 3.2 * size, 0.9, 0.16 * size);
     this.fx.ripples.spawn(p, 1.6 * size, 1.3);
     this.fx.ripples.spawn(p, 0.9 * size, 0.9);
+  }
+
+  /** The thing being hauled has knocked on the bottom: it is felt in the line and seen on the water. */
+  knock() {
+    this.judder = 1; this.bowV += 0.12;
+    if (this.fishObj) { _v.set(this.fishPos.x, this.waveY(this.fishPos.x, this.fishPos.z) + 0.04, this.fishPos.z); this.fx.ripples.spawn(_v, 1.8, 1.0, GOLD); }
+  }
+
+  private ensureFind(find: FindOffer) {
+    const key = `find:${find.id}`;
+    if (this.fishId === key && this.fishObj) return;
+    this.clearFish();
+    this.fishObj = makeFind(find.kind, find.id, 'line');
+    this.fishId = key;
+    this.group.add(this.fishObj.obj);
   }
 
   private ensureFish(id: string) {

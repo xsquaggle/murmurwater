@@ -30,6 +30,9 @@ const SFX = {
   // (The cat's two are recorded 4 to 7 dB under the rest, held down by sharp peaks, and play at full gain for it.)
   'cat-catch': [2, 1], 'cat-eat': [1, 1], 'hollis-catch': [2, 0.75], 'hollis-thin': [1, 0.8], 'hollis-thick': [1, 0.8],
   'crew-basket-full': [1, 0.8], 'boatyard': [1, 0.9], 'sloop-sail': [1, 0.75],
+  // Things fished up, the Keeper's Shelf and Moonpearls
+  'find-drag': [2, 0.85], 'haul-knock': [3, 0.9], 'haul-snag': [2, 0.9], 'haul-free': [2, 0.7], 'find-surface': [2, 0.85],
+  'crate-open': [2, 0.8], 'relic-found': [1, 0.9], 'rumour': [1, 0.7], 'pearl-set': [2, 0.8], 'pearl-lift': [1, 0.7],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
@@ -40,7 +43,10 @@ type Loop = (typeof LOOPS)[number];
  * such a sound is not fetched and not counted as missing, and its synth stand-in plays; from the first build
  * after they land it is used, with nothing to change here.
  */
-const PENDING: ReadonlySet<string> = new Set<string>([]);
+const PENDING: ReadonlySet<string> = new Set<string>([
+  // docs/briefs/finds-assets.md
+  'find-drag', 'haul-knock', 'haul-snag', 'haul-free', 'find-surface', 'crate-open', 'relic-found', 'rumour', 'pearl-set', 'pearl-lift',
+]);
 const BUILT_IN: ReadonlySet<string> = new Set(present);
 /** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
 const wanted = (name: string) => !PENDING.has(name) || BUILT_IN.has(`audio/sfx/${name}_1.ogg`);
@@ -336,6 +342,49 @@ export class AudioEngine {
   chartOpen() { if (!this.sfx('chart-open')) this.pageTurn(); }
   /** A sea chest's lid: a creak with the clink of what is inside (the recording has both). */
   chestOpen() { if (!this.sfx('chest-open')) this.coin(8); }
+  // ---- things fished up ----
+  /** The float drawn slowly under by something that is not a fish: a long low gulp. */
+  drag() { if (!this.sfx('find-drag')) { this.noise(0.9, 320, 0.8, 0.2, 'lowpass', 110); this.tone(110, 0.8, 0.13, 'sine', 0, 68); } }
+  /** The strike has it: the rod takes a dead weight. */
+  haulStart() { this.sfx('line-creak', { gain: 0.8, rate: 0.8, vary: 0.05 }); this.tone(82, 0.32, 0.24, 'sine', 0.02, 50); }
+  /** It knocks on the bottom, felt up the line: the warning to let go of the reel. */
+  knock() {
+    if (this.sfx('haul-knock', { vary: 0.07 })) return;
+    if (!this.sfx('boat-bump', { gain: 0.42, rate: 0.72 })) { this.tone(96, 0.16, 0.34, 'sine', 0, 60); this.noise(0.08, 380, 1.2, 0.18, 'lowpass'); }
+    this.tone(196, 0.09, 0.1, 'triangle', 0, 150);
+  }
+  /** It has caught fast. */
+  snag() {
+    if (this.sfx('haul-snag')) return;
+    this.sfx('line-creak', { gain: 1.1, rate: 0.74, vary: 0.05 });
+    this.tone(70, 0.32, 0.34, 'sine', 0, 44); this.noise(0.2, 300, 1, 0.2, 'lowpass');
+  }
+  /** It comes free of the bottom, or slides over what it knocked on. */
+  eased() { if (!this.sfx('haul-free', { vary: 0.08 })) { this.tone(392, 0.12, 0.09, 'sine', 0, 523); this.noise(0.35, 1200, 0.7, 0.07, 'lowpass', 400); } }
+  /** A heavy thing breaking the surface with the water running off it. */
+  findUp() { if (!this.sfx('find-surface')) { this.landSplash(); this.noise(0.9, 1800, 0.6, 0.11, 'bandpass', 500, 0.15); } }
+  /** A crate prised open, or a sea chest's lid: wood, and what is inside. */
+  crateOpen(chest: boolean) {
+    if (chest) { this.chestOpen(); return; }
+    if (!this.sfx('crate-open')) { if (!this.sfx('chest-open', { rate: 1.22, gain: 0.7 })) this.noise(0.18, 900, 1.2, 0.2, 'bandpass', 400); this.coin(3); }
+  }
+  /** A relic in the hands: a glass note, and under it something that is not quite in tune. */
+  relicFound() {
+    if (this.sfx('relic-found')) return;
+    [622.25, 932.33, 1244.5, 1864.66].forEach((f, i) => this.tone(f, 1.1, 0.1, 'sine', i * 0.13));
+    for (let i = 0; i < 3; i++) this.tone(311 * (1 + i * 0.5), 1.6, 0.07, 'sine', 0.35 + i * 0.12);
+    this.tone(2489, 0.5, 0.04, 'triangle', 0.5);
+  }
+  /** Something is said of a thing still in the water. */
+  rumour() {
+    if (this.sfx('rumour')) return;
+    this.sfx('page-turn', { gain: 0.8, rate: 0.9 });
+    this.tone(587.33, 0.5, 0.07, 'sine', 0.06); this.tone(880, 0.8, 0.05, 'sine', 0.22);
+  }
+  /** A Moonpearl set into the hollow beside a relic, and lifted out again. */
+  pearlSet() { if (!this.sfx('pearl-set', { vary: 0.06 })) { this.noise(0.03, 3000, 2, 0.08); this.tone(1568, 0.26, 0.12, 'sine', 0.01); this.tone(2349.3, 0.45, 0.07, 'sine', 0.07); } }
+  pearlLift() { if (!this.sfx('pearl-lift')) { this.tone(2349.3, 0.14, 0.08, 'sine'); this.tone(1568, 0.3, 0.09, 'sine', 0.05); } }
+
   // ---- Lantern Pots and the Drowned Bell ----
   /** A pot going into the water: the float's plop and the basket sinking after it. */
   potSet() { if (!this.sfx('pot-set')) { this.plop(0.9); this.noise(0.5, 500, 0.7, 0.12, 'lowpass', 160, 0.12); } }

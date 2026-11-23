@@ -6,6 +6,8 @@ import { assets } from './render/assets';
 import { makeFish } from './render/fish-models';
 import { loadSettings } from './game/settings';
 import * as quests from './core/quests';
+import * as finds from './core/finds';
+import * as relics from './core/relics';
 import { findRoute } from './core/seaways';
 import { clearance } from './core/boat';
 import { LANDING, hullDistance, landingSpot } from './core/landing';
@@ -45,7 +47,7 @@ const testSlot = params.has('fresh') || params.has('keepfresh');
  * reads and writes no save at all, so the player's own game is as they left it.
  */
 const TESTERS = [
-  { id: 'finds', save: testerFinds, note: 'Things fished up: nightfall on the home dock, the Puffin afloat, both hands aboard, four relics and three Moonpearls never set. Open the satchel\'s Shelf for the rumours; the first lies in the cove beside you.' },
+  { id: 'finds', save: testerFinds, note: 'Things fished up: nightfall on the home dock, the Puffin afloat, both hands aboard, four relics and three Moonpearls never set. Open the satchel\'s Shelf for the rumours; the first lies in Lantern Cove, a good cast off the end of the dock you stand on.' },
   { id: 'crew', save: testerCrew, note: 'Hands aboard: the cat signed on, the wreck of the Puffin found, the price of her refit in your purse (see Pell), and a gentleman waiting on the old sea-road.' },
   { id: 'fen', save: testerFen, note: 'Mossglass Fen: the Bell rung once, the Fog Lamp on the bow, Pell\'s road job in hand.' },
 ];
@@ -121,7 +123,7 @@ async function boot() {
     get assetsMissing() { return [...assets.missing]; },
     tester,
     testerStart: tester ? TESTERS[testerAt].id : null,
-    quests,
+    quests, finds, relics,
     findRoute,
     clearance,
     landingSpot, hullDistance, LANDING,

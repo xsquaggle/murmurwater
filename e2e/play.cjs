@@ -35,8 +35,8 @@ const { chromium } = require('playwright');
       g.simulate(1 / 60, () => ({ ...NO, primary: true, primaryPressed: true }));
       // Fight with a sensible policy.
       guard = 0;
-      while (g.session.phase === 'fighting' && guard++ < 60 * 120) {
-        g.simulate(1 / 60, (gg) => { const f = gg.session.fight; if (!f) return NO; return { ...NO, primary: f.thrash <= 0 && f.tension < 0.7, steer: f.run ? -f.run : 0 }; });
+      while ((g.session.phase === 'fighting' || g.session.phase === 'hauling') && guard++ < 60 * 120) {
+        g.simulate(1 / 60, (gg) => { const f = gg.session.fight, h = gg.session.haul; if (h) return { ...NO, primary: !h.snag && !h.warned && h.tension < 0.7 }; if (!f) return NO; return { ...NO, primary: f.thrash <= 0 && f.tension < 0.7, steer: f.run ? -f.run : 0 }; });
       }
       if (g.session.phase === 'landed' || g.state.lifetime.catches > landed) landed = g.state.lifetime.catches; else lost++;
       g.simulate(1.2, () => NO);

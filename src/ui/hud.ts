@@ -8,6 +8,8 @@ import type { Stats } from '../core/gear';
 import { potsWaiting } from '../core/pots';
 import { basket } from '../core/crew';
 import { FEEL, STRANGE_TRAITS, type FishingSession } from '../core/fishing';
+import type { Loot } from '../core/finds';
+import { RELICS_BY_ID, giftText } from '../core/relics';
 import type { CatchItem, GameState } from '../core/state';
 
 const RARITY_NAMES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Uncanny'];
@@ -186,7 +188,8 @@ export class Hud {
   }
   private hintWas = ''; private promptWas = ''; private promptLow = false;
 
-  toast(html: string, kind = '') {
+  /** `hold`: milliseconds it stays up (a line somebody is quoted saying takes longer to read). */
+  toast(html: string, kind = '', hold = 2600) {
     // Said once: the same words are not stacked while they are still up.
     if ([...this.toasts.children].some((c) => !c.classList.contains('out') && (c as HTMLElement).dataset.say === html)) return;
     const t = h('div', 'toast ' + kind, this.toasts, html);
@@ -194,8 +197,21 @@ export class Hud {
     // At most four at once: a burst pushes the oldest out early.
     const live = [...this.toasts.children].filter((c) => !c.classList.contains('out'));
     for (const old of live.slice(0, Math.max(0, live.length - 4))) { old.classList.add('out'); setTimeout(() => old.remove(), 600); }
-    setTimeout(() => t.classList.add('out'), 2600);
-    setTimeout(() => t.remove(), 3200);
+    setTimeout(() => t.classList.add('out'), hold);
+    setTimeout(() => t.remove(), hold + 600);
+  }
+
+  /** The card for a thing fished up that is not a fish: what it was, what was in it, and for a relic what it gives. */
+  showFind(loot: Loot, lines: string[]) {
+    const relic = loot.relic ? RELICS_BY_ID.get(loot.relic) : null;
+    this.card.className = `catch-card on find ${loot.kind}`;
+    this.card.innerHTML = `
+      <div class="cc-rarity">${relic ? 'A relic for the Shelf' : loot.kind === 'chest' ? 'Sea chest' : 'Fished up'}</div>
+      <div class="cc-name">${loot.name}</div>
+      ${lines.length ? `<div class="cc-stats cc-loot">${lines.map((l) => `<span>${l}</span>`).join('')}</div>` : ''}
+      ${relic ? `<div class="cc-stats cc-gift"><span>${giftText(relic.effect)}</span></div>` : ''}
+      <div class="cc-lore">${loot.text}</div>`;
+    this.cardTimer = relic ? 8 : loot.kind === 'chest' ? 5.5 : 4;
   }
 
   showCatch(item: CatchItem | null, catchInfo: { fishId: string; weight: number; trait: string | null }, first: boolean, record: boolean, value: number, holdFull: boolean) {
@@ -256,10 +272,23 @@ export class Hud {
       this.power.classList.toggle('sweet', session.power >= lo && session.power <= hi);
     }
     this.bite.classList.toggle('on', ph === 'bite');
+    // A find draws the float down slowly: the mark is as slow, and a different colour.
+    this.bite.classList.toggle('heavy', ph === 'bite' && !!session.finding);
     if (ph === 'bite' && bitePos) { this.bite.style.left = `${bitePos.x}px`; this.bite.style.top = `${bitePos.y}px`; }
 
-    const fs = session.fight;
-    this.fight.classList.toggle('on', ph === 'fighting' && !!fs);
+    const fs = session.fight, hs = session.haul;
+    this.fight.classList.toggle('on', (ph === 'fighting' && !!fs) || (ph === 'hauling' && !!hs));
+    this.fight.classList.toggle('haul', !!hs);
+    if (hs) {
+      // Dead weight: no fish to tire, only the line and the bottom.
+      const say = hs.snag ? 'Caught on the bottom: let go of the reel' : hs.warned ? 'It knocks: let go!' : hs.tension > 0.82 ? 'Rest the line a moment' : 'Haul it up, a little at a time';
+      if (this.fightLabel.textContent !== say) this.fightLabel.textContent = say;
+      this.fightLabel.classList.toggle('warn', hs.snag || hs.warned);
+      this.tensionFill.style.width = `${Math.min(1, hs.tension) * 100}%`;
+      this.tensionFill.parentElement!.classList.toggle('danger', hs.tension > 0.85);
+      this.tensionFill.parentElement!.classList.remove('slack');
+      this.distFill.style.width = `${Math.max(0, Math.min(1, 1 - hs.distance / Math.max(session.castDistance, 1))) * 100}%`;
+    }
     if (fs) {
       this.fightLabel.textContent = fs.thrash > 0 ? 'It’s thrashing — ease off!' : fs.run !== 0 ? 'It’s running — steer against it!' : 'Reel it in';
       this.fightLabel.classList.toggle('warn', fs.thrash > 0 || fs.run !== 0);

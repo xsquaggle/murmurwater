@@ -137,7 +137,7 @@ module.exports.install = (page, { grant = true } = {}) => page.evaluate((grant) 
           g.simulate(0.15, () => NO);
           g.simulate(1 / 60, () => ({ ...NO, primary: true, primaryPressed: true }));
           guard = 0;
-          while (g.session.phase === 'fighting' && guard++ < 60 * 60) g.simulate(1 / 60, (gg) => { const f = gg.session.fight; if (!f) return NO; return { ...NO, primary: f.thrash <= 0 && f.tension < 0.7, steer: f.run ? -f.run : 0 }; });
+          while ((g.session.phase === 'fighting' || g.session.phase === 'hauling') && guard++ < 60 * 60) g.simulate(1 / 60, (gg) => { const f = gg.session.fight, h = gg.session.haul; if (h) return { ...NO, primary: !h.snag && !h.warned && h.tension < 0.7 }; if (!f) return NO; return { ...NO, primary: f.thrash <= 0 && f.tension < 0.7, steer: f.run ? -f.run : 0 }; });
           g.simulate(2.6, () => NO);
           if ((s.journal[fishId]?.caught ?? 0) > before) { g.botInput = null; return n; }
         }

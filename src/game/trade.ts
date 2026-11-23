@@ -10,10 +10,11 @@ import {
   type PotUpgrade,
 } from '../core/gear';
 import { buyEcho, echoRank } from '../core/bell';
+import { liftPearl, setPearl } from '../core/relics';
 import { QUESTS_BY_ID, newlyReady, readySet, readyText } from '../core/quests';
 
 export type GearAction =
-  | { type: 'buyRod' | 'equipRod' | 'tune' | 'equipBait' | 'buyLure' | 'buyWearable' | 'wear' | 'buyEcho'; id: string }
+  | { type: 'buyRod' | 'equipRod' | 'tune' | 'equipBait' | 'buyLure' | 'buyWearable' | 'wear' | 'buyEcho' | 'setPearl' | 'liftPearl'; id: string }
   | { type: 'buyBait'; id: string; n: number }
   | { type: 'equipLure'; id: string | null }
   | { type: 'buyCreel' | 'buyPot' }
@@ -39,6 +40,9 @@ export function trade(g: Game, a: GearAction): boolean {
     case 'buyCreel': { const n = creelNext(s); ok = buyCreel(s); said = n ? `${n.name}: your hold is bigger, and fish keep better` : ''; coins = 5; break; }
     case 'buyPot': ok = buyPot(s); said = 'Another Lantern Pot for the water'; coins = 5; break;
     case 'potUpgrade': ok = upgradePots(s, a.k); said = `${POTS.upgrades[a.k].name}: ${POTS.upgrades[a.k].blurb.toLowerCase()}`; coins = 3; break;
+    // A pearl beside a relic, or out again: nothing is spent either way.
+    case 'setPearl': ok = setPearl(s, a.id); break;
+    case 'liftPearl': ok = liftPearl(s, a.id); break;
     case 'buyEcho': {
       const u = ECHOES_BY_ID.get(a.id);
       ok = buyEcho(s, a.id);
@@ -48,7 +52,7 @@ export function trade(g: Game, a: GearAction): boolean {
   }
   if (!ok) return false;
   g.refreshSession();
-  if (a.type === 'buyEcho') g.audio.echoBuy(); else if (coins) g.audio.coin(coins);
+  if (a.type === 'buyEcho') g.audio.echoBuy(); else if (a.type === 'setPearl') g.audio.pearlSet(); else if (a.type === 'liftPearl') g.audio.pearlLift(); else if (coins) g.audio.coin(coins);
   if (said) g.hud.toast(said, 'gold');
   // Owning the thing can be what a job was waiting for.
   for (const id of newlyReady(s, before)) { const q = QUESTS_BY_ID.get(id)!; g.hud.toast(readyText(q), 'gold'); }
