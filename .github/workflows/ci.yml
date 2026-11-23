@@ -39,12 +39,16 @@ jobs:
         run: node e2e/fog.cjs shots/fog
         env:
           MW_QUALITY: low
-      - name: Tester bot (F8 on the title screen through both tester's starts, the simulator's save in the real game, across the road to Calloway, nothing saved)
+      - name: Tester bot (F8 on the title screen through all three tester's starts, the simulator's save in the real game, across the road to Calloway, nothing saved)
         run: node e2e/tester.cjs shots/tester
         env:
           MW_QUALITY: low
       - name: Crew bot (hands aboard from the tester's start, the cat at work, the wreck, Pell's boatyard, the Puffin under sail, Mister Hollis hailed and fishing after dark, the basket sold, the boats swapped)
         run: node e2e/crew.cjs shots/crew
+        env:
+          MW_QUALITY: low
+      - name: Finds bot (things fished up from the tester's start, the rumours, the Shelf and its pearls, a crate hauled with a knock and a snag, a chest, a line broken on a haul, a relic fished from Lantern Cove by night)
+        run: node e2e/finds.cjs shots/finds
         env:
           MW_QUALITY: low
       - name: Walk bot (solid props and people, everyone reachable on foot)

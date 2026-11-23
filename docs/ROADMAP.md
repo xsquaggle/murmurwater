@@ -6,7 +6,7 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 |---|---|---|---|
 | 0 | Pre-production | Vision, design, art bible, tech plan, repo, CI skeleton, style refs | Done (v0.0.1) |
 | 1 | Vertical slice | Hearthbay at final quality: water, sky/time, lighthouse, dock, cast/bite/hook/fight feel, 8 fish, sell, 2 rods, first quest chain, save/load, settings, Windows build on a Release | Done (v0.1.0) |
-| 2 | Production A | Economy core + simulator, gear/bait/lures/wearables, boats + free sailing + discovery + fast travel, Mossglass Fen, automation, the Bell (prestige), notice board | In progress (v0.2.0: boats; v0.3.0: economy, gear, Lantern Pots, the Bell; v0.4.0: Mossglass Fen; v0.5.0: deckhands and the Puffin) |
+| 2 | Production A | Economy core + simulator, gear/bait/lures/wearables, boats + free sailing + discovery + fast travel, Mossglass Fen, automation, the Bell (prestige), notice board | Done but for voices and music that wait on credits (v0.2.0: boats; v0.3.0: economy, gear, Lantern Pots, the Bell; v0.4.0: Mossglass Fen; v0.5.0: deckhands and the Puffin; v0.6.0: things fished up, relics and the Keeper's Shelf) |
 | 3 | Production B | Saltbone Reach, The Hush, Sunken Lanterns; relics, chests, crates fully populated; story chain through act 4 | |
 | 4 | Alpha (content complete) | Still Eye finale + ending + postgame; all fish/gear/quests in; automated full playthrough passes | |
 | 5 | Beta (balance + polish) | Simulator-tuned 10–15 h arc, audio pass, VFX pass, perf pass, onboarding pass, controller decision, reviewer playtests | |
@@ -50,4 +50,5 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 - [x] Crew bot; two tester's starts; the simulator hires the crew and buys the Puffin (v0.5.0)
 - [x] Dr. Calloway's model, built in code by the asset thread (v0.4.0)
 - [ ] The Fen's music, voices for the 121 unvoiced lines (wait on credits)
-- [ ] More chests, crates and relics
+- [x] Things fished up: crates, sea chests and relics on the line, the haul, eight new relics with rumours, the Keeper's Shelf, Moonpearls set beside relics; save v6 (v0.6.0)
+- [x] Finds bot; a third tester's start; the simulator hauls, follows rumours and sets pearls (v0.6.0)
