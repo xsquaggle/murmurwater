@@ -12,7 +12,8 @@
 import { Model, pack, strip, cli, emit, within, rotY, move, compose, rad, rng, add, sub, mul, norm, lerp, len } from './kit.mjs';
 import { curve, mirrored, quadToward, triToward, aim } from './fish.mjs';
 
-const args = cli(), ATLAS = [1024, 1024], rnd = rng(31);
+const args = cli(), ATLAS = [1024, 1024], rnd = rng(31), ROPE = 8.6;
+const ropeLay = (pts) => { const L = pts.slice(1).reduce((a, q, i) => a + len(sub(q, pts[i])), 0); if (L > ROPE) throw new Error(`a rope of ${L} m`); return L / ROPE; };     // each rope takes its length of the rope's rectangle
 const N = 5, LAP = 0.045, KW = 0.07, KEEL = 0.2, INSET = 0.11, BAT = 0.09, DEEP = -0.2;        // strakes a side; how far a plank's edge stands proud; half the keel's width, its depth; the wall inside the gunwale, its batter, how far it goes into the ground
 const ZC = 3.70, ZF = 3.62, ZT = -3.80, SHIFT = (-ZC - ZT) / 2;                                 // the sawn end, the face of the front wall, the stem's forward face; what centres her on the origin
 // the boat's lines as she lies: z -> [half breadth at the gunwale, height of the gunwale, of the planking on the centre line, fullness of the section]
@@ -60,7 +61,7 @@ const R = {
     floatB: [160, 80, { mat: 'floatglass', colour: '#4E9C96', net: 6, soft: 0, glow: { mat: 'flat', colour: '#000000', var: 0, soft: 0 } }],
     bench: [220, 60, { mat: 'wood', planks: 2, along: 'x', tone: 'grey', weather: 0.5, nails: 2, edge: 0.3 }],
     tin: [96, 168, { mat: 'tin', tile_x: true }],
-    rope: [128, 24, { mat: 'rope', pitch: 32 }],
+    rope: [600, 12, { mat: 'rope', pitch: 10 }],                                         // ROPE m of rope, laid end to end
     slab: [112, 96, { mat: 'flat', colour: '#6C727C', var: 0.16, grain: 0.25, along: 'x', edge: 0.35 }],
     stone: [96, 56, { mat: 'flat', colour: '#7B8089', var: 0.2, tile_x: true }],
     iron: [48, 48, { mat: 'iron', rust: 0.5 }],
@@ -168,7 +169,7 @@ const DX0 = -0.98, DX1 = -0.13, DY0 = 0.07, DTOP = 1.87, DIN = 0.13;
       for (let q = 0; q < 4; q++) { const b = (t) => add(c, [0.03 * Math.cos(Math.PI / 2 * t), -0.012, -0.03 * Math.sin(Math.PI / 2 * t)]); p.tri([b(q), h.at(q / 4, 0)], [b(q + 1), h.at((q + 1) / 4, 0)], [add(c, [0, 0.02, 0]), h.at(0.5, 1)]); } });
   });
   const LY = 1.31, FL = [[0.25, 0.13, 0.13, 'A', 0.4], [0.555, 0.105, 0.29, 'B', 2.1], [0.865, 0.15, 0.09, 'A', 3.3], [1.16, 0.115, 0.23, 'B', 5.0]];      // x, radius, length of its cord, which glass, turn
-  fit.tube([[0.08, LY + 0.02, ZF + 0.02], [0.4, LY - 0.01, ZF + 0.03], [0.72, LY - 0.02, ZF + 0.03], [1.02, LY - 0.01, ZF + 0.03], [XW - 0.04, LY + 0.02, ZF + 0.02]], 0.012, 3, R.rope, { lay: 5, open: true });
+  fit.tube([[0.08, LY + 0.02, ZF + 0.02], [0.4, LY - 0.01, ZF + 0.03], [0.72, LY - 0.02, ZF + 0.03], [1.02, LY - 0.01, ZF + 0.03], [XW - 0.04, LY + 0.02, ZF + 0.02]], 0.012, 3, R.rope, { lay: ropeLay([[0.08, LY, ZF], [XW - 0.04, LY, ZF]]) * 1.01, open: true });
   for (const sx of [0.08, XW - 0.04]) fit.box([sx, LY + 0.02, ZF + 0.02], [0.022, 0.022, 0.03], R.iron);
   for (const [x, r, cord, which, turn] of FL) { const c = [x, LY - 0.02 - cord - r, ZF + r + 0.012];
     within(glass, compose(move(c), rotY(turn)), (p) => p.lathe([[0, -r], [0.72 * r, -0.70 * r], [r, 0], [0.72 * r, 0.70 * r], [0, r]], 6, R['float' + which], { v: [0, 0.22, 0.5, 0.78, 1] }));
@@ -186,7 +187,8 @@ within(fit, move([0.78, 0, -0.9]), (p) => { const t = R.tin;
 // ---- two ropes over the hull, a stone hung on each end to hold her down in a gale
 for (const z of [1.55, -1.75]) { const r = ringAt(z), B = r.P[0][0], yk = r.P[N][1];
   const half = [[B + 0.075, 0.78, z], [B + 0.075, r.P[0][1] + 0.055, z], ...r.U.slice(1, N).map((q, j) => add(q, mul(r.nr[j + 1], 0.02))), [KW + 0.025, yk + KEEL + 0.022, z]];
-  fit.tube([...half, ...half.map(([x, y, zz]) => [-x, y, zz]).reverse()], 0.017, 3, R.rope, { lay: 14, open: true });
+  const over = [...half, ...half.map(([x, y, zz]) => [-x, y, zz]).reverse()];
+  fit.tube(over, 0.017, 3, R.rope, { lay: ropeLay(over), open: true });
   for (const sx of [1, -1]) within(fit, compose(move([sx * (B + 0.075), 0.66, z]), rotY(rnd() * 6)), (p) => p.lathe([[0, -0.15], [0.14, -0.07], [0.125, 0.06], [0.04, 0.125], [0, 0.125]], 5, R.stone, { wobble: (i, j) => 1 + 0.16 * (((j * 7 + i * 3) % 5) / 4 - 0.5) }));
 }
 

@@ -94,14 +94,15 @@ LICHEN, LICHEN_L, LICHEN_R, CRUST = hexc('#DB8A2A'), hexc('#F1B646'), hexc('#E6C
 FILM, SEA, DEEP, WEED, WEED_L, SHELL, SHELL_D = hexc('#7F9272'), hexc('#5B7059'), hexc('#2F433C'), hexc('#3B472E'), hexc('#6C6636'), hexc('#D8D2BC'), hexc('#7E7862')
 
 
-def bone(H, W, seed=0, geo=None, axis=None, tide=None, lichen=None, raw=0.0, end=None, cracks=1.0, pits=1.0, ppm=64.0, at=(0.0, 6.0, 0.0), **_):
+def bone(H, W, seed=0, geo=None, axis=None, tide=None, lichen=None, raw=0.0, end=None, cracks=1.0, pits=1.0, ppm=64.0, at=(0.0, 6.0, 0.0), sockets=(), **_):
     """Old bone left out in the weather: cream, stained and bleached, cracked along its length and pitted.
     axis    the bone's middle line [[x, y, z], ...]: cracks run along it (without one they run up and down)
     tide    {"top": m, "limpets": n}: the bone stands in the sea at y = 0: dark green below, a grey-green film with
             weed, barnacles and n limpets up to about `top` metres
     lichen  {"lo": m, "hi": m, "amount": 0..1}: orange lichen in dabs, none below lo and all of `amount` above hi
     raw     0..1: a broken face, darker and full of holes
-    end     {"c": [x, z], "r": m}: the flat end of a drum of bone about that upright line: rings, and a spongy middle"""
+    end     {"c": [x, z], "r": m}: the flat end of a drum of bone about that upright line: rings, and a spongy middle
+    sockets [{"c": [x, y, z], "r": m}, ...]: hollows (an eye's socket) that go dark toward their middles"""
     g = geo or flatgeo(H, W, ppm, at)
     P, N = g['pos'], g['nrm']
     Y, up = P[..., 1], N[..., 1]
@@ -158,6 +159,10 @@ def bone(H, W, seed=0, geo=None, axis=None, tide=None, lichen=None, raw=0.0, end
         dab = mix(dab, LICHEN_L, 0.7 * smooth(noise3(P, 0.09, seed + 17), 0.55, 0.8) * heart)
         img = mix(img, dab, 0.94 * m)
 
+    for sk in sockets:                                                 # the dark of a socket, deepest in its middle, with a lit lip round it
+        d = np.linalg.norm(P - np.asarray(sk['c'], float), axis=-1) / sk['r']
+        img = mix(img, mix(HOLE, hexc('#2A2219'), smooth(0.7 - d, 0, 0.5)), 0.95 * smooth(1.0 - d, 0, 0.35))
+        img = mix(img, WHITE, 0.35 * np.exp(-((d - 1.12) / 0.08) ** 2) * smooth(P[..., 1] - sk['c'][1], -0.2 * sk['r'], 0.4 * sk['r']))
     if tide:
         top = tide.get('top', 1.1)
         rag = (fbm3(P, (0.55, 1.2, 0.55), seed + 20, 3) - 0.5) * 0.9 * top
@@ -463,5 +468,198 @@ def wrapped(H, W, seed=0, colour='#D8CCA8', turns=5, ties=(0.25, 0.62), tile_x=T
     return img
 
 
+def reefrock(H, W, seed=0, geo=None, top=1.0, ppm=40.0, at=(0.0, 0.0, 0.0), **_):
+    """Dark slate rock of a reef, painted by place like bone (geo): beds that dip across it, blocky and cracked, grey
+    crusts above the sea, and below `top` metres the tide: a grey-green film, weed, barnacles, dark green under water."""
+    g = geo or flatgeo(H, W, ppm, at)
+    P, N = g['pos'], g['nrm']
+    Y, up = P[..., 1], N[..., 1]
+    big, mid = fbm3(P, 3.0, seed, 3), fbm3(P, 0.8, seed + 1, 3)
+    img = mix(hexc('#4A5059'), hexc('#6E737A'), 0.25 + 0.6 * big)
+    img = shade(img, 0.88 + 0.22 * mid)
+    bed = (Y + 0.18 * P[..., 0] - 0.07 * P[..., 2]) / 0.55 + 0.8 * fbm3(P, 2.0, seed + 2, 2)
+    f = bed - np.floor(bed)
+    img = shade(img, 1 - 0.30 * np.exp(-(f / 0.07) ** 2))                         # the partings between beds
+    img = mix(img, hexc('#8A8F94'), 0.35 * np.exp(-((f - 0.12) / 0.05) ** 2) * smooth(up, -0.2, 0.6))
+    img = mix(img, hexc('#9CA0A2'), 0.30 * smooth(up, 0.3, 0.9))                 # tops paler
+    crust = smooth(noise3(P, 0.3, seed + 3) * fbm3(P, 1.4, seed + 4, 2), 0.50, 0.58) * smooth(Y, top + 0.3, top + 1.2)
+    img = mix(img, CRUST, 0.55 * crust)
+    rag = (fbm3(P, (1.0, 2.0, 1.0), seed + 5, 3) - 0.5) * 0.8 * top
+    img = mix(img, FILM, 0.85 * smooth(top + rag - Y, 0.0, 0.4 * top))
+    img = mix(img, mix(SEA, DEEP, smooth(-Y, 0.2, 2.3)), 0.92 * smooth(-Y, -0.08, 0.25))
+    w = fbm3(P, (0.25, 1.6, 0.25), seed + 6, 3)
+    band = smooth(Y, -2.0, -0.6) * (1 - smooth(Y, 0.4 * top, 0.95 * top))
+    wm = smooth(w + 0.4 * band - 0.35, 0.50, 0.62) * smooth(band, 0.0, 0.25)
+    img = mix(img, mix(WEED, WEED_L, 0.8 * smooth(noise3(P, 0.12, seed + 7), 0.45, 0.8)), 0.9 * wm)
+    zone = np.exp(-((Y - 0.5 * top) / (0.6 * top)) ** 2)
+    img = mix(img, SHELL, 0.8 * smooth(noise3(P, 0.08, seed + 8), 0.80, 0.86) * zone * (1 - wm))
+    return shade(img, 1 - 0.16 * smooth(0.35 - Y, 0, 0.35) * (Y > -0.05))
+
+
+# ------------------------------------------------------------------------------------------------ the Tally Stone
+CUT_OLD, CUT_NEW = hexc('#41464E'), hexc('#AEB4BB')
+
+
+def _seg(a, b, ax, ay, bx, by):
+    """Distance from points (a, b) to segments (ax, ay)-(bx, by), where along it (0..1), and the offset across it."""
+    dx, dy = bx - ax, by - ay
+    L2 = dx * dx + dy * dy + 1e-12
+    t = np.clip(((a - ax) * dx + (b - ay) * dy) / L2, 0, 1)
+    ox, oy = a - (ax + t * dx), b - (ay + t * dy)
+    return np.hypot(ox, oy), t, ox, oy
+
+
+def slate(H, W, seed=0, ppm=440.0, x0=0.0, y0=0.0, crown=None, floor=0.8, side=0.07, top=0.08, group=(0.06, 0.085), stroke=(0.0115, 0.058, 0.0046),
+          era=(0.0, 1.0), fresh=0.1, left=0, part=5, cuts=True, layers='x', lichen=0.45, moss=0.3, tile_x=False, **_):
+    """A face of split slate, its foot at the bottom of the patch (ppm = pixels to a metre; x0, y0 = where the patch's
+    bottom left corner lies on the face, in metres). With `cuts` it is cut all over with tallies in fives, four strokes
+    and one across, row on row from the top down as a ledger is kept, from `floor` (metres up the face) to `top` under
+    the crown (the top edge, [[x, y], ...] left to right) and `side` in from either edge. The marks run from era[0]
+    (old: worn shallow, broken, grimed and grown over) to era[1] (new); the last `fresh` of them are pale new cuts. The
+    last `left` places are not cut yet, and the newest five has only `part` strokes. Lit from the upper left. Without
+    `cuts`, plain slate whose layers run along `layers` (an edge shows them)."""
+    yy, xx, v = _yx(H, W)
+    X, Y = x0 + xx * W / ppm, y0 + v * H / ppm
+    big = stretch(fbm(H, W, max(2, H / 90), max(2, W / 90), seed, 3, 0.55, tile_x=tile_x))
+    img = mix(hexc('#565C66'), hexc('#7C818A'), 0.25 + 0.55 * big)
+    img = mix(img, hexc('#6A6660'), 0.25 * smooth(stretch(fbm(H, W, max(2, H / 40), max(2, W / 40), seed + 1, 3, tile_x=tile_x)), 0.6, 0.9))      # a brown cast in places
+    img = shade(img, 0.93 + 0.12 * strokes(H, W, seed + 2, layers, 7, 220, tile_x=tile_x))                       # the cleavage
+    img = shade(img, 1 - 0.09 * smooth(strokes(H, W, seed + 3, 'y' if layers == 'x' else 'x', 5, 60, tile_x=tile_x), 0.55, 0.9))     # rain runs
+    young = np.zeros((H, W))
+    if cuts:
+        gw, gp = group
+        sp, sh, sw = stroke
+        span = W / ppm - 2 * side
+        cols = int(span // gw)
+        xs = x0 + side + (span - cols * gw) / 2
+        cx, cy = (np.array([c[0] for c in crown]), np.array([c[1] for c in crown])) if crown else (np.array([x0, x0 + W / ppm]), np.full(2, y0 + H / ppm))
+        y_top = float(cy.max()) - top
+        rows = int((y_top - floor) // gp)
+        gx = xs + np.arange(cols) * gw
+        roof = np.minimum(np.interp(gx, cx, cy), np.interp(gx + gw, cx, cy)) - top
+        ok = (y_top - np.arange(rows)[:, None] * gp) <= roof[None, :]
+        order = (np.cumsum(ok.ravel()) - 1).reshape(rows, cols)
+        N = int(ok.sum()) - left
+        r = np.floor((y_top - Y) / gp).astype(int)
+        c = np.floor((X - xs) / gw).astype(int)
+        inside = (r >= 0) & (r < rows) & (c >= 0) & (c < cols)
+        rc, cc = np.clip(r, 0, rows - 1), np.clip(c, 0, cols - 1)
+        n = order[rc, cc]
+        cut = inside & ok[rc, cc] & (n < N)
+        t = era[0] + (era[1] - era[0]) * n / max(1, N - 1)                     # how new each five is
+        a = X - xs - cc * gw                                                    # in the five: across from its left
+        b = Y - (y_top - (rc + 1) * gp)                                         # and up from its row's foot
+        gid = rc * 131 + cc
+        h = [_per(gid * 7 + k, seed + 40) for k in range(6)]
+        hand = _per(rc * 17 + 3, seed + 43)                                     # each row cut on one day, by one hand: its own drift and slant
+        dx = (h[0] - 0.5) * 0.008
+        dy = (h[1] - 0.5) * 0.006 + 0.007 * np.sin(cc * (0.35 + 0.4 * hand) + rc * 1.7)
+        lean, tall = (hand - 0.5) * 0.16 + (h[2] - 0.5) * 0.10, 0.86 + 0.2 * h[3]
+        b0 = 0.012 + dy
+        best, g = np.full((H, W), 9.0), np.zeros((H, W))
+        L = np.array([-1.0, 1.0]) / np.sqrt(2)                                  # toward the light
+        ends = []
+        for i in range(4):
+            ji = (_per(gid * 7 + 10 + i, seed + 41) - 0.5) * 0.003
+            ax = 0.009 + i * sp + dx + ji
+            ends.append((ax, b0, ax + sh * tall * np.sin(lean + ji * 8), b0 + sh * tall * np.cos(lean + ji * 8)))
+        ends.append((ends[0][0] - 0.007, b0 + 0.010, ends[3][0] + 0.009, b0 + sh * tall - 0.012 + (h[4] - 0.5) * 0.01))
+        strokes_in = np.where(n == N - 1, part, 5)
+        for i, (ax, ay, bx, by) in enumerate(ends):
+            d, s, ox, oy = _seg(a, b, ax, ay, bx, by)
+            w = sw * (0.45 + 0.55 * np.sqrt(np.clip(np.sin(np.pi * s), 0, 1)))  # a chisel cut tapers to its ends
+            d = d / w + 9.0 * (i >= strokes_in)
+            nearer = d < best
+            g = np.where(nearer, -(ox * L[0] + oy * L[1]) / w, g)              # > 0 on the wall that faces the light
+            best = np.where(nearer, d, best)
+        wear = smooth(stretch(fbm(H, W, max(2, H / 14), max(2, W / 14), seed + 42, 2, tile_x=tile_x)) + 0.7 * t, 0.30, 0.55)
+        m = cut * smooth(1 - best, 0.0, 0.35) * (0.35 + 0.65 * wear)
+        new = smooth(t, era[1] - fresh * (era[1] - era[0]) - 1e-6, era[1] - 0.3 * fresh * (era[1] - era[0]))
+        young = cut * new
+        inner = mix(mix(img, CUT_OLD, 0.45), CUT_NEW, new)                     # a cut is the stone's own grey, darker for its grime, or pale where new
+        img = mix(img, shade(inner, 0.86 + 0.34 * np.clip(g, -1, 1) * (0.5 + 0.5 * t)), m)
+        rim = smooth(1.6 - best, 0, 0.5) * (1 - smooth(1 - best, 0.0, 0.35)) * cut
+        img = mix(img, hexc('#C4C8CC'), 0.25 * rim * np.clip(g, 0, 1) * (0.4 + 0.6 * t))        # the lit lip of a cut
+        dust = cut * new * smooth(3.0 - best, 0, 1.5)
+        img = mix(img, hexc('#9DA3AA'), 0.22 * dust)
+        young = np.clip(blur(young.astype(float), 6, wrap_x=tile_x) * 3, 0, 1)
+    grown = _growth(img, H, W, seed, v, lichen, moss, tile_x)
+    return mix(img, grown, 1 - 0.85 * young)
+
+
+# ------------------------------------------------------------------------------------------------ the mark on the ninth rib
+_FONT = {                                                                # capitals as strokes in a box 0.6 wide and 1 high (y up)
+    'N': [[(0, 0), (0, 1), (0.6, 0), (0.6, 1)]], 'I': [[(0.3, 0), (0.3, 1)]], 'E': [[(0.6, 1), (0, 1), (0, 0), (0.6, 0)], [(0, 0.5), (0.45, 0.5)]],
+    'O': [[(0.3, 0), (0.08, 0.1), (0, 0.5), (0.08, 0.9), (0.3, 1), (0.52, 0.9), (0.6, 0.5), (0.52, 0.1), (0.3, 0)]],
+    'U': [[(0, 1), (0, 0.25), (0.1, 0.05), (0.3, 0), (0.5, 0.05), (0.6, 0.25), (0.6, 1)]], 'T': [[(0, 1), (0.6, 1)], [(0.3, 1), (0.3, 0)]],
+    'F': [[(0.6, 1), (0, 1), (0, 0)], [(0, 0.5), (0.45, 0.5)]], 'C': [[(0.6, 0.85), (0.45, 1), (0.15, 1), (0, 0.8), (0, 0.2), (0.15, 0), (0.45, 0), (0.6, 0.15)]],
+    'Y': [[(0, 1), (0.3, 0.5), (0.6, 1)], [(0.3, 0.5), (0.3, 0)]], 'R': [[(0, 0), (0, 1), (0.45, 1), (0.6, 0.85), (0.6, 0.65), (0.45, 0.5), (0, 0.5)], [(0.3, 0.5), (0.6, 0)]],
+    'S': [[(0.6, 0.85), (0.45, 1), (0.15, 1), (0, 0.85), (0, 0.65), (0.15, 0.5), (0.45, 0.5), (0.6, 0.35), (0.6, 0.15), (0.45, 0), (0.15, 0), (0, 0.15)]],
+    'L': [[(0, 1), (0, 0), (0.6, 0)]], '.': [[(0.3, 0), (0.3, 0.07)]], ',': [[(0.32, 0.08), (0.22, -0.14)]], ' ': []}
+
+
+def _letters(text, x0, y0, h, rs=None, shake=0.0, gap=0.32):
+    """Poly-lines in pixels (y down) for `text` written from (x0, y0 = its foot), letters `h` pixels high; `shake`
+    moves every point a little (a hand with a knife), by `rs`."""
+    out, x = [], x0
+    for ch in text:
+        for ln in _FONT[ch]:
+            out.append([(x + (px + (rs.normal() * shake if rs is not None else 0)) * h, y0 - (py + (rs.normal() * shake if rs is not None else 0)) * h) for px, py in ln])
+        x += (0.6 + gap) * h if ch != ' ' else 0.6 * h
+    return out
+
+
+def _width(text, h, gap=0.32):
+    return sum(((0.6 + gap) * h if ch != ' ' else 0.6 * h) for ch in text) - gap * h
+
+
+def ribplate(H, W, seed=0, big='NINE', small=('IN FOR NINE, OUT FOR NINE.', 'COUNT IT YOURSELF. I.F.'), **_):
+    """A brass plate seen face on, filling the patch, kept bright by somebody's sleeve: dark in its corners and round
+    its four screws, an engraved border, `big` cut deep across it and, under that, `small` scratched in with a knife."""
+    from mats import brass
+    yy, xx, v = _yx(H, W)
+    rs = np.random.default_rng(seed)
+    img = brass(H, W, seed, top=0.1, patina=0.25, verdigris=0.0)
+    edge = np.minimum(np.minimum(xx, 1 - xx) * W, np.minimum(yy, 1 - yy) * H)
+    rub = np.exp(-(((xx - 0.5) / 0.32) ** 2 + ((yy - 0.45) / 0.36) ** 2))
+    img = mix(img, hexc('#F2D27C'), 0.55 * rub)                                                        # bright where it is rubbed
+    img = mix(img, hexc('#5E4A22'), 0.6 * smooth(14 - edge, 0, 14) * (1 - rub))                       # tarnish in from the edges
+    img = mix(img, hexc('#6E9A82'), 0.5 * smooth(5 - edge, 0, 5) * smooth(stretch(fbm(H, W, 6, 6, seed + 3, 2)), 0.5, 0.8))
+    img = shade(img, 1 - 0.35 * np.exp(-(edge / 2.5) ** 2))                                          # the bevel
+    def cut(lines, wid, depth, lip):                                                                    # engrave: a dark groove with a bright lower lip
+        m = linemask(H, W, lines, wid)
+        lo = linemask(H, W, [[(x + 0.5 * wid, y + 0.5 * wid) for x, y in ln] for ln in lines], wid)
+        nonlocal img
+        img = mix(img, hexc('#FFE9A8'), lip * np.clip(lo - m, 0, 1))
+        img = mix(img, hexc('#3A2A12'), depth * m)
+    m = int(0.075 * H)
+    cut([[(m, m), (W - m, m), (W - m, H - m), (m, H - m), (m, m)]], 1.6, 0.8, 0.7)
+    h = 0.3 * H
+    cut(_letters(big, (W - _width(big, h)) / 2, 0.47 * H, h), max(2.0, H / 45), 0.9, 0.8)
+    for k, line in enumerate(small):
+        hs = min(0.085 * H, 0.82 * W / max(1, _width(line, 1.0)))
+        cut(_letters(line, (W - _width(line, hs)) / 2 + rs.normal() * 2, (0.66 + 0.13 * k) * H, hs, rs, 0.03), max(1.0, H / 200), 0.6, 0.35)
+    for cx, cy in ((0.045, 0.07), (0.955, 0.07), (0.045, 0.93), (0.955, 0.93)):                       # four screws, their slots every which way
+        d = np.hypot((xx - cx) * W, (yy - cy) * H)
+        r0 = 0.032 * H
+        img = mix(img, hexc('#7A6030'), smooth(r0 - d, -0.8, 0.8))
+        img = mix(img, hexc('#E8C878'), 0.6 * smooth(r0 - d, -0.8, 0.8) * smooth(-((xx - cx) * W + (yy - cy) * H), 0, r0))
+        a = rs.uniform(0, np.pi)
+        along = np.abs(-(xx - cx) * W * np.sin(a) + (yy - cy) * H * np.cos(a))
+        img = mix(img, hexc('#2A1E0C'), 0.9 * smooth(0.9 - along, -0.5, 0.5) * (d < 0.8 * r0))
+        img = shade(img, 1 - 0.35 * np.exp(-((d - r0 - 1.2) / 1.0) ** 2))
+    return img
+
+
+def fray(H, W, seed=0, **_):
+    """The frayed end of a rope as a fan of loose yarns, root at the bottom of the patch, cut out against nothing (the
+    tips go to the colour of old hemp, not to clear: the model's strands are cut to the yarn)."""
+    yy, xx, v = _yx(H, W)
+    yarn = 0.5 + 0.5 * np.sin(xx * W * 1.3 + 3 * stretch(fbm(H, W, 3, 6, seed)))
+    img = mix(hexc('#6A5A40'), hexc('#C2AE86'), 0.3 + 0.6 * yarn)
+    return shade(img, 0.75 + 0.35 * v)
+
+
 REACH = {'bone': bone, 'limpet': limpet, 'gullnest': gullnest, 'gullegg': gullegg, 'thriftdome': thriftdome, 'thrifthead': thrifthead,
-         'drystone': drystone, 'brickwork': brickwork, 'tarred': tarred, 'floatglass': floatglass, 'canvas': canvas, 'trypot': trypot, 'skimmer': skimmer, 'wrapped': wrapped}
+         'drystone': drystone, 'brickwork': brickwork, 'tarred': tarred, 'floatglass': floatglass, 'canvas': canvas, 'trypot': trypot, 'skimmer': skimmer, 'wrapped': wrapped, 'reefrock': reefrock,
+         'slate': slate, 'ribplate': ribplate, 'fray': fray}
