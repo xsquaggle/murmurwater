@@ -47,10 +47,7 @@ type Loop = (typeof LOOPS)[number];
  * such a sound is not fetched and not counted as missing, and its synth stand-in plays; from the first build
  * after they land it is used, with nothing to change here.
  */
-const PENDING: ReadonlySet<string> = new Set<string>([
-  // Saltbone Reach (docs/briefs/reach-assets.md, group 6).
-  'reach-day', 'reach-night', 'storm-rain', 'storm-wind', 'struck-water', 'thunder-near', 'thunder-far', 'lightning-strike', 'storm-cone', 'swell-boom',
-]);
+const PENDING: ReadonlySet<string> = new Set<string>([]);
 const BUILT_IN: ReadonlySet<string> = new Set(present);
 /** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
 const wanted = (name: string) => !PENDING.has(name) || BUILT_IN.has(`audio/sfx/${name}_1.ogg`);
