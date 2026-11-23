@@ -497,7 +497,7 @@ def reefrock(H, W, seed=0, geo=None, top=1.0, ppm=40.0, at=(0.0, 0.0, 0.0), **_)
 
 
 # ------------------------------------------------------------------------------------------------ the Tally Stone
-CUT_OLD, CUT_NEW = hexc('#41464E'), hexc('#AEB4BB')
+CUT_OLD, CUT_NEW = hexc('#9CA2A8'), hexc('#CDD1D5')        # a cut is paler than the face: weathered, or new
 
 
 def _seg(a, b, ax, ay, bx, by):
@@ -509,15 +509,17 @@ def _seg(a, b, ax, ay, bx, by):
     return np.hypot(ox, oy), t, ox, oy
 
 
-def slate(H, W, seed=0, ppm=440.0, x0=0.0, y0=0.0, crown=None, floor=0.8, side=0.07, top=0.08, group=(0.06, 0.085), stroke=(0.0115, 0.058, 0.0046),
-          era=(0.0, 1.0), fresh=0.1, left=0, part=5, cuts=True, layers='x', lichen=0.45, moss=0.3, tile_x=False, **_):
+def slate(H, W, seed=0, ppm=440.0, x0=0.0, y0=0.0, crown=None, floor=0.8, side=0.07, top=0.08, group=(0.17, 0.21), stroke=(0.03, 0.14, 0.016),
+          drift=0.04, era=(0.0, 1.0), fresh=0.1, left=0, part=5, cuts=True, layers='x', lichen=0.45, moss=0.3, tile_x=False, **_):
     """A face of split slate, its foot at the bottom of the patch (ppm = pixels to a metre; x0, y0 = where the patch's
-    bottom left corner lies on the face, in metres). With `cuts` it is cut all over with tallies in fives, four strokes
-    and one across, row on row from the top down as a ledger is kept, from `floor` (metres up the face) to `top` under
-    the crown (the top edge, [[x, y], ...] left to right) and `side` in from either edge. The marks run from era[0]
-    (old: worn shallow, broken, grimed and grown over) to era[1] (new); the last `fresh` of them are pale new cuts. The
-    last `left` places are not cut yet, and the newest five has only `part` strokes. Lit from the upper left. Without
-    `cuts`, plain slate whose layers run along `layers` (an edge shows them)."""
+    bottom left corner lies on the face, in metres). With `cuts` it is cut with tallies in fives, four strokes and one
+    across, row on row from the top down as a ledger is kept, from `floor` (metres up the face) to `top` under the crown
+    (the top edge, [[x, y], ...] left to right) and `side` in from either edge: `group` is the width of a five's place
+    and the pitch of the rows, `stroke` the spacing, height and width of a stroke. Each row was cut on one day by one
+    hand, so it has its own tilt and wanders up and down (by about `drift`), and its fives sit unevenly. The cuts are
+    pale in the grey face; they run from era[0] (old: worn, broken, grimed and grown over) to era[1] (new); the last
+    `fresh` of them are bright new cuts. The last `left` places are not cut yet, and the newest five has only `part`
+    strokes. Lit from the upper left. Without `cuts`, plain slate whose layers run along `layers` (an edge shows them)."""
     yy, xx, v = _yx(H, W)
     X, Y = x0 + xx * W / ppm, y0 + v * H / ppm
     big = stretch(fbm(H, W, max(2, H / 90), max(2, W / 90), seed, 3, 0.55, tile_x=tile_x))
@@ -540,48 +542,56 @@ def slate(H, W, seed=0, ppm=440.0, x0=0.0, y0=0.0, crown=None, floor=0.8, side=0
         ok = (y_top - np.arange(rows)[:, None] * gp) <= roof[None, :]
         order = (np.cumsum(ok.ravel()) - 1).reshape(rows, cols)
         N = int(ok.sum()) - left
-        r = np.floor((y_top - Y) / gp).astype(int)
-        c = np.floor((X - xs) / gw).astype(int)
-        inside = (r >= 0) & (r < rows) & (c >= 0) & (c < cols)
-        rc, cc = np.clip(r, 0, rows - 1), np.clip(c, 0, cols - 1)
-        n = order[rc, cc]
-        cut = inside & ok[rc, cc] & (n < N)
-        t = era[0] + (era[1] - era[0]) * n / max(1, N - 1)                     # how new each five is
-        a = X - xs - cc * gw                                                    # in the five: across from its left
-        b = Y - (y_top - (rc + 1) * gp)                                         # and up from its row's foot
-        gid = rc * 131 + cc
-        h = [_per(gid * 7 + k, seed + 40) for k in range(6)]
-        hand = _per(rc * 17 + 3, seed + 43)                                     # each row cut on one day, by one hand: its own drift and slant
-        dx = (h[0] - 0.5) * 0.008
-        dy = (h[1] - 0.5) * 0.006 + 0.007 * np.sin(cc * (0.35 + 0.4 * hand) + rc * 1.7)
-        lean, tall = (hand - 0.5) * 0.16 + (h[2] - 0.5) * 0.10, 0.86 + 0.2 * h[3]
-        b0 = 0.012 + dy
-        best, g = np.full((H, W), 9.0), np.zeros((H, W))
+        wide = 3 * sp + sw                                                      # the four strokes, side to side
+        mid = xs + cols * gw / 2
+        r0, c0 = np.floor((y_top - Y) / gp).astype(int), np.floor((X - xs) / gw).astype(int)
+        best, g, tb = np.full((H, W), 9.0), np.zeros((H, W)), np.zeros((H, W))
         L = np.array([-1.0, 1.0]) / np.sqrt(2)                                  # toward the light
-        ends = []
-        for i in range(4):
-            ji = (_per(gid * 7 + 10 + i, seed + 41) - 0.5) * 0.003
-            ax = 0.009 + i * sp + dx + ji
-            ends.append((ax, b0, ax + sh * tall * np.sin(lean + ji * 8), b0 + sh * tall * np.cos(lean + ji * 8)))
-        ends.append((ends[0][0] - 0.007, b0 + 0.010, ends[3][0] + 0.009, b0 + sh * tall - 0.012 + (h[4] - 0.5) * 0.01))
-        strokes_in = np.where(n == N - 1, part, 5)
-        for i, (ax, ay, bx, by) in enumerate(ends):
-            d, s, ox, oy = _seg(a, b, ax, ay, bx, by)
-            w = sw * (0.45 + 0.55 * np.sqrt(np.clip(np.sin(np.pi * s), 0, 1)))  # a chisel cut tapers to its ends
-            d = d / w + 9.0 * (i >= strokes_in)
-            nearer = d < best
-            g = np.where(nearer, -(ox * L[0] + oy * L[1]) / w, g)              # > 0 on the wall that faces the light
-            best = np.where(nearer, d, best)
-        wear = smooth(stretch(fbm(H, W, max(2, H / 14), max(2, W / 14), seed + 42, 2, tile_x=tile_x)) + 0.7 * t, 0.30, 0.55)
-        m = cut * smooth(1 - best, 0.0, 0.35) * (0.35 + 0.65 * wear)
-        new = smooth(t, era[1] - fresh * (era[1] - era[0]) - 1e-6, era[1] - 0.3 * fresh * (era[1] - era[0]))
+        for dr in (-1, 0, 1):                                                   # a five may lean or drift into the next place
+            for dc in (-1, 0, 1):
+                r, c = r0 + dr, c0 + dc
+                inside = (r >= 0) & (r < rows) & (c >= 0) & (c < cols)
+                rc, cc = np.clip(r, 0, rows - 1), np.clip(c, 0, cols - 1)
+                n = order[rc, cc]
+                live = inside & ok[rc, cc] & (n < N)
+                t = era[0] + (era[1] - era[0]) * n / max(1, N - 1)              # how new each five is
+                gid = rc * 131 + cc
+                h = [_per(gid * 7 + k, seed + 40) for k in range(6)]
+                hand = [_per(rc * 17 + k, seed + 43) for k in range(4)]         # the row's own tilt and wander
+                px = xs + (cc + 0.5) * gw
+                fx = px - wide / 2 + (h[0] - 0.5) * 0.24 * gw + (hand[0] - 0.5) * 0.12 * gw
+                fy = (y_top - (rc + 1) * gp + (gp - sh) / 2 + drift * ((hand[1] - 0.5) * 2.2 * (px - mid) / max(0.3, mid - xs)
+                      + 0.8 * np.sin(px * (3.0 + 3.0 * hand[2]) + 6.28 * hand[3])) + (h[1] - 0.5) * 0.35 * drift)
+                a, b = X - fx, Y - fy                                           # in the five: across from its left, up from its foot
+                lean, tall = (hand[2] - 0.5) * 0.14 + (h[2] - 0.5) * 0.10, 0.88 + 0.18 * h[3]
+                ends = []
+                for i in range(4):
+                    ji = (_per(gid * 7 + 10 + i, seed + 41) - 0.5)
+                    ax, hi = i * sp + ji * 0.25 * sp + sw / 2, sh * tall * (1 + 0.08 * ji)
+                    ay = 0.04 * sh * (_per(gid * 7 + 20 + i, seed + 41) - 0.5)
+                    ends.append((ax, ay, ax + hi * np.sin(lean + ji * 0.12), ay + hi * np.cos(lean + ji * 0.12)))
+                ends.append((ends[0][0] - 0.55 * sp, 0.18 * sh, ends[3][0] + 0.75 * sp, sh * tall * (0.80 + 0.1 * (h[4] - 0.5))))
+                strokes_in = np.where(n == N - 1, part, 5)
+                for i, (ax, ay, bx, by) in enumerate(ends):
+                    d, s_, ox, oy = _seg(a, b, ax, ay, bx, by)
+                    w = (sw * (0.9 if i == 4 else 1.0)) * (0.45 + 0.55 * np.sqrt(np.clip(np.sin(np.pi * s_), 0, 1)))  # a chisel cut tapers to its ends
+                    d = d / w + 9.0 * (i >= strokes_in) + 9.0 * ~live
+                    nearer = d < best
+                    g = np.where(nearer, -(ox * L[0] + oy * L[1]) / w, g)      # > 0 on the wall that faces the light
+                    tb = np.where(nearer, t, tb)
+                    best = np.where(nearer, d, best)
+        cut = best < 8.0
+        wear = smooth(stretch(fbm(H, W, max(2, H / 14), max(2, W / 14), seed + 42, 2, tile_x=tile_x)) + 0.7 * tb, 0.30, 0.55)
+        m = cut * smooth(1 - best, 0.0, 0.3) * (0.6 + 0.4 * wear)
+        new = smooth(tb, era[1] - fresh * (era[1] - era[0]) - 1e-6, era[1] - 0.3 * fresh * (era[1] - era[0])) * (fresh > 0)
         young = cut * new
-        inner = mix(mix(img, CUT_OLD, 0.45), CUT_NEW, new)                     # a cut is the stone's own grey, darker for its grime, or pale where new
-        img = mix(img, shade(inner, 0.86 + 0.34 * np.clip(g, -1, 1) * (0.5 + 0.5 * t)), m)
-        rim = smooth(1.6 - best, 0, 0.5) * (1 - smooth(1 - best, 0.0, 0.35)) * cut
-        img = mix(img, hexc('#C4C8CC'), 0.25 * rim * np.clip(g, 0, 1) * (0.4 + 0.6 * t))        # the lit lip of a cut
-        dust = cut * new * smooth(3.0 - best, 0, 1.5)
-        img = mix(img, hexc('#9DA3AA'), 0.22 * dust)
+        grime = smooth(stretch(fbm(H, W, max(2, H / 25), max(2, W / 25), seed + 44, 2, tile_x=tile_x)), 0.4, 0.8) * (1 - tb)
+        inner = mix(mix(img, CUT_OLD, 0.55 + 0.35 * tb - 0.25 * grime), CUT_NEW, new)       # weathered pale grey, greyer where grimed; bright where new
+        img = mix(img, shade(inner, 0.9 + 0.22 * np.clip(g, -1, 1)), m)
+        rim = smooth(1.5 - best, 0, 0.5) * (1 - smooth(1 - best, 0.0, 0.3)) * cut
+        img = mix(img, hexc('#3E434A'), 0.35 * rim * np.clip(-g, 0, 1))                    # the shadowed lip of a cut
+        dust = cut * new * smooth(2.5 - best, 0, 1.2)
+        img = mix(img, hexc('#A3A9AF'), 0.25 * dust)
         young = np.clip(blur(young.astype(float), 6, wrap_x=tile_x) * 3, 0, 1)
     grown = _growth(img, H, W, seed, v, lichen, moss, tile_x)
     return mix(img, grown, 1 - 0.85 * young)
