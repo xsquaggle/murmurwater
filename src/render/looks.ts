@@ -46,5 +46,18 @@ const MOSS: RegionLook = {
   water: { deep: '#06231F', mid: '#2C8566', shallow: '#8EDDB0', foam: '#DDF3D6', swell: 0.4, shoreFoam: 0.12, murk: 0.2 },
 };
 
-const LOOKS: Record<string, RegionLook> = { amber: AMBER, moss: MOSS };
+/**
+ * Saltbone Reach: grey shingle for sand, slate for rock, short turf the colour of lichen and dry thrift (no trees),
+ * and deep grey water with a long swell on it that breaks white on every shore.
+ */
+const SLATE: RegionLook = {
+  terrain: {
+    sand: '#9A958A', wetSand: '#64665F', seaSand: '#5D6461', deepFloor: '#132630',
+    moss: '#6F7C5C', mossLight: '#A8A57C', pine: '#4C5246',
+    rock: '#59616C', rockDark: '#383E48', rockWarm: '#6C6860', rockLight: '#8A9096', reedBed: null,
+  },
+  water: { deep: '#0C1822', mid: '#33566B', shallow: '#7FA6AE', foam: '#E8EEEA', swell: 1.3, shoreFoam: 1.25, murk: 0.5 },
+};
+
+const LOOKS: Record<string, RegionLook> = { amber: AMBER, moss: MOSS, slate: SLATE };
 export function lookOf(grade: string): RegionLook { return LOOKS[grade] ?? AMBER; }

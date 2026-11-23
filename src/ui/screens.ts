@@ -37,7 +37,7 @@ export function el(tag: string, attrs: Attrs = {}, ...kids: (Node | string | nul
 }
 
 const RARITY_NAMES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Uncanny'];
-const NPC_COLORS: Record<string, string> = { mara: '#C25F55', pell: '#4C5A66', wick: '#E86F6F', calloway: '#8E8A4E', 'packet-box': '#8A6A42', hollis: '#6F8A7C' };
+const NPC_COLORS: Record<string, string> = { mara: '#C25F55', pell: '#4C5A66', wick: '#E86F6F', calloway: '#8E8A4E', 'packet-box': '#8A6A42', hollis: '#6F8A7C', oake: '#3A4E72' };
 
 // ------------------------------------------------------------------ dialogue
 

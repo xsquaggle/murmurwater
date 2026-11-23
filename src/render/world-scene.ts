@@ -14,6 +14,10 @@ import { waveHeight, CALM_WAVES } from '../core/waves';
 import { SeaRoadLights } from './sea-road';
 import { lookOf } from './looks';
 import { FenDressing } from './fen-scene';
+import { ReachDressing } from './reach-scene';
+import { StormFx, type StruckDraw } from './storm-fx';
+import { CONE_HOIST } from './reach-props';
+import { nextStorm, weatherAt, type Weather } from '../core/weather';
 import { groveTrees } from '../core/flora';
 import { buildProp, propClearing } from './fen-props';
 import { roadsOf } from '../core/content';
@@ -23,6 +27,11 @@ import type { QualityProfile } from './renderer';
 
 /** The Murmur Fog by day. */
 const MURK = new Color('#B4A6CE');
+/** Storm light: the cloud by day and by night, the grey it puts on the sun, and the gold that comes through in the eye. */
+const STORM_DAY = new Color('#56606A'), STORM_NIGHT = new Color('#0C1118'), STORM_KEY = new Color('#A8B0B8'), EYE_GOLD = new Color('#FFCF86'), EYE_HAZE = new Color('#D8B98A');
+const _sc = new Color(), _white = new Color(1, 1, 1);
+/** How much more the sea swells at the height of a storm (0 = no more than in fair weather). */
+const STORM_SWELL = 0.6;
 
 export class WorldScene {
   /** The scene everything is drawn in. It outlives a region: the player, the boat and the people are added to it by their owners. */
@@ -32,7 +41,21 @@ export class WorldScene {
   /** How much of the usual swell this region's water has (1 = Hearthbay). */
   readonly swell: number;
   /** The height of the sea's surface at (x, z) now. */
-  waveY(x: number, z: number): number { return waveHeight(CALM_WAVES, x, z, this.time, 0.36 * this.swell); }
+  waveY(x: number, z: number): number { return waveHeight(CALM_WAVES, x, z, this.time, 0.36 * this.swellNow); }
+  /** The swell as it is now: the region's own, stood up by a storm. */
+  get swellNow(): number { return this.swell * (1 + STORM_SWELL * this.weather.power); }
+  /** The weather here at the hour the sky shows (core/weather.ts). */
+  weather: Weather = { storm: null, power: 0, rain: 0, thunder: false, eye: 0 };
+  /** Rain, lightning, struck water and the eye's light, in a region that has storms. */
+  storm: StormFx | null = null;
+  /** The struck waters to draw (the game sets these; see game/storms.ts). */
+  struckDraw: StruckDraw[] = [];
+  /** The Ribs, the bones and the sea-thrift, in Saltbone Reach. */
+  reach: ReachDressing | null = null;
+  /** The weather mast's storm cone, and how far up its halyard it is (0 down .. 1 hoisted). */
+  private cone: { obj: Object3D; y0: number; up: number } | null = null;
+  /** The cone is going up (1) or coming down (-1) this frame (the game listens for it: a block squeaks). */
+  coneMoved = 0;
   /** Reeds, drowned trees and lilies, in a region that has them. */
   fen: FenDressing | null = null;
   /** The lights of the sea-roads that leave this region, if any. */
@@ -135,6 +158,26 @@ export class WorldScene {
       this.fen = new FenDressing({ center: region.center, within: region.shoals.within, heightAt: terrain.heightAt, trees, lilies: rcx.lilies ?? [], clear });
       s.add(this.fen.root);
       lap('flora');
+    }
+
+    // Saltbone Reach: the Ribs over their channel, vertebrae awash and on the beaches, thrift on the slate.
+    const rcr = region as RegionContent;
+    if (rcr.ribs || rcr.bones) {
+      const dock = region.landmarks.dock;
+      const keep: [number, number, number][] = (rcr.moorings ?? []).map((m) => [m.x, m.z, 9]);
+      keep.push([dock.x + Math.sin(dock.rot ?? 0) * (dock.length ?? 30) / 2, dock.z + Math.cos(dock.rot ?? 0) * (dock.length ?? 30) / 2, (dock.length ?? 30) / 2 + 5]);
+      for (const p of rcr.props ?? []) keep.push([p.x, p.z, (p.block ?? 1) + 1.2]);
+      for (const p of [...(rcr.places ?? []), ...(rcr.npcSpots ?? []), ...(rcr.chests ?? [])]) keep.push([p.x, p.z, 2.5]);
+      this.reach = new ReachDressing({ region: rcr, hf: this.hf, heightAt: terrain.heightAt, keep, sparse: profile.terrainCell >= 4 });
+      this.rocks.push(...this.reach.rocks); this.blockers.push(...this.reach.blockers);
+      this.propMats.push(...this.reach.propMats);
+      s.add(this.reach.root);
+      lap('flora');
+    }
+    if (rcr.storms?.length) {
+      this.storm = new StormFx(profile.waterSegments <= 160 ? 'low' : profile.waterSegments <= 256 ? 'medium' : 'high');
+      this.water.material.uniforms.uStruck.value = this.storm.struck;
+      s.add(this.storm.root);
     }
 
     const L = region.landmarks;
@@ -303,6 +346,14 @@ export class WorldScene {
       // the shallows), unless it lies aground: then it is on the bed, or as deep as it was made to lie.
       const bed = this.hf.height(p.x, p.z);
       o.position.set(p.x, built.aground !== null ? Math.max(bed, -built.aground) : Math.max(0, bed, dockDeckAt(L.dock, p.x, p.z) ?? 0), p.z); o.rotation.y = p.yaw;
+      // A thing let into a rib goes on the rib nearest where the data puts it.
+      if (built.onRib && !this.reach?.fixToRib(o, p.x, p.z)) continue;
+      // What stands in the sea and on the reef is solid to hulls and to feet.
+      for (const [lx, lz, r] of built.solid) {
+        const c = Math.cos(p.yaw), sn = Math.sin(p.yaw), wx = p.x + lx * c + lz * sn, wz = p.z - lx * sn + lz * c;
+        this.rocks.push([wx, wz, r]); this.blockers.push([wx, wz, r]);
+      }
+      if (built.cone) this.cone = { obj: built.cone, y0: built.cone.position.y, up: 0 };
       if (p.until) this.untilProps.push({ flag: p.until, object: o });
       s.add(o); o.updateMatrixWorld(true);
       this.propMats.push(...built.mats); this.glassMats.push(...built.glass); this.fillMats.push(...built.fill);
@@ -453,6 +504,8 @@ export class WorldScene {
     this.time += dt;
     const lt = sample(this.hour, this.lighting);
     this.grade?.(lt);
+    const w = this.weather = weatherAt(this.region.id, this.hour);
+    if (this.storm) this.stormLight(lt, w);
     const u = this.sky;
     u.uTime.value = this.time;
     u.uSunDir.value.copy(lt.sunDir);
@@ -496,7 +549,8 @@ export class WorldScene {
     // rather than on the stroke of the hour.
     const ramp = (a: number, b: number, x: number) => Math.min(1, Math.max(0, (x - a) / (b - a)));
     const early = 1 - ramp(6.8, 8.2, lt.hour), late = ramp(16.6, 17.4, lt.hour);
-    const glow = this.glow = Math.min(1, Math.max(0, (lt.night - 0.05) * 1.6 + 0.35 * Math.max(early, late)));
+    // (In a storm the windows are lit as if it were evening.)
+    const glow = this.glow = Math.min(1, Math.max(0, (lt.night - 0.05) * 1.6 + 0.35 * Math.max(early, late), 0.55 * w.power));
     for (const m of this.propMats) { const un = m.userData.uniforms; if (un) un.uGlow.value = glow; }
     this.lanterns.forEach((l, i) => {
       const flick = 0.85 + 0.15 * Math.sin(this.time * 9.1 + i * 2.3) * Math.sin(this.time * 3.7 + i);
@@ -504,8 +558,17 @@ export class WorldScene {
     });
     for (const m of this.glassMats) m.emissiveIntensity = 0.12 + 2.6 * glow * (0.9 + 0.1 * Math.sin(this.time * 7.3));
     for (const f of this.fillMats) f.mat.emissiveIntensity = f.k * (1 - 0.85 * lt.night);
-    this.pennants.forEach((p, i) => { p.rotation.y = (p.userData.rest as number) + 0.3 * Math.sin(this.time * 1.7 + i) + 0.1 * Math.sin(this.time * 4.3 + i * 2); });
-    for (const v of this.vanes) v.rotation.y = (v.userData.rest as number) + 0.7 * Math.sin(this.time * 0.19) + 0.07 * Math.sin(this.time * 2.3);
+    const gust = 1 + 2.2 * w.power;
+    this.pennants.forEach((p, i) => { p.rotation.y = (p.userData.rest as number) + 0.3 * Math.sin(this.time * 1.7 * gust + i) + 0.1 * gust * Math.sin(this.time * 4.3 * gust + i * 2); });
+    for (const v of this.vanes) v.rotation.y = (v.userData.rest as number) + 0.7 * Math.sin(this.time * 0.19) + 0.07 * gust * Math.sin(this.time * 2.3 * gust);
+    // The storm cone goes up the mast when a storm is on or due within the hour, and comes down when it has passed.
+    if (this.cone) {
+      const due = w.storm !== null || (nextStorm(this.region.id, this.hour)?.inHours ?? 99) < 1;
+      const before = this.cone.up;
+      this.cone.up = Math.min(1, Math.max(0, this.cone.up + (due ? 1 : -1) * dt * 0.5));
+      this.coneMoved = Math.abs(this.cone.up - before) > 1e-6 ? (due ? 1 : -1) : 0;
+      this.cone.obj.position.y = this.cone.y0 + CONE_HOIST * (this.cone.up * this.cone.up * (3 - 2 * this.cone.up));
+    }
     if (this.lighthouseGlass) this.lighthouseGlass.emissiveIntensity = this.lighthouseLit ? 4 : 0.06 + 0.04 * Math.sin(this.time * 0.7);
     // The pocket lantern is kept up a while after sunrise: the dock lies in the island's shadow for the first hour.
     const dark = Math.min(1, Math.max(0, lt.night * 1.4 + Math.max(0.25 * ramp(17.8, 18.4, lt.hour), 0.4 * (1 - ramp(6.4, 7.7, lt.hour)))));
@@ -516,10 +579,16 @@ export class WorldScene {
       this.beamMat.uniforms.uOpacity.value = 0.08 + 0.34 * dark;
     }
     this.pocket.position.set(focus.x, focus.y + 2.3, focus.z);
-    this.pocket.intensity = 22 * dark * this.pocketScale;
+    this.pocket.intensity = 22 * Math.max(dark, 0.45 * w.power * (1 - lt.night)) * this.pocketScale;
 
     this.seaRoad?.update(dt, this.time, this.lampAt, (x, z) => this.waveY(x, z));
     this.fen?.update(dt, focus, lt.night);
+    this.reach?.update(dt);
+    if (this.storm) {
+      this.storm.update(dt, camera, focus, w, lt, this.struckDraw, (x, z) => this.waveY(x, z));
+      wu.uRain.value = Math.min(1, w.rain);
+    }
+    wu.uSeaState.value = 0.6 * this.swellNow;
     for (const bu of this.buoys) {
       bu.obj.position.set(bu.x, this.waveY(bu.x, bu.z) + 0.02, bu.z);
       bu.obj.rotation.set(Math.sin(this.time * 1.1 + bu.ph) * 0.09, bu.ph, Math.sin(this.time * 0.8 + bu.ph * 2) * 0.09);
@@ -538,6 +607,36 @@ export class WorldScene {
     if (this.ferryBeached) this.boat.position.set(b.x, b.y, b.z);
     else this.boat.position.set(b.x, this.waveY(b.x, b.z) + (isModel ? -0.32 : 0.42) + Math.sin(this.time * 1.3) * 0.04, b.z);
     this.boat.rotation.set(this.ferryBeached ? 0.04 : Math.sin(this.time * 0.9) * 0.025, this.boatYaw, this.ferryBeached ? 0.09 : Math.sin(this.time * 1.1) * 0.04, 'YXZ');
+  }
+
+  /**
+   * A storm over the light the clock gives: the cloud comes down slate and the sun goes grey behind it, the far
+   * water is lost in rain, and a bolt lights everything for a moment. In the eye the cloud thins and the light
+   * comes through gold.
+   */
+  private stormLight(lt: Lighting, w: Weather) {
+    const p = w.power, day = 1 - lt.night, eye = w.eye * (w.storm?.strength ?? 0);
+    _sc.copy(STORM_NIGHT).lerp(STORM_DAY, day);
+    lt.zenith.lerp(_sc, Math.min(1, 0.78 * p + 0.3 * eye));
+    lt.horizon.lerp(_sc, Math.min(1, 0.62 * p + 0.2 * eye));
+    lt.fog.lerp(_sc, 0.7 * p);
+    lt.hemiSky.lerp(_sc, 0.45 * p);
+    lt.keyColor.lerp(STORM_KEY, 0.55 * p);
+    lt.keyIntensity *= 1 - 0.7 * p;
+    lt.fogDensity += 0.0016 * p + 0.0042 * w.rain;
+    if (eye > 0) {
+      lt.keyColor.lerp(EYE_GOLD, 0.65 * eye * day);
+      lt.keyIntensity *= 1 + 0.12 * eye * day;
+      lt.horizon.lerp(EYE_HAZE, 0.3 * eye * day);
+      lt.fog.lerp(EYE_HAZE, 0.25 * eye * day);
+    }
+    this.sky.uCloudCover.value = 0.35 + 0.65 * Math.min(1, p * 1.7 + 0.75 * eye);
+    // The flash of a bolt.
+    const f = this.storm!.flash;
+    if (f > 0.001) {
+      lt.zenith.lerp(_white, 0.35 * f); lt.horizon.lerp(_white, 0.45 * f); lt.fog.lerp(_white, 0.25 * f);
+      lt.hemiIntensity += 2.6 * f;
+    }
   }
 
   /**

@@ -11,6 +11,7 @@ import { Builder } from './builder';
 import { PALETTE } from './palette';
 import { assets } from './assets';
 import { buildNoticeBoard, createPropMaterial } from './props';
+import { JAW_SOLID, harpoonRack, ribMark, stormMast, tallyStone, theJaw, tryworks, whaleboatHouse } from './reach-props';
 
 const C = (h: string) => new Color(h);
 
@@ -32,6 +33,12 @@ export interface PropBuild {
    * where the bed is deep enough, in metres. On a shallower bed it lies on the bed. Null for everything else.
    */
   aground: number | null;
+  /** The storm cone that is run up when a storm is near (Saltbone Reach's weather mast), if it has one. */
+  cone: Object3D | null;
+  /** Its ground plan as circles a hull cannot pass and feet cannot cross, in its own frame: [x, z, r]. */
+  solid: [number, number, number][];
+  /** It is fixed to the nearest great rib, not stood on the ground (see ReachDressing.fixToRib). */
+  onRib: boolean;
 }
 
 interface Part { name?: string; geo: BufferGeometry; pos?: [number, number, number] }
@@ -47,6 +54,8 @@ interface Spec {
    * hull heeled toward the eye): it gets a third of the sky's light and reads as a hole in the picture without it.
    */
   fill?: number;
+  solid?: [number, number, number][];
+  onRib?: boolean;
 }
 
 /** Mara's packet box: a lidded sea crate on short legs, a scale pan on the lid, her pennant on a pole. */
@@ -228,6 +237,13 @@ const SPECS: Record<string, Spec> = {
   barrel: { asset: 'barrel', standIn: barrel },
   tackleBox: { asset: 'tackleBox', standIn: tackleBox },
   puffinWreck: { asset: 'puffinWreck', standIn: puffinWreck, aground: 0.2, clearing: 4.6, fill: 0.22 },
+  whaleboatHouse: { asset: 'whaleboatHouse', standIn: whaleboatHouse },
+  tryworks: { asset: 'tryworks', standIn: tryworks },
+  stormMast: { asset: 'stormMast', standIn: stormMast },
+  harpoonRack: { asset: 'harpoonRack', standIn: harpoonRack },
+  tallyStone: { asset: 'tallyStone', standIn: tallyStone },
+  theJaw: { asset: 'theJaw', standIn: theJaw, solid: JAW_SOLID },
+  ribMark: { asset: 'ribMark', standIn: ribMark, onRib: true },
 };
 export const PROP_MODELS = Object.keys(SPECS);
 /** How far reeds are kept back from a prop of this kind, if at all. */
@@ -255,16 +271,16 @@ export function buildProp(model: string): PropBuild | null {
       if (!glass.has(mat)) glass.set(mat, mat.clone());
       m.material = glass.get(mat)!;
     });
-    return { object: made, mats: [], glass: [...glass.values()], fill: [...lit.values()].map((mat) => ({ mat, k: spec.fill! })), pennant: made.getObjectByName('Pennant') ?? null, vane: made.getObjectByName('Vane') ?? null, lamp, aground: spec.aground ?? null };
+    return { object: made, mats: [], glass: [...glass.values()], fill: [...lit.values()].map((mat) => ({ mat, k: spec.fill! })), pennant: made.getObjectByName('Pennant') ?? null, vane: made.getObjectByName('Vane') ?? null, lamp, aground: spec.aground ?? null, cone: made.getObjectByName('Cone') ?? null, solid: spec.solid ?? [], onRib: !!spec.onRib };
   }
   const g = new Group(), mat = createPropMaterial();
-  let pennant: Object3D | null = null;
+  const named: Record<string, Object3D> = {};
   for (const part of spec.standIn()) {
     const m = new Mesh(part.geo, mat);
     m.castShadow = true; m.receiveShadow = true;
     if (part.pos) m.position.set(...part.pos);
-    if (part.name) { m.name = part.name; if (part.name === 'Pennant') pennant = m; }
+    if (part.name) { m.name = part.name; named[part.name] = m; }
     g.add(m);
   }
-  return { object: g, mats: [mat], glass: [], fill: [], pennant, vane: null, lamp, aground: spec.aground ?? null };
+  return { object: g, mats: [mat], glass: [], fill: [], pennant: named.Pennant ?? null, vane: named.Vane ?? null, lamp, aground: spec.aground ?? null, cone: named.Cone ?? null, solid: spec.solid ?? [], onRib: !!spec.onRib };
 }

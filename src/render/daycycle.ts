@@ -96,7 +96,22 @@ const mossDay = new Color('#9FC6A0'), mossNight = new Color('#12322E'), mossSky 
  * Mossglass Fen ("moss"): a green haze that takes the distance by day, so the standing trees come out of it as
  * shapes first, and a deep teal dark at night that leaves the glowing things to do the lighting.
  */
+const slateDay = new Color('#C9CFD2'), slateNight = new Color('#151C26'), slateGround = new Color('#4E5650');
 export const GRADES: Record<string, Grade> = {
+  /**
+   * Saltbone Reach ("slate"): a cooler, greyer day than Hearthbay's, the haze off the swell taking the far
+   * water, and a blue-black night. The storms are laid over this by WorldScene (see weather).
+   */
+  slate: (lt) => {
+    const day = 1 - lt.night;
+    _g.copy(slateNight).lerp(slateDay, day);
+    lt.fog.lerp(_g, 0.45);
+    lt.horizon.lerp(_g, 0.32);
+    lt.zenith.lerp(_g, 0.12);
+    lt.hemiGround.lerp(slateGround, 0.45);
+    lt.keyColor.lerp(slateDay, 0.2 * day);
+    lt.fogDensity = lt.fogDensity * 1.2 + 0.0004;
+  },
   moss: (lt) => {
     const day = 1 - lt.night;
     _g.copy(mossNight).lerp(mossDay, day);

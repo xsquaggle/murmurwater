@@ -39,17 +39,36 @@ export const MODEL_PATHS = {
   fieldKit: 'models/props/field-kit.glb',
   listeningPost: 'models/props/listening-post.glb',
   puffinWreck: 'models/props/puffin-wreck.glb',
+  ribA: 'models/props/rib-a.glb',
+  ribB: 'models/props/rib-b.glb',
+  vertebra: 'models/props/vertebra.glb',
+  seaThrift: 'models/props/sea-thrift.glb',
 } as const;
 /**
  * Models that have been asked for and may not be made yet (docs/briefs): used from the build after they land,
  * with nothing to change here, and not counted as missing meanwhile.
  */
-export const PENDING_MODELS: Record<string, string> = {};
+export const PENDING_MODELS: Record<string, string> = {
+  // Saltbone Reach (docs/briefs/reach-assets.md), groups 2 and 3.
+  whaleboatHouse: 'models/props/whaleboat-house.glb',
+  tryworks: 'models/props/tryworks.glb',
+  stormMast: 'models/props/storm-mast.glb',
+  harpoonRack: 'models/props/harpoon-rack.glb',
+  theJaw: 'models/props/the-jaw.glb',
+  tallyStone: 'models/props/tally-stone.glb',
+  ribMark: 'models/props/rib-mark.glb',
+};
+/** Fish and people of the brief that may not be made yet: not counted as missing meanwhile (see PENDING_MODELS). */
+const PENDING_KEYS = new Set([
+  'npc:oake',
+  ...['bonefin-herring', 'slate-pout', 'thrift-wrasse', 'ribfish', 'kettle-cod', 'squall-mackerel', 'lantern-ling', 'thunderback', 'old-greyback', 'the-lull'].map((id) => `fish:${id}`),
+]);
 /** Optional NPC models; each falls back to a procedural stand-in until its file exists. */
-export const NPC_MODEL_IDS = ['mara', 'pell', 'wick', 'calloway', 'hollis'];
+export const NPC_MODEL_IDS = ['mara', 'pell', 'wick', 'calloway', 'hollis', 'oake'];
 export const FISH_MODEL_IDS = [
   'butterperch', 'pebble-goby', 'kettle-carp', 'coral-snapper', 'lampjaw', 'moss-eel', 'twofold-flounder', 'hollow-lantern', 'manyeye',
   'reedling', 'mudlark', 'glassfin', 'sedge-pike', 'mossback-tench', 'glowbelly', 'stilt-gar', 'bottomless-eel', 'old-mossglass', 'the-listener',
+  'bonefin-herring', 'slate-pout', 'thrift-wrasse', 'ribfish', 'kettle-cod', 'squall-mackerel', 'lantern-ling', 'thunderback', 'old-greyback', 'the-lull',
 ];
 
 interface Entry { scene: Group; clips: AnimationClip[] }
@@ -91,7 +110,7 @@ export class Assets {
         });
         this.lib.set(key, { scene: g.scene, clips: g.animations });
       } catch {
-        if (!(key in PENDING_MODELS)) this.missing.push(url);
+        if (!(key in PENDING_MODELS) && !PENDING_KEYS.has(key)) this.missing.push(url);
       }
       done++;
       onProgress?.(done / jobs.length);

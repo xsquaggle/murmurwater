@@ -30,7 +30,7 @@ const CLUMP_RANGE = 58, CLUMP_CELL = 1.9, CLUMP_MAX = 1800;
 const GLOW = new Color('#7FF0D0');
 
 /** Makes a material sway whatever it draws: more toward the top (uv.y), each instance on its own beat. */
-function swaying(mat: MeshStandardMaterial, time: { value: number }, amount: number): MeshStandardMaterial {
+export function swaying(mat: MeshStandardMaterial, time: { value: number }, amount: number): MeshStandardMaterial {
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uSwayTime = time;
     shader.vertexShader = shader.vertexShader
@@ -128,7 +128,7 @@ function clumpGeometry(seed: number): BufferGeometry {
 }
 
 /** The geometry and material of a one-material model, or null if it is not in the library. */
-function modelParts(key: string): { geo: BufferGeometry; mat: MeshStandardMaterial }[] | null {
+export function modelParts(key: string): { geo: BufferGeometry; mat: MeshStandardMaterial }[] | null {
   const m = assets.instance(key);
   if (!m) return null;
   const out: { geo: BufferGeometry; mat: MeshStandardMaterial }[] = [];

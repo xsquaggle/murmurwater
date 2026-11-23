@@ -16,12 +16,14 @@ const HEIGHT: Record<string, number> = { hollis: 2.0 };
 
 const mat = (hex: string, rough = 0.85) => new MeshStandardMaterial({ color: new Color(hex), roughness: rough, flatShading: true });
 
-interface Look { height: number; width: number; coat: string; trim: string; skin: string; hair: string; hat?: 'scarf' | 'brim' | 'none'; hatColor?: string; specs?: boolean; /** Hair drawn back off the face into a knot. */ bun?: boolean; beard?: boolean; stoop?: number; prop?: 'book' }
+interface Look { height: number; width: number; coat: string; trim: string; skin: string; hair: string; hat?: 'scarf' | 'brim' | 'cap' | 'none'; hatColor?: string; specs?: boolean; /** Hair drawn back off the face into a knot. */ bun?: boolean; beard?: boolean; stoop?: number; prop?: 'book' | 'pipe'; /** A grey plait down the back. */ plait?: boolean; /** Leg colour (sea boots). */ legs?: string; /** Buttons down the front, in this colour. */ buttons?: string }
 const LOOKS: Record<string, Look> = {
   mara: { height: 1.62, width: 1.18, coat: '#C25F55', trim: '#F2E3C6', skin: '#D9A27E', hair: '#5A3A2C', hat: 'scarf' },
   pell: { height: 1.86, width: 0.9, coat: '#4C5A66', trim: '#2F3A44', skin: '#E3B796', hair: '#E9E4DA', hat: 'brim', beard: true, stoop: 0.16 },
   wick: { height: 1.2, width: 0.85, coat: '#E86F6F', trim: '#F2E3C6', skin: '#C98E6A', hair: '#2E2420', hat: 'none', prop: 'book' },
   // A sun hat, round spectacles, a waxed field coat, a notebook always in hand.
+  // Short and broad, a dark blue pilot coat buttoned to the neck, a knitted cap, a plait, sea boots, a clay pipe never lit.
+  oake: { height: 1.58, width: 1.34, coat: '#273857', trim: '#273857', skin: '#B9866A', hair: '#A6A39C', hat: 'cap', hatColor: '#7A3B32', plait: true, prop: 'pipe', legs: '#2C2A2A', buttons: '#C9A24A' },
   calloway: { height: 1.7, width: 0.98, coat: '#7C7A4A', trim: '#C9B48E', skin: '#C99872', hair: '#3B2A22', hat: 'brim', hatColor: '#D9C48A', specs: true, bun: true, prop: 'book' },
 };
 
@@ -32,7 +34,7 @@ function standIn(id: string): Group {
   const body = new Group();
   g.add(body);
   const coat = mat(L.coat), trim = mat(L.trim), skin = mat(L.skin), hair = mat(L.hair);
-  for (const x of [-0.11, 0.11]) { const leg = new Mesh(new CylinderGeometry(0.09, 0.08, 0.55, 6), mat('#3E3A44')); leg.position.set(x, 0.3, 0); body.add(leg); }
+  for (const x of [-0.11, 0.11]) { const leg = new Mesh(new CylinderGeometry(0.09, 0.08, 0.55, 6), mat(L.legs ?? '#3E3A44')); leg.position.set(x, 0.3, 0); body.add(leg); }
   const torso = new Mesh(new CylinderGeometry(0.22 * L.width, 0.36 * L.width, 0.8, 8), coat); torso.position.y = 0.95; body.add(torso);
   const apron = new Mesh(new BoxGeometry(0.34 * L.width, 0.55, 0.04), trim); apron.position.set(0, 0.86, 0.27 * L.width); apron.rotation.x = -0.18; body.add(apron);
   for (const x of [-1, 1]) { const arm = new Mesh(new CapsuleGeometry(0.07, 0.42, 3, 6), coat); arm.position.set(x * 0.3 * L.width, 1.06, 0.02); arm.rotation.z = x * 0.18; body.add(arm); }
@@ -46,6 +48,18 @@ function standIn(id: string): Group {
     const crown = new Mesh(new CylinderGeometry(0.2, 0.24, 0.2, 10), mat(L.hatColor ?? '#6E5440')); crown.position.y = 1.88; body.add(crown);
   }
   if (L.specs) for (const x of [-0.08, 0.08]) { const r = new Mesh(new TorusGeometry(0.05, 0.008, 4, 10), mat('#C9A24A', 0.4)); r.position.set(x, 1.61, 0.245); body.add(r); }
+  if (L.hat === 'cap') {
+    const cap = new Mesh(new SphereGeometry(0.27, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), mat(L.hatColor ?? '#7A3B32', 0.95)); cap.position.y = 1.64; cap.scale.set(1, 0.85, 1); body.add(cap);
+    const roll = new Mesh(new TorusGeometry(0.255, 0.04, 5, 14), mat(L.hatColor ?? '#7A3B32', 0.95)); roll.position.y = 1.66; roll.rotation.x = Math.PI / 2; body.add(roll);
+  }
+  if (L.plait) {
+    for (let i = 0; i < 5; i++) { const p = new Mesh(new SphereGeometry(0.055 - i * 0.004, 6, 5), hair); p.position.set(0, 1.42 - i * 0.1, -0.27 - (i < 2 ? 0 : 0.03 * (i - 1))); body.add(p); }
+  }
+  if (L.buttons) for (let i = 0; i < 4; i++) for (const x of [-0.07, 0.07]) { const b = new Mesh(new SphereGeometry(0.022, 5, 4), mat(L.buttons, 0.35)); b.position.set(x, 1.24 - i * 0.14, 0.27 * L.width * (0.84 + i * 0.05)); body.add(b); }
+  if (L.prop === 'pipe') {
+    const stem = new Mesh(new CylinderGeometry(0.012, 0.012, 0.16, 5), mat('#E8E0CC', 0.6)); stem.position.set(0.06, 1.5, 0.3); stem.rotation.set(Math.PI / 2 - 0.2, 0, 0.3); body.add(stem);
+    const bowl = new Mesh(new CylinderGeometry(0.03, 0.022, 0.06, 6), mat('#E8E0CC', 0.6)); bowl.position.set(0.09, 1.52, 0.37); body.add(bowl);
+  }
   if (L.beard) { const b = new Mesh(new ConeGeometry(0.16, 0.34, 7), hair); b.position.set(0, 1.38, 0.13); b.rotation.x = Math.PI + 0.25; body.add(b); }
   if (L.prop === 'book') { const bk = new Mesh(new BoxGeometry(0.3, 0.22, 0.04), mat('#F2E3C6')); bk.position.set(0.05, 1.0, 0.32); bk.rotation.x = -0.6; body.add(bk); }
   body.rotation.x = L.stoop ?? 0;

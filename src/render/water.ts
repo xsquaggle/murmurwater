@@ -11,6 +11,7 @@ import { CALM_WAVES, packWaves, type Wave } from '../core/waves';
 import { PALETTE } from './palette';
 import type { WaterLook } from './looks';
 import { SHADOW_N } from './fish-shadows';
+import { STRUCK_N } from './storm-fx';
 
 /** How many points of a boat's wake the water can draw. */
 export const WAKE_N = 48;
@@ -100,8 +101,11 @@ export class Water {
         uWake: { value: this.wakeA },
         uWakeB: { value: this.wakeB },
         uWakeField: { value: this.wakeField },
+        // Struck water (render/storm-fx.ts): (x, z, how lit, seed) for each place; and how hard it rains, 0..1.
+        uStruck: { value: Array.from({ length: STRUCK_N }, () => new Vector4()) },
+        uRain: { value: 0 },
       },
-      defines: { FISH_N: SHADOW_N, WAKE_N },
+      defines: { FISH_N: SHADOW_N, WAKE_N, STRUCK_N },
       vertexShader: /* glsl */ `
         uniform float uTime;
         uniform vec4 uWaves[6];
@@ -172,6 +176,8 @@ export class Water {
         uniform vec4 uWake[WAKE_N];
         uniform vec2 uWakeB[WAKE_N];
         uniform vec4 uWakeField;
+        uniform vec4 uStruck[STRUCK_N];
+        uniform float uRain;
         varying vec3 vWorld;
         varying vec3 vNormal;
         varying float vCrest;
@@ -286,7 +292,8 @@ export class Water {
           // Stylized glint: sharp sparkles where ripple normals align with the key light.
           vec3 H = normalize(uKeyDir + V);
           float spec = pow(max(dot(Ng, H), 0.0), 1400.0);
-          float sparkle = smoothstep(0.3, 0.7, spec);
+          // Rain takes the glitter off the sea.
+          float sparkle = smoothstep(0.3, 0.7, spec) * (1.0 - 0.85 * uRain);
           col += uKeyColor * sparkle * (3.5 * (1.0 - uNight) + 1.2 * uNight) * uKeyIntensity * 0.5;
           float sheen = pow(max(dot(R, uKeyDir), 0.0), 60.0);
           col += uKeyColor * sheen * 0.35 * uKeyIntensity;
@@ -309,9 +316,34 @@ export class Water {
           vec3 foamCol = uFoam * (uAmbient * 0.9 + uKeyColor * uKeyIntensity * 0.4 * wrap + 0.15);
           col = mix(col, foamCol, clamp(foam, 0.0, 1.0));
 
+          // Rain: every drop a ring spreading on the surface, near the eye.
+          if (uRain > 0.01 && dist < 60.0) {
+            vec2 g = vWorld.xz * 1.7, cell = floor(g), f = fract(g) - 0.5;
+            float ph = fract(uTime * 1.7 + mw_hash3(vec3(cell, 3.1)));
+            vec2 off = vec2(mw_hash3(vec3(cell, 1.7)), mw_hash3(vec3(cell, 5.3))) - 0.5;
+            float rr = length(f - off * 0.5);
+            float dimple = (1.0 - smoothstep(0.0, 0.045, abs(rr - ph * 0.42))) * (1.0 - ph);
+            col = mix(col, foamCol * 0.85 + 0.06, dimple * 0.4 * uRain * (1.0 - smoothstep(18.0, 60.0, dist)));
+          }
+          // Struck water: where lightning went in, a ring of pale fire on the surface that fades, licking.
+          float struckLit = 0.0;
+          for (int i = 0; i < STRUCK_N; i++) {
+            vec4 sw = uStruck[i];
+            if (sw.z < 0.004) continue;
+            vec2 d = vWorld.xz - sw.xy;
+            float r = length(d);
+            if (r > 9.5) continue;
+            float ang = atan(d.y, d.x);
+            float lick = 0.55 + 0.45 * sin(ang * 12.0 + sw.w + sin(uTime * 3.1 + ang * 5.0) * 0.9);
+            float ring = exp(-pow((r - 6.4) / (0.45 + 0.4 * lick), 2.0)) * lick;
+            float fill = (1.0 - smoothstep(0.0, 6.6, r)) * (0.14 + 0.16 * mw_vnoise(vWorld.xz * 0.9 + uTime * 0.8));
+            struckLit = max(struckLit, (ring * 1.7 + fill) * sw.z);
+          }
+          col += vec3(0.68, 0.86, 1.0) * struckLit;
+
           // Transparency in the shallows lets the seabed (with caustics) show through.
           float alpha = clamp(1.0 - exp(-depth * uTurbid), 0.25, 1.0);
-          alpha = max(max(alpha, foam), shade);
+          alpha = max(max(max(alpha, foam), shade), min(1.0, struckLit));
           alpha = mix(alpha, 1.0, smoothstep(30.0, 140.0, dist) * 0.8 + fres * 0.5);
 
           // Distance fog matched to scene fog.
