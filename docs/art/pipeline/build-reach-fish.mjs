@@ -229,7 +229,7 @@ const FISH = {
       eye: [96, 96, { mat: 'eye', seed: 4, soft: 0, iris: '#C9B98A', pupil: 0.52, iris_r: 0.8 }],
       fin: [480, 64, FIN(5, { ...F, rays: 30 })], fin1: [128, 64, FIN(8, { ...F, rays: 6 })], tail: [160, 96, FIN(6, { ...F, rays: 7 })], pec: [128, 80, FIN(7, { ...F, rays: 5 })],
       barbel: [16, 64, { mat: 'flat', colour: '#7A6048', var: 0.15 }],
-      bulb: [48, 48, { mat: 'flat', colour: '#FFC062', var: 0.1, glow: { mat: 'flat', colour: '#FF9E2C', var: 0.08 } }],
+      bulb: [96, 64, { mat: 'lure', colour: '#FFC877', hot: '#FFE9B4', deep: '#E8892E', glow: { mat: 'lure', colour: '#FFB54E', hot: '#FFD489', deep: '#D86A1C', rib: '#8A3E10', rib_amount: 0.6 } }],
     }),
     eyes: [E],
     fins: [
@@ -240,10 +240,10 @@ const FISH = {
       { kind: 'side', rect: 'pec', s: 0.13, a: -20, len: 0.07, fan: 34, root: 0.025, dir: [0.65, -0.35, -0.68], rays: 5 },
       { kind: 'side', rect: 'pec', s: 0.1, a: -84, len: 0.045, fan: 18, root: 0.012, dir: [0.2, -0.85, -0.5], rays: 4 },
     ],
-    more: ({ B, R, bits }) => {                      // the barbel, and the light at its end
-      const { end, dir } = chinBarbel(bits, R.barbel, B, 0.04, [[0, 0, 0], [0, -0.022, 0.008], [0, -0.045, 0.006], [0, -0.062, -0.006]], 0.0045, 4);
-      const keep = bits.xf; bits.xf = aim(add(end, mul(dir, -0.004)), dir, [0, 0, 1]);
-      bits.lathe([[0, -0.002], [0.011, 0.005], [0.016, 0.016], [0.011, 0.027], [0, 0.031]], 8, R.bulb);
+    more: ({ B, R, bits }) => {                      // the barbel, curving down and forward from the chin, and the light hanging at its end
+      const { end } = chinBarbel(bits, R.barbel, B, 0.04, [[0, 0, 0], [0, -0.02, 0.006], [0, -0.036, 0.02], [0, -0.044, 0.036]], 0.0065, 5);
+      const keep = bits.xf; bits.xf = aim(add(end, [0, 0.004, 0]), [0, -1, 0], [0, 0, 1]);
+      bits.lathe([[0, -0.002], [0.013, 0.004], [0.029, 0.018], [0.039, 0.037], [0.038, 0.055], [0.027, 0.071], [0, 0.079]], 12, R.bulb);
       bits.xf = keep;
     },
   }; })(),
