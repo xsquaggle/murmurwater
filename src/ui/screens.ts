@@ -248,6 +248,9 @@ export class Screens {
         el('div', { class: 'item-top' }, el('b', {}, r.name), el('span', { class: 'chart-far' }, 'Across the fog')),
         ...r.moorings.map((m) => el('div', { class: 'item-top chart-far-row' }, el('span', {}, m.name),
           el('button', { class: 'btn gold', disabled: !v.from, onclick: () => this.host.sailTo(m.id) }, 'Sail there'))))),
+      ...(v.storms?.length ? [el('div', { class: 'chart-almanac' }, el('div', { class: 'item-top' }, el('b', {}, 'The almanac'), el('span', { class: 'muted' }, 'Storms here keep hours')),
+        ...v.storms.map((st) => el('div', { class: 'chart-storm' + (st.on ? ' on' : '') }, el('div', { class: 'item-top' }, el('b', {}, st.name), st.on ? el('span', { class: 'chart-here' }, 'Blowing now') : null),
+          el('div', { class: 'item-desc' }, `${st.when} ${st.note}`))))] : []),
       el('p', { class: 'muted chart-edge' }, v.hint));
     this.card.append(el('div', { class: 'chart-wrap' }, canvas, list));
   }

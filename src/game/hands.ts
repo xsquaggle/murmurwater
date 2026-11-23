@@ -14,9 +14,10 @@ import { REGIONS_BY_ID, fish, zoneAt } from '../core/content';
 import { fmt } from '../core/economy';
 
 /** What one hand is doing, for the Crew page and the bots. */
-export type HandState = 'fishing' | 'under way' | 'full' | 'too light' | 'nothing here' | 'ashore';
+export type HandState = 'fishing' | 'under way' | 'full' | 'too light' | 'sheltering' | 'nothing here' | 'ashore';
 const SAY: Record<HandState, string> = {
   fishing: 'Fishing', 'under way': 'Waiting for the boat to lie still', full: 'The basket is full', 'too light': 'Too light for him: he fishes after dark, or in fog',
+  sheltering: 'Below, out of the storm: fishing again in the eye, or when it has passed',
   'nothing here': 'Nothing from your journal swims here for them', ashore: 'Ashore: no berth in this boat',
 };
 export const handStateText = (st: HandState) => SAY[st];
@@ -68,6 +69,7 @@ export class Hands {
   state(def: CrewDef): HandState {
     const s = this.g.state, env = this.env;
     if (!env || !isAboard(s, def.id)) return 'ashore';
+    if (sheltering(env)) return 'sheltering';
     if (!env.still) return 'under way';
     if (def.when === 'dark' && !darkEnough(env)) return 'too light';
     if (basketFull(s)) return 'full';
@@ -188,6 +190,10 @@ export class Hands {
     }
     if (!rig) return;
     const env = this.env, time = g.world.time;
+    // Gone below out of a storm: their berths stand empty until the eye or the end of it.
+    const below = !!env && sheltering(env);
+    if (this.cat) this.cat.root.visible = !below;
+    if (this.hollis) this.hollis.root.visible = !below;
     if (this.cat) {
       // She knows before the float does: with the keeper's line out from this boat, she leans to the water a
       // second and a half before the bite (not for a nibble).

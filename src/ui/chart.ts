@@ -31,6 +31,8 @@ export interface ChartView {
   roads?: { x: number; z: number; tx: number; tz: number; label: string }[];
   /** Other waters the player has reached, and the moorings known there. */
   elsewhere?: { id: string; name: string; moorings: { id: string; name: string }[] }[];
+  /** The almanac's page for these waters (once the keeper has it): each storm, its hours and a line on it; `on` for the one blowing now. */
+  storms?: { name: string; when: string; note: string; on: boolean }[];
 }
 
 const INK = [59, 42, 79] as const;

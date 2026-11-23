@@ -24,6 +24,7 @@ import { CREW_BY_ID, isAboard, signedOn } from '../core/crew';
 import { handStateText } from './hands';
 import { BELL_FLAG, canRing, echoesFor, ringBell, turnings } from '../core/bell';
 import { trade } from './trade';
+import { sayHour, weatherAt } from '../core/weather';
 import { keyLabel, saveSettings, type Settings } from './settings';
 import { QUALITY } from '../render/renderer';
 
@@ -653,7 +654,7 @@ export class Town {
     const g = this.g, s = g.state, rc = this.region, sail = g.sailing;
     const known = (id: string) => s.world.charted.includes(id);
     const ph = g.session.phase;
-    const goal = this.goalTarget(), lamp = hasFogLamp(s);
+    const goal = this.goalTarget(), lamp = hasFogLamp(s), stormNow = weatherAt(rc.id, s.hour).storm?.id ?? null;
     return {
       title: `Chart of ${rc.zones.find((z) => z.priority === 0)?.name ?? rc.name}`,
       raster: this.raster(),
@@ -674,6 +675,10 @@ export class Town {
       elsewhere: lamp ? REGIONS.filter((r) => r.id !== rc.id && s.world.discovered.includes(r.id)).map((r) => ({
         id: r.id, name: r.name, moorings: (r.moorings ?? []).filter((m) => known(m.place)).map((m) => ({ id: m.id, name: m.name })),
       })) : [],
+      storms: s.flags.includes('almanac') ? (rc.storms ?? []).map((st) => {
+        const eye = st.eye ? `, with an eye from ${sayHour(st.eye[0])} to ${sayHour(st.eye[1])}` : '';
+        return { name: st.name.charAt(0).toUpperCase() + st.name.slice(1), when: `From ${sayHour(st.hours[0])} to ${sayHour(st.hours[1])}${eye}.`, note: st.note ?? '', on: stormNow === st.id };
+      }) : [],
     };
   }
 

@@ -328,6 +328,11 @@ body.titled .hud { opacity: 0; }
 .chart-place { border: 2px solid rgba(59,42,79,.25); border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; background: #FFF9EC; }
 .chart-place.here { border-color: var(--lagoon); box-shadow: 0 0 0 3px rgba(63,167,160,.22); }
 .chart-place .item-desc { margin: 3px 0 0; font-size: 13px; }
+.chart-almanac { border: 2px solid rgba(78,86,96,.35); border-radius: 12px; padding: 8px 10px; margin: 10px 0 8px; background: #EEF0EE; }
+.chart-storm { padding: 6px 0 2px; border-top: 1px dashed rgba(78,86,96,.3); }
+.chart-storm:first-of-type { border-top: none; }
+.chart-storm .item-desc { margin: 2px 0 0; font-size: 13px; }
+.chart-storm.on b { color: #4E5660; }
 .chart-here { font-weight: 800; font-size: 13px; color: #2F8079; }
 .chart-place.far { border-style: dashed; border-color: rgba(47,128,121,.6); background: #F1F8F1; }
 .chart-far { font: italic 600 13px var(--serif); color: #2F8079; }
