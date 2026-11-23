@@ -2,7 +2,7 @@
 
 A cozy-but-weird fishing incremental for Windows PC. Stylized low-poly 3D, built with three.js and Electron.
 
-> Status: two waters, two boats, a crew, and things on the bottom that are not fish. Hearthbay with a boat of your own, gear worth choosing, Lantern Pots and the Drowned Bell; a lamp for the fog and Mossglass Fen beyond it; a cat and a gentleman of fog who fish from your boat, and the Puffin to carry them; crates, sea chests and relics hauled up on the line, and the Keeper's Shelf to stand them on (v0.6.0). See `docs/ROADMAP.md`.
+> Status: three waters, two boats, a crew, things on the bottom that are not fish, and weather. Hearthbay with a boat of your own, gear worth choosing, Lantern Pots and the Drowned Bell; a lamp for the fog and Mossglass Fen beyond it; a cat and a gentleman of fog who fish from your boat, and the Puffin to carry them; crates, sea chests and relics hauled up on the line, and the Keeper's Shelf to stand them on; and over the whale-road Saltbone Reach, where three storms keep hours and the best fishing is where the lightning has just gone into the sea (v0.7.0). See `docs/ROADMAP.md`.
 
 ## Play it on Windows
 1. Open the [Releases page](https://github.com/xsquaggle/murmurwater/releases) and take the newest release.
@@ -33,7 +33,7 @@ Your save lives in `%APPDATA%\Murmurwater\save.json` (with a `save.bak.json` bac
 ```
 npm ci
 npm run dev           # play in the browser at http://localhost:5173
-npm test              # unit tests (quests, talk, saves, layout, economy, the boat, the sea, the ground, the simulator's bands)
+npm test              # unit tests (quests, talk, saves, layout, economy, the boat, the sea, the ground, the weather, the simulator's bands)
 npm run typecheck
 npm run sim           # economy and fight simulator
 npm run voice         # voice script (docs/voice) and recording status
@@ -49,6 +49,7 @@ Bots (need `npx vite build && npx vite preview --port 4173` running):
 - `node e2e/fog.cjs shots/fog` the Fog Lamp, the sea-road and Mossglass Fen
 - `node e2e/crew.cjs shots/crew` the cat at work, Pell's boatyard, the Puffin, Mister Hollis (from the tester's start)
 - `node e2e/finds.cjs shots/finds` the Shelf and its pearls, a crate and a chest hauled up, a relic fished from Lantern Cove by night (from the tester's start)
+- `node e2e/reach.cjs shots/reach` the whale-road, Saltbone Reach, Captain Oake, a storm with its struck water and its eye (from the tester's start)
 - `node e2e/play.cjs shots` the core loop
 - `node e2e/walk.cjs shots/walk` walks into everything solid and up to everyone
 - `node e2e/shadows.cjs shots/shadows` follows a fish shadow to the bite
