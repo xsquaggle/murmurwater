@@ -41,6 +41,7 @@ PACKS = {   # path prefix -> (short name, title, author, page)
     'oga/thwack-sounds/': ('antumdeluge-thwack', 'Thwack Sounds', 'AntumDeluge', OGA + 'thwack-sounds'),
     'oga/40-cc0-water-splash-slime-sfx/': ('rubberduck-water', '40 CC0 water / splash / slime SFX', 'rubberduck', OGA + '40-cc0-water-splash-slime-sfx'),
     'oga/bubble-sound-effects/': ('bmaczero-bubbles', 'Bubble Sound Effects', 'BMacZero', OGA + 'bubble-sound-effects'),
+    'oga/35-wooden-crackshitsdestructions/': ('independent-wood', '35 wooden cracks/hits/destructions', 'Independent.nu', OGA + '35-wooden-crackshitsdestructions'),
 }
 BAM = 'oga/swish-bamboo-stick-weapon-swhoshes/swoshes.x/swosh-%02d.flac'
 FISH = 'oga/fisheefects/FisheefectsComplete.x/'

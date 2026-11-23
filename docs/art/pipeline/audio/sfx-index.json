@@ -3899,5 +3899,206 @@
   "peak_db": -1.7,
   "loud100_db": -17.6,
   "bytes": 21837
+ },
+ {
+  "name": "crate-open_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak1.ogg",
+    "cut": [
+     0.14,
+     0.5
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "independent-wood",
+    "file": "crack01.mp3.flac",
+    "cut": [
+     0.15,
+     0.75
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_misc_09.ogg",
+    "speed": 0.9
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     0.28,
+     0.62
+    ]
+   }
+  ],
+  "how": "a short high creak for the lid levered up and a nail squealing, a crack of wood as it gives 0.3 s in, a wooden rattle after it for what is inside shifting, and one quiet drip; no coins; cut at 0.95 s",
+  "file": "crate-open_1.ogg",
+  "seconds": 0.954,
+  "samples": 42071,
+  "decoded": 41943,
+  "peak_db": -5.4,
+  "loud100_db": -17.2,
+  "bytes": 14412
+ },
+ {
+  "name": "crate-open_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak3.ogg",
+    "speed": 0.9
+   },
+   {
+    "kind": "cc0",
+    "pack": "independent-wood",
+    "file": "crack04.mp3.flac",
+    "cut": [
+     0.15,
+     0.5
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_misc_09.ogg",
+    "speed": 1.12
+   },
+   {
+    "kind": "cc0",
+    "pack": "angeloyazar-drops",
+    "file": "water_drops_1.ogg",
+    "cut": [
+     1.99,
+     2.3
+    ],
+    "speed": 1.1
+   }
+  ],
+  "how": "a short high creak for the lid levered up and a nail squealing, a crack of wood as it gives 0.3 s in, a wooden rattle after it for what is inside shifting, and one quiet drip; no coins; cut at 0.95 s",
+  "file": "crate-open_2.ogg",
+  "seconds": 0.954,
+  "samples": 42071,
+  "decoded": 41943,
+  "peak_db": -6.8,
+  "loud100_db": -17.0,
+  "bytes": 14176
+ },
+ {
+  "name": "relic-found_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "one struck note of glass (A5: a tone with the upper partials of glass, each a pair a hertz or two apart, a tick at the strike and a tail of room) that rings for three seconds, and from 0.45 s a low hum 35 cents under D3 (two voices 0.7 Hz apart, each wandering a few cents, with a little second and third harmonic, dulled and in a longer room) that swells for a second and fades with the glass"
+   }
+  ],
+  "how": "synthesised in sfx_finds.py; the glass is on A and the answer is the bell's D, the fifth below, 35 cents flat",
+  "file": "relic-found_1.ogg",
+  "seconds": 3.304,
+  "samples": 145706,
+  "decoded": 145706,
+  "peak_db": -14.9,
+  "loud100_db": -19.9,
+  "bytes": 18421
+ },
+ {
+  "name": "rumour_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "bookFlip1.ogg",
+    "cut": [
+     0.3,
+     0.77
+    ]
+   },
+   {
+    "kind": "synth",
+    "what": "one soft far note of glass (E6) with a slow start, 0.3 s after the start, 3 dB under the page, with a short tail of room"
+   }
+  ],
+  "how": "the page of page-turn_1, then a synthesised note as the page settles; levelled 6 dB under the other sounds so that it does not startle",
+  "file": "rumour_1.ogg",
+  "seconds": 1.024,
+  "samples": 45158,
+  "decoded": 45158,
+  "peak_db": -4.3,
+  "loud100_db": -23.2,
+  "bytes": 10483
+ },
+ {
+  "name": "pearl-set_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_002.ogg"
+   },
+   {
+    "kind": "synth",
+    "what": "one clear note of struck glass (A6), 12 ms after the tick, with a short tail of room"
+   }
+  ],
+  "how": "a recorded tick for the pearl touching the wood, then a synthesised ring; levelled 4 dB under the other sounds, since a clear note near 2 kHz is heard as louder than it measures",
+  "file": "pearl-set_1.ogg",
+  "seconds": 0.716,
+  "samples": 31574,
+  "decoded": 32576,
+  "peak_db": -10.4,
+  "loud100_db": -21.0,
+  "bytes": 6766
+ },
+ {
+  "name": "pearl-set_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-ui",
+    "file": "tick_001.ogg"
+   },
+   {
+    "kind": "synth",
+    "what": "one clear note of struck glass (B6), 12 ms after the tick, with a short tail of room"
+   }
+  ],
+  "how": "a recorded tick for the pearl touching the wood, then a synthesised ring; levelled 4 dB under the other sounds, since a clear note near 2 kHz is heard as louder than it measures",
+  "file": "pearl-set_2.ogg",
+  "seconds": 0.716,
+  "samples": 31574,
+  "decoded": 31446,
+  "peak_db": -5.7,
+  "loud100_db": -21.0,
+  "bytes": 6529
+ },
+ {
+  "name": "pearl-lift_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "synth",
+    "what": "the note of pearl-set_1 (A6), shorter, its pitch sinking three semitones in 0.3 s, with a faint tick at the start"
+   }
+  ],
+  "how": "synthesised in sfx_finds.py; levelled 4 dB under the other sounds like pearl-set",
+  "file": "pearl-lift_1.ogg",
+  "seconds": 0.454,
+  "samples": 20021,
+  "decoded": 19893,
+  "peak_db": -14.8,
+  "loud100_db": -21.1,
+  "bytes": 6374
  }
 ]

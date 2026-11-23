@@ -25,7 +25,9 @@ WHAT = {
     'boatyard': 'a boatyard: hammering on wood, sawing, planing, then a boat sliding into the water', 'sloop-sail': 'a big canvas sail filling with wind with a thump, and a wooden creak',
     'find-drag': 'one long low gulp of water as something sinks slowly', 'haul-knock': 'a dull wooden thud heard under water, with a short low ring',
     'haul-snag': 'a heavy thud under water, then a taut line creaking tighter', 'haul-free': 'a soft scrape under water and a few bubbles rising',
-    'find-surface': 'a heavy box lifted out of the sea, water streaming off it and then dripping'}
+    'find-surface': 'a heavy box lifted out of the sea, water streaming off it and then dripping',
+    'crate-open': 'a wooden crate prised open: a lid creaking, wood cracking and things shifting inside', 'relic-found': 'a struck glass ringing for a long time, with a low hum under it',
+    'rumour': 'a page turned, then one soft high note', 'pearl-set': 'a tiny hard tick and a clear glassy ring', 'pearl-lift': 'a short glassy ring that falls in pitch'}
 names = list(WHAT); T = ears.embed_text([WHAT[n] for n in names]); out = {}
 for f in sorted(os.listdir(D)):
     if not f.endswith('.ogg'): continue
