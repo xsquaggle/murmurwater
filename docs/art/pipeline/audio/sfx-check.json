@@ -22,7 +22,7 @@
   ]
  },
  "bite-dunk_1.ogg": {
-  "rank": 11,
+  "rank": 12,
   "top": "find-surface",
   "tags": [
    [
@@ -110,7 +110,7 @@
   ]
  },
  "boat-board_2.ogg": {
-  "rank": 5,
+  "rank": 6,
   "top": "haul-knock",
   "tags": [
    [
@@ -374,7 +374,7 @@
   ]
  },
  "cat-catch_1.ogg": {
-  "rank": 15,
+  "rank": 16,
   "top": "pot-set",
   "tags": [
    [
@@ -902,7 +902,7 @@
   ]
  },
  "fen-day_1.ogg": {
-  "rank": 2,
+  "rank": 3,
   "top": "fen-night",
   "tags": [
    [
@@ -1122,8 +1122,8 @@
   ]
  },
  "fog-cross_1.ogg": {
-  "rank": 2,
-  "top": "find-drag",
+  "rank": 3,
+  "top": "swell-boom",
   "tags": [
    [
     "Sound effect",
@@ -1254,7 +1254,7 @@
   ]
  },
  "haul-free_1.ogg": {
-  "rank": 8,
+  "rank": 9,
   "top": "haul-knock",
   "tags": [
    [
@@ -1276,7 +1276,7 @@
   ]
  },
  "haul-free_2.ogg": {
-  "rank": 6,
+  "rank": 7,
   "top": "find-surface",
   "tags": [
    [
@@ -1408,8 +1408,8 @@
   ]
  },
  "hollis-catch_1.ogg": {
-  "rank": 7,
-  "top": "haul-knock",
+  "rank": 8,
+  "top": "swell-boom",
   "tags": [
    [
     "Sound effect",
@@ -1430,8 +1430,8 @@
   ]
  },
  "hollis-catch_2.ogg": {
-  "rank": 4,
-  "top": "lamp-ignite",
+  "rank": 5,
+  "top": "swell-boom",
   "tags": [
    [
     "Sound effect",
@@ -1562,7 +1562,7 @@
   ]
  },
  "hull-wash_1.ogg": {
-  "rank": 17,
+  "rank": 19,
   "top": "oars",
   "tags": [
    [
@@ -1715,6 +1715,50 @@
    ]
   ]
  },
+ "lightning-strike_1.ogg": {
+  "rank": 2,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Slosh",
+    0.18
+   ],
+   [
+    "Static",
+    0.12
+   ],
+   [
+    "Water",
+    0.12
+   ],
+   [
+    "Music",
+    0.03
+   ]
+  ]
+ },
+ "lightning-strike_2.ogg": {
+  "rank": 2,
+  "top": "lamp-ignite",
+  "tags": [
+   [
+    "Static",
+    0.11
+   ],
+   [
+    "Slosh",
+    0.05
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.04
+   ],
+   [
+    "Water",
+    0.03
+   ]
+  ]
+ },
  "line-creak_1.ogg": {
   "rank": 4,
   "top": "dock-creak",
@@ -1804,7 +1848,7 @@
   ]
  },
  "line-snap_2.ogg": {
-  "rank": 39,
+  "rank": 41,
   "top": "cast-swish",
   "tags": [
    [
@@ -1826,7 +1870,7 @@
   ]
  },
  "line-snap_3.ogg": {
-  "rank": 42,
+  "rank": 43,
   "top": "cast-swish",
   "tags": [
    [
@@ -2328,6 +2372,50 @@
    [
     "Doorbell",
     0.15
+   ]
+  ]
+ },
+ "reach-day_1.ogg": {
+  "rank": 4,
+  "top": "pot-set",
+  "tags": [
+   [
+    "Ocean",
+    0.4
+   ],
+   [
+    "Waves, surf",
+    0.22
+   ],
+   [
+    "Fowl",
+    0.12
+   ],
+   [
+    "Honk",
+    0.11
+   ]
+  ]
+ },
+ "reach-night_1.ogg": {
+  "rank": 20,
+  "top": "swell-boom",
+  "tags": [
+   [
+    "Music",
+    0.74
+   ],
+   [
+    "Sonar",
+    0.24
+   ],
+   [
+    "Ambient music",
+    0.07
+   ],
+   [
+    "Sound effect",
+    0.03
    ]
   ]
  },
@@ -3101,9 +3189,251 @@
    ]
   ]
  },
- "tide-turn_1.ogg": {
+ "storm-cone_1.ogg": {
+  "rank": 7,
+  "top": "crate-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.26
+   ],
+   [
+    "Squeak",
+    0.07
+   ],
+   [
+    "Music",
+    0.04
+   ],
+   [
+    "Thunk",
+    0.03
+   ]
+  ]
+ },
+ "storm-rain_1.ogg": {
   "rank": 1,
-  "top": "tide-turn",
+  "top": "storm-rain",
+  "tags": [
+   [
+    "Rain",
+    0.48
+   ],
+   [
+    "Rain on surface",
+    0.41
+   ],
+   [
+    "Raindrop",
+    0.38
+   ],
+   [
+    "Gush",
+    0.07
+   ]
+  ]
+ },
+ "storm-wind_1.ogg": {
+  "rank": 2,
+  "top": "fog-cross",
+  "tags": [
+   [
+    "Noise",
+    0.22
+   ],
+   [
+    "Cacophony",
+    0.06
+   ],
+   [
+    "Sound effect",
+    0.06
+   ],
+   [
+    "Music",
+    0.05
+   ]
+  ]
+ },
+ "struck-water_1.ogg": {
+  "rank": 5,
+  "top": "relic-found",
+  "tags": [
+   [
+    "Music",
+    0.26
+   ],
+   [
+    "Raindrop",
+    0.18
+   ],
+   [
+    "Rain",
+    0.08
+   ],
+   [
+    "Singing bowl",
+    0.08
+   ]
+  ]
+ },
+ "swell-boom_1.ogg": {
+  "rank": 1,
+  "top": "swell-boom",
+  "tags": [
+   [
+    "Explosion",
+    0.26
+   ],
+   [
+    "Sound effect",
+    0.18
+   ],
+   [
+    "Whoosh, swoosh, swish",
+    0.15
+   ],
+   [
+    "Eruption",
+    0.08
+   ]
+  ]
+ },
+ "swell-boom_2.ogg": {
+  "rank": 1,
+  "top": "swell-boom",
+  "tags": [
+   [
+    "Explosion",
+    0.43
+   ],
+   [
+    "Eruption",
+    0.22
+   ],
+   [
+    "Sound effect",
+    0.16
+   ],
+   [
+    "Burst, pop",
+    0.1
+   ]
+  ]
+ },
+ "thunder-far_1.ogg": {
+  "rank": 1,
+  "top": "thunder-far",
+  "tags": [
+   [
+    "Thunder",
+    0.41
+   ],
+   [
+    "Thunderstorm",
+    0.28
+   ],
+   [
+    "Eruption",
+    0.12
+   ],
+   [
+    "Explosion",
+    0.12
+   ]
+  ]
+ },
+ "thunder-far_2.ogg": {
+  "rank": 4,
+  "top": "swell-boom",
+  "tags": [
+   [
+    "Thunder",
+    0.29
+   ],
+   [
+    "Thunderstorm",
+    0.19
+   ],
+   [
+    "Explosion",
+    0.06
+   ],
+   [
+    "Music",
+    0.06
+   ]
+  ]
+ },
+ "thunder-far_3.ogg": {
+  "rank": 4,
+  "top": "swell-boom",
+  "tags": [
+   [
+    "Thunder",
+    0.19
+   ],
+   [
+    "Thunderstorm",
+    0.12
+   ],
+   [
+    "Explosion",
+    0.09
+   ],
+   [
+    "Eruption",
+    0.07
+   ]
+  ]
+ },
+ "thunder-near_1.ogg": {
+  "rank": 3,
+  "top": "lightning-strike",
+  "tags": [
+   [
+    "Thunder",
+    0.39
+   ],
+   [
+    "Thunderstorm",
+    0.37
+   ],
+   [
+    "Rain",
+    0.3
+   ],
+   [
+    "Rain on surface",
+    0.11
+   ]
+  ]
+ },
+ "thunder-near_2.ogg": {
+  "rank": 2,
+  "top": "lightning-strike",
+  "tags": [
+   [
+    "Thunderstorm",
+    0.67
+   ],
+   [
+    "Thunder",
+    0.64
+   ],
+   [
+    "Rain",
+    0.56
+   ],
+   [
+    "Rain on surface",
+    0.23
+   ]
+  ]
+ },
+ "tide-turn_1.ogg": {
+  "rank": 2,
+  "top": "reach-day",
   "tags": [
    [
     "Ocean",
@@ -3388,8 +3718,8 @@
   ]
  },
  "waves-lap_1.ogg": {
-  "rank": 1,
-  "top": "waves-lap",
+  "rank": 2,
+  "top": "reach-day",
   "tags": [
    [
     "Ocean",
@@ -3410,8 +3740,8 @@
   ]
  },
  "waves-lap_2.ogg": {
-  "rank": 1,
-  "top": "waves-lap",
+  "rank": 2,
+  "top": "reach-day",
   "tags": [
    [
     "Ocean",
