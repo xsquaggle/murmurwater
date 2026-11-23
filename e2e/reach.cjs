@@ -183,13 +183,14 @@ const { chromium } = require('playwright');
   await shot('06-cone-up');
 
   // 6. The Ribs, from the boat: the plate on the ninth rib.
-  r = await ev(() => { const g = window.__MW__.game, end = g.world.dockEnd; window.bot.walk(end.x, end.z, 30, () => Math.hypot(g.pos.x - end.x, g.pos.z - end.z) < 1.2); const b = window.bot.board(); const go = window.bot.sailTo(1174, -937.4, { stopR: 5, maxTime: 300, until: () => (window.__MW__.game.town.focusPrompt ?? '').startsWith('Read the plate') }); window.reach.stop(); return { b, go, prompt: window.__MW__.game.town.focusPrompt }; });
+  // (Noon again: the sail to the Ribs takes an hour and a quarter of the day, and the Deacon is for step 7.)
+  r = await ev(() => { const g = window.__MW__.game, end = g.world.dockEnd; window.reach.hour(12.3); window.bot.walk(end.x, end.z, 30, () => Math.hypot(g.pos.x - end.x, g.pos.z - end.z) < 1.2); const b = window.bot.board(); const go = window.bot.sailTo(1174, -937.4, { stopR: 5, maxTime: 300, until: () => (window.__MW__.game.town.focusPrompt ?? '').startsWith('Read the plate') }); window.reach.stop(); return { b, go, prompt: window.__MW__.game.town.focusPrompt }; });
   check(r.b.ok && r.go.ok && /Read the plate/.test(r.prompt ?? ''), `to the ninth rib, where the plate can be read from the boat (${j(r.go)}, "${r.prompt}")`);
   n0 = await said();
   await ev(() => window.bot.tap('KeyE'));
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(6200);
   r = await ev((n) => ({ told: window.reach.since(n), flag: window.__MW__.state.flags.includes('rib-read') }), n0);
-  check(r.flag && /in for nine/.test(r.told), `and what is cut there is told ("${r.told.slice(0, 100)}")`);
+  check(r.flag && /in for nine, out for nine/.test(r.told), `and what is cut there is told ("${r.told.slice(0, 160)}")`);
   await shot('07-the-ribs');
 
   // 7. The Deacon comes up: she is told, the hands go below, and the weather on the screen says so.

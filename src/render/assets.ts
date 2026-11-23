@@ -43,13 +43,6 @@ export const MODEL_PATHS = {
   ribB: 'models/props/rib-b.glb',
   vertebra: 'models/props/vertebra.glb',
   seaThrift: 'models/props/sea-thrift.glb',
-} as const;
-/**
- * Models that have been asked for and may not be made yet (docs/briefs): used from the build after they land,
- * with nothing to change here, and not counted as missing meanwhile.
- */
-export const PENDING_MODELS: Record<string, string> = {
-  // Saltbone Reach (docs/briefs/reach-assets.md), groups 2 and 3.
   whaleboatHouse: 'models/props/whaleboat-house.glb',
   tryworks: 'models/props/tryworks.glb',
   stormMast: 'models/props/storm-mast.glb',
@@ -57,7 +50,13 @@ export const PENDING_MODELS: Record<string, string> = {
   theJaw: 'models/props/the-jaw.glb',
   tallyStone: 'models/props/tally-stone.glb',
   ribMark: 'models/props/rib-mark.glb',
-};
+  struckRing: 'models/props/struck-ring.glb',
+} as const;
+/**
+ * Models that have been asked for and may not be made yet (docs/briefs): used from the build after they land,
+ * with nothing to change here, and not counted as missing meanwhile.
+ */
+export const PENDING_MODELS: Record<string, string> = {};
 /** Fish and people of the brief that may not be made yet: not counted as missing meanwhile (see PENDING_MODELS). */
 const PENDING_KEYS = new Set([
   'npc:oake',

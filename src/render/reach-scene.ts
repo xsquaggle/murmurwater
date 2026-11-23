@@ -7,7 +7,7 @@
  * until then each is built here from a few plain shapes, of the same size and facing.
  */
 import {
-  BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Group, IcosahedronGeometry, InstancedMesh, Matrix4, MeshStandardMaterial, Object3D,
+  BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Group, IcosahedronGeometry, InstancedMesh, Matrix4, type Mesh, MeshStandardMaterial, Object3D,
   Quaternion, SphereGeometry, Vector3,
 } from 'three';
 import { Builder } from './builder';
@@ -21,6 +21,8 @@ type HeightAt = (x: number, z: number) => number;
 const hash = (a: number, b: number, seed = 0) => { const s = Math.sin(a * 127.1 + b * 311.7 + seed * 74.7) * 43758.5453; return s - Math.floor(s); };
 
 /** Where on a great rib (in its own frame) the rib mark is let in: head height, on the face toward the channel. */
+/** The cold light bone has by night, and how much of it at full dark. */
+const BONE_BY_NIGHT = '#9DB0DC', BONE_GLOW = 0.22;
 export const RIB_MARK_AT = new Vector3(0.55, 1.7, 0);
 
 /** The great rib from plain shapes: a tusk of bone from 2.5 m under the water up 13 m and over 7 m toward +X. */
@@ -100,7 +102,7 @@ export class ReachDressing {
     for (const kind of ['a', 'b'] as const) {
       const mine = this.ribs.filter((r) => r.kind === kind);
       if (!mine.length) continue;
-      const parts = modelParts(kind === 'a' ? 'ribA' : 'ribB') ?? [{ geo: ribGeometry(kind === 'b'), mat: this.own(createPropMaterial()) }];
+      const parts = modelParts(kind === 'a' ? 'ribA' : 'ribB')?.map((p) => ({ geo: p.geo, mat: this.bone(p.mat) })) ?? [{ geo: ribGeometry(kind === 'b'), mat: this.own(createPropMaterial()) }];
       for (const part of parts) {
         const im = new InstancedMesh(part.geo, part.mat, mine.length);
         mine.forEach((r, k) => { _m.compose(_v.set(r.x, 0, r.z), _q.setFromAxisAngle(_up, r.yaw), _s.setScalar(r.scale)); im.setMatrixAt(k, _m); });
@@ -114,7 +116,7 @@ export class ReachDressing {
     // ---- vertebrae, awash and on the beaches
     this.bones = boneSpots(o.region, o.hf, o.keep);
     if (this.bones.length) {
-      const parts = modelParts('vertebra') ?? [{ geo: vertebraGeometry(), mat: this.own(createPropMaterial()) }];
+      const parts = modelParts('vertebra')?.map((p) => ({ geo: p.geo, mat: this.bone(p.mat) })) ?? [{ geo: vertebraGeometry(), mat: this.own(createPropMaterial()) }];
       for (const part of parts) {
         const im = new InstancedMesh(part.geo, part.mat, this.bones.length);
         this.bones.forEach((b, k) => {
@@ -166,6 +168,21 @@ export class ReachDressing {
   readonly propMats: MeshStandardMaterial[] = [];
   private own(m: MeshStandardMaterial): MeshStandardMaterial { this.propMats.push(m); return m; }
 
+  /**
+   * Bone takes the moon. With no windows to light it the Reach's night is lit from the sky, and the bones are what
+   * stands pale in it: each bone material is given a faint cold light of its own that comes up with the dark
+   * (a copy, so the library's own material is as it was made).
+   */
+  private boneMats: MeshStandardMaterial[] = [];
+  private bone(m: MeshStandardMaterial): MeshStandardMaterial {
+    const c = m.clone();
+    c.emissive = new Color(BONE_BY_NIGHT); c.emissiveMap = c.map; c.emissiveIntensity = 0;
+    this.boneMats.push(c);
+    return c;
+  }
+  /** A thing of bone that something else built (the Jaw): its meshes take the moon too. */
+  moonlit(obj: Object3D) { obj.traverse((o) => { const mesh = o as Mesh; if (mesh.isMesh && !Array.isArray(mesh.material)) mesh.material = this.bone(mesh.material as MeshStandardMaterial); }); }
+
   /** The rib nearest (x, z), and where on it, in the world, a thing at `local` in its frame is. */
   ribNear(x: number, z: number, local: Vector3): { rib: RibSpot; at: Vector3; yaw: number } | null {
     let best: RibSpot | null = null, bd = Infinity;
@@ -183,7 +200,13 @@ export class ReachDressing {
     return true;
   }
 
-  update(dt: number) { this.time.value += dt; }
+  /** `night` 0..1: how dark it is (the bones come up pale as it goes). */
+  update(dt: number, night = 0) {
+    this.time.value += dt;
+    const k = BONE_GLOW * night;
+    if (k !== this.boneLit) { this.boneLit = k; for (const m of this.boneMats) m.emissiveIntensity = k; }
+  }
+  private boneLit = 0;
 }
 
 const _m = new Matrix4(), _q = new Quaternion(), _t = new Quaternion(), _v = new Vector3(), _s = new Vector3(), _up = new Vector3(0, 1, 0), _side = new Vector3(1, 0, 0);

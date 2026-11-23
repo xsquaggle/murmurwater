@@ -97,19 +97,27 @@ const mossDay = new Color('#9FC6A0'), mossNight = new Color('#12322E'), mossSky 
  * shapes first, and a deep teal dark at night that leaves the glowing things to do the lighting.
  */
 const slateDay = new Color('#C9CFD2'), slateNight = new Color('#151C26'), slateGround = new Color('#4E5650');
+const slateZenithDay = new Color('#8395A3'), slateZenithNight = new Color('#0B1119'), slateSky = new Color('#B9C3C9'), slateMoon = new Color('#8496BE'), _z = new Color();
 export const GRADES: Record<string, Grade> = {
   /**
-   * Saltbone Reach ("slate"): a cooler, greyer day than Hearthbay's, the haze off the swell taking the far
-   * water, and a blue-black night. The storms are laid over this by WorldScene (see weather).
+   * Saltbone Reach ("slate"): the fair days here are grey ones. A pale high overcast instead of Hearthbay's blue,
+   * a whiter and softer sun, the haze off the swell taking the far water, dusk gone to slate-violet instead of
+   * rose, and a blue-black night. The storms are laid over this by WorldScene (see weather).
    */
   slate: (lt) => {
     const day = 1 - lt.night;
     _g.copy(slateNight).lerp(slateDay, day);
-    lt.fog.lerp(_g, 0.45);
-    lt.horizon.lerp(_g, 0.32);
-    lt.zenith.lerp(_g, 0.12);
-    lt.hemiGround.lerp(slateGround, 0.45);
-    lt.keyColor.lerp(slateDay, 0.2 * day);
+    _z.copy(slateZenithNight).lerp(slateZenithDay, day);
+    lt.fog.lerp(_g, 0.72);
+    lt.horizon.lerp(_g, 0.66);
+    lt.zenith.lerp(_z, 0.62);
+    lt.hemiSky.lerp(slateSky, 0.55 * day).lerp(slateMoon, 0.4 * lt.night);
+    lt.hemiGround.lerp(slateGround, 0.6);
+    lt.keyColor.lerp(slateDay, 0.45 + 0.15 * day);
+    // A softer sun, and a brighter moon: with no windows to light it, the Reach's night is lit from the sky,
+    // and the bones stand pale in it.
+    lt.keyIntensity *= 1 - 0.2 * day + 0.9 * lt.night;
+    lt.hemiIntensity *= 1 + 0.7 * lt.night;
     lt.fogDensity = lt.fogDensity * 1.2 + 0.0004;
   },
   moss: (lt) => {

@@ -1190,7 +1190,7 @@
           "rx": 22,
           "rz": 15,
           "rot": 0.2,
-          "height": 4.5,
+          "height": 1.4,
           "seed": 44,
           "profile": "hill",
           "place": "the-jaw"
@@ -1458,8 +1458,8 @@
         {
           "id": "rib-mark",
           "name": "The mark on the ninth rib",
-          "x": 1174,
-          "z": -937.4,
+          "x": 1173,
+          "z": -946.1,
           "r": 9,
           "prompt": "Read the plate on the rib",
           "flag": "rib-read",
@@ -1580,7 +1580,7 @@
           "items": {
             "sand-eel": 12
           },
-          "text": "A sea chest jammed under the lip of the rock, out of the weather. The lid is scratched all over with gull tracks, or with writing."
+          "text": "A sea chest jammed under the broken back of the skull, out of the weather. The lid is scratched all over with gull tracks, or with writing."
         },
         {
           "id": "kettle-chest",
@@ -1720,8 +1720,8 @@
         },
         {
           "model": "ribMark",
-          "x": 1174,
-          "z": -937.4,
+          "x": 1173.5,
+          "z": -946,
           "yaw": 0
         }
       ],

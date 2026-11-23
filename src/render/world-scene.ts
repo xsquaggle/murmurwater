@@ -353,6 +353,7 @@ export class WorldScene {
         const c = Math.cos(p.yaw), sn = Math.sin(p.yaw), wx = p.x + lx * c + lz * sn, wz = p.z - lx * sn + lz * c;
         this.rocks.push([wx, wz, r]); this.blockers.push([wx, wz, r]);
       }
+      if (built.bone) this.reach?.moonlit(o);
       if (built.cone) this.cone = { obj: built.cone, y0: built.cone.position.y, up: 0 };
       if (p.until) this.untilProps.push({ flag: p.until, object: o });
       s.add(o); o.updateMatrixWorld(true);
@@ -583,7 +584,7 @@ export class WorldScene {
 
     this.seaRoad?.update(dt, this.time, this.lampAt, (x, z) => this.waveY(x, z));
     this.fen?.update(dt, focus, lt.night);
-    this.reach?.update(dt);
+    this.reach?.update(dt, lt.night);
     if (this.storm) {
       this.storm.update(dt, camera, focus, w, lt, this.struckDraw, (x, z) => this.waveY(x, z));
       wu.uRain.value = Math.min(1, w.rain);
@@ -630,7 +631,8 @@ export class WorldScene {
       lt.horizon.lerp(EYE_HAZE, 0.3 * eye * day);
       lt.fog.lerp(EYE_HAZE, 0.25 * eye * day);
     }
-    this.sky.uCloudCover.value = 0.35 + 0.65 * Math.min(1, p * 1.7 + 0.75 * eye);
+    // (A water with storms is a cloudy one on its fair days too.)
+    this.sky.uCloudCover.value = 0.58 + 0.42 * Math.min(1, p * 1.7 + 0.75 * eye);
     // The flash of a bolt.
     const f = this.storm!.flash;
     if (f > 0.001) {

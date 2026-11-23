@@ -39,6 +39,8 @@ export interface PropBuild {
   solid: [number, number, number][];
   /** It is fixed to the nearest great rib, not stood on the ground (see ReachDressing.fixToRib). */
   onRib: boolean;
+  /** It is bone, and a made model: by night it stands pale like the Ribs (see ReachDressing.moonlit). */
+  bone: boolean;
 }
 
 interface Part { name?: string; geo: BufferGeometry; pos?: [number, number, number] }
@@ -56,6 +58,7 @@ interface Spec {
   fill?: number;
   solid?: [number, number, number][];
   onRib?: boolean;
+  bone?: boolean;
 }
 
 /** Mara's packet box: a lidded sea crate on short legs, a scale pan on the lid, her pennant on a pole. */
@@ -242,7 +245,7 @@ const SPECS: Record<string, Spec> = {
   stormMast: { asset: 'stormMast', standIn: stormMast },
   harpoonRack: { asset: 'harpoonRack', standIn: harpoonRack },
   tallyStone: { asset: 'tallyStone', standIn: tallyStone },
-  theJaw: { asset: 'theJaw', standIn: theJaw, solid: JAW_SOLID },
+  theJaw: { asset: 'theJaw', standIn: theJaw, solid: JAW_SOLID, bone: true },
   ribMark: { asset: 'ribMark', standIn: ribMark, onRib: true },
 };
 export const PROP_MODELS = Object.keys(SPECS);
@@ -271,7 +274,7 @@ export function buildProp(model: string): PropBuild | null {
       if (!glass.has(mat)) glass.set(mat, mat.clone());
       m.material = glass.get(mat)!;
     });
-    return { object: made, mats: [], glass: [...glass.values()], fill: [...lit.values()].map((mat) => ({ mat, k: spec.fill! })), pennant: made.getObjectByName('Pennant') ?? null, vane: made.getObjectByName('Vane') ?? null, lamp, aground: spec.aground ?? null, cone: made.getObjectByName('Cone') ?? null, solid: spec.solid ?? [], onRib: !!spec.onRib };
+    return { object: made, mats: [], glass: [...glass.values()], fill: [...lit.values()].map((mat) => ({ mat, k: spec.fill! })), pennant: made.getObjectByName('Pennant') ?? null, vane: made.getObjectByName('Vane') ?? null, lamp, aground: spec.aground ?? null, cone: made.getObjectByName('Cone') ?? null, solid: spec.solid ?? [], onRib: !!spec.onRib, bone: !!spec.bone };
   }
   const g = new Group(), mat = createPropMaterial();
   const named: Record<string, Object3D> = {};
@@ -282,5 +285,5 @@ export function buildProp(model: string): PropBuild | null {
     if (part.name) { m.name = part.name; named[part.name] = m; }
     g.add(m);
   }
-  return { object: g, mats: [mat], glass: [], fill: [], pennant: named.Pennant ?? null, vane: named.Vane ?? null, lamp, aground: spec.aground ?? null, cone: named.Cone ?? null, solid: spec.solid ?? [], onRib: !!spec.onRib };
+  return { object: g, mats: [mat], glass: [], fill: [], pennant: named.Pennant ?? null, vane: named.Vane ?? null, lamp, aground: spec.aground ?? null, cone: named.Cone ?? null, solid: spec.solid ?? [], onRib: !!spec.onRib, bone: false };
 }

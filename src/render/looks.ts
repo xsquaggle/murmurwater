@@ -56,7 +56,7 @@ const SLATE: RegionLook = {
     moss: '#6F7C5C', mossLight: '#A8A57C', pine: '#4C5246',
     rock: '#59616C', rockDark: '#383E48', rockWarm: '#6C6860', rockLight: '#8A9096', reedBed: null,
   },
-  water: { deep: '#0C1822', mid: '#33566B', shallow: '#7FA6AE', foam: '#E8EEEA', swell: 1.3, shoreFoam: 1.25, murk: 0.5 },
+  water: { deep: '#0C1822', mid: '#33566B', shallow: '#8FA5A8', foam: '#E8EEEA', swell: 1.3, shoreFoam: 1.25, murk: 0.5 },
 };
 
 const LOOKS: Record<string, RegionLook> = { amber: AMBER, moss: MOSS, slate: SLATE };

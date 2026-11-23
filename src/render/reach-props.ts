@@ -163,8 +163,12 @@ export function ribMark(): Part[] {
   return [{ geo: b.build() }];
 }
 
-/** The ground plan of the Jaw as circles a hull cannot pass and feet cannot cross, in its own frame: [x, z, r]. */
+/**
+ * The ground plan of the Jaw as circles a hull cannot pass and feet cannot cross, in its own frame: [x, z, r].
+ * The skull (snout at z -7, its broken back open at z -27, 11.5 m across) and the two jawbones. The last two
+ * metres under the back of the skull are left to walk into: a chest is jammed there.
+ */
 export const JAW_SOLID: [number, number, number][] = [
-  [0, -19.5, 8], [0, -13.5, 6],
+  [0, -18.5, 6.5], [0, -12.5, 6],
   ...[-1, 1].flatMap((x) => [0, 1, 2, 3, 4].map((s) => [x * 5.6, -12 + s * 2.6, 1.4] as [number, number, number])),
 ];
