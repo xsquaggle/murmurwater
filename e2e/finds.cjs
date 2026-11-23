@@ -134,10 +134,12 @@ const { chromium } = require('playwright');
     const finding = g.session.finding ? { ...g.session.finding } : null, noBiteDue = g.session.biteIn === Infinity;
     let stalker = 0;
     const waited = fb.run(40, null, () => { if (g.shadows.biter.mode === 'stalk') stalker++; return g.session.phase === 'bite'; });
-    const y0 = g.view.bobberPos.y;
+    // How far under the water's own surface the float is: the swell lifts and drops it by more than a find draws it down.
+    const under = () => g.waveY(g.view.bobberPos.x, g.view.bobberPos.z) - g.view.bobberPos.y;
+    const y0 = under();
     fb.run(1.4);
     const el = document.querySelector('.bite');
-    return { before, landed, finding, noBiteDue, stalker, waited, phase: g.session.phase, sank: y0 - g.view.bobberPos.y, heavy: el.classList.contains('heavy') && el.classList.contains('on'), hint: document.querySelector('.hint')?.textContent ?? '', casts: s.finds.casts };
+    return { before, landed, finding, noBiteDue, stalker, waited, phase: g.session.phase, sank: under() - y0, heavy: el.classList.contains('heavy') && el.classList.contains('on'), hint: document.querySelector('.hint')?.textContent ?? '', casts: s.finds.casts };
   });
   const before = r.before;
   check(r.landed === 'waiting' && r.finding?.kind === 'crate' && r.noBiteDue && r.stalker === 0, 'the float lands over a crate: nothing alive comes to it (no shadow stalks, no bite is due)');
