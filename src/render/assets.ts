@@ -57,7 +57,7 @@ export const MODEL_PATHS = {
  */
 export const PENDING_MODELS: Record<string, string> = {};
 /** People of a brief who may not be made yet: not counted as missing meanwhile (see PENDING_MODELS). */
-const PENDING_KEYS = new Set(['npc:oake']);
+const PENDING_KEYS = new Set<string>();
 /** Optional NPC models; each falls back to a procedural stand-in until its file exists. */
 export const NPC_MODEL_IDS = ['mara', 'pell', 'wick', 'calloway', 'hollis', 'oake'];
 export const FISH_MODEL_IDS = [

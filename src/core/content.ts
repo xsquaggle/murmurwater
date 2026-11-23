@@ -202,12 +202,12 @@ export function roadsOpen(region: string, x: number, z: number, hull = Infinity)
   return best;
 }
 
-/** The road under (x, z) out of `region` that this `hull` is too slight for, if there is one. */
 /** The least hull that can sail into or out of `region` by any of its roads (0 where some road takes any boat). */
 export function hullFor(region: string): number {
   const roads = roadsOf(region);
   return roads.length ? Math.min(...roads.map((r) => r.hull ?? 0)) : 0;
 }
+/** The road under (x, z) out of `region` that this `hull` is too slight for, if there is one. */
 export function roadTooRough(region: string, x: number, z: number, hull: number): RoadDef | null {
   for (const r of ROADS) if (r.between.includes(region) && hull < (r.hull ?? 0) && roadOpen(r, x, z) > 0) return r;
   return null;

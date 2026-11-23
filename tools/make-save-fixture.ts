@@ -25,5 +25,13 @@ s.gear.wearables = ['wool-cap', 'keepers-boots']; s.gear.worn.hat = 'wool-cap'; 
 s.pots = { owned: 2, placed: [{ id: 1, region: 'hearthbay', zone: 'hb-dock', x: -120, z: 30, fish: [{ uid: 9, fishId: 'butterperch', weight: 0.4, trait: null, value: 3, perfect: false }], t: 12, n: 4 }], hold: [], levels: { speed: 1, size: 0, quality: 2 }, nextId: 2 };
 s.echoes = 4; s.echoUpgrades = { tidewise: 2 }; s.lifetime.echoes = 7; s.run = { number: 2, coins: 800, startedAt: 3000 };
 s.flags.push('bell-found', 'pots-open');
+// v5: a hand signed on, with a fish of hers in the crew basket.
+s.crew.hired.push('biscuit'); s.crew.tally.biscuit = { fish: 12, coins: 90, eaten: 3 };
+s.crew.hold.push({ uid: 21, fishId: 'butterperch', weight: 0.3, trait: null, value: 3, perfect: false });
+// v6: things fished up, and a pearl set beside a relic.
+s.finds = { casts: 37, dry: 3, crates: 2, chests: 1, near: { 'cork-float': 2 } };
+s.relics.push('tide-table'); s.moonpearls = 2; s.pearls = { 'tide-table': 1 };
+// v7: nothing new in the save (the weather is worked out from the hour); the number moved so that a build from
+// before Saltbone Reach declines a save that may hold its rod, its baits or its water.
 writeFileSync(`tests/fixtures/saves/v${SAVE_VERSION}.json`, serialize(s, new Date('2026-11-12T00:00:00Z')));
 console.log('wrote fixture v' + SAVE_VERSION);

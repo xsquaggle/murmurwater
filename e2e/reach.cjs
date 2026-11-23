@@ -56,7 +56,7 @@ const { chromium } = require('playwright');
         g.town.closeScreens();
         return hands;
       },
-      pill() { g.presentOnce(1 / 30); const p = document.querySelector('.pill.weather'); return { text: p?.textContent ?? '', shown: !!p && p.style.display !== 'none' && !p.hidden, cls: p?.className ?? '' }; },
+      pill() { g.almanacT = 0; g.presentOnce(1 / 30); const p = document.querySelector('.pill.weather'); return { text: p?.textContent ?? '', shown: !!p && p.style.display !== 'none' && !p.hidden, cls: p?.className ?? '' }; },
       /** Walk up to somebody and hear them out. Returns the choices they end on. */
       hub(id, starts) {
         const p = window.bot.npc(id); window.bot.walk(p.x, p.z, 40, () => (g.town.focusPrompt ?? '').startsWith(starts));
@@ -93,6 +93,30 @@ const { chromium } = require('playwright');
         const ev = window.reach.events.slice(n0).find((e) => e.type === 'catch');
         return { spot, target, waited: +waited.toFixed(2), caught: ev?.fishId ?? null, struckCatch: !!ev?.struck };
       },
+    };
+    /** A cast over something that is not a fish, struck: comes back as the haul begins. */
+    window.reach.castToHaul = (power) => {
+      g.simulate(1 / 60, () => ({ ...NO, primary: true, primaryPressed: true }));
+      let guard = 0;
+      while (g.session.phase === 'charging' && g.session.power < power && guard++ < 200) g.simulate(1 / 60, () => ({ ...NO, primary: true }));
+      g.simulate(1 / 60, () => ({ ...NO, primaryReleased: true }));
+      guard = 0;
+      while (g.session.phase === 'casting' && guard++ < 600) g.simulate(1 / 60, () => NO);
+      const spot = { ...g.session.spot };
+      let waited = 0;
+      while (g.session.phase === 'waiting' && waited < 40) { g.simulate(1 / 60, () => NO); waited += 1 / 60; }
+      if (g.session.phase !== 'bite') return { spot, phase: g.session.phase };
+      g.simulate(0.3, () => NO);
+      g.simulate(1 / 60, () => ({ ...NO, primary: true, primaryPressed: true }));
+      g.simulate(0.1, () => NO);
+      return { spot, phase: g.session.phase };
+    };
+    /** Hauls up whatever is on the line, the way every bot does. */
+    window.reach.haulUp = () => {
+      let guard = 0;
+      while (g.session.phase === 'hauling' && guard++ < 60 * 90) g.simulate(1 / 60, (gg) => { const h = gg.session.haul; return h ? { ...NO, primary: !h.snag && !h.warned && h.tension < 0.7 } : NO; });
+      g.simulate(2.6, () => NO); g.botInput = null;
+      return g.session.phase;
     };
     const toast = g.hud.toast.bind(g.hud);
     g.hud.toast = (text, kind, ms) => { window.reach.said.push(text); return toast(text, kind, ms); };
@@ -225,6 +249,17 @@ const { chromium } = require('playwright');
   check(!r.none && !!r.c.caught && r.c.struckCatch && r.c.waited < 8, `the fish from it is a fish from struck water, and quick to bite (${r.c?.caught}, ${r.c?.waited} s)`);
   check(!r.none && (r.out >= 0 || r.gone), 'and hooking it put the water out');
 
+  // 9b. Something that is not a fish, struck in struck water, puts it out as well: one ring, one thing on the line
+  // (a fresh review found a ring gave up a crate and then a fish).
+  r = await ev(() => { const MW = window.__MW__, g = MW.game, st = g.storms; st.nextBolt = 99;
+    const at = g.keeperAt(), d = g.session.reachAt(1) * 0.7, x = at.x + Math.sin(g.camYaw) * d, z = at.z + Math.cos(g.camYaw) * d;
+    st.strike(x, z); const ring = st.struck[st.struck.length - 1];
+    g.forcedFind = MW.finds.offerOf('crate', 'saltbone-reach', 240);
+    const c = window.reach.castToHaul(0.6), out = ring.out;
+    const after = window.reach.haulUp(); g.forcedFind = null; window.fog.wait(1.5);
+    return { c, out, after, depth: +g.world.hf.depth(x, z).toFixed(1) }; });
+  check(r.c.spot.struck === true && r.c.phase === 'hauling' && r.out >= 0, `a crate struck in struck water puts it out too (${j(r)})`);
+
   // 10. The eye: the sea lies down, gold light comes through, the hands come up and fish.
   r = await ev(() => { const n = window.reach.said.length; window.reach.hour(15.65); window.fog.wait(8); const g = window.__MW__.game; return { told: window.reach.since(n), eye: g.storms.weather.eye, power: +g.storms.weather.power.toFixed(2), pill: window.reach.pill(), hands: window.reach.page(), berths: window.reach.berths() }; });
   check(r.eye > 0.5 && /eye of the Deacon is over you/.test(r.told), `the eye comes over, and she is told (power ${r.power}: "${r.told.slice(0, 100)}")`);
@@ -247,6 +282,29 @@ const { chromium } = require('playwright');
   check(r.region === 'saltbone-reach' && r.built === 'saltbone-reach' && r.coins === saved.coins && r.done === saved.done && Math.hypot(r.boat[0] - saved.boat[0], r.boat[1] - saved.boat[1]) < 30, `the reload wakes in the Reach with its coins and its story (${j({ ...r, saved })})`);
   check(r.oake && /Fair · the Deacon/.test(r.pill) && r.ribs && r.ribs.ribs > 0 && r.ribs.bones > 0, `with Oake on the quay, the almanac on the screen, and the Ribs and their bones (${j(r.ribs)})`);
   await shot('11-reloaded-in-the-reach');
+
+  // 13. Started as a person starts it, with the title card up and the Deacon blowing: nothing is said of the storm
+  // behind the card, and she is told once she is there (a fresh review found the storm's word and its one lesson
+  // spoken to nobody).
+  await page.goto(`http://localhost:${port}/?keepfresh&hour=14.6&${q}`);
+  await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 2, null, { timeout: 180000 });
+  r = await ev(() => {
+    const g = window.__MW__.game;
+    g.paused = true; g.halted = true; g.skipRender = true;
+    window.said2 = [];
+    const toast = g.hud.toast.bind(g.hud);
+    g.hud.toast = (text, kind, hold) => { window.said2.push(text); return toast(text, kind, hold); };
+    const NO = { primary: false, primaryPressed: false, primaryReleased: false, steer: 0, cancel: false };
+    window.run2 = (sec) => { for (let t = 0; t < sec; t += 1 / 60) { g.state.hour = 14.6; g.simulate(1 / 60, () => NO); } };
+    window.run2(12);
+    return { titled: document.body.classList.contains('titled'), behind: g.behindTitle, region: g.state.world.region, storm: g.storms.weather.storm?.id ?? null, told: g.storms.told, bolts: g.storms.bolts, said: [...window.said2] };
+  });
+  check(r.titled && r.behind && r.region === 'saltbone-reach' && r.storm === 'deacon' && r.told === null && !r.said.some((x) => /Deacon|storm|lightning|gone below/i.test(x)),
+    `twelve seconds behind the title card in the Deacon: ${r.bolts} bolts have fallen and nothing has been said of it (${j(r.said)})`);
+  await page.click('.title');
+  r = await ev(() => { const g = window.__MW__.game; window.run2(3); return { behind: g.behindTitle, said: [...window.said2] }; });
+  check(!r.behind && r.said.some((x) => /is blowing\. In a storm the pots take nothing/.test(x)) && r.said.some((x) => /Where lightning goes into the sea/.test(x)),
+    `after the click she is told of the storm and of struck water (${j(r.said.map((x) => x.slice(0, 40)))})`);
 
   check(errors.length === 0, `no page errors (${errors.slice(0, 3).join(' | ')})`);
   await browser.close();

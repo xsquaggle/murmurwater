@@ -10,16 +10,17 @@ import {
   AdditiveBlending, BufferAttribute, BufferGeometry, CanvasTexture, Color, CylinderGeometry, DoubleSide, DynamicDrawUsage, Group, LineSegments,
   Mesh, MeshBasicMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, SRGBColorSpace, ShaderMaterial, Vector3, Vector4,
 } from 'three';
-import type { Weather } from '../core/weather';
+import { STRUCK, type Weather } from '../core/weather';
 import type { Lighting } from './daycycle';
 
-/** How many struck waters can be drawn at once (the water shader has as many places for them). */
-export const STRUCK_N = 4;
+/** How many struck waters can be drawn at once (the water shader has as many places for them): as many as there can be. */
+export const STRUCK_N = STRUCK.most;
 /** The radius of the ring of struck water as drawn, m (the rule's own radius is STRUCK.radius). */
 export const STRUCK_RING = 6.4;
 const LICKS = 12;
 const RAIN_BOX = 64, RAIN_HIGH = 34, RAIN_FALL = 24, RAIN_WIND = 7;
 const BOLT_LIFE = 0.42;
+const RAIN_BY_DAY = new Color('#B8C6D2'), RAIN_BY_NIGHT = new Color('#2E3746');
 
 /** A struck water as the scene draws it: where, and how lit it still is (0..1). */
 export interface StruckDraw { x: number; z: number; strength: number; seed: number }
@@ -193,7 +194,7 @@ export class StormFx {
     if (this.rain.visible) {
       const u = this.rainMat.uniforms;
       u.uTime.value = t; (u.uCam.value as Vector3).copy(camera.position); u.uRain.value = Math.min(1, w.rain * 1.15);
-      (u.uColor.value as Color).set('#B8C6D2').lerp(new Color('#2E3746'), lt.night * 0.75);
+      (u.uColor.value as Color).copy(RAIN_BY_DAY).lerp(RAIN_BY_NIGHT, lt.night * 0.75);
     }
     // Bolts: a flicker, a second stroke down the same path, then gone.
     for (let i = this.bolts.length - 1; i >= 0; i--) {

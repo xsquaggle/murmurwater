@@ -45,11 +45,11 @@ export class WorldScene {
   /** The swell as it is now: the region's own, stood up by a storm. */
   get swellNow(): number { return this.swell * (1 + STORM_SWELL * this.weather.power); }
   /** The weather here at the hour the sky shows (core/weather.ts). */
-  weather: Weather = { storm: null, power: 0, rain: 0, thunder: false, eye: 0 };
+  weather: Weather = { storm: null, power: 0, rain: 0, thunder: false, inEye: false, eye: 0 };
   /** Rain, lightning, struck water and the eye's light, in a region that has storms. */
   storm: StormFx | null = null;
   /** The struck waters to draw (the game sets these; see game/storms.ts). */
-  struckDraw: StruckDraw[] = [];
+  struckDraw: readonly StruckDraw[] = [];
   /** The Ribs, the bones and the sea-thrift, in Saltbone Reach. */
   reach: ReachDressing | null = null;
   /** The weather mast's storm cone, and how far up its halyard it is (0 down .. 1 hoisted). */

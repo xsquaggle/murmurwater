@@ -14,7 +14,7 @@ import { addCatch, breakRhythm, earn, sellAll, RHYTHM } from '../../src/core/eco
 import {
   BAITS, FISH, RARITIES, REGIONS, REGIONS_BY_ID, RODS, bait as baitDef, fish as fishDef, inHours, onShelf, regionAt, regionOfNpc, regionOfPlace, roadToward, zoneAt, type ChestDef, type FishDef,
 } from '../../src/core/content';
-import { inWeather, weatherAt } from '../../src/core/weather';
+import { inWeather, stormsOf, weatherAt } from '../../src/core/weather';
 import {
   LURES, WEARABLES, boatOnOffer, buyBait, buyBoat, buyCreel, buyLure, buyPot, buyRod, buyWearable, claimCollections, creelNext, fishingContext,
   grantLure, grantWearable, hasFogLamp, isNight, potPrice, potUpgradeCost, spendBait, stats, tuneCost, tuneRod, upgradePots, type PotUpgrade, type Stats,
@@ -156,6 +156,13 @@ export class SimPlayer {
     const s = this.s;
     if (this.trial) { s.playTime += dt; return; }
     dt *= 1 + (this.opts.dawdle ?? 0.2);
+    // Where storms keep hours the pots and the hands stop and start with them, so a long stretch (a sail, a walk
+    // to the Tally Stone) is lived a few seconds at a time, as the game lives it. Elsewhere it is one step, as ever.
+    const step = stormsOf(s.world.region).length ? 10 : dt;
+    for (let left = dt; left > 1e-9; left -= step) this.passOnce(Math.min(step, left), busy);
+  }
+  private passOnce(dt: number, busy: boolean) {
+    const s = this.s;
     s.playTime += dt;
     s.hour = (s.hour + (dt * 24) / DAY_LENGTH_S) % 24;
     if (busy) { this.idle = 0; this.totals.fishing += dt; } else { this.idle += dt; this.totals.away += dt; if (this.idle > RHYTHM.decayAfter) s.rhythm = 0; }
@@ -308,7 +315,7 @@ export class SimPlayer {
    */
   private reachKey(region: string): string[] { const w = this.weatherKey(region); return [...(this.s.flags.includes('reach-counted') && region === REACH ? ['counted'] : []), ...(w ? [w] : [])]; }
   /** The weather as far as a place's fishing goes: which storm, and whether it is in its eye. */
-  private weatherKey(region: string): string { const w = weatherAt(region, this.s.hour); return w.storm ? `${w.storm.id}${w.eye > 0.5 ? '-eye' : ''}` : ''; }
+  private weatherKey(region: string): string { const w = weatherAt(region, this.s.hour); return w.storm ? `${w.storm.id}${w.inEye ? '-eye' : ''}` : ''; }
 
   /** The baits worth thinking about: the free one, anything in the tin, anything on the stall the purse can stand. */
   private baitChoices(): string[] {

@@ -101,7 +101,7 @@ export class Hands {
 
     // A storm over the boat: the hands go below out of the weather (said once a storm).
     if (sheltering(env)) {
-      if (!this.shelterTold && sail.aboard && aboard(s).length) { this.shelterTold = true; g.hud.toast(aboard(s).length > 1 ? 'The hands have gone below out of the weather. They fish again in the eye, or when it has passed.' : `${aboard(s)[0].name} has gone below out of the weather, and will fish again in the eye or when it has passed.`); }
+      if (!this.shelterTold && !g.behindTitle && sail.aboard && aboard(s).length) { this.shelterTold = true; g.hud.toast(aboard(s).length > 1 ? 'The hands have gone below out of the weather. They fish again in the eye, or when it has passed.' : `${aboard(s)[0].name} has gone below out of the weather, and will fish again in the eye or when it has passed.`); }
     } else this.shelterTold = false;
 
     // Lying still with the keeper aboard, somewhere the journal knows nothing for a hand: said once for each water.

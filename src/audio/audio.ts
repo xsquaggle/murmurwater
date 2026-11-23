@@ -516,7 +516,6 @@ export class AudioEngine {
     if (!this.sfx('rope-creak', { rate: 0.8, gain: 0.6, at: 0.25 })) this.noise(0.3, 600, 2, 0.06, 'bandpass', 420, 0.3);
   }
 
-  /** A new place on the chart: a short rising figure (the recorded sting once it exists). */
   // ---- Saltbone Reach ----
   /** A bolt into the sea `dist` metres off: the split and the hiss of steam, then the thunder when it has come that far. */
   lightning(dist: number) {
@@ -540,6 +539,7 @@ export class AudioEngine {
   /** The swell going into one of the Kettles: a deep hollow boom and a suck back. */
   swellBoom(gain = 1) { if (!this.sfx('swell-boom', { bus: 'ambience', gain })) { this.tone(48, 1.4, 0.3 * gain, 'sine', 0, 36); this.noise(1.6, 260, 1, 0.12 * gain, 'lowpass', 90, 0.9); } }
 
+  /** A new place on the chart: a short rising figure (the recorded sting once it exists). */
   discover() {
     const synth = () => { [587.33, 739.99, 880, 1174.66].forEach((f, i) => this.tone(f, 0.5, 0.12, 'triangle', i * 0.11)); this.tone(293.66, 1.1, 0.07, 'sine', 0.05); };
     if (PENDING.has('sting-discover')) synth();

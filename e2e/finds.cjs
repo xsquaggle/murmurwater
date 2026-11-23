@@ -11,6 +11,8 @@ const { chromium } = require('playwright');
 (async () => {
   const port = process.env.MW_PORT || 4173;
   const outDir = process.argv[2] || 'shots/finds';
+  // The save version the game writes now, read from the source so that this bot does not go stale when it moves on.
+  const SAVE_VERSION = +/SAVE_VERSION = (\d+)/.exec(require('fs').readFileSync(require('path').join(__dirname, '../src/core/state.ts'), 'utf8'))[1];
   require('fs').mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
@@ -86,7 +88,7 @@ const { chromium } = require('playwright');
     return { start: MW.testerStart, version: s.version, relics: [...s.relics], pearls: s.moonpearls, set: Object.keys(s.pearls).length, finds: { ...s.finds }, boat: s.boats.current, crew: s.crew.hired.length,
       hour: s.hour, catches: s.lifetime.catches, missing: MW.assetsMissing, onDock: g.groundAt(at.x, at.z) !== null, zone16: zone(16), zone24: zone(24), rumours: s.flags.filter((f) => f.startsWith('rumour:')).length };
   });
-  check(r.start === 'finds' && r.version === 6 && r.relics.length === 4 && r.pearls === 3 && r.set === 0 && r.finds.casts === 0 && r.finds.crates + r.finds.chests === 0 && r.boat === 'puffin' && r.crew === 2,
+  check(r.start === 'finds' && r.version === SAVE_VERSION && r.relics.length === 4 && r.pearls === 3 && r.set === 0 && r.finds.casts === 0 && r.finds.crates + r.finds.chests === 0 && r.boat === 'puffin' && r.crew === 2,
     `the finds start: save version ${r.version}, ${r.relics.length} relics, ${r.pearls} pearls and none set, nothing ever fished up, the ${r.boat} afloat with ${r.crew} hands`);
   check(r.onDock && r.zone24 === 'hb-bay' && r.hour >= 20 && r.rumours === 0, `she stands at the end of the dock at ${r.hour.toFixed(1)} h, a good cast from Lantern Cove (${r.zone16} at 16 m, ${r.zone24} at 24 m), no rumour heard yet`);
   check(Array.isArray(r.missing) && r.missing.length === 0, `no model is missing (${JSON.stringify(r.missing)})`);

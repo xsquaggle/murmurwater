@@ -248,7 +248,7 @@ describe('Saltbone Reach, by simulation', () => {
     return { coins, pot: b.reduce((a, x) => a + x.pot, 0) / coins, crew: b.reduce((a, x) => a + x.crew, 0) / coins, perMinute: coins / (420 - arrived(r)!) };
   };
 
-  it('is reached in the fourth hour, as soon as the Puffin floats, and Captain Oake\'s six jobs fill an hour and a half', () => {
+  it('is reached between three and four and a half hours in, as soon as the Puffin floats, and Captain Oake\'s six jobs take one to two and a quarter hours', () => {
     const rs = onward();
     const reach = at(rs, 'reached Saltbone Reach');
     expect(reach, `the Reach reached at minute ${reach.toFixed(0)}`).toBeGreaterThan(190);
@@ -271,7 +271,7 @@ describe('Saltbone Reach, by simulation', () => {
     expect(median(spans)).toBeLessThan(135);
   }, 240000);
 
-  it('its rod is a thing to save for: an hour in at the least, and in every keeper\'s hand before the seventh hour is out', () => {
+  it('its rod is a thing to save for: forty minutes in the Reach at the least for anyone, an hour or so for most, and in every keeper\'s hand before the seventh hour is out', () => {
     const waits: number[] = [];
     for (const r of onward()) {
       const rod = when(r, 'bought Whalebone Rod');
@@ -285,7 +285,7 @@ describe('Saltbone Reach, by simulation', () => {
     expect(median(waits)).toBeLessThan(115);
   }, 240000);
 
-  it('pays a few times what the Fen does, most of it to the keeper\'s own rod: storms stop the pots and send the hands below', () => {
+  it('pays more than staying in the Fen, most of it to the keeper\'s own rod: the pots and the crew bring under a third of it between them', () => {
     const fen = long();
     for (const [i, r] of onward().entries()) {
       const x = inReach(r);
@@ -309,7 +309,7 @@ describe('Saltbone Reach, by simulation', () => {
     for (const r of rs) {
       expect(r.totals.struck, 'fish out of struck water in seven hours').toBeGreaterThanOrEqual(8);
       expect(when(r, 'first Squall Mackerel')).not.toBeNull();
-      // The Reach's relics: all four that lie in its water are rumoured by the last job but one.
+      // With the Reach's relics in the water: thirteen or more of the game's seventeen in seven hours.
       expect(r.state.relics.length, 'relics in seven hours, with the Reach').toBeGreaterThanOrEqual(13);
     }
     // Old Greyback keeps noon on the Long Swell: most keepers who sit up for him have him, and the page with him.

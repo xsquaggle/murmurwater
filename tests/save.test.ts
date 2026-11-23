@@ -65,6 +65,19 @@ describe('saves', () => {
     expect(st.world.charted).toContain('kettle-isle');
     expect(st.world.onBoat).toBe(true);
   });
+  it('a save from before Saltbone Reach (v6) loads with nothing changed but its number', () => {
+    for (const f of ['v6.json', 'v6-finds.json']) {
+      const text = readFileSync(join(__dirname, 'fixtures', 'saves', f), 'utf8');
+      const was = JSON.parse(text, (_k, v) => (v === '__inf__' ? Infinity : v)).state;
+      expect(was.version, f).toBe(6);
+      const st = deserialize(text);
+      expect(st.version, f).toBe(SAVE_VERSION);
+      // Field for field what was written: no water, weather, rod or relic of the Reach arrives with the load.
+      expect({ ...st, version: 6 }, f).toEqual(was);
+      expect(st.world.region, f).toBe('hearthbay');
+      expect(st.flags.some((x) => x === 'reached:saltbone-reach' || x === 'almanac'), f).toBe(false);
+    }
+  });
   it('every fixture save from every past version still loads', () => {
     const dir = join(__dirname, 'fixtures', 'saves');
     const files = readdirSync(dir).filter((f) => f.endsWith('.json'));

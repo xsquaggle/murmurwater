@@ -10,6 +10,7 @@ import { QUESTS_BY_ID, accept, objectiveProgress, onQuestEvent } from '../src/co
 import { RELICS_BY_ID, relicsHere } from '../src/core/relics';
 import { BOATS_BY_ID } from '../src/core/quests';
 import { Rng } from '../src/core/rng';
+import { almanacLine } from '../src/game/storms';
 import { ctx } from './helpers';
 
 const REACH = 'saltbone-reach';
@@ -75,6 +76,49 @@ describe('storms that keep hours', () => {
     expect(nextStorm(REACH, 23.5)!.storm.id).toBe('margit');
     expect(nextStorm('hearthbay', 8)).toBeNull();
     expect([5.5, 14, 22.5, 12, 0, 18.5, 1].map(sayHour)).toEqual(['half past five in the morning', 'two in the afternoon', 'half past ten at night', 'noon', 'midnight', 'half past six in the evening', 'one at night']);
+  });
+
+  it('one rule at every edge: what is said, what stops, what bites and where the bolts fall change at the same moment', () => {
+    // A fresh review found a few seconds at every edge where the lightning had stopped and its fish still bit,
+    // and where the hands were fishing in the eye under bolts. The weather's own word and what waits on it must agree.
+    for (let i = 0; i < 24 * 400; i++) {
+      const h = i / 400, w = weatherAt(REACH, h);
+      expect(w.thunder, `thunder at ${h}`).toBe(inWeather(REACH, h, 'thunder'));
+      expect(w.inEye, `the eye at ${h}`).toBe(inWeather(REACH, h, 'eye'));
+      expect(!!w.storm && !w.inEye, `a storm at ${h}`).toBe(inWeather(REACH, h, 'storm'));
+      // The Thunderback is in the water exactly while bolts can fall, the Lull exactly while the eye is over.
+      expect(names(h, 'reach-anvil').includes('thunderback'), `the Thunderback at ${h}`).toBe(w.thunder);
+      expect(potRolled(REACH, h), `the pots at ${h}`).toBe(!!w.storm && !w.inEye);
+    }
+    // The look of it is eased (so it lags the rule by a few seconds), and never the other way about.
+    expect(weatherAt(REACH, 14.01)).toMatchObject({ thunder: true });
+    expect(weatherAt(REACH, 14.01).power).toBeLessThan(0.05);
+    expect(weatherAt(REACH, 15.51)).toMatchObject({ thunder: false, inEye: true });
+    expect(weatherAt(REACH, 15.51).eye).toBeLessThan(0.1);
+  });
+
+  it('the almanac\'s line on the screen says what is on and what is next, all round the clock', () => {
+    const line = (h: number) => almanacLine(REACH, h);
+    expect(line(2)).toEqual({ text: 'Fair · Old Margit in 4 min', kind: 'fair' });
+    expect(line(5.2)).toEqual({ text: 'Fair · Old Margit in under a minute', kind: 'fair' });
+    expect(line(6)).toEqual({ text: 'Old Margit · blows out in 2 min', kind: 'storm' });
+    expect(line(10)).toEqual({ text: 'Fair · the Deacon in 4 min', kind: 'fair' });
+    expect(line(14.2)).toEqual({ text: 'The Deacon · the eye in 1 min', kind: 'storm' });
+    // The eye is on the line from the moment the pots and the hands fish again, and off it the moment they stop.
+    expect(line(15.49)!.kind).toBe('storm');
+    expect(line(15.5)).toEqual({ text: 'Eye of the Deacon · closes in 2 min', kind: 'eye' });
+    expect(line(16.99)).toEqual({ text: 'Eye of the Deacon · closes in under a minute', kind: 'eye' });
+    expect(line(17)).toEqual({ text: 'The Deacon · blows out in 2 min', kind: 'storm' });
+    expect(line(18.49)!.text).toBe('The Deacon · blows out in under a minute');
+    expect(line(18.5)).toEqual({ text: 'Fair · Little Wren in 4 min', kind: 'fair' });
+    // Across midnight.
+    expect(line(23.5)).toEqual({ text: 'Little Wren · blows out in 2 min', kind: 'storm' });
+    expect(line(0.5)).toEqual({ text: 'Little Wren · blows out in under a minute', kind: 'storm' });
+    expect(line(1)).toEqual({ text: 'Fair · Old Margit in 5 min', kind: 'fair' });
+    // Every hour of the day has a line in the Reach, and a water without storms has none.
+    for (let i = 0; i < 24 * 20; i++) expect(line(i / 20), `at ${i / 20}`).not.toBeNull();
+    expect(almanacLine('hearthbay', 12)).toBeNull();
+    expect(almanacLine('mossglass-fen', 15)).toBeNull();
   });
 });
 

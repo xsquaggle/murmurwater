@@ -12,9 +12,11 @@ export interface Weather {
   power: number;
   /** 0..1: how hard it rains. */
   rain: number;
-  /** Lightning is coming down. */
+  /** Lightning is coming down: the storm has it, and its eye is not over (the same rule as `inWeather(…, 'thunder')`). */
   thunder: boolean;
-  /** 0..1: how far into the calm of the eye. */
+  /** The eye is over, by the hours (the same rule as `inWeather(…, 'eye')`): what is said and what stops go by this. */
+  inEye: boolean;
+  /** 0..1: how far into the calm of the eye the sea and the sky have come (the look of it, which lags the rule). */
   eye: number;
 }
 
@@ -24,11 +26,12 @@ export const STORM = { ramp: 0.35, eyeRamp: 0.2, eyePower: 0.08, dryRain: 0.12 }
 /**
  * Struck water: where lightning has gone into the sea, a cast gets a quick bite and the dice are thrown with a
  * great deal of luck. `every` is the seconds between bolts near the keeper, `life` how long the water stays lit,
- * `radius` how near a float must land, `near` how far from the keeper a bolt comes down.
+ * `radius` how near a float must land, `near` how far from the keeper a bolt comes down, `most` how many waters
+ * can be lit at once.
  */
-export const STRUCK = { every: [10, 18] as [number, number], life: 30, radius: 7, near: [13, 34] as [number, number], luck: 1.2, wait: 0.3 };
+export const STRUCK = { every: [10, 18] as [number, number], life: 30, radius: 7, near: [13, 34] as [number, number], luck: 1.2, wait: 0.3, most: 4 };
 
-const FAIR: Weather = { storm: null, power: 0, rain: 0, thunder: false, eye: 0 };
+const FAIR: Weather = { storm: null, power: 0, rain: 0, thunder: false, inEye: false, eye: 0 };
 const smooth = (t: number) => { const x = Math.min(1, Math.max(0, t)); return x * x * (3 - 2 * x); };
 /** Hours from `a` on to `b`, going forward round the clock. */
 const ahead = (a: number, b: number) => (((b - a) % 24) + 24) % 24;
@@ -41,11 +44,14 @@ export function weatherAt(region: string, hour: number): Weather {
     if (!inHours(hour, st.hours)) continue;
     const into = ahead(st.hours[0], hour), left = ahead(hour, st.hours[1]);
     let power = st.strength * smooth(Math.min(into, left) / STORM.ramp), eye = 0;
-    if (st.eye && inHours(hour, st.eye)) {
-      eye = smooth(Math.min(ahead(st.eye[0], hour), ahead(hour, st.eye[1])) / STORM.eyeRamp);
+    const inEye = !!st.eye && inHours(hour, st.eye);
+    if (inEye) {
+      eye = smooth(Math.min(ahead(st.eye![0], hour), ahead(hour, st.eye![1])) / STORM.eyeRamp);
       power *= 1 - eye * (1 - STORM.eyePower);
     }
-    return { storm: st, power, rain: power * (st.dry ? STORM.dryRain : 1), thunder: !!st.thunder && eye < 0.5 && power > 0.25 * st.strength, eye };
+    // What stops, what bites and where the bolts fall go by the hours alone, so that they change together; only
+    // the look of it (how hard it blows and rains, how far the sea has lain down) is eased.
+    return { storm: st, power, rain: power * (st.dry ? STORM.dryRain : 1), thunder: !!st.thunder && !inEye, inEye, eye };
   }
   return FAIR;
 }

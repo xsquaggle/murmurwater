@@ -509,6 +509,8 @@ export class Game {
           break;
         case 'slipped': this.hud.toast('Too late: it has settled again. It is still down there.'); break;
         case 'haul':
+          // Whatever is struck in struck water puts it out, fish or not: one ring, one thing on the line.
+          if (this.session.spot.struck) this.storms.quench(this.view.target.x, this.view.target.z);
           this.audio.hook(false); this.audio.haulStart(); this.shake = 0.2;
           this.hud.toast('Something heavy!', 'good');
           this.once('seen:haul', 'It will not run. Reel a little at a time, and let go when you feel it knock on the bottom.');
@@ -792,7 +794,8 @@ export class Game {
     this.hud.setPrompt(prompts.join('<br>'), sail.aboard || !!this.pots.near);
 
     const night = this.world.light.night, fen = !!this.world.fen, reach = !!this.world.reach, w = this.world.weather;
-    this.hud.setWeather(s.flags.includes('almanac') ? almanacLine(s.world.region, s.hour) : null);
+    // (The almanac's line changes by the minute: it is read four times a second, not every frame.)
+    if ((this.almanacT -= dt) <= 0) { this.almanacT = 0.25; this.hud.setWeather(s.flags.includes('almanac') ? almanacLine(s.world.region, s.hour) : null); }
     this.audio.update(dt, {
       reeling: !!line && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3 * (fs ? 1 : 0.6), tension, fighting: !!fs, sea: 0.5,
       charge: ph === 'charging' ? this.session.power : -1,
@@ -817,6 +820,7 @@ export class Game {
   }
 
   private coneHeard = false;
+  private almanacT = 0;
   private boomT = 4;
   /** The Kettles: the swell goes into the three holes in the bank and booms, louder the nearer the keeper is. */
   private kettles(dt: number) {

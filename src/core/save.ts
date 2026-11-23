@@ -60,6 +60,11 @@ export const MIGRATIONS: Record<number, Migration> = {
     s.pearls = {};
     return s;
   },
+  // v6 → v7: Saltbone Reach. Nothing in the save changes shape (its weather is worked out from the hour and is
+  // never saved), but a save can now be in a water, or hold a rod, a bait or a relic, that a build from before the
+  // Reach has never heard of and fails on. The number moves on so that such a build declines the save as one
+  // from a newer game, and leaves it alone, instead of opening it.
+  6: (s) => s,
 };
 
 // JSON can't hold Infinity (the free breadcrumb stack); encode it.

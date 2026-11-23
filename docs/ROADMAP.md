@@ -56,7 +56,8 @@ Phases are milestones; each ends with a build, a report in the project thread, a
 ## Phase 3 checklist
 - [x] Saltbone Reach: the whale-road and its swell, the region, storms that keep hours, struck water, Captain Oake's six jobs, ten fish, the Whalebone Rod, the almanac; no new save state (v0.7.0)
 - [x] Reach bot; a fourth tester's start; the simulator crosses to the Reach and fishes its storms (v0.7.0)
-- [ ] Captain Oake's model and the Reach's recorded sounds (asset thread, groups 5 and 6)
+- [x] Captain Oake's model, built in code by the asset thread (v0.7.0)
+- [ ] The Reach's recorded sounds (asset thread, group 6)
 - [ ] The Hush
 - [ ] The Sunken Lanterns
 - [ ] The story chain through act 4

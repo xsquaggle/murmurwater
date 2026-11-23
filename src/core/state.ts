@@ -4,7 +4,7 @@
  */
 import type { BoardQuest } from './quests';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 /** One in-game day lasts this many seconds of play. */
 export const DAY_LENGTH_S = 24 * 60;
 
