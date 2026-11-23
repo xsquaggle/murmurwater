@@ -184,7 +184,7 @@ const { chromium } = require('playwright');
 
   // 6. The Ribs, from the boat: the plate on the ninth rib.
   // (Noon again: the sail to the Ribs takes an hour and a quarter of the day, and the Deacon is for step 7.)
-  r = await ev(() => { const g = window.__MW__.game, end = g.world.dockEnd; window.reach.hour(12.3); window.bot.walk(end.x, end.z, 30, () => Math.hypot(g.pos.x - end.x, g.pos.z - end.z) < 1.2); const b = window.bot.board(); const go = window.bot.sailTo(1174, -937.4, { stopR: 5, maxTime: 300, until: () => (window.__MW__.game.town.focusPrompt ?? '').startsWith('Read the plate') }); window.reach.stop(); return { b, go, prompt: window.__MW__.game.town.focusPrompt }; });
+  r = await ev(() => { const g = window.__MW__.game, end = g.world.dockEnd; window.reach.hour(12.3); window.bot.walk(end.x, end.z, 30, () => Math.hypot(g.pos.x - end.x, g.pos.z - end.z) < 1.2); const b = window.bot.board(); const go = window.bot.sailTo(1167.5, -947.5, { stopR: 4, maxTime: 300, until: () => (window.__MW__.game.town.focusPrompt ?? '').startsWith('Read the plate') }); window.reach.stop(); return { b, go, prompt: window.__MW__.game.town.focusPrompt }; });
   check(r.b.ok && r.go.ok && /Read the plate/.test(r.prompt ?? ''), `to the ninth rib, where the plate can be read from the boat (${j(r.go)}, "${r.prompt}")`);
   n0 = await said();
   await ev(() => window.bot.tap('KeyE'));

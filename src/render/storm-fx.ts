@@ -8,7 +8,7 @@
  */
 import {
   AdditiveBlending, BufferAttribute, BufferGeometry, CanvasTexture, Color, CylinderGeometry, DoubleSide, DynamicDrawUsage, Group, LineSegments,
-  Mesh, MeshBasicMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, ShaderMaterial, Vector3, Vector4,
+  Mesh, MeshBasicMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, SRGBColorSpace, ShaderMaterial, Vector3, Vector4,
 } from 'three';
 import type { Weather } from '../core/weather';
 import type { Lighting } from './daycycle';
@@ -26,15 +26,25 @@ export interface StruckDraw { x: number; z: number; strength: number; seed: numb
 
 const hash = (a: number, b: number, s = 0) => { const v = Math.sin(a * 127.1 + b * 311.7 + s * 74.7) * 43758.5453; return v - Math.floor(v); };
 
-/** A soft flame for the licks: bright at its foot, tapering up. */
+/** How big a lick is drawn (a point's size; about 0.52 of it is its height in metres), and how far its middle stands over the water. */
+const LICK_SIZE = 4.4, LICK_UP = 1.0;
+
+/** A flame for the licks: white at its foot, blue up its length, drawn to a point; narrow, in a square. */
 function flameTexture(): CanvasTexture {
-  const c = document.createElement('canvas'); c.width = 32; c.height = 64;
-  const g = c.getContext('2d')!;
-  const grad = g.createRadialGradient(16, 50, 0, 16, 44, 30);
-  grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(0.25, 'rgba(255,255,255,.6)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = grad;
-  g.beginPath(); g.moveTo(16, 2); g.quadraticCurveTo(30, 40, 16, 63); g.quadraticCurveTo(2, 40, 16, 2); g.fill();
-  return new CanvasTexture(c);
+  const n = 128;
+  const hard = document.createElement('canvas'); hard.width = hard.height = n;
+  const g = hard.getContext('2d')!;
+  g.beginPath(); g.moveTo(64, 6); g.bezierCurveTo(70, 52, 90, 88, 64, 122); g.bezierCurveTo(38, 88, 58, 52, 64, 6); g.closePath(); g.clip();
+  const grad = g.createRadialGradient(64, 104, 2, 64, 92, 92);
+  grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(0.2, 'rgba(200,232,255,1)');
+  grad.addColorStop(0.55, 'rgba(120,180,255,.8)'); grad.addColorStop(1, 'rgba(110,130,255,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, n, n);
+  // Softened, so the edge of it does not show as a cut.
+  const c = document.createElement('canvas'); c.width = c.height = n;
+  const s = c.getContext('2d')!;
+  s.filter = 'blur(2.5px)'; s.drawImage(hard, 0, 0);
+  const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace;
+  return t;
 }
 
 export class StormFx {
@@ -54,7 +64,7 @@ export class StormFx {
   private shaftMat: ShaderMaterial;
   private licks: Points;
   private lickPos = new Float32Array(STRUCK_N * LICKS * 3);
-  private lickCol = new Float32Array(STRUCK_N * LICKS * 3);
+  private lickCol = new Float32Array(STRUCK_N * LICKS * 4);
   private time = 0;
 
   constructor(quality: 'low' | 'medium' | 'high' | 'ultra') {
@@ -130,8 +140,8 @@ export class StormFx {
     // ---- the licks of pale fire round struck water
     const lg = new BufferGeometry();
     lg.setAttribute('position', new BufferAttribute(this.lickPos, 3).setUsage(DynamicDrawUsage));
-    lg.setAttribute('color', new BufferAttribute(this.lickCol, 3).setUsage(DynamicDrawUsage));
-    this.licks = new Points(lg, new PointsMaterial({ map: flameTexture(), size: 1.5, sizeAttenuation: true, vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false, fog: false }));
+    lg.setAttribute('color', new BufferAttribute(this.lickCol, 4).setUsage(DynamicDrawUsage));
+    this.licks = new Points(lg, new PointsMaterial({ map: flameTexture(), size: LICK_SIZE, sizeAttenuation: true, vertexColors: true, transparent: true, depthWrite: false, fog: false }));
     this.licks.frustumCulled = false; this.licks.renderOrder = 8;
     this.root.add(this.licks);
   }
@@ -221,14 +231,16 @@ export class StormFx {
       const s = struck[r], v = this.struck[r];
       if (s) v.set(s.x, s.z, s.strength, s.seed); else v.set(0, 0, 0, 0);
       for (let i = 0; i < LICKS; i++) {
-        const o = (r * LICKS + i) * 3;
-        if (!s || s.strength < 0.01) { this.lickCol[o] = this.lickCol[o + 1] = this.lickCol[o + 2] = 0; continue; }
-        const a = (i / LICKS) * Math.PI * 2 + s.seed + Math.sin(t * 0.4 + i) * 0.06;
+        const o = (r * LICKS + i) * 3, c = (r * LICKS + i) * 4;
+        if (!s || s.strength < 0.01) { this.lickCol[c + 3] = 0; continue; }
+        // Each stands over one of the twelve bright places the water's shader draws on the ring.
+        const a = (i / LICKS) * Math.PI * 2 + (Math.PI / 2 - s.seed) / LICKS;
         const x = s.x + Math.cos(a) * STRUCK_RING, z = s.z + Math.sin(a) * STRUCK_RING;
         const f = 0.55 + 0.45 * Math.sin(t * (5.3 + hash(i, r, 31) * 3) + i * 1.7) * Math.sin(t * 2.1 + i);
-        this.lickPos[o] = x; this.lickPos[o + 1] = waveY(x, z) + 0.35 + 0.3 * f; this.lickPos[o + 2] = z;
-        const b = s.strength * f;
-        this.lickCol[o] = 0.62 * b; this.lickCol[o + 1] = 0.82 * b; this.lickCol[o + 2] = 1.0 * b;
+        this.lickPos[o] = x; this.lickPos[o + 1] = waveY(x, z) + LICK_UP + 0.22 * f; this.lickPos[o + 2] = z;
+        // Brighter than white, so the bloom takes it; it dies down as the water does.
+        this.lickCol[c] = this.lickCol[c + 1] = this.lickCol[c + 2] = 1.3;
+        this.lickCol[c + 3] = Math.min(1, s.strength * 1.4) * (0.5 + 0.5 * f);
       }
     }
     this.licks.geometry.attributes.position.needsUpdate = true; this.licks.geometry.attributes.color.needsUpdate = true;

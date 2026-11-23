@@ -322,8 +322,8 @@ export class Water {
             float ph = fract(uTime * 1.7 + mw_hash3(vec3(cell, 3.1)));
             vec2 off = vec2(mw_hash3(vec3(cell, 1.7)), mw_hash3(vec3(cell, 5.3))) - 0.5;
             float rr = length(f - off * 0.5);
-            float dimple = (1.0 - smoothstep(0.0, 0.045, abs(rr - ph * 0.42))) * (1.0 - ph);
-            col = mix(col, foamCol * 0.85 + 0.06, dimple * 0.4 * uRain * (1.0 - smoothstep(18.0, 60.0, dist)));
+            float dimple = (1.0 - smoothstep(0.0, 0.045, abs(rr - ph * 0.42))) * (1.0 - ph) * (1.0 - ph);
+            col = mix(col, foamCol * 0.85 + 0.06, dimple * 0.24 * uRain * (1.0 - smoothstep(14.0, 46.0, dist)));
           }
           // Struck water: where lightning went in, a ring of pale fire on the surface that fades, licking.
           float struckLit = 0.0;
@@ -339,7 +339,8 @@ export class Water {
             float fill = (1.0 - smoothstep(0.0, 6.6, r)) * (0.14 + 0.16 * mw_vnoise(vWorld.xz * 0.9 + uTime * 0.8));
             struckLit = max(struckLit, (ring * 1.7 + fill) * sw.z);
           }
-          col += vec3(0.68, 0.86, 1.0) * struckLit;
+          // Blue, so it is not taken for foam, and white where it is hottest.
+          col = mix(col, vec3(0.36, 0.66, 1.0) * 1.15, clamp(struckLit, 0.0, 1.0) * 0.9) + vec3(0.75, 0.88, 1.0) * max(struckLit - 0.9, 0.0) * 0.5;
 
           // Transparency in the shallows lets the seabed (with caustics) show through.
           float alpha = clamp(1.0 - exp(-depth * uTurbid), 0.25, 1.0);

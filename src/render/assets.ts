@@ -50,7 +50,6 @@ export const MODEL_PATHS = {
   theJaw: 'models/props/the-jaw.glb',
   tallyStone: 'models/props/tally-stone.glb',
   ribMark: 'models/props/rib-mark.glb',
-  struckRing: 'models/props/struck-ring.glb',
 } as const;
 /**
  * Models that have been asked for and may not be made yet (docs/briefs): used from the build after they land,

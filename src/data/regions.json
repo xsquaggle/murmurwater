@@ -1458,9 +1458,9 @@
         {
           "id": "rib-mark",
           "name": "The mark on the ninth rib",
-          "x": 1173,
-          "z": -946.1,
-          "r": 9,
+          "x": 1177,
+          "z": -946,
+          "r": 11,
           "prompt": "Read the plate on the rib",
           "flag": "rib-read",
           "fromBoat": true,
