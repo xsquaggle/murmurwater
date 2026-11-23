@@ -63,6 +63,9 @@ export class Hud {
     this.crew.title = 'Fish in the crew basket';
     this.crew.style.display = 'none';
     this.rhythm = h('div', 'pill rhythm', tr, '<span class="ico">♪</span><b>×1.00</b>');
+    this.weather = h('div', 'pill weather', tr, '<span class="ico"></span><b></b>');
+    this.weather.title = 'Your almanac: the storm that is on, and the next';
+    this.weather.style.display = 'none';
     this.pots.style.display = 'none'; this.echoes.style.display = 'none';
     this.goal = h('div', 'goal', this.root, '<div class="goal-k">Next</div>');
     this.goalText = h('div', 'goal-t', this.goal);
@@ -227,6 +230,20 @@ export class Hud {
       ${holdFull ? '<div class="cc-warn">Hold full — released back to the sea</div>' : ''}`;
     this.cardTimer = first ? 5.5 : 3.2;
     void item;
+  }
+
+  private weather: HTMLElement;
+  private weatherWas = '';
+  /** The almanac's line (once the keeper has one, in a water with storms), or null to hide it. */
+  setWeather(line: { text: string; kind: 'fair' | 'storm' | 'eye' } | null) {
+    const key = line ? `${line.kind}|${line.text}` : '';
+    if (key === this.weatherWas) return;
+    this.weatherWas = key;
+    this.weather.style.display = line ? '' : 'none';
+    if (!line) return;
+    (this.weather.querySelector('b') as HTMLElement).textContent = line.text;
+    (this.weather.querySelector('.ico') as HTMLElement).textContent = line.kind === 'storm' ? '☂' : line.kind === 'eye' ? '◎' : '☁';
+    this.weather.className = `pill weather ${line.kind}`;
   }
 
   update(dt: number, s: GameState, session: FishingSession, bitePos: { x: number; y: number } | null, st: Stats) {

@@ -360,3 +360,10 @@ body.titled .hud { opacity: 0; }
 .sum-i.warn b { color: #B5532F; }
 
 .hold-also { margin: 2px 0 8px; } .hold-also b { color: var(--ink); }
+/* The almanac (Saltbone Reach): the storm that is on, or how long until the next. */
+.pill.weather b { font-size: 13px; }
+.pill.weather .ico { color: #6E7F8E; }
+.pill.weather.storm { background: #D6DCE2; border-color: #3E4A58; }
+.pill.weather.storm .ico { color: #3E4A58; }
+.pill.weather.eye { background: #FFE9B8; border-color: #C98E2A; }
+.pill.weather.eye .ico { color: #C98E2A; }

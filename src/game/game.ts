@@ -16,6 +16,8 @@ import { Town } from './town';
 import { Sailing } from './sailing';
 import { PotField } from './potfield';
 import { Hands } from './hands';
+import { Storms, almanacLine } from './storms';
+import { inWeather } from '../core/weather';
 import { defaultSettings, keyLabel, type Settings } from './settings';
 import { AudioEngine, type Ground } from '../audio/audio';
 import { Input } from './input';
@@ -24,7 +26,7 @@ import { frameTime } from '../core/clock';
 import { FishingSession, type FindOffer, type FishingInput, type SpotInfo } from '../core/fishing';
 import { findName, lootLines, takeFind, withFinds } from '../core/finds';
 import { newRumours } from '../core/relics';
-import { REGIONS_BY_ID, bait, crossingAt, regionAcross, regionAhead, rod, zoneAt } from '../core/content';
+import { REGIONS_BY_ID, bait, crossingAt, regionAcross, regionAhead, rod, zoneAt, type RegionContent } from '../core/content';
 import { RegionPrep } from '../render/region-prep';
 import { PALETTE } from '../render/palette';
 import { addCatch, breakRhythm, rarityIndex, RHYTHM } from '../core/economy';
@@ -107,6 +109,8 @@ export class Game {
   readonly pots: PotField;
   /** The deckhands. Made after the boat, so the boat's first launch finds none (see Sailing.fitOut). */
   hands!: Hands;
+  /** The storms of the region the keeper is in: bolts, struck water, what she is told (see storms.ts). */
+  storms!: Storms;
   /** Hours the sky is still behind the clock, after the clock was put on (see rushSky). */
   private skyLag = 0;
   /** Camera shake multiplier from settings (0 = off). */
@@ -137,6 +141,7 @@ export class Game {
     this.town = new Town(this, uiRoot, settings);
     this.pots = new PotField(this);
     this.hands = new Hands(this);
+    this.storms = new Storms(this);
     // A journal page that was filled before pages paid anything (an older save) is paid now.
     this.town.pagesDone(claimCollections(state));
     this.town.applySettings(['volumes', 'sensitivity', 'invertY', 'bindings', 'uiScale', 'subtitles']);
@@ -156,7 +161,13 @@ export class Game {
   stats!: Stats;
   private statsAge = 0;
   private wasNight = false;
-  refreshStats() { this.stats = stats(this.state, { hour: this.state.hour, afloat: !!this.sailing?.aboard }); this.statsAge = 0; this.wasNight = isNight(this.state.hour); }
+  private wasStorm = false;
+  refreshStats() {
+    const s = this.state, storm = inWeather(s.world.region, s.hour, 'storm');
+    this.stats = stats(s, { hour: s.hour, afloat: !!this.sailing?.aboard, storm }); this.statsAge = 0; this.wasNight = isNight(s.hour); this.wasStorm = storm;
+  }
+  /** Where the keeper is: the boat when she is aboard, else her own feet. */
+  keeperAt(): { x: number; z: number } { return this.sailing?.aboard ? { x: this.sailing.boat.x, z: this.sailing.boat.z } : this.pos; }
   get holdCapacity() { return this.stats.hold; }
 
   private newSession(): FishingSession {
@@ -169,7 +180,7 @@ export class Game {
       for (let d = dist; d > 2; d -= 0.5) {
         const x = this.pos.x + dir.x * d, z = this.pos.z + dir.z * d;
         const depth = this.world.hf.depth(x, z);
-        if (depth >= 0.6) return { zoneId: zoneAt(region, x, z)?.id ?? null, depth, hotspot: false, distance: d };
+        if (depth >= 0.6) return { zoneId: zoneAt(region, x, z)?.id ?? null, depth, hotspot: false, distance: d, ...(this.storms?.struckAt(x, z) ? { struck: true } : {}) };
       }
       return { zoneId: null, depth: 0, hotspot: false, distance: 0 };
     }, this.stats), s, this.stats, () => { const f = this.forcedFind; this.forcedFind = undefined; return f; }); // a bot (or a picture) may say what the next cast comes down over
@@ -225,6 +236,7 @@ export class Game {
     this.sailing.enterRegion();
     this.town.enterRegion(first);
     this.pots.enterRegion();
+    this.storms.enterRegion();
     this.refreshSession();
     this.lastSwap = { ...WorldScene.lastBuild, readyBefore: ready ? 1 : 0, finishing: Math.round(waited), scene: Math.round(built - t0), game: Math.round(performance.now() - built) };
     this.prepBudget = 3;
@@ -310,7 +322,8 @@ export class Game {
     this.session.ctx.hour = s.hour;
     // Gear that depends on the hour or on being afloat: look again now and then, and when night falls or lifts.
     this.statsAge += dt;
-    if (this.statsAge > 1) { if (isNight(s.hour) !== this.wasNight) this.refreshSession(); else this.refreshStats(); }
+    // (A storm coming up or blowing out changes what the gear does, as night does.)
+    if (this.statsAge > 1) { if (isNight(s.hour) !== this.wasNight || inWeather(s.world.region, s.hour, 'storm') !== this.wasStorm) this.refreshSession(); else this.refreshStats(); }
     if (this.sessionStale && this.session.phase === 'idle') this.refreshSession();
 
     // Mouse look / aim.
@@ -422,6 +435,7 @@ export class Game {
     this.pots.step(dt, (after === 'idle' || after === 'landed' || after === 'lost') && !this.town.blocking && !sail.busy);
     // The hands aboard fish on the game's clock while she lies still.
     this.hands.step(dt);
+    this.storms.step(dt);
     // What is said on the islands of things still in the water: passed on when its time has come.
     this.rumourT -= dt;
     if (this.behindTitle) this.rumourT = 1.5; // nothing is said to somebody who is not there yet
@@ -460,6 +474,8 @@ export class Game {
           // The bait this cast went out with, whatever has been put on the hook since.
           const out = spendBait(s, this.session.ctx.bait.id);
           if (out) { this.hud.toast(`Out of ${bait(out).name}: back to breadcrumbs`); this.sessionStale = true; }
+          // The first fish hooked in struck water puts it out.
+          if (this.session.spot.struck) this.storms.quench(this.view.target.x, this.view.target.z);
         }
           this.audio.hook(e.grade === 'perfect'); this.hud.toast(e.grade === 'perfect' ? 'Perfect hook!' : 'Hooked!', e.grade === 'perfect' ? 'gold' : 'good'); this.shake = 0.35; break;
         case 'tooEarly': this.shadows.spook(); this.hud.toast(e.spooked ? 'Too early — you spooked it' : 'Wait for the bobber to go under', 'bad'); break;
@@ -470,7 +486,7 @@ export class Game {
         case 'landed': {
           const res = addCatch(s, e.catch, this.stats);
           if (res.firstCatch) this.town.pagesDone(claimCollections(s));
-          this.town.questEvent({ type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook });
+          this.town.questEvent({ type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook, ...(e.catch.struck ? { struck: true } : {}) });
           const r = rarityIndex(e.catch.fishId);
           this.audio.catchFanfare(r);
           this.audio.landSplash();
@@ -747,7 +763,11 @@ export class Game {
     this.fx.update(dt, (x, z) => this.waveY(x, z));
     this.world.pocketScale += ((sail.aboard ? 0.22 : 1) - this.world.pocketScale) * Math.min(1, dt * 3);
     this.world.murk = sail.fog;
+    this.world.struckDraw = this.storms.draw();
     this.world.update(dt, this.camera, this.pos);
+    if (this.world.coneMoved > 0 && !this.coneHeard) { this.coneHeard = true; if (Math.hypot(this.pos.x - this.world.dockStart.x, this.pos.z - this.world.dockStart.z) < 90) this.audio.stormCone(); }
+    if (this.world.coneMoved === 0) this.coneHeard = false;
+    this.kettles(dt);
     // In the middle of a crossing the fog closes right in for a breath; the regions change behind it.
     const veil = sail.aboard ? crossingAt(this.state.world.region, sail.boat.x, sail.boat.z) : 0;
     this.hud.veil(veil * 0.94, veil > 0 ? `#${(this.world.scene.fog as { color: Color }).color.getHexString()}` : '');
@@ -771,7 +791,8 @@ export class Game {
     // Aboard, and with a pot in reach, the prompt sits low: the thing it is about floats where it would otherwise be.
     this.hud.setPrompt(prompts.join('<br>'), sail.aboard || !!this.pots.near);
 
-    const night = this.world.light.night, fen = !!this.world.fen;
+    const night = this.world.light.night, fen = !!this.world.fen, reach = !!this.world.reach, w = this.world.weather;
+    this.hud.setWeather(s.flags.includes('almanac') ? almanacLine(s.world.region, s.hour) : null);
     this.audio.update(dt, {
       reeling: !!line && this.input.held('cast'), reelSpeed: rod(s.gear.rod).power / 3 * (fs ? 1 : 0.6), tension, fighting: !!fs, sea: 0.5,
       charge: ph === 'charging' ? this.session.power : -1,
@@ -779,17 +800,33 @@ export class Game {
       // By day the boat has her own tune; ashore each island keeps its own.
       // A fen keeps to its own air (frogs by day, crickets by night) with the boat's tune under way by day;
       // until that air is recorded it borrows the sea's music.
-      music: fen && AudioEngine.recorded('fen-day') ? (night > 0.6 || !sail.aboard ? null : night < 0.4 ? 'open-water' : undefined)
+      // The Reach has no music of its own yet: its bed carries it ashore, and the boat's tune plays under way by day.
+      music: reach ? (night > 0.6 || !sail.aboard || w.power > 0.3 ? null : night < 0.4 ? 'open-water' : undefined)
+        : fen && AudioEngine.recorded('fen-day') ? (night > 0.6 || !sail.aboard ? null : night < 0.4 ? 'open-water' : undefined)
         : !sail.aboard && this.town.island === 'gull-point' ? 'gull-point'
         : night > 0.6 ? 'hearthbay-night' : night < 0.4 ? (sail.aboard || fen ? 'open-water' : 'hearthbay-day') : undefined,
       fen,
       day: 1 - night, onDock: !sail.riding && this.world.dockDeckAt(this.pos.x, this.pos.z) !== null, purr: this.town.catCloseness(),
       hull: sail.aboard ? sail.pace : undefined, murmur: sail.murmur,
+      reach, storm: { power: w.power, rain: w.rain }, struck: this.storms.closeness(),
     });
     if (line && tension > 0.9 && this.lastTension <= 0.9) this.audio.strain();
     this.lastTension = tension;
 
     if (!this.skipRender) this.renderer.render(dt);
+  }
+
+  private coneHeard = false;
+  private boomT = 4;
+  /** The Kettles: the swell goes into the three holes in the bank and booms, louder the nearer the keeper is. */
+  private kettles(dt: number) {
+    this.boomT -= dt;
+    if (this.boomT > 0) return;
+    this.boomT = 5 + Math.random() * 8;
+    const k = (REGIONS_BY_ID.get(this.state.world.region) as RegionContent | undefined)?.chart?.find((c) => c.id === 'the-kettles');
+    if (!k) return;
+    const at = this.keeperAt(), d = Math.hypot(k.x - at.x, k.z - at.z);
+    if (d < 260) this.audio.swellBoom(Math.min(1, (1.1 - d / 260) * (1 + 0.6 * this.world.weather.power)));
   }
 
   private hint(): string {

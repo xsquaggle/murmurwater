@@ -6,7 +6,7 @@ import { SAVE_VERSION } from '../src/core/state';
 import { boatOnOffer, hasFogLamp } from '../src/core/gear';
 import { berthFor, isAboard } from '../src/core/crew';
 import { BOATS_BY_ID, currentGoal, npcOffer, questStatus } from '../src/core/quests';
-import { regionOfNpc, regionOfPlace } from '../src/core/content';
+import { hullFor, regionOfNpc, regionOfPlace } from '../src/core/content';
 import { FINDS, findChance } from '../src/core/finds';
 import { newRumours, pearlsFree, relicsHere } from '../src/core/relics';
 
@@ -19,6 +19,30 @@ describe("the tester's starts", () => {
       expect(rounded(readFileSync(testerFile(id), 'utf8'))).toBe(rounded(testerSaveText(id)));
     }, 120000);
   }
+
+  it('reach: loads on the home dock in late morning with the Puffin afloat, both hands aboard and the whale-road job in hand', () => {
+    const s = deserialize(readFileSync(testerFile('reach'), 'utf8'));
+    expect(s.version).toBe(SAVE_VERSION);
+    expect(s.world.region).toBe('hearthbay');
+    expect(s.world.onBoat).toBe(false);
+    expect(s.hour).toBeGreaterThan(11);
+    expect(s.hour).toBeLessThan(12.5);
+    // The Puffin can take the whale-road's swell; the skiff could not.
+    expect(s.boats.current).toBe('puffin');
+    expect(BOATS_BY_ID.get('puffin')!.hull).toBeGreaterThanOrEqual(hullFor('saltbone-reach'));
+    expect(BOATS_BY_ID.get('skiff')!.hull).toBeLessThan(hullFor('saltbone-reach'));
+    expect(isAboard(s, 'biscuit')).toBe(true);
+    expect(isAboard(s, 'hollis')).toBe(true);
+    // The job is in hand and the Reach not yet found; nobody there has been met.
+    expect(questStatus(s, 'hb-14-whale-road')).toBe('active');
+    expect(s.flags).not.toContain('reached:saltbone-reach');
+    expect(s.flags).not.toContain('met-oake');
+    expect(s.flags).not.toContain('almanac');
+    for (const flag of ['puffin-afloat', 'reached:mossglass-fen', 'met-hollis']) expect(s.flags).toContain(flag);
+    // Nobody at home has another job to press on her first, and the goal line speaks of the road.
+    expect(npcOffer(s, 'pell').kind).not.toBe('offer');
+    expect(currentGoal(s).text).toMatch(/whale-road|Reach|Oake/i);
+  });
 
   it('finds: loads on the home dock at nightfall with everything before it done, nothing found, and every rumour to hear', () => {
     const s = deserialize(readFileSync(testerFile('finds'), 'utf8'));

@@ -1,5 +1,8 @@
 // The tester's starts: `npm run tester-save` writes src/data/tester/<id>.json, one for each of the last slices.
 // Each is a save the simulator's keeper really played, with the real rules, up to the doorstep of a slice:
+//   reach (v0.7.0, Saltbone Reach): everything of the first two waters done that a keeper does before the
+//        whale-road (the Puffin afloat, both hands aboard, finds and relics as they came), and Pell has just
+//        sent her east to Captain Oake; late morning on the home dock, so the Deacon comes up as she arrives;
 //   finds (v0.6.0, things fished up): everything before it is done (the Puffin afloat, the cat and Mister Hollis
 //        aboard) by a keeper for whom nothing ever came up but fish; she stands on the home dock at nightfall
 //        with four relics, three pearls never set, and every rumour still to hear;
@@ -16,12 +19,12 @@ import { fileURLToPath } from 'node:url';
 import { SimPlayer } from './sim/player';
 import { hasFogLamp } from '../src/core/gear';
 import { isAboard } from '../src/core/crew';
-import { BOATS_BY_ID, QUESTS, handsInTo, questStatus } from '../src/core/quests';
+import { BOATS_BY_ID, QUESTS, accept, handsInTo, questStatus } from '../src/core/quests';
 import { serialize } from '../src/core/save';
 import type { GameState } from '../src/core/state';
 
 /** The starts, newest first. */
-export const TESTER_STARTS = ['finds', 'crew', 'fen'] as const;
+export const TESTER_STARTS = ['reach', 'finds', 'crew', 'fen'] as const;
 export type TesterStart = (typeof TESTER_STARTS)[number];
 export const testerFile = (id: TesterStart) => fileURLToPath(new URL(`../src/data/tester/${id}.json`, import.meta.url));
 
@@ -47,6 +50,25 @@ function findsKeeper(): GameState {
   // morning, a fair cast out.
   s.hour = 20.25;
   s.world.pos = [-129.6, 1.42, 20.6]; s.world.yaw = -Math.PI / 2;
+  return s;
+}
+
+/**
+ * Seed 1 at a practised hand, in the real sea (finds and all), never offered the whale-road, played until the
+ * Puffin floats with both hands aboard; then home, and Pell's job taken: the road east is hers to sail.
+ */
+function reachKeeper(): GameState {
+  const p = new SimPlayer({ seed: 1, skill: 0.7, minutes: 1500, without: ['hb-14-whale-road'] });
+  const there = () => p.s.boats.current === BOAT && isAboard(p.s, 'biscuit') && isAboard(p.s, 'hollis');
+  for (let i = 0; i < 3000 && !there(); i++) p.outing();
+  if (!there()) throw new Error('the keeper never had the Puffin afloat with both hands aboard');
+  p.home();
+  p.townBusiness();
+  const s = p.s;
+  if (!accept(s, 'hb-14-whale-road')) throw new Error('Pell had no whale-road job to give');
+  if (s.world.region !== 'hearthbay' || s.flags.includes('reached:saltbone-reach')) throw new Error('the keeper is not at home with the Reach still to find');
+  // Late morning: the Puffin is across the whale-road a little before two, when the Deacon comes up.
+  s.hour = 11.6;
   return s;
 }
 
@@ -81,7 +103,7 @@ function fenKeeper(): GameState {
 
 /** The keeper of one start, ashore on the home island. */
 export function testerKeeper(id: TesterStart): GameState {
-  const s = id === 'finds' ? findsKeeper() : id === 'crew' ? crewKeeper() : fenKeeper();
+  const s = id === 'reach' ? reachKeeper() : id === 'finds' ? findsKeeper() : id === 'crew' ? crewKeeper() : fenKeeper();
   // What the game itself notes down as things happen (town.ts), which the simulator's keeper never does: who
   // has been spoken to, and the kettle gone from its stones. A new flag set outside src/core belongs here too.
   const spoken = new Set<string>();

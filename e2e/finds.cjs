@@ -1,4 +1,4 @@
-// Things-fished-up bot: the newest tester's start (?tester, src/data/tester/finds.json), through the real game.
+// Things-fished-up bot: the v0.6.0 tester's start (?tester=finds, src/data/tester/finds.json), through the real game.
 // The keeper stands at the end of the home dock at nightfall with four relics, three Moonpearls never set and
 // every rumour still to hear. She hears the rumours, reads the Keeper's Shelf, sets and lifts pearls, hauls a
 // crate (missing the first strike, reeling through one knock into a snag and easing off at the next), hauls a
@@ -28,7 +28,7 @@ const { chromium } = require('playwright');
   };
   const ev = (fn, ...a) => page.evaluate(fn, ...a);
 
-  await page.goto(`http://localhost:${port}/?tester&notitle&hour=21&quality=${process.env.MW_QUALITY || 'medium'}`);
+  await page.goto(`http://localhost:${port}/?tester=finds&notitle&hour=21&quality=${process.env.MW_QUALITY || 'medium'}`);
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 2, null, { timeout: 180000 });
   await page.waitForTimeout(1200);
   await ev(() => {
@@ -304,7 +304,7 @@ const { chromium } = require('playwright');
 
   // 11. With the title card up (as the game is started by a person), nothing is told behind it: the rumours
   // wait for the click, and are told a moment after it.
-  await page.goto(`http://localhost:${port}/?tester&hour=21&quality=${process.env.MW_QUALITY || 'medium'}`);
+  await page.goto(`http://localhost:${port}/?tester=finds&hour=21&quality=${process.env.MW_QUALITY || 'medium'}`);
   await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 2, null, { timeout: 180000 });
   r = await ev(() => {
     const g = window.__MW__.game, s = g.state;

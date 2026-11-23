@@ -12,7 +12,7 @@ import { clearance, fogAt, nearestFloat, newBoat, stepBoat, type BoatEnv, type B
 import { LANDING, boatEnv, hullDistance, landingSpot } from '../core/landing';
 import { BOATS_BY_ID, type BoatDef } from '../core/quests';
 import { earn } from '../core/economy';
-import { roadsOpen, type ChartPlace, type MooringDef, type RegionContent } from '../core/content';
+import { roadTooRough, roadsOpen, type ChartPlace, type MooringDef, type RegionContent } from '../core/content';
 import { hasFogLamp } from '../core/gear';
 
 interface Hop { from: Vector3; to: Vector3; t: number; dur: number; rise: number; toBoat: boolean; done: () => void }
@@ -54,7 +54,8 @@ export class Sailing {
   /** The sea of the region the game is in: its bed and rocks, and its sea-roads if she carries the Fog Lamp. */
   private seaHere(): BoatEnv {
     const g = this.g;
-    return boatEnv(g.world.hf, g.world.rocks, (x, z) => (hasFogLamp(g.state) ? roadsOpen(g.state.world.region, x, z) : 0));
+    // (A road with a rougher sea on it opens only to a boat with hull enough: the whale-road wants the Puffin.)
+    return boatEnv(g.world.hf, g.world.rocks, (x, z) => (hasFogLamp(g.state) ? roadsOpen(g.state.world.region, x, z, this.def?.hull ?? 0) : 0));
   }
 
   /** The region has changed under her (see Game.enterRegion): a new sea, the same boat, still under way. */
@@ -161,7 +162,11 @@ export class Sailing {
       g.camYaw += wrap(this.boat.heading - h0);
       this.seat += ((sit ? 1 : 0) - this.seat) * Math.min(1, dt * 7);
       this.rig.personAt(this.boat, g.pos, this.seat);
-      if (this.murmur > 0.3 && this.murmurTold <= 0) { this.murmurTold = 14; g.hud.toast(hasFogLamp(g.state) ? 'The fog is too thick here. The Fog Lamp only shows the way along the old sea-road.' : this.region.edgeHint ?? 'The sea murmurs and turns you back.'); }
+      if (this.murmur > 0.3 && this.murmurTold <= 0) {
+        this.murmurTold = 14;
+        const rough = hasFogLamp(g.state) ? roadTooRough(g.state.world.region, this.boat.x, this.boat.z, this.def?.hull ?? 0) : null;
+        g.hud.toast(rough ? rough.tooRough ?? `The swell on this road is more than ${this.def?.name ?? 'she'} will take.` : hasFogLamp(g.state) ? 'The fog is too thick here. The Fog Lamp only shows the way along the sea-roads.' : this.region.edgeHint ?? 'The sea murmurs and turns you back.');
+      }
       // Somewhere to step off: looked for a few times a second, only when she is nearly still.
       this.landingT -= dt;
       if (this.landingT <= 0) {

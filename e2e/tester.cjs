@@ -1,5 +1,5 @@
 // Tester's-start bot: F8 on the title screen, through the real game. F8 once is the newest slice's start (the
-// crew's: see crew.cjs, which plays it), F8 again the one before: the keeper the simulator played to the doorstep
+// Reach's: see reach.cjs, which plays it), then the finds' and the crew's, and a fourth F8 the oldest: the keeper the simulator played to the doorstep
 // of Mossglass Fen (src/data/tester/fen.json). She has the Fog Lamp and Pell's road job, Hearthbay knows her, and
 // nothing she does is written to the player's own save. Then the save is proved to be one the game can play on
 // from: she boards the skiff, sails the old sea-road by the helm, comes out in Mossglass Fen and hands Pell's
@@ -35,20 +35,26 @@ const { chromium } = require('playwright');
   check(r.tester === false && r.own > 100, `the player's own game is running and saved (${r.own} bytes)`);
   const testerUp = (id) => page.waitForFunction((id) => window.__MW__ && window.__MW__.tester === true && window.__MW__.testerStart === id && window.__MW__.frames > 2, id, { timeout: 180000 });
   await page.keyboard.press('F8');
+  await testerUp('reach');
+  r = await ev(() => { const s = window.__MW__.state; return { url: location.search, note: document.querySelector('.title-tester')?.textContent ?? '', boat: s.boats.current, crew: s.crew.hired, road: window.__MW__.quests.questStatus(s, 'hb-14-whale-road'), region: s.world.region }; });
+  check(r.url === '?tester' && /1 of 4/.test(r.note) && /Nothing here is saved/.test(r.note) && r.boat === 'puffin' && r.crew.length === 2 && r.road === 'active' && r.region === 'hearthbay',
+    `F8 on the title screen opens the newest tester's start, and the title says so ("${r.note.slice(0, 60)}…")`);
+  await shot('00-title-reach', 4);
+  await page.keyboard.press('F8');
   await testerUp('finds');
   r = await ev(() => { const s = window.__MW__.state; return { url: location.search, note: document.querySelector('.title-tester')?.textContent ?? '', relics: s.relics.length, pearls: s.moonpearls, set: Object.keys(s.pearls).length, casts: s.finds.casts, boat: s.boats.current, crew: s.crew.hired }; });
-  check(r.url === '?tester' && /1 of 3/.test(r.note) && /Nothing here is saved/.test(r.note) && r.relics === 4 && r.pearls === 3 && r.set === 0 && r.casts === 0 && r.boat === 'puffin' && r.crew.length === 2,
-    `F8 on the title screen opens the newest tester's start, and the title says so ("${r.note.slice(0, 60)}…")`);
+  check(r.url === '?tester=finds' && /2 of 4/.test(r.note) && /Nothing here is saved/.test(r.note) && r.relics === 4 && r.pearls === 3 && r.set === 0 && r.casts === 0 && r.boat === 'puffin' && r.crew.length === 2,
+    `F8 again opens the start before it, and the title says so ("${r.note.slice(0, 60)}…")`);
   await shot('00-title-finds', 4);
   await page.keyboard.press('F8');
   await testerUp('crew');
   r = await ev(() => ({ url: location.search, note: document.querySelector('.title-tester')?.textContent ?? '', coins: window.__MW__.state.coins, crew: window.__MW__.state.crew.hired }));
-  check(r.url === '?tester=crew' && /2 of 3/.test(r.note) && /Nothing here is saved/.test(r.note) && r.coins >= 40000 && r.crew.includes('biscuit'), `F8 again opens the start before it, and the title says so ("${r.note.slice(0, 60)}…")`);
+  check(r.url === '?tester=crew' && /3 of 4/.test(r.note) && /Nothing here is saved/.test(r.note) && r.coins >= 40000 && r.crew.includes('biscuit'), `F8 a third time opens the crew's start, and the title says so ("${r.note.slice(0, 60)}…")`);
   await shot('00-title-crew', 4);
   await page.keyboard.press('F8');
   await testerUp('fen');
   r = await ev(() => ({ url: location.search, note: document.querySelector('.title-tester')?.textContent ?? '' }));
-  check(r.url === '?tester=fen' && /3 of 3/.test(r.note) && /Nothing here is saved/.test(r.note), `F8 a third time opens the oldest, and the title says so ("${r.note.slice(0, 60)}…")`);
+  check(r.url === '?tester=fen' && /4 of 4/.test(r.note) && /Nothing here is saved/.test(r.note), `F8 a fourth time opens the oldest, and the title says so ("${r.note.slice(0, 60)}…")`);
   await shot('01-title', 4);
   await page.click('.title');
   await page.waitForTimeout(1200);

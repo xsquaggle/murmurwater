@@ -7,7 +7,7 @@ import type { Game } from './game';
 import type { BoatRig } from '../render/boat-rig';
 import { CatAboard, HollisAboard } from '../render/crew-figures';
 import { makeFish, type FishObject } from '../render/fish-models';
-import { CREW_BY_ID, aboard, basket, basketFull, berthIn, crewKit, crewKnows, darkEnough, hired, isAboard, tickCrew, working, type CrewCatch, type CrewDef, type CrewEnv, type CrewKit } from '../core/crew';
+import { CREW_BY_ID, aboard, basket, basketFull, berthIn, crewKit, crewKnows, darkEnough, hired, sheltering, isAboard, tickCrew, working, type CrewCatch, type CrewDef, type CrewEnv, type CrewKit } from '../core/crew';
 import type { GameState } from '../core/state';
 import { fogAt } from '../core/boat';
 import { REGIONS_BY_ID, fish, zoneAt } from '../core/content';
@@ -38,6 +38,7 @@ export class Hands {
   private catBerth: Group | null = null; private hollisBerth: Group | null = null;
   private zone: string | null = null; private zoneT = 0;
   private fullTold: boolean;
+  private shelterTold = false;
   private stillT = 0;
   private told = new Set<string>();
   private thick: boolean | null = null;
@@ -95,6 +96,11 @@ export class Hands {
       g.audio.basketFull();
       g.hud.toast(`The crew basket is full: ${bk.fish} fish, ◉ ${fmt(bk.value)} at the stall`, 'good');
     } else if (!full) this.fullTold = false;
+
+    // A storm over the boat: the hands go below out of the weather (said once a storm).
+    if (sheltering(env)) {
+      if (!this.shelterTold && sail.aboard && aboard(s).length) { this.shelterTold = true; g.hud.toast(aboard(s).length > 1 ? 'The hands have gone below out of the weather. They fish again in the eye, or when it has passed.' : `${aboard(s)[0].name} has gone below out of the weather, and will fish again in the eye or when it has passed.`); }
+    } else this.shelterTold = false;
 
     // Lying still with the keeper aboard, somewhere the journal knows nothing for a hand: said once for each water.
     this.stillT = env.still && sail.aboard ? this.stillT + dt : 0;
@@ -190,7 +196,7 @@ export class Hands {
     }
     if (this.hollis && this.hollisBerth) {
       const thick = !!env && darkEnough(env);
-      const fishing = thick && !!env?.still && !basketFull(s);
+      const fishing = thick && !!env?.still && !sheltering(env) && !basketFull(s);
       this.hollis.update(dt, thick ? 1 : 0, fishing, this.waterIn(this.hollisBerth, 0.1, 1.2));
       // He thins with the light and is there again with the dark or the fog: heard, and said the first time.
       if (this.thick !== null && thick !== this.thick) {

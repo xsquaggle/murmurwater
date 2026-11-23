@@ -1,0 +1,438 @@
+{
+ "format": "murmurwater-save",
+ "version": 6,
+ "savedAt": "2026-11-16T00:00:00.000Z",
+ "state": {
+  "version": 6,
+  "seed": 1,
+  "playTime": 12691.862219577015,
+  "hour": 11.6,
+  "coins": 150,
+  "moonpearls": 5,
+  "echoes": 1,
+  "lifetime": {
+   "coins": 150126,
+   "catches": 183,
+   "perfectHooks": 94,
+   "snaps": 1,
+   "echoes": 58
+  },
+  "run": {
+   "number": 5,
+   "coins": 0,
+   "startedAt": 12640.262219577016
+  },
+  "nextUid": 683,
+  "hold": [],
+  "journal": {
+   "butterperch": {
+    "caught": 15,
+    "bestWeight": 1.37,
+    "traits": [],
+    "firstAt": 43.56667007085739
+   },
+   "coral-snapper": {
+    "caught": 32,
+    "bestWeight": 2.48,
+    "traits": [
+     "hollow",
+     "glimmering"
+    ],
+    "firstAt": 69.18040055134594
+   },
+   "kettle-carp": {
+    "caught": 6,
+    "bestWeight": 2.76,
+    "traits": [],
+    "firstAt": 94.01714974666194
+   },
+   "moss-eel": {
+    "caught": 2,
+    "bestWeight": 2.19,
+    "traits": [],
+    "firstAt": 241.850655933703
+   },
+   "pebble-goby": {
+    "caught": 7,
+    "bestWeight": 0.3,
+    "traits": [],
+    "firstAt": 307.1240664396293
+   },
+   "lampjaw": {
+    "caught": 14,
+    "bestWeight": 1.96,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 1065.4671431636573
+   },
+   "twofold-flounder": {
+    "caught": 13,
+    "bestWeight": 5.42,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 1919.793290829554
+   },
+   "hollow-lantern": {
+    "caught": 2,
+    "bestWeight": 5.91,
+    "traits": [],
+    "firstAt": 2457.0822493017254
+   },
+   "reedling": {
+    "caught": 14,
+    "bestWeight": 0.48,
+    "traits": [],
+    "firstAt": 5185.3093818083225
+   },
+   "glassfin": {
+    "caught": 15,
+    "bestWeight": 0.48,
+    "traits": [
+     "inverted"
+    ],
+    "firstAt": 5204.743700321579
+   },
+   "mossback-tench": {
+    "caught": 19,
+    "bestWeight": 3.89,
+    "traits": [
+     "glimmering",
+     "two-faced"
+    ],
+    "firstAt": 5505.017358116448
+   },
+   "stilt-gar": {
+    "caught": 9,
+    "bestWeight": 6.19,
+    "traits": [],
+    "firstAt": 6444.121574730689
+   },
+   "mudlark": {
+    "caught": 24,
+    "bestWeight": 1.18,
+    "traits": [
+     "hollow"
+    ],
+    "firstAt": 6499.510130106179
+   },
+   "glowbelly": {
+    "caught": 1,
+    "bestWeight": 0.61,
+    "traits": [],
+    "firstAt": 6775.731816195449
+   },
+   "bottomless-eel": {
+    "caught": 5,
+    "bestWeight": 15.91,
+    "traits": [
+     "hollow"
+    ],
+    "firstAt": 7754.79480404755
+   },
+   "sedge-pike": {
+    "caught": 1,
+    "bestWeight": 2.01,
+    "traits": [],
+    "firstAt": 10762.157765505075
+   },
+   "old-mossglass": {
+    "caught": 4,
+    "bestWeight": 14.58,
+    "traits": [],
+    "firstAt": 11565.284962049409
+   }
+  },
+  "gear": {
+   "rods": [
+    "driftwood-rod",
+    "harbour-rod",
+    "gullwing-rod",
+    "fenwood-rod"
+   ],
+   "rodLevels": {
+    "driftwood-rod": 0,
+    "harbour-rod": 0,
+    "gullwing-rod": 0,
+    "fenwood-rod": 0
+   },
+   "rod": "fenwood-rod",
+   "baits": {
+    "breadcrumb": "__inf__"
+   },
+   "bait": "breadcrumb",
+   "lures": [
+    "tin-minnow",
+    "brass-spinner",
+    "mirror-spoon",
+    "moth-lure",
+    "glass-bead"
+   ],
+   "lure": "tin-minnow",
+   "wearables": [
+    "keepers-boots",
+    "wool-cap",
+    "gull-feather",
+    "keepers-oilskin",
+    "keepers-souwester",
+    "keepers-whistle",
+    "fen-waders",
+    "field-hat"
+   ],
+   "worn": {
+    "hat": "wool-cap",
+    "coat": "keepers-oilskin",
+    "boots": "keepers-boots",
+    "charm": "gull-feather"
+   },
+   "creel": 1
+  },
+  "pots": {
+   "owned": 3,
+   "placed": [],
+   "hold": [],
+   "levels": {
+    "speed": 0,
+    "size": 0,
+    "quality": 0
+   },
+   "nextId": 24
+  },
+  "crew": {
+   "hired": [
+    "biscuit",
+    "hollis"
+   ],
+   "hold": [
+    {
+     "uid": 682,
+     "fishId": "butterperch",
+     "weight": 0.65,
+     "trait": null,
+     "value": 5,
+     "perfect": false
+    }
+   ],
+   "clocks": {
+    "biscuit": {
+     "t": 21.599999999999998,
+     "n": 125
+    },
+    "hollis": {
+     "t": 0,
+     "n": 0
+    }
+   },
+   "tally": {
+    "biscuit": {
+     "fish": 94,
+     "coins": 3400,
+     "eaten": 31
+    }
+   }
+  },
+  "boats": {
+   "owned": [
+    "skiff",
+    "puffin"
+   ],
+   "current": "puffin",
+   "upgrades": {},
+   "at": null
+  },
+  "world": {
+   "region": "hearthbay",
+   "pos": [
+    -118,
+    1.4,
+    22
+   ],
+   "yaw": -1.5707963267948966,
+   "discovered": [
+    "hearthbay",
+    "mossglass-fen"
+   ],
+   "charted": [
+    "hearthbay",
+    "gull-point",
+    "kettle-isle",
+    "pips-bar",
+    "the-teeth",
+    "drowned-belfry",
+    "sedge-landing",
+    "glasswater",
+    "reed-maze",
+    "standing-trees",
+    "the-sump",
+    "listening-post"
+   ],
+   "onBoat": false
+  },
+  "quests": {
+   "active": {
+    "hb-14-whale-road": {}
+   },
+   "done": [
+    "hb-01-salt",
+    "hb-04-drawing",
+    "hb-02-supper",
+    "hb-03-proper-rod",
+    "hb-05-dark-lamp",
+    "hb-06-relight",
+    "hb-07-kettle",
+    "hb-08-teeth",
+    "hb-p1-pots",
+    "hb-s1-cat",
+    "hb-08b-stall",
+    "hb-09-bell",
+    "hb-10-turning",
+    "hb-11-lamp",
+    "hb-12-road",
+    "fen-01-scale",
+    "fen-02-glass",
+    "fen-03-tape",
+    "fen-03b-wreck",
+    "fen-04-glows",
+    "fen-05-sump",
+    "fen-06-post",
+    "fen-s1-gentleman",
+    "hb-13-refit"
+   ],
+   "board": {
+    "quests": [
+     {
+      "id": "board-20",
+      "title": "Wanted: Butterperch",
+      "objective": {
+       "type": "catch",
+       "fish": "butterperch",
+       "count": 4,
+       "label": "Catch 4 Butterperch"
+      },
+      "reward": {
+       "coins": 40,
+       "items": {
+        "sandworm": 5
+       }
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-21",
+      "title": "Wanted: Butterperch",
+      "objective": {
+       "type": "catch",
+       "fish": "butterperch",
+       "count": 3,
+       "label": "Catch 3 Butterperch"
+      },
+      "reward": {
+       "coins": 30,
+       "items": {
+        "sandworm": 5
+       }
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-22",
+      "title": "A Big One",
+      "objective": {
+       "type": "catch",
+       "fish": "kettle-carp",
+       "minWeight": 2.4,
+       "count": 1,
+       "label": "Catch a Kettle Carp over 2.4 kg"
+      },
+      "reward": {
+       "coins": 35
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     }
+    ],
+    "timer": 452.4,
+    "serial": 22
+   }
+  },
+  "flags": [
+   "shop-open",
+   "board-open",
+   "has-lampjaw-light",
+   "lamp-lit",
+   "seen:lighthouse-lamp",
+   "hb-lighthouse-lit",
+   "seen:keepers-kettle",
+   "chest:pips-bar-chest",
+   "chest:belfry-chest",
+   "chest:kettle-west-chest",
+   "page:hearthbay-page",
+   "pots-open",
+   "seen:drowned-bell",
+   "bell-found",
+   "tide-turned",
+   "reached:mossglass-fen",
+   "chest:glass-bar-chest",
+   "seen:survey-stake",
+   "seen:puffin-wreck",
+   "puffin-found",
+   "reached:hearthbay",
+   "boatyard-open",
+   "chest:grove-chest",
+   "chest:sump-chest",
+   "seen:ear-trumpet",
+   "fen-heard",
+   "page:fen-page",
+   "puffin-afloat",
+   "met-mara",
+   "met-wick",
+   "met-pell",
+   "met-calloway",
+   "met-hollis",
+   "kettle-taken"
+  ],
+  "finds": {
+   "casts": 195,
+   "dry": 19,
+   "crates": 15,
+   "chests": 2,
+   "near": {}
+  },
+  "relics": [
+   "wicks-drawing",
+   "isoldes-spectacles",
+   "keepers-kettle",
+   "cork-float",
+   "tide-table",
+   "packet-ticket",
+   "isolde-log-fen",
+   "fen-light-jar",
+   "isolde-log-sump",
+   "calloway-tape"
+  ],
+  "pearls": {
+   "packet-ticket": 2,
+   "tide-table": 2
+  },
+  "echoUpgrades": {
+   "fog-lamp": 1,
+   "tidewise": 4,
+   "quick-hands": 3,
+   "steady-line": 3,
+   "patient-float": 3,
+   "deep-pockets": 2,
+   "maras-ledger": 2,
+   "second-sight": 2,
+   "old-habits": 1,
+   "warm-lanterns": 1,
+   "lamp-minder": 1
+  },
+  "rhythm": 0
+ }
+}

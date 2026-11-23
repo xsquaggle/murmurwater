@@ -7,7 +7,7 @@ import { Color, Group, Mesh, MeshStandardMaterial, Vector3 } from 'three';
 import type { Game } from './game';
 import { assets } from '../render/assets';
 import { buildPotFloat, createPropMaterial } from '../render/props';
-import { canPlacePot, haulPot, placePot, potKnows, potsInHand, takeUpPot, tickPots } from '../core/pots';
+import { canPlacePot, haulPot, placePot, potKnows, potRolled, potsInHand, takeUpPot, tickPots } from '../core/pots';
 import { REGIONS_BY_ID, zoneAt, type RegionContent } from '../core/content';
 import { hullDistance } from '../core/landing';
 import { fmt } from '../core/economy';
@@ -146,7 +146,8 @@ export class PotField {
     if (!pot) return;
     g.audio.potSet();
     this.splash(x, z, 1);
-    if (potKnows(s, pot.zone) > 0) g.hud.toast(`Lantern Pot set${zone ? ` in ${zone.name}` : ''}. It fishes while you do.`, 'good');
+    if (potKnows(s, pot.zone) > 0 && potRolled(pot.region, s.hour)) g.hud.toast(`Lantern Pot set${zone ? ` in ${zone.name}` : ''}. Nothing goes in it while the storm blows: it fishes again in the eye, or once the storm has passed.`);
+    else if (potKnows(s, pot.zone) > 0) g.hud.toast(`Lantern Pot set${zone ? ` in ${zone.name}` : ''}. It fishes while you do.`, 'good');
     else g.hud.toast('Lantern Pot set, but its light stays dim: nothing in your journal swims here yet.', 'bad');
     this.near = pot; this.spot = null;
     void g.save();
@@ -179,7 +180,8 @@ export class PotField {
   get prompt(): string | null {
     const p = this.near;
     if (!p) return null;
-    return p.fish.length ? `Haul the Lantern Pot (${p.fish.length} fish)` : 'Hold to take up the Lantern Pot';
+    const rolled = potRolled(p.region, this.g.state.hour) ? ' · in a storm nothing goes in' : '';
+    return (p.fish.length ? `Haul the Lantern Pot (${p.fish.length} fish)` : 'Hold to take up the Lantern Pot') + rolled;
   }
 
   // ------------------------------------------------------------------ per frame

@@ -35,10 +35,12 @@ const SFX = {
   // the rest on purpose, so they are not turned down a second time here.
   'find-drag': [2, 0.85], 'haul-knock': [3, 1], 'haul-snag': [2, 0.9], 'haul-free': [2, 0.7], 'find-surface': [2, 0.85],
   'crate-open': [2, 0.8], 'relic-found': [1, 0.9], 'rumour': [1, 0.9], 'pearl-set': [2, 0.9], 'pearl-lift': [1, 0.85],
+  // Saltbone Reach: storms, lightning, the weather mast, the Kettles
+  'thunder-near': [2, 1], 'thunder-far': [3, 0.8], 'lightning-strike': [2, 1], 'storm-cone': [1, 0.8], 'swell-boom': [2, 0.9],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
-const LOOPS = ['reel-click', 'waves-lap', 'cat-purr', 'hull-wash', 'murmur', 'fen-day', 'fen-night'] as const;
+const LOOPS = ['reel-click', 'waves-lap', 'cat-purr', 'hull-wash', 'murmur', 'fen-day', 'fen-night', 'reach-day', 'reach-night', 'storm-rain', 'storm-wind', 'struck-water'] as const;
 type Loop = (typeof LOOPS)[number];
 /**
  * Sounds that have been asked for and may not be recorded yet (docs/briefs). Until its files are in the build
@@ -46,7 +48,8 @@ type Loop = (typeof LOOPS)[number];
  * after they land it is used, with nothing to change here.
  */
 const PENDING: ReadonlySet<string> = new Set<string>([
-  // Nothing is owed: the ten sounds of docs/briefs/finds-assets.md are all in.
+  // Saltbone Reach (docs/briefs/reach-assets.md, group 6).
+  'reach-day', 'reach-night', 'storm-rain', 'storm-wind', 'struck-water', 'thunder-near', 'thunder-far', 'lightning-strike', 'storm-cone', 'swell-boom',
 ]);
 const BUILT_IN: ReadonlySet<string> = new Set(present);
 /** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
@@ -72,6 +75,12 @@ export interface AudioState {
   murmur?: number;
   /** In a fen: frogs and insects instead of gulls. */
   fen?: boolean;
+  /** In Saltbone Reach: its own bed of swell on shingle and wind over rock. */
+  reach?: boolean;
+  /** The weather where the keeper is (core/weather.ts): how hard it blows and rains, 0..1. */
+  storm?: { power: number; rain: number };
+  /** 0..1: how near the keeper's float or boat is to struck water. */
+  struck?: number;
 }
 
 export class AudioEngine {
@@ -86,6 +95,8 @@ export class AudioEngine {
   private chargeGain!: GainNode; private chargeFilter!: BiquadFilterNode; private chargeOsc!: OscillatorNode; private chargeTone!: GainNode;
   private washGain!: GainNode; private washFilter!: BiquadFilterNode;
   private murmurGain!: GainNode; private murmurLfo = 0;
+  /** Until the storm's recordings are in: rain and wind made from the noise, and the singing of struck water. */
+  private rainGain!: GainNode; private windGain!: GainNode; private windFilter!: BiquadFilterNode; private struckGain!: GainNode;
   volumes = { master: 0.8, music: 0.6, sfx: 0.8, voice: 0.9, ambience: 0.6 };
   private files = new Map<string, AudioBuffer>();
 
@@ -155,6 +166,18 @@ export class AudioEngine {
     const breath = ctx.createBufferSource(); breath.buffer = this.noiseBuf; breath.loop = true;
     const bf = ctx.createBiquadFilter(); bf.type = 'bandpass'; bf.frequency.value = 320; bf.Q.value = 1.4;
     const bg = ctx.createGain(); bg.gain.value = 0.35; breath.connect(bf).connect(bg).connect(this.murmurGain); breath.start(0, 1.3);
+    // Stand-ins for the storm's beds: hiss for the rain, a moaning band for the wind, a high soft chord for struck water.
+    const rain = ctx.createBufferSource(); rain.buffer = this.noiseBuf; rain.loop = true;
+    const rf = ctx.createBiquadFilter(); rf.type = 'highpass'; rf.frequency.value = 1800;
+    this.rainGain = ctx.createGain(); this.rainGain.gain.value = 0; rain.connect(rf).connect(this.rainGain).connect(this.buses.ambience); rain.start(0, 0.4);
+    const wind = ctx.createBufferSource(); wind.buffer = this.noiseBuf; wind.loop = true;
+    this.windFilter = ctx.createBiquadFilter(); this.windFilter.type = 'bandpass'; this.windFilter.frequency.value = 380; this.windFilter.Q.value = 2.2;
+    this.windGain = ctx.createGain(); this.windGain.gain.value = 0; wind.connect(this.windFilter).connect(this.windGain).connect(this.buses.ambience); wind.start(0, 1.1);
+    this.struckGain = ctx.createGain(); this.struckGain.gain.value = 0; this.struckGain.connect(this.buses.ambience);
+    for (const [f, g] of [[1318.5, 0.5], [1975.5, 0.3], [2637, 0.12]] as const) {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const og = ctx.createGain(); og.gain.value = g; o.connect(og).connect(this.struckGain); o.start();
+    }
     void this.preload();
   }
 
@@ -494,6 +517,29 @@ export class AudioEngine {
   }
 
   /** A new place on the chart: a short rising figure (the recorded sting once it exists). */
+  // ---- Saltbone Reach ----
+  /** A bolt into the sea `dist` metres off: the split and the hiss of steam, then the thunder when it has come that far. */
+  lightning(dist: number) {
+    const near = dist < 120;
+    if (near && !this.sfx('lightning-strike', { gain: Math.min(1, 60 / Math.max(30, dist)) })) {
+      this.noise(0.12, 5000, 0.7, 0.5, 'highpass');
+      this.noise(1.3, 3200, 1.2, 0.14, 'bandpass', 1400, 0.05);
+    }
+    this.thunder(dist, dist / 343);
+  }
+  /** Thunder from `dist` metres away, `at` seconds from now: near, a crack and a long roll; far, the roll alone. */
+  thunder(dist: number, at = 0) {
+    const g = Math.min(1, 0.35 + 90 / Math.max(60, dist));
+    if (this.sfx(dist < 400 ? 'thunder-near' : 'thunder-far', { at, gain: g, vary: 0.06 })) return;
+    if (dist < 400) this.noise(0.25, 900, 0.6, 0.35 * g, 'lowpass', 200, at);
+    this.noise(3.8, 160, 0.9, 0.45 * g, 'lowpass', 60, at + 0.08);
+    this.noise(2.6, 90, 0.8, 0.3 * g, 'lowpass', 50, at + 0.6);
+  }
+  /** The weather mast's cone run up its halyard: a block squeaks and canvas thumps. */
+  stormCone() { if (!this.sfx('storm-cone')) { this.tone(1900, 0.12, 0.05, 'sine', 0, 1500); this.noise(0.15, 300, 1, 0.1, 'lowpass', 120, 0.3); } }
+  /** The swell going into one of the Kettles: a deep hollow boom and a suck back. */
+  swellBoom(gain = 1) { if (!this.sfx('swell-boom', { bus: 'ambience', gain })) { this.tone(48, 1.4, 0.3 * gain, 'sine', 0, 36); this.noise(1.6, 260, 1, 0.12 * gain, 'lowpass', 90, 0.9); } }
+
   discover() {
     const synth = () => { [587.33, 739.99, 880, 1174.66].forEach((f, i) => this.tone(f, 0.5, 0.12, 'triangle', i * 0.11)); this.tone(293.66, 1.1, 0.07, 'sine', 0.05); };
     if (PENDING.has('sting-discover')) synth();
@@ -555,7 +601,9 @@ export class AudioEngine {
     this.humOsc.frequency.setTargetAtTime(90 + s.tension * 260, now, 0.05);
     // Sea: recorded lapping waves over a quiet wash that breathes.
     const waves = this.loops.get('waves-lap');
-    if (waves) waves.gain.gain.setTargetAtTime(s.fen ? 0.3 : 0.8, now, 1.5); // a fen's water hardly laps
+    const blow = s.storm?.power ?? 0, wet = s.storm?.rain ?? 0;
+    // A fen's water hardly laps; the Reach's has its own bed, and the lapping under it is less.
+    if (waves) waves.gain.gain.setTargetAtTime(s.fen ? 0.3 : s.reach ? 0.45 + 0.4 * blow : 0.8, now, 1.5);
     const wash = waves ? 0.35 : 1;
     this.seaGain.gain.setTargetAtTime(wash * (0.1 + 0.05 * Math.sin(now * 0.4) + s.sea * 0.05), now, 0.5);
     this.seaFilter.frequency.setTargetAtTime(380 + 220 * (0.5 + 0.5 * Math.sin(now * 0.31)), now, 0.5);
@@ -563,7 +611,8 @@ export class AudioEngine {
     this.gullTimer -= dt;
     if (this.gullTimer <= 0) {
       this.gullTimer = 14 + Math.random() * 30;
-      if ((s.day ?? 0) > 0.35 && !s.fen) this.sfx('gulls', { bus: 'ambience', gain: 0.5 + Math.random() * 0.5, vary: 0.06 });
+      // (None in the thick of a storm; far off and fewer in the Reach.)
+      if ((s.day ?? 0) > 0.35 && !s.fen && blow < 0.2) this.sfx('gulls', { bus: 'ambience', gain: (s.reach ? 0.25 : 0.5) + Math.random() * (s.reach ? 0.25 : 0.5), vary: 0.06 });
     }
     this.creakTimer -= dt;
     if (this.creakTimer <= 0) {
@@ -594,6 +643,19 @@ export class AudioEngine {
     const day = s.day ?? 1;
     this.loops.get('fen-day')?.gain.gain.setTargetAtTime(s.fen ? 0.8 * Math.min(1, Math.max(0, (day - 0.3) / 0.3)) : 0, now, 1.2);
     this.loops.get('fen-night')?.gain.gain.setTargetAtTime(s.fen ? 0.8 * Math.min(1, Math.max(0, (0.7 - day) / 0.3)) : 0, now, 1.2);
+    // Saltbone Reach: swell on shingle and wind over rock by day, the swell and a wire humming by night; in a storm,
+    // rain on the sea and a gale in the rigging; struck water singing quietly when the keeper is by it.
+    this.loops.get('reach-day')?.gain.gain.setTargetAtTime(s.reach ? 0.8 * Math.min(1, Math.max(0, (day - 0.3) / 0.3)) : 0, now, 1.2);
+    this.loops.get('reach-night')?.gain.gain.setTargetAtTime(s.reach ? 0.8 * Math.min(1, Math.max(0, (0.7 - day) / 0.3)) : 0, now, 1.2);
+    const rainLoop = this.loops.get('storm-rain'), windLoop = this.loops.get('storm-wind'), struckLoop = this.loops.get('struck-water');
+    rainLoop?.gain.gain.setTargetAtTime(0.9 * wet, now, 0.8);
+    windLoop?.gain.gain.setTargetAtTime(0.85 * blow, now, 0.8);
+    this.rainGain.gain.setTargetAtTime(rainLoop ? 0 : 0.09 * wet, now, 0.8);
+    this.windGain.gain.setTargetAtTime(windLoop ? 0 : 0.16 * blow * (0.6 + 0.4 * Math.sin(now * 0.37) * Math.sin(now * 0.13)), now, 0.4);
+    this.windFilter.frequency.setTargetAtTime(300 + 260 * (0.5 + 0.5 * Math.sin(now * 0.21)) + 200 * blow, now, 0.6);
+    const sing = s.struck ?? 0;
+    struckLoop?.gain.gain.setTargetAtTime(0.7 * sing, now, 0.3);
+    this.struckGain.gain.setTargetAtTime(struckLoop ? 0 : 0.012 * sing * (0.7 + 0.3 * Math.sin(now * 9)), now, 0.1);
     if (s.music !== undefined) this.setMusic(s.music);
     this.musicDuck.gain.setTargetAtTime(this.voices > 0 ? 0.45 : 1, now, 0.25);
   }

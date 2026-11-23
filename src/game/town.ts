@@ -14,7 +14,7 @@ import {
   BOATS_BY_ID, QUESTS_BY_ID, abandonBoard, accept, acceptBoard, boardOpen, count, currentGoal, describeRewards, handsInTo, npc, npcOffer, shortName, onQuestEvent, questStatus,
   newlyReady, readySet, readyText, tickBoard, turnIn, type QuestEvent, type QuestUpdate,
 } from '../core/quests';
-import { BAITS_BY_ID, REGIONS, REGIONS_BY_ID, findMooring, placeOfIsland, regionAt, regionOfNpc, regionOfPlace, roadToward, roadsOf, type FerryPoint, type HailDef, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
+import { BAITS_BY_ID, REGIONS, REGIONS_BY_ID, findMooring, hullFor, placeOfIsland, regionAt, regionOfNpc, regionOfPlace, roadToward, roadsOf, type FerryPoint, type HailDef, type NpcSpot, type PlaceDef, type RegionContent } from '../core/content';
 import { LANDING } from '../core/landing';
 import { DAY_LENGTH_S } from '../render/daycycle';
 import type { ChartRaster, ChartView } from '../ui/chart';
@@ -687,6 +687,13 @@ export class Town {
     if (!hit || !from || from.id === id || !s.world.charted.includes(hit.mooring.place)) return;
     const m = hit.mooring, far = hit.region.id !== s.world.region;
     if (far && !(hasFogLamp(s) && s.world.discovered.includes(hit.region.id))) return;
+    // A rough road is not sailed for by a boat that could not sail it herself.
+    const hull = sail.def?.hull ?? 0, need = far ? Math.max(hullFor(hit.region.id), hullFor(s.world.region)) : 0;
+    if (hull < need) {
+      const road = roadsOf(hit.region.id).find((r) => (r.hull ?? 0) > hull) ?? roadsOf(s.world.region).find((r) => (r.hull ?? 0) > hull);
+      g.hud.toast(road?.tooRough ?? `The swell out there is more than ${sail.def?.name ?? 'she'} will take.`, 'bad', 5000);
+      return;
+    }
     this.closeScreens();
     const hours = (Math.hypot(m.x - sail.boat.x, m.z - sail.boat.z) / sail.def!.speed) * (24 / DAY_LENGTH_S) * 1.5;
     this.run([

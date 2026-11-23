@@ -11,6 +11,7 @@ import * as relics from './core/relics';
 import { findRoute } from './core/seaways';
 import { clearance } from './core/boat';
 import { LANDING, hullDistance, landingSpot } from './core/landing';
+import testerReach from './data/tester/reach.json';
 import testerFinds from './data/tester/finds.json';
 import testerCrew from './data/tester/crew.json';
 import testerFen from './data/tester/fen.json';
@@ -43,10 +44,11 @@ const testSlot = params.has('fresh') || params.has('keepfresh');
 /**
  * ?tester (F8 on the title screen) is a tester's start: a save the simulator's keeper played up to the doorstep
  * of a slice (tools/tester-save.ts), for trying it without the play before it. `?tester` is the newest slice,
- * `?tester=crew` and `?tester=fen` the ones before; F8 goes through them and then back to the player's own game. A tester's start
+ * `?tester=finds`, `?tester=crew` and `?tester=fen` the ones before; F8 goes through them and then back to the player's own game. A tester's start
  * reads and writes no save at all, so the player's own game is as they left it.
  */
 const TESTERS = [
+  { id: 'reach', save: testerReach, note: 'Saltbone Reach: late morning on the home dock, the Puffin afloat with both hands aboard, and Pell\'s whale-road job in hand. The road runs north-east, round the other side of the island from the Belfry\'s; the skiff can\'t take its swell, the Puffin can. Storms out there keep hours: the Deacon blows from two in the afternoon.' },
   { id: 'finds', save: testerFinds, note: 'Things fished up: nightfall on the home dock, the Puffin afloat, both hands aboard, four relics and three Moonpearls never set. Open the satchel\'s Shelf for the rumours; the first lies in Lantern Cove, a good cast off the end of the dock you stand on.' },
   { id: 'crew', save: testerCrew, note: 'Hands aboard: the cat signed on, the wreck of the Puffin found, the price of her refit in your purse (see Pell), and a gentleman waiting on the old sea-road.' },
   { id: 'fen', save: testerFen, note: 'Mossglass Fen: the Bell rung once, the Fog Lamp on the bow, Pell\'s road job in hand.' },
