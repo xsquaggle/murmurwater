@@ -12,9 +12,16 @@ const STANDIN_COLORS: Record<string, string> = {
   'moss-eel': '#6F8F4E', 'twofold-flounder': '#B9BFC6', 'hollow-lantern': '#E9DCC0', manyeye: '#6A4C8C',
   reedling: '#D2DBA2', mudlark: '#A8703C', glassfin: '#C2EFE9', 'sedge-pike': '#6F7A40', 'mossback-tench': '#7C7A36',
   glowbelly: '#235E68', 'stilt-gar': '#7A9288', 'bottomless-eel': '#161F25', 'old-mossglass': '#1D7850', 'the-listener': '#E6E0EE',
+  'bonefin-herring': '#C9D2D6', 'slate-pout': '#6C727A', 'thrift-wrasse': '#7C9A5E', ribfish: '#E6E0C8', 'kettle-cod': '#2E2A24',
+  'squall-mackerel': '#6E8FA8', 'lantern-ling': '#6A4A2A', thunderback: '#4A5560', 'old-greyback': '#5E8088', 'the-lull': '#E4DCEC',
 };
 /** Long fish whose whole body carries the wave. */
-const EELS = new Set(['moss-eel', 'bottomless-eel']);
+const EELS = new Set(['moss-eel', 'bottomless-eel', 'lantern-ling']);
+/** Fish that lie flat, back to the sky and both eyes on top: they swim with a wave up and down, and are held up back outward. */
+const FLAT = new Set(['thunderback']);
+
+/** The quarter turn about its length that shows a flat fish's back where another fish shows its side. */
+const FLAT_HELD = Math.PI / 2;
 
 export interface FishObject {
   readonly obj: Group;
@@ -26,23 +33,24 @@ export interface FishObject {
 /** Shared swim uniforms per material (all instances of a species share one material). */
 const swimUniforms = new WeakMap<MeshStandardMaterial, { uSwimT: { value: number }; uSwimAmp: { value: number } }>();
 
-function addSwim(mat: MeshStandardMaterial, eel: boolean) {
+function addSwim(mat: MeshStandardMaterial, eel: boolean, flat = false) {
   if (swimUniforms.has(mat)) return swimUniforms.get(mat)!;
   const u = { uSwimT: { value: 0 }, uSwimAmp: { value: 0 } };
   swimUniforms.set(mat, u);
-  const freq = eel ? 9.0 : 6.0, tail = eel ? 1.0 : 0.0;
+  const freq = eel ? 9.0 : 6.0, tail = eel ? 1.0 : 0.0, axis = flat ? 'y' : 'x';
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uSwimT = u.uSwimT; sh.uniforms.uSwimAmp = u.uSwimAmp;
     sh.vertexShader = 'uniform float uSwimT;\nuniform float uSwimAmp;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
       // Models are 1 m nose (+Z) to tail (-Z). The head barely moves; the tail sweeps.
       float tailW = mix(smoothstep(0.25, -0.5, position.z), 1.0, ${tail.toFixed(1)});
-      transformed.x += sin(position.z * ${freq.toFixed(1)} - uSwimT) * uSwimAmp * (0.04 + tailW * 0.16);`);
+      transformed.${axis} += sin(position.z * ${freq.toFixed(1)} - uSwimT) * uSwimAmp * (0.04 + tailW * 0.16);`);
   };
-  mat.customProgramCacheKey = () => `swim-${eel ? 'eel' : 'fish'}`;
+  mat.customProgramCacheKey = () => `swim-${eel ? 'eel' : flat ? 'flat' : 'fish'}`;
   return u;
 }
 
-export function makeFish(id: string, weight?: number): FishObject {
+/** `held`: it is to be held up and looked at (a flat fish is turned to show its back, not its edge). */
+export function makeFish(id: string, weight?: number, held = false): FishObject {
   const def = fishDef(id);
   const avgW = (def.weight[0] + def.weight[1]) / 2;
   const sizeK = weight ? Math.cbrt(weight / avgW) : 1;
@@ -55,11 +63,12 @@ export function makeFish(id: string, weight?: number): FishObject {
   }
   const root = new Group();
   model.scale.setScalar(len);
+  if (held && FLAT.has(id)) model.rotation.z = FLAT_HELD;
   root.add(model);
   const mats: { mat: MeshStandardMaterial; u: ReturnType<typeof addSwim> }[] = [];
   model.traverse((o: Object3D) => {
     const m = o as Mesh;
-    if (m.isMesh) { const mat = m.material as MeshStandardMaterial; mats.push({ mat, u: addSwim(mat, EELS.has(id)) }); }
+    if (m.isMesh) { const mat = m.material as MeshStandardMaterial; mats.push({ mat, u: addSwim(mat, EELS.has(id), FLAT.has(id)) }); }
   });
   const glowBase = mats.map(({ mat }) => mat.emissiveIntensity);
   let phase = 0, lastT = 0;

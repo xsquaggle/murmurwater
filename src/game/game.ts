@@ -494,7 +494,7 @@ export class Game {
           this.hud.showCatch(res.item, e.catch, res.firstCatch, res.newRecord, value, res.holdFull);
           this.fx.glow.burst(this.avatar.tipWorld().add(new Vector3(0, -0.5, 0)), 30 + r * 20, RARITY_GLOW[r], 2.5, 3, 1.4, 0.18, 1.5);
           this.shown?.dispose();
-          this.shown = makeFish(e.catch.fishId, e.catch.weight);
+          this.shown = makeFish(e.catch.fishId, e.catch.weight, true);
           this.avatar.holdFish(this.shown.obj);
           this.showTimer = 2.4;
           this.session = this.newSession();
