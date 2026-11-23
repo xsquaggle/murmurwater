@@ -5,6 +5,7 @@ model's builder laid out (layout JSON: name -> [x0, y0, x1, y1] in pixels). Ever
 painted again bit for bit. Needs numpy, scipy and Pillow.
 """
 import json
+import os
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage as ndi
@@ -157,6 +158,8 @@ class Atlas:
         self.used = np.zeros((self.h, self.w), bool)
         self.glow = None                 # a second canvas, black where nothing glows; made when the first glow patch is pasted
         self.gused = np.zeros((self.h, self.w), bool)
+        g = self.layout.get('geo')         # where every pixel lies on the model (geomap.mjs), if the builder wrote that: a file beside the layout
+        self.geo = np.fromfile(os.path.join(os.path.dirname(layout) if isinstance(layout, str) else '.', g), '<f4').reshape(self.layout['atlas'][1], self.layout['atlas'][0], 7) if g else None
 
     def rect(self, name):
         x0, y0, x1, y1 = [int(round(v)) for v in self.layout['rects'][name]]
@@ -165,6 +168,21 @@ class Atlas:
     def size(self, name):
         x0, y0, x1, y1 = self.rect(name)
         return y1 - y0, x1 - x0
+
+    def geo_of(self, name):
+        """A patch's place on the model: {'pos': (h, w, 3) metres, 'nrm': (h, w, 3), 'on': (h, w) bool}; pixels that no
+        triangle covers take the place of the nearest one that is covered. None if the builder wrote no map."""
+        if self.geo is None:
+            return None
+        x0, y0, x1, y1 = self.rect(name)
+        g = self.geo[y0:y1, x0:x1]
+        on = g[..., 6] > 0.25
+        if not on.any():
+            return None
+        if not on.all():
+            iy, ix = ndi.distance_transform_edt(~on, return_distances=False, return_indices=True)
+            g = g[iy, ix]
+        return dict(pos=g[..., 0:3].astype(float), nrm=g[..., 3:6].astype(float), on=on)
 
     def paste_glow(self, name, img, bleed=4):
         """The same for the glow map (what the patch gives off after dark)."""

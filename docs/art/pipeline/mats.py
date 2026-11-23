@@ -11,6 +11,8 @@ Options every material takes through paint_spec:
   tile_x   the patch runs round something, so its left and right edges must meet
   flip     turn the finished patch upside down (a blade whose foot is at the top of the atlas)
   glow     {"mat": ..., options}: a second patch for the same rectangle, painted into the model's glow map
+A material may also take geo: where every pixel of its patch lies on the model ({'pos', 'nrm', 'on'}, see
+paintkit.Atlas.geo_of), which paint_spec passes when the builder wrote a map (geomap.mjs). Bone uses it (reachmats.py).
 Needs paintkit.py beside it.
 """
 import numpy as np
@@ -20,6 +22,7 @@ from fishmats import FISH
 from callomats import CALLO
 from boatmats import BOAT
 from hollismats import HOLLIS
+from reachmats import REACH
 
 ALGAE, SCUM, BARNACLE = hexc('#58724A'), hexc('#3B4734'), hexc('#DAD8C2')
 
@@ -428,6 +431,8 @@ PAINT.update(FISH)                                                   # skins, fi
 PAINT.update(CALLO)                                                  # skin, hair, straw and cloth for a person (callomats.py)
 PAINT.update(BOAT)                                                   # painted planking, name boards, sailcloth (boatmats.py)
 PAINT.update(HOLLIS)                                                 # oilskin, knitting, carpet and a watch's dial for Mister Hollis (hollismats.py)
+assert not set(REACH) & set(PAINT), set(REACH) & set(PAINT)          # a name used twice would repaint an earlier model
+PAINT.update(REACH)                                                  # bone, limpets, a gull's nest and sea-thrift for Saltbone Reach (reachmats.py)
 
 
 # ------------------------------------------------------------------------------------------------ what happens to a patch afterwards
@@ -477,6 +482,8 @@ def paint_spec(A, skip=(), extra=None):
         spec = dict(spec)
         mat = spec.pop('mat')
         H, W = A.size(name)
+        if getattr(A, 'geo', None) is not None:                      # a painter that paints by place gets the patch's place on the model
+            spec['geo'] = A.geo_of(name)
         img = table[mat](H, W, **spec)
         A.paste(name, finish(img, **spec))
         if isinstance(spec.get('glow'), dict):                       # what the patch gives off after dark goes into the glow map
