@@ -125,6 +125,11 @@ export interface FishingContext {
   spot: (distance: number) => SpotInfo; // where the lure lands for a given cast distance
   /** Asked once as the float lands: what lies on the bottom there that is not a fish, if anything (core/finds.ts). */
   find?: (spot: SpotInfo) => FindOffer | null;
+  /**
+   * Told when the cast has been used: a fish was hooked on it, the find came aboard, or it went with a broken
+   * line. Until then the place has only been looked at (a cast reeled back in, a missed bite, a find let go).
+   */
+  spent?: (how: 'hooked' | 'found' | 'snapped') => void;
 }
 
 export interface FightState {
@@ -331,6 +336,7 @@ export class FishingSession {
     if (input.primaryPressed) {
       const perfect = this.biteTimer <= this.biteWindow * FEEL.perfectFraction;
       this.events.push({ type: 'hook', grade: perfect ? 'perfect' : 'good' });
+      this.ctx.spent?.('hooked');
       this.startFight(this.biteFish!, perfect);
       return;
     }
@@ -484,6 +490,7 @@ export class FishingSession {
       this.lastFind = h.find;
       this.phase = 'landed';
       this.resultTimer = 2.2;
+      this.ctx.spent?.('found'); // before anybody opens it: what is in it goes by the count this moves on
       this.events.push({ type: 'found', find: h.find, time: h.time });
       this.haul = null;
     }
@@ -496,7 +503,7 @@ export class FishingSession {
     const weight = Math.round((f.weight[0] + (f.weight[1] - f.weight[0]) * r) * 100) / 100;
     const sizeFactor = 0.75 + 0.6 * r;
     let trait: StrangeTrait | null = null;
-    const chance = this.ctx.strangeChance * (fs.perfect ? 1.25 : 1) * (this.cleanCast ? 1.15 : 1);
+    const chance = this.ctx.strangeChance * (fs.perfect ? STRANGE_PERFECT : 1) * (this.cleanCast ? STRANGE_CLEAN : 1);
     if (this.rng.chance(chance)) trait = this.rng.weighted(STRANGE_TRAITS, (t) => t.weight).id;
     this.lastCatch = { fishId: f.id, weight, sizeFactor, trait, perfectHook: fs.perfect, cleanCast: this.cleanCast, fightTime: fs.time };
     this.phase = 'landed';
@@ -506,6 +513,7 @@ export class FishingSession {
   }
 
   private lose(reason: LostReason) {
+    if (this.haul && reason === 'snap') this.ctx.spent?.('snapped');
     this.lostReason = reason;
     this.events.push({ type: 'lost', reason, fishId: this.fight?.fish.id, find: this.haul?.find });
     this.fight = null;
@@ -538,17 +546,22 @@ export function fishTable(c: FishingContext, spot: SpotInfo, cleanCast = false):
     .map((f) => ({ fish: f, weight: RARITY_WEIGHT[f.rarity] * Math.pow(1 + luck, RARITIES.indexOf(f.rarity)) * (c.bait.affinity[f.id] ?? 1) }));
 }
 
+/** How much likelier a Strange fish is from a perfect hook, and from a clean cast. */
+const STRANGE_PERFECT = 1.25, STRANGE_CLEAN = 1.15;
+
 /**
  * What a fish from a cast to this spot is worth on average, before the keeper's selling bonuses: the draw's own
- * weights, the middling size, and the chance of a Strange one.
+ * weights, the middling size, and the chance of a Strange one. `best` reckons it for a clean cast and a perfect
+ * hook (the luck of the one, and the Strange fish both bring), which is the most a hand can make of the cast.
  */
-export function typicalFish(c: FishingContext, spot: SpotInfo): number {
-  const table = fishTable(c, spot);
+export function typicalFish(c: FishingContext, spot: SpotInfo, best = false): number {
+  const table = fishTable(c, spot, best);
   let total = 0, sum = 0;
   for (const t of table) { total += t.weight; sum += t.weight * t.fish.baseValue; }
   if (!(total > 0)) return 0;
   // The size roll is 1 − (1 − u^1.7)(1 − size), so it averages 1/2.7 pushed up by `size`; a trait multiplies by 2.95 on average.
   const r = 1 - (1 - 1 / 2.7) * (1 - (c.size ?? 0));
   const traits = STRANGE_TRAITS.reduce((a, x) => a + x.weight * x.mult, 0) / STRANGE_TRAITS.reduce((a, x) => a + x.weight, 0);
-  return (sum / total) * (0.75 + 0.6 * r) * (1 + c.strangeChance * (traits - 1));
+  const strange = Math.min(1, c.strangeChance * (best ? STRANGE_PERFECT * STRANGE_CLEAN : 1));
+  return (sum / total) * (0.75 + 0.6 * r) * (1 + strange * (traits - 1));
 }

@@ -5,34 +5,34 @@
  "state": {
   "version": 6,
   "seed": 1,
-  "playTime": 4429.520056533551,
+  "playTime": 4601.702010866791,
   "hour": 8.5,
   "coins": 0,
-  "moonpearls": 3,
+  "moonpearls": 4,
   "echoes": 0,
   "lifetime": {
-   "coins": 11313,
-   "catches": 84,
-   "perfectHooks": 22,
+   "coins": 12100,
+   "catches": 88,
+   "perfectHooks": 26,
    "snaps": 0,
    "echoes": 16
   },
   "run": {
    "number": 2,
    "coins": 0,
-   "startedAt": 4332.32005653355
+   "startedAt": 4504.50201086679
   },
-  "nextUid": 174,
+  "nextUid": 176,
   "hold": [],
   "journal": {
    "butterperch": {
-    "caught": 14,
+    "caught": 15,
     "bestWeight": 1.37,
     "traits": [],
     "firstAt": 43.56667007085739
    },
    "coral-snapper": {
-    "caught": 28,
+    "caught": 31,
     "bestWeight": 2.48,
     "traits": [
      "hollow",
@@ -47,38 +47,38 @@
     "firstAt": 94.01714974666194
    },
    "moss-eel": {
-    "caught": 4,
-    "bestWeight": 4.05,
+    "caught": 2,
+    "bestWeight": 2.19,
     "traits": [],
     "firstAt": 241.850655933703
    },
    "pebble-goby": {
     "caught": 6,
-    "bestWeight": 0.29,
+    "bestWeight": 0.3,
     "traits": [],
     "firstAt": 307.1240664396293
    },
    "lampjaw": {
-    "caught": 12,
+    "caught": 14,
     "bestWeight": 1.96,
     "traits": [
      "glimmering"
     ],
-    "firstAt": 1066.7071431636562
+    "firstAt": 1065.4671431636573
    },
    "twofold-flounder": {
     "caught": 13,
-    "bestWeight": 4.93,
+    "bestWeight": 5.42,
     "traits": [
      "glimmering"
     ],
-    "firstAt": 1781.4785584846306
+    "firstAt": 1919.793290829554
    },
    "hollow-lantern": {
     "caught": 2,
     "bestWeight": 5.91,
     "traits": [],
-    "firstAt": 2256.584271377786
+    "firstAt": 2457.0822493017254
    }
   },
   "gear": {
@@ -101,8 +101,7 @@
    "lures": [
     "tin-minnow",
     "brass-spinner",
-    "mirror-spoon",
-    "moth-lure"
+    "mirror-spoon"
    ],
    "lure": "tin-minnow",
    "wearables": [
@@ -138,32 +137,32 @@
    ],
    "hold": [
     {
-     "uid": 172,
+     "uid": 174,
+     "fishId": "butterperch",
+     "weight": 0.88,
+     "trait": null,
+     "value": 5,
+     "perfect": false
+    },
+    {
+     "uid": 175,
      "fishId": "coral-snapper",
      "weight": 0.63,
      "trait": null,
      "value": 12,
-     "perfect": false
-    },
-    {
-     "uid": 173,
-     "fishId": "pebble-goby",
-     "weight": 0.1,
-     "trait": null,
-     "value": 2,
      "perfect": false
     }
    ],
    "clocks": {
     "biscuit": {
      "t": 7.199999999999999,
-     "n": 21
+     "n": 20
     }
    },
    "tally": {
     "biscuit": {
-     "fish": 16,
-     "coins": 176,
+     "fish": 15,
+     "coins": 188,
      "eaten": 5
     }
    }
@@ -297,10 +296,10 @@
    "kettle-taken"
   ],
   "finds": {
-   "casts": 79,
-   "dry": 6,
-   "crates": 4,
-   "chests": 1,
+   "casts": 87,
+   "dry": 1,
+   "crates": 7,
+   "chests": 2,
    "near": {}
   },
   "relics": [
@@ -310,7 +309,8 @@
    "cork-float"
   ],
   "pearls": {
-   "keepers-kettle": 2
+   "keepers-kettle": 2,
+   "isoldes-spectacles": 1
   },
   "echoUpgrades": {
    "fog-lamp": 1,

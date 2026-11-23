@@ -35,10 +35,13 @@ export function met(s: GameState, need: string | undefined): boolean {
   return s.flags.includes(need);
 }
 
-/** The unfound relics that would come to a line here and now, in the order of the data. */
+/**
+ * The unfound relics that would come to a line here and now, in the order of the data. None comes up before
+ * the time has come for somebody to speak of it (`hint.after`): a relic is heard of first and fished for after.
+ */
 export function relicsHere(s: GameState, region: string, zone: string | null, hour: number): RelicDef[] {
   if (!zone) return [];
-  return RELICS.filter((r) => r.where && r.region === region && !s.relics.includes(r.id) && r.where.zones.includes(zone) && inHours(hour, r.where.hours) && met(s, r.where.needs));
+  return RELICS.filter((r) => r.where && r.region === region && !s.relics.includes(r.id) && r.where.zones.includes(zone) && inHours(hour, r.where.hours) && met(s, r.hint.after) && met(s, r.where.needs));
 }
 
 // ---------------------------------------------------------------- the Shelf
@@ -66,7 +69,7 @@ export function newRumours(s: GameState): RelicDef[] {
     if (!r.where || s.flags.includes(told(r.id))) continue;
     if (p.state === 'empty') continue;
     s.flags.push(told(r.id));
-    // A relic that came up before anybody spoke of it needs no rumour.
+    // A relic the keeper already has (a bot's, or a gift's) needs no rumour.
     if (p.state === 'rumour') out.push(r);
   }
   return out;
@@ -103,7 +106,7 @@ const GIFT: Record<StatKey, (v: number) => string> = {
   biteWindow: (v) => `${pct(v)} longer to strike`,
   strange: (v) => `${pct(v)} more chance of a Strange fish`,
   potSpeed: (v) => `Lantern Pots fill ${pct(v)} faster`,
-  rhythmCap: (v) => `${fmtN(v)} more Rhythm ${v === 1 ? 'stack' : 'stacks'}`,
+  rhythmCap: (v) => `Rhythm builds ${pct(v * 0.05)} higher`, // a catch counted is RHYTHM.perStack (economy.ts); a test holds the two together
   grace: (v) => `The line bears ${pct(v)} longer before it breaks`,
   power: (v) => `${pct(v)} more reeling power`,
   control: (v) => `${pct(v)} more line control`,

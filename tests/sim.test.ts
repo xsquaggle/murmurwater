@@ -169,10 +169,18 @@ describe('the first hours, by simulation', () => {
   }, 240000);
 
   it('a second tide is quicker than the first', () => {
+    const ratios: number[] = [];
     for (const r of play(0.7)) {
       const [a, b] = r.rings;
-      expect(b.t - a.t).toBeLessThan(a.t * 0.8);
+      // It is rung again sooner than it was first rung, by every keeper,
+      expect(b.t - a.t, 'the second tide, against the first').toBeLessThan(a.t);
+      ratios.push((b.t - a.t) / a.t);
+      // and long before that the second tide has earned everything the first one did. (How long a keeper then
+      // stays out is her own affair: one who has crossed to the Fen saves for the Fenwood Rod before she rings.)
+      expect(a.matched, 'no second tide ever earned what the first did').toBeDefined();
+      expect(a.matched!, 'time to earn the first tide\'s coins again').toBeLessThan(a.t * 0.6);
     }
+    expect(median(ratios), 'the usual second tide').toBeLessThan(0.8);
   }, 120000);
 
   it('skill pays, but a clumsy keeper is not locked out', () => {

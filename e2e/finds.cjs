@@ -3,7 +3,9 @@
 // every rumour still to hear. She hears the rumours, reads the Keeper's Shelf, sets and lifts pearls, hauls a
 // crate (missing the first strike, reeling through one knock into a snag and easing off at the next), hauls a
 // sea chest for its pearl and its lure, breaks the line on one she is too greedy with, fishes the keeper's
-// spectacles out of Lantern Cove by night with nothing forced, and catches a fish to see that fish still bite.
+// spectacles out of Lantern Cove by night with nothing forced (after three casts reeled straight in, which
+// throw no dice), catches a fish to see that fish still bite, and last the game is started with its title card
+// up to see that no rumour is told behind it.
 // Exits 1 on any failure. Usage: node e2e/finds.cjs [outdir]
 const { chromium } = require('playwright');
 (async () => {
@@ -155,7 +157,7 @@ const { chromium } = require('playwright');
     return { slipped, again, phase, haul: g.session.haul ? { ...g.session.haul, find: g.session.haul.find.kind } : null, fight: fb.fight(), bait: fb.bait(), hint: document.querySelector('.hint')?.textContent ?? '' };
   });
   // (She had already watched it for 1.4 s. The time to strike is 2.6 s and what her gear adds to it.)
-  check(r.slipped.phase === 'waiting' && r.slipped.finding === 'crate' && r.slipped.t + 1.4 > 2.5 && r.slipped.t + 1.4 < 4 && (await said(/slid off the hook/)), `left alone for ${(r.slipped.t + 1.4).toFixed(1)} s it slides off the hook, and is still down there`);
+  check(r.slipped.phase === 'waiting' && r.slipped.finding === 'crate' && r.slipped.t + 1.4 > 2.5 && r.slipped.t + 1.4 < 4 && (await said(/it has settled again\. It is still down there/)), `left alone for ${(r.slipped.t + 1.4).toFixed(1)} s it settles again, and is still down there`);
   check(r.again > 2 && r.again < 5 && r.phase === 'hauling' && r.haul?.find === 'crate', `${r.again.toFixed(1)} s later the float goes down again, and the strike has it`);
   check(/haul/.test(r.fight.cls) && /on/.test(r.fight.cls) && r.fight.stamina === 'none' && /Haul it up/.test(r.fight.label) && r.bait === before.bait && /haul it up/.test(r.hint), `the gauge is the haul's (tension and line, no fish to tire: "${r.fight.label}"), and no bait went with the strike`);
   check((await said(/Something heavy!/)) && (await said(/let go when you feel it knock/)), 'she is told it is heavy, and the first time how to bring it up');
@@ -233,28 +235,41 @@ const { chromium } = require('playwright');
   check(r.t < 60 && r.snaps === r.was.snaps + 1 && r.coins === r.was.coins && r.chests === r.was.chests && r.rhythm === 0 && (await said(/Snap!/)) && r.phase === 'idle',
     `a heavy chest reeled without a rest: the line breaks in ${r.t.toFixed(0)} s, nothing is gained and the Rhythm is broken`);
 
-  // 9. The keeper's spectacles, where Wick said: Lantern Cove, at night, nothing forced. Casts that come down
-  // over only a fish are reeled straight in; anything else is hauled.
+  // 9. The keeper's spectacles, where Wick said: Lantern Cove, at night, nothing forced. First three casts reeled
+  // straight back in: they throw no dice, and each comes down over the same thing. Then she fishes: a fish is
+  // hooked and played, anything else is hauled, and each of those casts is counted.
   r = await ev(() => {
     const MW = window.__MW__, g = MW.game, s = g.state, fb = window.fb;
     fb.run(3);
     const byDay = MW.relics.relicsHere(s, 'hearthbay', 'hb-bay', 12).map((x) => x.id), byNight = MW.relics.relicsHere(s, 'hearthbay', 'hb-bay', s.hour).map((x) => x.id), offDock = MW.relics.relicsHere(s, 'hearthbay', 'hb-dock', s.hour).map((x) => x.id);
     const strange = g.stats.strange, relics = s.relics.length, counted = s.finds.casts;
+    // Cast and reel straight in, three times over.
+    const peeked = [], dice = JSON.stringify(s.finds);
+    for (let i = 0; i < 3; i++) { s.hour = 21.5; if (fb.cast(0.9) === 'waiting') peeked.push(g.session.finding ? g.session.finding.id : 'fish'); fb.reelIn(); }
+    const idle = { same: peeked.length === 3 && new Set(peeked).size === 1, what: peeked[0], unmoved: JSON.stringify(s.finds) === dice };
     let casts = 0; const came = [];
     while (!s.relics.includes('isoldes-spectacles') && casts < 14) {
       s.hour = 21.5;
-      casts++;
+      if (s.hold.length >= g.holdCapacity - 1) s.hold.length = 0;
       if (fb.cast(0.9) !== 'waiting') { fb.run(2); continue; }
+      casts++;
       const f = g.session.finding;
-      if (!f) { fb.reelIn(); continue; }
-      came.push(f.kind === 'relic' ? f.id : f.kind);
-      fb.run(40, null, () => g.session.phase === 'bite'); fb.run(0.5); fb.strike(); fb.haulIn();
+      came.push(!f ? 'fish' : f.kind === 'relic' ? f.id : f.kind);
+      fb.run(45, null, () => g.session.phase === 'bite');
+      if (!f) {
+        fb.run(0.15); fb.strike();
+        fb.run(120, (gg) => { const x = gg.session.fight; return x ? { ...fb.NO, primary: x.thrash <= 0 && x.tension < 0.7, steer: x.run ? -x.run : 0 } : fb.NO; }, () => g.session.phase !== 'fighting');
+        fb.run(3.5);
+        continue;
+      }
+      fb.run(0.5); fb.strike(); fb.haulIn();
       if (!s.relics.includes('isoldes-spectacles')) fb.run(3.5);
     }
-    return { byDay, byNight, offDock, casts, came, counted: s.finds.casts - counted, relics: s.relics.length - relics, strange: g.stats.strange - strange, card: fb.card(), near: { ...s.finds.near }, page: fb.shelf() };
+    return { byDay, byNight, offDock, idle, casts, came, counted: s.finds.casts - counted, relics: s.relics.length - relics, strange: g.stats.strange - strange, card: fb.card(), near: { ...s.finds.near }, page: fb.shelf() };
   });
   check(r.byNight.includes('isoldes-spectacles') && !r.byDay.includes('isoldes-spectacles') && !r.offDock.includes('isoldes-spectacles'), 'the spectacles lie in Lantern Cove by night: not there by day, and not under the dock at any hour');
-  check(r.relics === 1 && r.casts <= 12 && r.came.includes('isoldes-spectacles') && r.counted === r.casts, `fished for there after dark, they come up on cast ${r.casts}, every cast counted in the save (what came up: ${r.came.join(', ')})`);
+  check(r.idle.same && r.idle.unmoved, `three casts reeled straight back in throw no dice: each came down over the same thing (${r.idle.what}) and the save's count did not move`);
+  check(r.relics === 1 && r.casts <= 12 && r.came.includes('isoldes-spectacles') && r.counted === r.casts, `fished for there after dark, they come up on cast ${r.casts}, every cast that hooked a fish or brought something up counted in the save (what came up: ${r.came.join(', ')})`);
   check(/relic/.test(r.card.cls) && /The Keeper's Spectacles/.test(r.card.text) && /Strange fish/.test(r.card.text) && Math.abs(r.strange - 0.01) < 1e-6 && r.near['isoldes-spectacles'] === undefined,
     `the card names them and their gift, and the gift is hers at once (${(r.strange * 100).toFixed(0)}% more Strange fish)`);
   found = r.page.places.filter((p) => p.state === 'found');
@@ -284,6 +299,30 @@ const { chromium } = require('playwright');
   });
   check(!r.bad && r.caught === 1 && !/find/.test(r.card.cls) && r.casts === 0, `a fish, played and landed as ever (${r.tries} cast${r.tries === 1 ? '' : 's'}; a cast a bot decides is not counted against the save's dice): "${(r.card?.text ?? '').split('\n')[1] ?? r.bad}"`);
   check(!/haul/.test(r.fight?.cls ?? 'haul'), 'the gauge is the fight\'s again');
+
+  // 11. With the title card up (as the game is started by a person), nothing is told behind it: the rumours
+  // wait for the click, and are told a moment after it.
+  await page.goto(`http://localhost:${port}/?tester&hour=21&quality=${process.env.MW_QUALITY || 'medium'}`);
+  await page.waitForFunction(() => window.__MW__ && window.__MW__.frames > 2, null, { timeout: 180000 });
+  r = await ev(() => {
+    const g = window.__MW__.game, s = g.state;
+    g.paused = true; g.halted = true; g.skipRender = true;
+    window.said2 = [];
+    const toast = g.hud.toast.bind(g.hud);
+    g.hud.toast = (text, kind, hold) => { window.said2.push(text); return toast(text, kind, hold); };
+    const NO = { primary: false, primaryPressed: false, primaryReleased: false, steer: 0, cancel: false };
+    window.run2 = (sec) => { for (let t = 0; t < sec; t += 1 / 60) g.simulate(1 / 60, () => NO); };
+    window.run2(20);
+    return { titled: document.body.classList.contains('titled'), card: !!document.querySelector('.title'), behind: g.behindTitle, rumours: s.flags.filter((f) => f.startsWith('rumour:')).length, said: [...window.said2] };
+  });
+  check(r.titled && r.card && r.behind && r.rumours === 0 && !r.said.some((x) => /rumour/i.test(x)), `twenty seconds behind the title card: no rumour is told and none is marked as told (${r.rumours} marked, ${r.said.length} messages)`);
+  await page.click('.title');
+  r = await ev(() => {
+    const g = window.__MW__.game, s = g.state;
+    window.run2(4);
+    return { titled: document.body.classList.contains('titled'), behind: g.behindTitle, rumours: s.flags.filter((f) => f.startsWith('rumour:')).length, said: [...window.said2] };
+  });
+  check(!r.titled && !r.behind && r.rumours === 8 && r.said.some((x) => /8 rumours have reached you/.test(x)) && r.said.some((x) => /on the Shelf, in your satchel/.test(x)), `after the click the eight rumours are told, with where to read them (${r.rumours} marked)`);
 
   check(errors.length === 0, `no errors on the page (${errors.slice(0, 3).join(' | ')})`);
   await browser.close();

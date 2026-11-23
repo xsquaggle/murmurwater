@@ -5,24 +5,24 @@
  "state": {
   "version": 6,
   "seed": 1,
-  "playTime": 15736.990220710202,
+  "playTime": 12875.940843225837,
   "hour": 16.5,
-  "coins": 46572,
-  "moonpearls": 3,
-  "echoes": 3,
+  "coins": 70364,
+  "moonpearls": 4,
+  "echoes": 2,
   "lifetime": {
-   "coins": 158936,
-   "catches": 206,
-   "perfectHooks": 113,
-   "snaps": 0,
-   "echoes": 48
+   "coins": 153682,
+   "catches": 188,
+   "perfectHooks": 98,
+   "snaps": 1,
+   "echoes": 38
   },
   "run": {
-   "number": 6,
-   "coins": 55621,
-   "startedAt": 13081.162037291002
+   "number": 4,
+   "coins": 89309,
+   "startedAt": 9832.080742109603
   },
-  "nextUid": 868,
+  "nextUid": 687,
   "hold": [],
   "journal": {
    "butterperch": {
@@ -32,7 +32,7 @@
     "firstAt": 43.56667007085739
    },
    "coral-snapper": {
-    "caught": 28,
+    "caught": 32,
     "bestWeight": 2.48,
     "traits": [
      "hollow",
@@ -41,108 +41,107 @@
     "firstAt": 69.18040055134594
    },
    "kettle-carp": {
-    "caught": 7,
+    "caught": 6,
     "bestWeight": 2.76,
     "traits": [],
     "firstAt": 94.01714974666194
    },
    "moss-eel": {
-    "caught": 4,
-    "bestWeight": 4.05,
+    "caught": 2,
+    "bestWeight": 2.19,
     "traits": [],
     "firstAt": 241.850655933703
    },
    "pebble-goby": {
-    "caught": 6,
-    "bestWeight": 0.29,
+    "caught": 7,
+    "bestWeight": 0.3,
     "traits": [],
     "firstAt": 307.1240664396293
    },
    "lampjaw": {
-    "caught": 12,
+    "caught": 14,
     "bestWeight": 1.96,
     "traits": [
      "glimmering"
     ],
-    "firstAt": 1066.7071431636562
+    "firstAt": 1065.4671431636573
    },
    "twofold-flounder": {
     "caught": 13,
-    "bestWeight": 4.93,
+    "bestWeight": 5.42,
     "traits": [
      "glimmering"
     ],
-    "firstAt": 1781.4785584846306
+    "firstAt": 1919.793290829554
    },
    "hollow-lantern": {
     "caught": 2,
     "bestWeight": 5.91,
     "traits": [],
-    "firstAt": 2256.584271377786
+    "firstAt": 2457.0822493017254
+   },
+   "reedling": {
+    "caught": 16,
+    "bestWeight": 0.48,
+    "traits": [],
+    "firstAt": 5185.3093818083225
+   },
+   "glassfin": {
+    "caught": 15,
+    "bestWeight": 0.48,
+    "traits": [
+     "inverted"
+    ],
+    "firstAt": 5204.743700321579
+   },
+   "mossback-tench": {
+    "caught": 19,
+    "bestWeight": 3.89,
+    "traits": [
+     "glimmering",
+     "two-faced"
+    ],
+    "firstAt": 5505.017358116448
+   },
+   "stilt-gar": {
+    "caught": 10,
+    "bestWeight": 6.19,
+    "traits": [],
+    "firstAt": 6444.121574730689
    },
    "mudlark": {
-    "caught": 35,
+    "caught": 26,
     "bestWeight": 1.18,
     "traits": [
      "hollow"
     ],
-    "firstAt": 5062.884739070794
-   },
-   "bottomless-eel": {
-    "caught": 11,
-    "bestWeight": 15.93,
-    "traits": [
-     "glimmering",
-     "hollow"
-    ],
-    "firstAt": 5181.541831926462
-   },
-   "reedling": {
-    "caught": 20,
-    "bestWeight": 0.5,
-    "traits": [
-     "glimmering"
-    ],
-    "firstAt": 5622.05408930437
-   },
-   "glassfin": {
-    "caught": 20,
-    "bestWeight": 0.49,
-    "traits": [],
-    "firstAt": 5640.733185521084
+    "firstAt": 6499.510130106179
    },
    "glowbelly": {
-    "caught": 2,
-    "bestWeight": 0.75,
+    "caught": 1,
+    "bestWeight": 0.61,
     "traits": [],
-    "firstAt": 6609.568181729419
+    "firstAt": 6775.731816195449
    },
-   "mossback-tench": {
-    "caught": 20,
-    "bestWeight": 3.92,
+   "bottomless-eel": {
+    "caught": 5,
+    "bestWeight": 15.91,
     "traits": [
-     "hollow",
-     "glimmering"
+     "hollow"
     ],
-    "firstAt": 8393.44213511307
-   },
-   "stilt-gar": {
-    "caught": 6,
-    "bestWeight": 5.06,
-    "traits": [],
-    "firstAt": 8426.878433945669
+    "firstAt": 7754.79480404755
    },
    "sedge-pike": {
     "caught": 1,
-    "bestWeight": 1.55,
+    "bestWeight": 2.01,
     "traits": [],
-    "firstAt": 10346.738631501707
+    "firstAt": 10762.157765505075
    },
    "old-mossglass": {
     "caught": 4,
-    "bestWeight": 12.06,
+    "bestWeight": 14.58,
     "traits": [],
-    "firstAt": 10844.213396673516
+    "firstAt": 11565.284962049409
    }
   },
   "gear": {
@@ -156,18 +155,17 @@
     "driftwood-rod": 0,
     "harbour-rod": 0,
     "gullwing-rod": 0,
-    "fenwood-rod": 0
+    "fenwood-rod": 1
    },
    "rod": "fenwood-rod",
    "baits": {
     "breadcrumb": "__inf__",
-    "sandworm": 19,
-    "glowgrub": 48,
-    "brine-shrimp": 47,
-    "glass-mayfly": 47,
-    "marsh-worm": 4
+    "glowgrub": 39,
+    "marsh-worm": 59,
+    "brine-shrimp": 51,
+    "glass-mayfly": 4
    },
-   "bait": "glowgrub",
+   "bait": "brine-shrimp",
    "lures": [
     "tin-minnow",
     "brass-spinner",
@@ -191,18 +189,18 @@
     "boots": "keepers-boots",
     "charm": "gull-feather"
    },
-   "creel": 3
+   "creel": 4
   },
   "pots": {
    "owned": 3,
    "placed": [],
    "hold": [],
    "levels": {
-    "speed": 3,
+    "speed": 4,
     "size": 3,
-    "quality": 2
+    "quality": 3
    },
-   "nextId": 35
+   "nextId": 24
   },
   "crew": {
    "hired": [
@@ -211,15 +209,15 @@
    "hold": [],
    "clocks": {
     "biscuit": {
-     "t": 10.200562976343539,
-     "n": 157
+     "t": 22.061593078926187,
+     "n": 128
     }
    },
    "tally": {
     "biscuit": {
-     "fish": 118,
-     "coins": 3495,
-     "eaten": 39
+     "fish": 96,
+     "coins": 3482,
+     "eaten": 32
     }
    }
   },
@@ -251,10 +249,10 @@
     "the-teeth",
     "drowned-belfry",
     "sedge-landing",
-    "the-sump",
     "glasswater",
     "reed-maze",
     "standing-trees",
+    "the-sump",
     "listening-post"
    ],
    "onBoat": false
@@ -291,7 +289,7 @@
    "board": {
     "quests": [
      {
-      "id": "board-22",
+      "id": "board-17",
       "title": "A Big One",
       "objective": {
        "type": "catch",
@@ -308,26 +306,24 @@
       "done": false
      },
      {
-      "id": "board-23",
-      "title": "Wanted: Pebble Goby",
+      "id": "board-18",
+      "title": "A Big One",
       "objective": {
        "type": "catch",
-       "fish": "pebble-goby",
-       "count": 4,
-       "label": "Catch 4 Pebble Goby"
+       "fish": "butterperch",
+       "minWeight": 1,
+       "count": 1,
+       "label": "Catch a Butterperch over 1 kg"
       },
       "reward": {
-       "coins": 25,
-       "items": {
-        "sandworm": 5
-       }
+       "coins": 25
       },
       "accepted": true,
       "progress": 0,
       "done": false
      },
      {
-      "id": "board-24",
+      "id": "board-19",
       "title": "Wanted: Pebble Goby",
       "objective": {
        "type": "catch",
@@ -343,8 +339,8 @@
       "done": false
      }
     ],
-    "timer": 378.00000000000006,
-    "serial": 24
+    "timer": 385.20000000000005,
+    "serial": 19
    }
   },
   "flags": [
@@ -364,7 +360,6 @@
    "bell-found",
    "tide-turned",
    "reached:mossglass-fen",
-   "chest:sump-chest",
    "chest:glass-bar-chest",
    "seen:survey-stake",
    "seen:puffin-wreck",
@@ -372,6 +367,7 @@
    "reached:hearthbay",
    "boatyard-open",
    "chest:grove-chest",
+   "chest:sump-chest",
    "seen:ear-trumpet",
    "fen-heard",
    "page:fen-page",
@@ -382,10 +378,10 @@
    "kettle-taken"
   ],
   "finds": {
-   "casts": 216,
-   "dry": 3,
-   "crates": 14,
-   "chests": 1,
+   "casts": 202,
+   "dry": 2,
+   "crates": 16,
+   "chests": 2,
    "near": {}
   },
   "relics": [
@@ -403,7 +399,7 @@
   ],
   "pearls": {
    "calloway-tape": 2,
-   "packet-ticket": 1
+   "packet-ticket": 2
   },
   "echoUpgrades": {
    "fog-lamp": 1,
@@ -412,11 +408,10 @@
    "steady-line": 2,
    "patient-float": 3,
    "deep-pockets": 2,
-   "maras-ledger": 2,
-   "second-sight": 2,
+   "maras-ledger": 1,
+   "second-sight": 1,
    "old-habits": 1,
-   "warm-lanterns": 1,
-   "lamp-minder": 1
+   "warm-lanterns": 1
   },
   "rhythm": 13
  }

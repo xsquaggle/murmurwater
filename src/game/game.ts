@@ -172,13 +172,10 @@ export class Game {
         if (depth >= 0.6) return { zoneId: zoneAt(region, x, z)?.id ?? null, depth, hotspot: false, distance: d };
       }
       return { zoneId: null, depth: 0, hotspot: false, distance: 0 };
-    }, this.stats), s, this.stats);
-    // A bot (or a picture) may say what the next cast comes down over.
-    const dice = ctx.find!;
-    ctx.find = (spot) => { const f = this.forcedFind; if (f === undefined) return dice(spot); this.forcedFind = undefined; return f; };
+    }, this.stats), s, this.stats, () => { const f = this.forcedFind; this.forcedFind = undefined; return f; }); // a bot (or a picture) may say what the next cast comes down over
     return new FishingSession(ctx, new Rng(this.rngSeed++));
   }
-  /** Test/bot hook: what the next cast comes down over (null: a fish, whatever the dice say). Used once. */
+  /** Test/bot hook: what the next cast comes down over (null: a fish, whatever the dice say). Used once, and such a cast never moves the save's dice. */
   forcedFind: FindOffer | null | undefined = undefined;
 
   /**
@@ -427,7 +424,8 @@ export class Game {
     this.hands.step(dt);
     // What is said on the islands of things still in the water: passed on when its time has come.
     this.rumourT -= dt;
-    if (this.rumourT <= 0 && after === 'idle' && !this.town.blocking && !sail.busy) { this.rumourT = 2; this.tellRumours(); }
+    if (this.behindTitle) this.rumourT = 1.5; // nothing is said to somebody who is not there yet
+    else if (this.rumourT <= 0 && after === 'idle' && !this.town.blocking && !sail.busy) { this.rumourT = 2; this.tellRumours(); }
 
     // Rhythm fades if you stop fishing for a while. Not while she is under way: sailing to the next ground is part of the work.
     const underWay = sail.aboard && (Math.abs(sail.boat.speed) > 0.9 || sail.throttle !== 0);
@@ -493,7 +491,7 @@ export class Game {
           this.audio.drag();
           this.once('seen:drag', 'The float is going down slowly. That is no fish: strike, and haul it up.');
           break;
-        case 'slipped': this.hud.toast('It slid off the hook. It is still down there.'); break;
+        case 'slipped': this.hud.toast('Too late: it has settled again. It is still down there.'); break;
         case 'haul':
           this.audio.hook(false); this.audio.haulStart(); this.shake = 0.2;
           this.hud.toast('Something heavy!', 'good');
@@ -557,11 +555,13 @@ export class Game {
     if (!told.length) return;
     this.audio.rumour();
     if (told.length === 1) this.hud.toast(`A rumour. ${told[0].hint.text}`, 'gold', 7000);
-    else this.hud.toast(`${told.length} rumours have reached you of things still in the water.`, 'gold');
+    else this.hud.toast(`${told.length} rumours have reached you of things still in the water.`, 'gold', 7000);
     this.hud.toast('What is said of each is on the Shelf, in your satchel.', '', 7000);
     void this.save();
   }
   private rumourT = 3;
+  /** The title card is up: the world runs behind it, but nothing is told to the keeper until it is gone (main.ts). */
+  behindTitle = false;
 
   /**
    * Conversation camera: a two-shot from one side of the line between the speakers, so the player never

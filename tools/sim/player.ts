@@ -93,7 +93,8 @@ export interface SimReport {
   marks: Mark[]; buckets: Bucket[]; state: GameState;
   totals: { casts: number; catches: number; snaps: number; slack: number; missed: number; coins: number; potCoins: number; crewCoins: number; fishing: number; away: number; finds: number; findCoins: number; hauling: number; haulSnaps: number; /** Outings made for a rumour, and the seconds they took. */ hunts: number; hunting: number };
   /** Seconds of play at each ringing of the Bell, and what it gave. */
-  rings: { t: number; echoes: number; coins: number }[];
+  /** Each ringing of the Bell: when, for how many Echoes, on how many coins, and (`matched`) how many seconds into the tide after it the keeper had earned as much again. */
+  rings: { t: number; echoes: number; coins: number; matched?: number }[];
 }
 
 export const BUCKET_S = 600;
@@ -107,7 +108,7 @@ export class SimPlayer {
   st: Stats;
   marks: Mark[] = [];
   buckets: Bucket[] = [];
-  rings: { t: number; echoes: number; coins: number }[] = [];
+  rings: { t: number; echoes: number; coins: number; matched?: number }[] = [];
   totals = { casts: 0, catches: 0, snaps: 0, slack: 0, missed: 0, coins: 0, potCoins: 0, crewCoins: 0, fishing: 0, away: 0, finds: 0, findCoins: 0, hauling: 0, haulSnaps: 0, hunts: 0, hunting: 0 };
   /** The water the boat lies in while she lies still (the crew fish it); null while she is under way. */
   private lying: string | null = null;
@@ -141,6 +142,8 @@ export class SimPlayer {
     s.playTime += dt;
     s.hour = (s.hour + (dt * 24) / DAY_LENGTH_S) % 24;
     if (busy) { this.idle = 0; this.totals.fishing += dt; } else { this.idle += dt; this.totals.away += dt; if (this.idle > RHYTHM.decayAfter) s.rhythm = 0; }
+    const last = this.rings[this.rings.length - 1];
+    if (last && last.matched === undefined && s.run.coins >= last.coins) last.matched = s.playTime - last.t;
     this.acc += dt;
     if (this.acc >= 1) {
       tickBoard(s, this.acc); tickPots(s, this.acc, s.hour, this.st);

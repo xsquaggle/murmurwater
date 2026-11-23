@@ -103,12 +103,13 @@ async function boot() {
     window.removeEventListener('keydown', toTester);
     title.classList.add('out');
     document.body.classList.remove('titled');
+    game.behindTitle = false;
     setTimeout(() => title.remove(), 900);
     game.audio.start();
     game.input.requestLock();
     if (tester) game.hud.toast("Tester's start: nothing here is saved", 'good');
   };
-  if (params.has('notitle')) { title.remove(); document.body.classList.remove('titled'); window.removeEventListener('keydown', toTester); } else title.addEventListener('click', begin, { once: true });
+  if (params.has('notitle')) { title.remove(); document.body.classList.remove('titled'); window.removeEventListener('keydown', toTester); } else { game.behindTitle = true; title.addEventListener('click', begin, { once: true }); }
   // Clicking the view captures the mouse, but not from under a conversation or a menu.
   canvas.addEventListener('click', () => { game.audio.start(); if (!game.town.blocking) game.input.requestLock(); });
 

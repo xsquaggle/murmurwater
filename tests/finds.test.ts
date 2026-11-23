@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { FishingSession, HAUL, NO_INPUT, type FindOffer, type FishingEvent } from '../src/core/fishing';
-import { FINDS, findChance, lootLines, offerOf, relicOffer, rollFind, takeFind, validateFinds, withFinds } from '../src/core/finds';
+import { FishingSession, HAUL, NO_INPUT, typicalFish, type FindOffer, type FishingEvent } from '../src/core/fishing';
+import { FINDS, countCast, findChance, fishWorth, lootLines, offerOf, peekFind, relicOffer, rollFind, takeFind, validateFinds, withFinds } from '../src/core/finds';
 import { PEARLS, RELICS, RELICS_BY_ID, giftText, liftPearl, met, newRumours, pearlsFree, relicGift, relicsHere, setPearl, shelf, shelfOpen, validateRelics } from '../src/core/relics';
 import { QUESTS } from '../src/core/quests';
 import { CREW } from '../src/core/crew';
 import { REGIONS, REGIONS_BY_ID, rod } from '../src/core/content';
-import { stats, validateGear } from '../src/core/gear';
+import { COLLECTIONS, fishingContext, stats, validateGear } from '../src/core/gear';
+import { RHYTHM, catchValue } from '../src/core/economy';
 import { newGame, type GameState } from '../src/core/state';
 import { Rng } from '../src/core/rng';
 import { readFileSync } from 'node:fs';
@@ -14,7 +15,7 @@ import { deserialize, serialize } from '../src/core/save';
 import { SAVE_VERSION } from '../src/core/state';
 import { basket } from '../src/core/crew';
 import { SimPlayer } from '../tools/sim/player';
-import { ctx, playHaul } from './helpers';
+import { ctx, playHaul, skilledFightInput, skilledHaulInput } from './helpers';
 
 const DT = 1 / 60;
 /** A keeper who has landed enough fish for things to start coming up. */
@@ -29,9 +30,12 @@ describe('the data', () => {
     expect(validateGear()).toEqual([]);
   });
   it('every relic is come by somehow: fished up, or given by a job or a journal page', () => {
-    const given = new Set(QUESTS.flatMap((q) => q.rewards.relics ?? []).concat(['calloway-tape']));
+    const given = new Set(QUESTS.flatMap((q) => q.rewards.relics ?? []).concat(COLLECTIONS.flatMap((c) => c.rewards.relics ?? [])));
     for (const r of RELICS) expect(!!r.where || given.has(r.id), r.id).toBe(true);
+    // And none both ways: a relic in the water is not also handed over.
+    for (const r of RELICS) expect(!!r.where && given.has(r.id), r.id).toBe(false);
     expect(RELICS.filter((r) => r.where).length).toBe(8);
+    expect(given.size).toBe(4);
   });
 });
 
@@ -98,11 +102,13 @@ describe('what a cast comes down over', () => {
 
 describe('a relic in its water at its hour', () => {
   const cove = (hour: number) => ({ region: 'hearthbay', zone: 'hb-bay', hour });
+  /** A keeper who has done Wick's drawing job: the spectacles have been spoken of. */
+  const told = (seed = 7) => { const s = keeper(seed); s.quests.done.push('hb-04-drawing'); return s; };
 
   it('comes up in about three casts and never takes more than eleven', () => {
     let total = 0, worst = 0;
     for (let seed = 1; seed <= 400; seed++) {
-      const s = keeper(seed);
+      const s = told(seed);
       let n = 0, got: FindOffer | null = null;
       while (!got || got.kind !== 'relic') { n++; got = rollFind(s, cove(23)); expect(n).toBeLessThan(12); }
       expect(got.id).toBe('isoldes-spectacles');
@@ -113,8 +119,28 @@ describe('a relic in its water at its hour', () => {
     expect(worst).toBeLessThanOrEqual(11);
   });
 
-  it('does not come up by day, in other water, before its story, or twice', () => {
+  it('does not come up before anybody has spoken of it', () => {
+    // A new keeper with a dozen fish and no jobs done, in Lantern Cove at night: the water has only fish and crates.
     const s = keeper(4);
+    expect(shelf(s).find((p) => p.relic.id === 'isoldes-spectacles')!.state).toBe('empty');
+    expect(relicsHere(s, 'hearthbay', 'hb-bay', 23)).toEqual([]);
+    for (let i = 0; i < 3000; i++) expect(rollFind(s, cove(23))?.kind).not.toBe('relic');
+    s.quests.done.push('hb-04-drawing');
+    expect(shelf(s).find((p) => p.relic.id === 'isoldes-spectacles')!.state).toBe('rumour');
+    expect(relicsHere(s, 'hearthbay', 'hb-bay', 23).map((r) => r.id)).toEqual(['isoldes-spectacles']);
+    // It holds for every relic in the water: where one lies, its rumour is due.
+    const all = newGame(2);
+    all.world.discovered = REGIONS.map((r) => r.id);
+    for (const r of RELICS.filter((x) => x.where)) {
+      const zone = r.where!.zones[0], hour = r.where!.hours?.[0] ?? 12;
+      const w = newGame(2); w.world.discovered = all.world.discovered;
+      if (r.where!.needs) { const n = r.where!.needs; if (n.startsWith('quest:')) w.quests.done.push(n.slice(6)); else if (n.startsWith('crew:')) w.crew.hired.push(n.slice(5)); else w.flags.push(n); }
+      if (relicsHere(w, r.region, zone, hour).some((x) => x.id === r.id)) expect(shelf(w).find((p) => p.relic.id === r.id)!.state, r.id).toBe('rumour');
+    }
+  });
+
+  it('does not come up by day, in other water, before its story, or twice', () => {
+    const s = told(4);
     for (let i = 0; i < 3000; i++) expect(rollFind(s, cove(12))?.kind).not.toBe('relic');
     for (let i = 0; i < 3000; i++) expect(rollFind(s, { region: 'hearthbay', zone: 'hb-dock', hour: 23 })?.kind).not.toBe('relic');
     // The cork float waits on the pots; the tide table on a Turning.
@@ -134,7 +160,7 @@ describe('a relic in its water at its hour', () => {
   });
 
   it('the casts that missed it are remembered, and forgotten when it is found', () => {
-    const s = keeper(21);
+    const s = told(21);
     let n = 0;
     while (rollFind(s, cove(22))?.kind !== 'relic') n++;
     expect(s.finds.near['isoldes-spectacles'] ?? 0).toBe(n);
@@ -180,9 +206,46 @@ describe('what is in it', () => {
     }
   });
 
-  it('a crate is worth two or three common fish of its water, never a wasted cast', () => {
-    expect(FINDS.regions.hearthbay.crate.coins[0]).toBeGreaterThanOrEqual(2 * 9);
-    expect(FINDS.regions['mossglass-fen'].crate.coins[0]).toBeGreaterThanOrEqual(2 * 44);
+  it('a crate is never opened for less than the fish that cast would have brought the best of hands', () => {
+    // A late keeper (the finds tester's start: the Puffin, good tackle, relics), with Rhythm up, in three waters.
+    for (const [zone, hour] of [['hb-teeth', 12], ['hb-bay', 22], ['hb-dock', 12]] as [string, number][]) {
+      const s = deserialize(readFileSync(join(__dirname, '..', 'src', 'data', 'tester', 'finds.json'), 'utf8'));
+      s.rhythm = 9; s.hour = hour;
+      const afloat = zone === 'hb-teeth', st = stats(s, { hour, afloat });
+      const spot = { zoneId: zone, depth: 5, hotspot: false };
+      const c = fishingContext(s, { hour, afloat }, () => spot, st);
+      const worth = fishWorth(c, spot, s, st);
+      expect(worth).toBeGreaterThan(typicalFish(c, spot) * st.value); // more than the plain average: a good hand's
+      // What that cast really brings a hand that casts clean, strikes at once and lands it, as the game values it.
+      let sum = 0, n = 0;
+      for (let seed = 1; seed <= 600; seed++) {
+        const f = new FishingSession(c, new Rng(seed));
+        f.update(DT, { ...NO_INPUT, primary: true, primaryPressed: true });
+        while (f.phase === 'charging') f.update(DT, f.power >= 0.88 ? { ...NO_INPUT, primaryReleased: true } : { ...NO_INPUT, primary: true });
+        for (let i = 0; i < 60 * 300 && f.phase !== 'landed' && f.phase !== 'lost' && f.phase !== 'idle'; i++) {
+          if (f.phase === 'bite') f.update(DT, { ...NO_INPUT, primary: true, primaryPressed: true });
+          else if (f.phase === 'fighting') f.update(DT, skilledFightInput(f));
+          else f.update(DT, NO_INPUT);
+        }
+        if (!f.lastCatch) continue;
+        const t = structuredClone(s); t.rhythm = Math.min(st.rhythmCap, t.rhythm + 1); // as addCatch counts it
+        sum += catchValue(t, f.lastCatch, st); n++;
+      }
+      expect(n).toBeGreaterThan(500);
+      const mean = sum / n;
+      // The reckoning is the mean of that hand, to within what six hundred fish can say (Strange ones swing it).
+      expect(worth / mean, `${zone}: worth ${worth.toFixed(0)}, fish ${mean.toFixed(0)}`).toBeGreaterThan(0.93);
+      expect(worth / mean, `${zone}: worth ${worth.toFixed(0)}, fish ${mean.toFixed(0)}`).toBeLessThan(1.12);
+      // And no crate holds less than it, a chest never less than twice it.
+      for (let i = 0; i < 300; i++) {
+        const k = structuredClone(s); k.finds.casts = i;
+        expect(takeFind(k, offerOf('crate', 'hearthbay', worth))!.coins).toBeGreaterThanOrEqual(Math.round(worth));
+        expect(takeFind(k, offerOf('chest', 'hearthbay', worth))!.coins).toBeGreaterThanOrEqual(Math.round(2 * worth));
+      }
+    }
+    // Where the fish are worth next to nothing, a crate still has its own coins in it.
+    const poor = keeper(3);
+    for (let i = 0; i < 100; i++) { poor.finds.casts = i; expect(takeFind(poor, offerOf('crate', 'hearthbay', 0))!.coins).toBeGreaterThanOrEqual(FINDS.regions.hearthbay.crate.coins[0]); }
   });
 
   it('a sea chest: a Moonpearl, and the first of a water holds a piece of gear sold nowhere', () => {
@@ -388,17 +451,33 @@ describe('the haul', () => {
 });
 
 describe('through a real session against a save', () => {
-  it('casts are counted in the save and a crate comes up, is hauled, and is opened', () => {
+  const open = { zoneId: 'hb-open', depth: 5, hotspot: false };
+  const over = (s: GameState, seed: number) => new FishingSession(withFinds(ctx({ spot: () => open }), s), new Rng(seed));
+  const strike = (f: FishingSession) => f.update(DT, { ...NO_INPUT, primary: true, primaryPressed: true });
+  const haulUp = (f: FishingSession) => { for (let i = 0; i < 60 * 90 && f.phase === 'hauling'; i++) f.update(DT, skilledHaulInput(f)); };
+  /** A keeper whose next cast into open water meets a crate. */
+  const crateNext = (seed = 31) => {
+    const s = keeper(seed);
+    for (let i = 0; i < 400 && !peekFind(s, day); i++) countCast(s, day, null);
+    expect(peekFind(s, day)?.kind).toBe('crate');
+    return s;
+  };
+
+  it('a cast is counted when it is used: a fish hooked, or the thing brought aboard', () => {
     const s = keeper(31);
     let crates = 0, fish = 0;
     for (let cast = 0; cast < 400 && crates < 3; cast++) {
-      const session = new FishingSession(withFinds(ctx({ spot: () => ({ zoneId: 'hb-open', depth: 5, hotspot: false }) }), s), new Rng(1000 + cast));
-      castOver(session);
-      if (!session.finding) { fish++; continue; }
-      session.update(DT, { ...NO_INPUT, primary: true, primaryPressed: true });
-      for (let i = 0; i < 60 * 60 && session.phase === 'hauling'; i++) session.update(DT, { ...NO_INPUT, primary: !session.haul!.snag && !session.haul!.warned && session.haul!.tension < 0.72 });
-      expect(session.phase).toBe('landed');
-      const loot = takeFind(s, session.lastFind!)!;
+      const f = over(s, 1000 + cast);
+      castOver(f);
+      const before = s.finds.casts;
+      strike(f);
+      if (f.phase === 'fighting') { fish++; expect(s.finds.casts).toBe(before + 1); continue; }
+      expect(f.phase).toBe('hauling');
+      expect(s.finds.casts).toBe(before); // not until it is aboard
+      haulUp(f);
+      expect(f.phase).toBe('landed');
+      expect(s.finds.casts).toBe(before + 1);
+      const loot = takeFind(s, f.lastFind!)!;
       expect(loot.kind).toBe('crate');
       crates++;
     }
@@ -406,6 +485,107 @@ describe('through a real session against a save', () => {
     expect(fish).toBeGreaterThan(15);
     expect(s.finds.casts).toBe(crates + fish);
     expect(s.finds.crates).toBe(3);
+  });
+
+  it('casting and reeling straight back in throws no dice, and neither does a bite that is missed', () => {
+    const s = keeper(8), before = structuredClone(s.finds);
+    const seen = new Set<string>();
+    for (let cast = 0; cast < 300; cast++) {
+      const f = over(s, 50 + cast);
+      f.update(DT, { ...NO_INPUT, primary: true, primaryPressed: true });
+      while (f.power < 0.7) f.update(DT, { ...NO_INPUT, primary: true });
+      f.update(DT, { ...NO_INPUT, primaryReleased: true });
+      while (f.phase === 'casting') f.update(DT, NO_INPUT);
+      seen.add(f.finding?.id ?? 'fish');
+      f.update(DT, { ...NO_INPUT, cancel: true });
+      expect(f.phase).toBe('idle');
+    }
+    expect(s.finds).toEqual(before);
+    expect(seen.size).toBe(1); // every one of those casts came down over the same thing
+    // A fish that bites and is not struck: the float is still in, and nothing has been thrown.
+    const f = over(s, 9);
+    castOver(f);
+    expect(f.finding).toBeNull();
+    for (let i = 0; i < 60 * 20 && f.phase === 'bite'; i++) f.update(DT, NO_INPUT);
+    f.update(DT, { ...NO_INPUT, cancel: true });
+    expect(s.finds).toEqual(before);
+  });
+
+  it('a find that is left, let go of, or in the water when the game is shut is still there', () => {
+    const s = crateNext(), before = structuredClone(s.finds);
+    // Seen and reeled past.
+    let f = over(s, 1); castOver(f);
+    expect(f.finding?.kind).toBe('crate');
+    f.update(DT, { ...NO_INPUT, cancel: true });
+    expect(s.finds).toEqual(before);
+    // Struck, and let go of half way up.
+    f = over(s, 2); castOver(f); strike(f);
+    for (let i = 0; i < 120; i++) f.update(DT, skilledHaulInput(f));
+    expect(f.phase).toBe('hauling');
+    // The game is shut here: the save as it would be written, loaded again, meets the same crate.
+    const loaded = deserialize(serialize(s));
+    expect(loaded.finds).toEqual(before);
+    const g = over(loaded, 77); castOver(g);
+    expect(g.finding?.kind).toBe('crate');
+    f.update(DT, { ...NO_INPUT, cancel: true });
+    expect(f.phase).toBe('lost');
+    expect(s.finds).toEqual(before);
+    // And then brought up: now the cast is used, the crate is opened once, and the water is quiet for a while.
+    f = over(s, 3); castOver(f); strike(f); haulUp(f);
+    expect(f.phase).toBe('landed');
+    expect(s.finds.casts).toBe(before.casts + 1);
+    expect(s.finds.dry).toBe(0);
+    expect(takeFind(s, f.lastFind!)!.kind).toBe('crate');
+    expect(peekFind(s, day)).toBeNull();
+    f = over(s, 4); castOver(f);
+    expect(f.finding).toBeNull();
+  });
+
+  it('a crate goes with a broken line; a relic does not', () => {
+    const s = crateNext(12), before = structuredClone(s.finds);
+    let f = over(s, 1); castOver(f); strike(f);
+    for (let i = 0; i < 60 * 60 && f.phase === 'hauling'; i++) f.update(DT, { ...NO_INPUT, primary: true });
+    expect(f.lostReason).toBe('snap');
+    expect(s.finds.casts).toBe(before.casts + 1);
+    expect(s.finds.dry).toBe(0);
+    expect(s.finds.crates).toBe(0);
+    // The spectacles, spoken of, in Lantern Cove at night.
+    const r = keeper(5); r.quests.done.push('hb-04-drawing');
+    const cove = { zoneId: 'hb-bay', depth: 5, hotspot: false }, night = { region: 'hearthbay', zone: 'hb-bay', hour: 23 };
+    for (let i = 0; i < 12 && peekFind(r, night)?.kind !== 'relic'; i++) countCast(r, night, peekFind(r, night));
+    expect(peekFind(r, night)?.kind).toBe('relic');
+    const was = structuredClone(r.finds);
+    const relicCast = (seed: number) => new FishingSession(withFinds(ctx({ spot: () => cove, hour: 23 }), r), new Rng(seed));
+    f = relicCast(1); castOver(f); strike(f);
+    expect(f.haul!.find.id).toBe('isoldes-spectacles');
+    for (let i = 0; i < 60 * 60 && f.phase === 'hauling'; i++) f.update(DT, { ...NO_INPUT, primary: true });
+    expect(f.lostReason).toBe('snap');
+    expect(r.finds).toEqual(was);
+    f = relicCast(2); castOver(f);
+    expect(f.finding?.id).toBe('isoldes-spectacles');
+    strike(f); haulUp(f);
+    expect(f.phase).toBe('landed');
+    expect(takeFind(r, f.lastFind!)!.relic).toBe('isoldes-spectacles');
+    expect(r.finds.near['isoldes-spectacles']).toBeUndefined();
+  });
+
+  it('no water moves another water\'s dice: where the float lands changes what is met only as the place itself does', () => {
+    let relics = 0, boxes = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const s = keeper(seed); s.quests.done.push('hb-04-drawing');
+      for (let i = 0; i < 60; i++) {
+        const dock = peekFind(s, { region: 'hearthbay', zone: 'hb-dock', hour: 23 });
+        const cove = peekFind(s, { region: 'hearthbay', zone: 'hb-bay', hour: 23 });
+        const teeth = peekFind(s, { region: 'hearthbay', zone: 'hb-teeth', hour: 23 });
+        // A box at the dock is a box at the Teeth (a crate or a chest there), and in the cove unless the relic comes instead.
+        expect(!!teeth).toBe(!!dock);
+        if (teeth) { boxes++; expect(dock!.kind).toBe('crate'); }
+        if (cove?.kind === 'relic') relics++; else expect(!!cove).toBe(!!dock);
+        countCast(s, { region: 'hearthbay', zone: 'hb-dock', hour: 23 }, dock);
+      }
+    }
+    expect(relics).toBeGreaterThan(100);
+    expect(boxes).toBeGreaterThan(100);
   });
 });
 
@@ -446,8 +626,10 @@ describe('Moonpearls are set, not spent', () => {
   it('a gift reads as what it does', () => {
     expect(giftText(RELICS_BY_ID.get('wicks-drawing')!.effect)).toBe('Rarer fish (3% luck)');
     expect(giftText(RELICS_BY_ID.get('wicks-drawing')!.effect, 1.5)).toBe('Rarer fish (4.5% luck)');
-    expect(giftText(RELICS_BY_ID.get('tide-table')!.effect)).toBe('1 more Rhythm stack');
-    expect(giftText(RELICS_BY_ID.get('tide-table')!.effect, 2)).toBe('2 more Rhythm stacks');
+    // One more catch counted by Rhythm is one more step of what Rhythm pays, and half a pearl's worth reads as half.
+    expect(giftText(RELICS_BY_ID.get('tide-table')!.effect)).toBe(`Rhythm builds ${RHYTHM.perStack * 100}% higher`);
+    expect(giftText(RELICS_BY_ID.get('tide-table')!.effect, 1.5)).toBe('Rhythm builds 7.5% higher');
+    expect(giftText(RELICS_BY_ID.get('tide-table')!.effect, 2)).toBe('Rhythm builds 10% higher');
     for (const r of RELICS) expect(giftText(r.effect)).not.toMatch(/undefined|NaN/);
   });
 });
@@ -507,7 +689,13 @@ describe('saves from before anything came up', () => {
     // The pearls they were given are theirs to set, and the relics give what they gave.
     expect(s.moonpearls).toBe(2);
     expect(pearlsFree(s)).toBe(2);
-    expect(stats(s).luck).toBeCloseTo(stats({ ...s, pearls: {} }).luck);
+    // Wick's Drawing and the Keeper's Kettle, as v0.5.0 counted them: the plain gift, no more and no less.
+    expect(s.relics).toEqual(['wicks-drawing', 'keepers-kettle', 'isolde-log-fen', 'calloway-tape']);
+    const without = stats({ ...s, relics: [] });
+    const gift = (k: 'luck' | 'biteSpeed') => s.relics.reduce((a, id) => a + (RELICS_BY_ID.get(id)!.effect[k] ?? 0), 0);
+    expect(gift('luck')).toBeCloseTo(0.07);
+    expect(stats(s).luck - without.luck).toBeCloseTo(gift('luck'));
+    expect(stats(s).biteSpeed - without.biteSpeed).toBeCloseTo(gift('biteSpeed'));
     // It goes round again without loss.
     expect(deserialize(serialize(s))).toEqual(s);
   });

@@ -6,6 +6,8 @@ import type { CatchItem, GameState } from './state';
 
 /** Rhythm: each catch in a row without a snap adds a stack; the cap comes from gear (stats().rhythmCap, 10 to start). */
 export const RHYTHM = { perStack: 0.05, decayAfter: 60 };
+/** A fish hooked in the first part of its bite window sells for this much more. */
+export const PERFECT_HOOK_VALUE = 1.1;
 
 export function traitMult(trait: string | null): number {
   return trait ? STRANGE_TRAITS.find((t) => t.id === trait)?.mult ?? 1 : 1;
@@ -15,7 +17,7 @@ export function rhythmMult(s: GameState, cap = stats(s).rhythmCap): number { ret
 
 export function catchValue(s: GameState, c: CatchResult, st = stats(s)): number {
   const f = fish(c.fishId);
-  const v = f.baseValue * c.sizeFactor * traitMult(c.trait) * rhythmMult(s, st.rhythmCap) * st.value * (c.perfectHook ? 1.1 : 1);
+  const v = f.baseValue * c.sizeFactor * traitMult(c.trait) * rhythmMult(s, st.rhythmCap) * st.value * (c.perfectHook ? PERFECT_HOOK_VALUE : 1);
   return Math.max(1, Math.round(v));
 }
 
