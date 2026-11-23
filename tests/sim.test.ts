@@ -10,13 +10,26 @@ import { newGame } from '../src/core/state';
  */
 const SEEDS = [1, 2, 3, 4, 5];
 const runs = new Map<number, SimReport[]>();
+/**
+ * The first two waters, as the game was before Saltbone Reach: a keeper who is never offered the whale-road.
+ * The bands below were set on these hours, and a keeper who sails on at the end of the fourth hour would take
+ * the Fen's last hours out from under them. The Reach has a keeper and bands of its own further down.
+ */
+const HOME = { without: ['hb-14-whale-road'] };
 /** Four hours of play: Hearthbay, the first Turning, and the Fen's story. */
-const play = (skill: number) => { let r = runs.get(skill); if (!r) { r = SEEDS.map((seed) => simulate({ seed, skill, minutes: 240 })); runs.set(skill, r); } return r; };
+const play = (skill: number) => { let r = runs.get(skill); if (!r) { r = SEEDS.map((seed) => simulate({ seed, skill, minutes: 240, ...HOME })); runs.set(skill, r); } return r; };
 /** Seven hours, for what comes late: the Puffin, Mister Hollis, the Listener. */
 let longRuns: SimReport[] | null = null;
-const long = () => (longRuns ??= SEEDS.map((seed) => simulate({ seed, skill: 0.7, minutes: 420 })));
+const long = () => (longRuns ??= SEEDS.map((seed) => simulate({ seed, skill: 0.7, minutes: 420, ...HOME })));
+/** Seven hours with nothing held back: over the whale-road in the fourth hour, and Captain Oake's jobs. */
+let reachRuns: SimReport[] | null = null;
+const onward = () => (reachRuns ??= SEEDS.map((seed) => simulate({ seed, skill: 0.7, minutes: 420 })));
 /** Jobs that wait on the price of the Puffin: they have a test of their own. */
 const LATE = ['Fitted Out', 'A Gentleman on the Road'];
+/** The jobs of Saltbone Reach, from Pell's word of the whale-road on. */
+const REACH_JOBS = QUESTS.filter((q) => q.id === 'hb-14-whale-road' || q.id.startsWith('reach-'));
+/** Every job of the first two waters. */
+const HOME_JOBS = QUESTS.length - REACH_JOBS.length;
 const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 const at = (rs: SimReport[], what: string) => median(rs.map((r) => when(r, what) ?? Infinity));
 
@@ -52,7 +65,7 @@ describe('the first hours, by simulation', () => {
   it('the story never stalls: every quest is done, and nothing is waited on for more than a quarter of an hour', () => {
     for (const r of play(0.7)) {
       const story = r.marks.filter((m) => (m.what.startsWith('done:') || m.what.startsWith('took:')) && !LATE.some((x) => m.what.endsWith(x)));
-      expect(story.filter((m) => m.what.startsWith('done:')).length).toBe(QUESTS.length - LATE.length);
+      expect(story.filter((m) => m.what.startsWith('done:')).length).toBe(HOME_JOBS - LATE.length);
       const first = story.filter((m) => m.t < (r.rings[0]?.t ?? Infinity));
       // The longest haul is A Full Stall (6,000 coins from the Teeth), with the cat's job done early in it.
       for (let i = 1; i < first.length; i++) expect((first[i].t - first[i - 1].t) / 60, `${first[i - 1].what} → ${first[i].what}`).toBeLessThan(45);
@@ -97,7 +110,7 @@ describe('the first hours, by simulation', () => {
       expect(hollis, 'Mister Hollis aboard').not.toBeNull();
       expect(hollis! - boat!).toBeLessThan(15);
       expect(hollis! - boat!).toBeGreaterThanOrEqual(0);
-      expect(r.marks.filter((m) => m.what.startsWith('done:')).length, 'every job done').toBe(QUESTS.length);
+      expect(r.marks.filter((m) => m.what.startsWith('done:')).length, 'every job of the first two waters done').toBe(HOME_JOBS);
       expect(r.state.boats.owned).toEqual(['skiff', 'puffin']);
       expect(r.state.crew.hired.sort()).toEqual(['biscuit', 'hollis']);
     }
@@ -147,7 +160,7 @@ describe('the first hours, by simulation', () => {
   }, 120000);
 
   it('a keeper who meets finds earns no less than one who never does', () => {
-    const none = SEEDS.map((seed) => simulate({ seed, skill: 0.7, minutes: 240, noFinds: true }));
+    const none = SEEDS.map((seed) => simulate({ seed, skill: 0.7, minutes: 240, noFinds: true, ...HOME }));
     const mean = (rs: SimReport[]) => rs.reduce((a, r) => a + r.totals.coins, 0) / rs.length;
     // A crate is reckoned from the fish it came up instead of, and the relics the rumours lead to give their
     // gifts, so the keeper who meets finds is ahead: by about a fifth over these seeds. (Seed by seed the two
@@ -219,5 +232,89 @@ describe('the first hours, by simulation', () => {
     const ratio = pays.get('mossglass-fen')! / pays.get('hearthbay')!;
     expect(ratio, `the Fen's best water pays ${ratio.toFixed(1)} times Hearthbay's`).toBeGreaterThan(1.6);
     expect(ratio).toBeLessThan(6);
+    // And the Reach's best (a storm at night, or the Long Swell at noon) a few times the Fen's.
+    const on = pays.get('saltbone-reach')! / pays.get('mossglass-fen')!;
+    expect(on, `the Reach's best water pays ${on.toFixed(1)} times the Fen's`).toBeGreaterThan(1.6);
+    expect(on).toBeLessThan(6);
+  }, 240000);
+});
+
+describe('Saltbone Reach, by simulation', () => {
+  const arrived = (r: SimReport) => when(r, 'reached Saltbone Reach');
+  /** What was earned from the minute she arrived to the end, and whose it was. */
+  const inReach = (r: SimReport) => {
+    const b = r.buckets.slice(Math.ceil((arrived(r) ?? 1e9) * 60 / BUCKET_S)).filter(Boolean);
+    const coins = b.reduce((a, x) => a + x.coins, 0);
+    return { coins, pot: b.reduce((a, x) => a + x.pot, 0) / coins, crew: b.reduce((a, x) => a + x.crew, 0) / coins, perMinute: coins / (420 - arrived(r)!) };
+  };
+
+  it('is reached in the fourth hour, as soon as the Puffin floats, and Captain Oake\'s six jobs fill an hour and a half', () => {
+    const rs = onward();
+    const reach = at(rs, 'reached Saltbone Reach');
+    expect(reach, `the Reach reached at minute ${reach.toFixed(0)}`).toBeGreaterThan(190);
+    expect(reach).toBeLessThan(265);
+    const spans: number[] = [];
+    for (const r of rs) {
+      const a = arrived(r), boat = when(r, 'bought The Puffin');
+      expect(a, 'every keeper crosses inside five hours').not.toBeNull();
+      expect(a!).toBeLessThan(300);
+      // The whale-road wants the Puffin: nobody is over it before she floats, and nobody waits long after.
+      expect(a! - boat!).toBeGreaterThanOrEqual(0);
+      expect(a! - boat!).toBeLessThan(20);
+      expect(r.marks.filter((m) => m.what.startsWith('done:')).length, 'every job in the game done inside seven hours').toBe(QUESTS.length);
+      // Nothing is waited on for an hour: the longest is the lightning, which keeps the Deacon's hours and Little Wren's.
+      const story = r.marks.filter((m) => m.t >= a! * 60 && (m.what.startsWith('done:') || m.what.startsWith('took:')) && REACH_JOBS.some((q) => m.what.endsWith(q.title)));
+      for (let i = 1; i < story.length; i++) expect((story[i].t - story[i - 1].t) / 60, `${story[i - 1].what} → ${story[i].what}`).toBeLessThan(60);
+      spans.push(when(r, 'done: The Count')! - a!);
+    }
+    expect(median(spans), `minutes from the quay to the count: ${spans.map((x) => x.toFixed(0)).join(', ')}`).toBeGreaterThan(65);
+    expect(median(spans)).toBeLessThan(135);
+  }, 240000);
+
+  it('its rod is a thing to save for: an hour in at the least, and in every keeper\'s hand before the seventh hour is out', () => {
+    const waits: number[] = [];
+    for (const r of onward()) {
+      const rod = when(r, 'bought Whalebone Rod');
+      expect(rod, 'the Whalebone Rod bought').not.toBeNull();
+      waits.push(rod! - arrived(r)!);
+      expect(rod! - arrived(r)!, 'minutes in the Reach before the Whalebone Rod').toBeGreaterThan(40);
+      // She has seen the Fenwood Rod bend double on something first.
+      expect(when(r, 'first Thunderback'), 'the Thunderback landed').not.toBeNull();
+    }
+    expect(median(waits), `minutes in the Reach before its rod: ${waits.map((x) => x.toFixed(0)).join(', ')}`).toBeGreaterThan(55);
+    expect(median(waits)).toBeLessThan(115);
+  }, 240000);
+
+  it('pays a few times what the Fen does, most of it to the keeper\'s own rod: storms stop the pots and send the hands below', () => {
+    const fen = long();
+    for (const [i, r] of onward().entries()) {
+      const x = inReach(r);
+      expect(x.pot, `pots in the Reach: ${(100 * x.pot).toFixed(0)}%`).toBeGreaterThan(0.05);
+      expect(x.pot, `pots in the Reach: ${(100 * x.pot).toFixed(0)}%`).toBeLessThan(0.28);
+      expect(x.crew, `the crew in the Reach: ${(100 * x.crew).toFixed(0)}%`).toBeGreaterThan(0.03);
+      expect(x.crew, `the crew in the Reach: ${(100 * x.crew).toFixed(0)}%`).toBeLessThan(0.11);
+      expect(x.pot + x.crew, 'crew and pots together').toBeLessThan(0.33);
+      // Against the same keeper kept in the Fen for the same hours: more, and not a different game.
+      const a = Math.ceil(arrived(r)! * 60 / BUCKET_S), stayed = fen[i].buckets.slice(a).filter(Boolean).reduce((s, b) => s + b.coins, 0);
+      expect(x.coins / stayed, `seed ${SEEDS[i]}: the Reach against staying in the Fen`).toBeGreaterThan(0.9);
+      expect(x.coins / stayed).toBeLessThan(4);
+    }
+    const mean = (rs: SimReport[]) => rs.reduce((a, r) => a + r.totals.coins, 0) / rs.length;
+    expect(mean(onward()) / mean(fen), 'seven hours with the Reach against seven without').toBeGreaterThan(1.1);
+    expect(mean(onward()) / mean(fen)).toBeLessThan(2.2);
+  }, 240000);
+
+  it('lightning is fished for, the storm fish are landed, and the journal page can be filled', () => {
+    const rs = onward();
+    for (const r of rs) {
+      expect(r.totals.struck, 'fish out of struck water in seven hours').toBeGreaterThanOrEqual(8);
+      expect(when(r, 'first Squall Mackerel')).not.toBeNull();
+      // The Reach's relics: all four that lie in its water are rumoured by the last job but one.
+      expect(r.state.relics.length, 'relics in seven hours, with the Reach').toBeGreaterThanOrEqual(13);
+    }
+    // Old Greyback keeps noon on the Long Swell: most keepers who sit up for him have him, and the page with him.
+    const grey = rs.map((r) => when(r, 'first Old Greyback')).filter((m) => m !== null && m !== undefined);
+    expect(grey.length, `keepers of ${SEEDS.length} with Old Greyback: ${grey.map((m) => m!.toFixed(0)).join(', ')}`).toBeGreaterThanOrEqual(3);
+    expect(rs.filter((r) => when(r, 'journal page: The Saltbone') !== null).length).toBeGreaterThanOrEqual(3);
   }, 240000);
 });

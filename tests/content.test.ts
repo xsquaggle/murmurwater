@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateContent, zoneAt, REGIONS, REGIONS_BY_ID, ROADS, BAITS, FISH, fishHint, inHours, regionAt, regionOfNpc, regionOfPlace, roadLights, roadOpen } from '../src/core/content';
+import { validateContent, zoneAt, REGIONS, REGIONS_BY_ID, ROADS, BAITS, FISH, fishHint, WEATHER_WORDS, inHours, regionAt, regionOfNpc, regionOfPlace, roadLights, roadOpen } from '../src/core/content';
 import { Heightfield } from '../src/core/world';
 import { clearance, fogAt, murmurAt, nearestFloat, newBoat, stepBoat } from '../src/core/boat';
 import { CREW_BY_ID, FOG_ENOUGH } from '../src/core/crew';
@@ -27,8 +27,12 @@ describe('content', () => {
       expect(home.hint, `${home.id} has a hint`).toBeTruthy();
       const told = fishHint(f, f.requires ? [f.requires] : []);
       expect(told, f.id).toContain(home.hint!);
-      if (f.hours) expect(told, f.id).toMatch(f.hours[0] > f.hours[1] ? /after dark$/ : /between .+ and .+$/);
-      else expect(told, f.id).toBe(`Bites ${home.hint}`);
+      // A fish that keeps weather says so last ("…, in a storm"), after the place and the hours.
+      const weather = f.weather ? WEATHER_WORDS[f.weather] : '';
+      expect(told.endsWith(weather), `${f.id} names its weather`).toBe(true);
+      const plain = told.slice(0, told.length - weather.length);
+      if (f.hours) expect(plain, f.id).toMatch(f.hours[0] > f.hours[1] ? /after dark$/ : /between .+ and .+$/);
+      else expect(plain, f.id).toBe(`Bites ${home.hint}`);
       // One that waits on something keeps its own riddle until then, and the riddle gives the place away to nobody.
       if (f.requires) { expect(f.hint, `${f.id} has a riddle`).toBeTruthy(); expect(fishHint(f, [])).toBe(f.hint); }
     }

@@ -59,6 +59,9 @@ function trap(s: GameState, pot: PotState, hour: number, st: Stats): CatchItem |
   return { uid: s.nextUid++, fishId: f.id, weight, trait: null, value, perfect: false };
 }
 
+/** A storm is blowing over the pots of this region: they take nothing until it has passed (or its eye comes over). */
+export function potRolled(region: string, hour: number): boolean { return inWeather(region, hour, 'storm'); }
+
 /** Runs every pot's clock by `dt` seconds of play. Returns how many fish were trapped. */
 export function tickPots(s: GameState, dt: number, hour: number, st = stats(s)): number {
   if (!s.pots.placed.length) return 0;
@@ -66,6 +69,8 @@ export function tickPots(s: GameState, dt: number, hour: number, st = stats(s)):
   let n = 0;
   for (const pot of s.pots.placed) {
     if (pot.fish.length >= st.potCapacity) { pot.t = 0; continue; }
+    // In a storm the swell rolls a pot about and nothing goes into it; in the eye it fishes again.
+    if (potRolled(pot.region, hour)) continue;
     pot.t += dt;
     while (pot.t >= every && pot.fish.length < st.potCapacity) {
       pot.t -= every;

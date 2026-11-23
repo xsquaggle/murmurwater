@@ -77,7 +77,9 @@ export function spotting(s: GameState): number { return s.crew.hired.length ? ab
 /** Is it dark enough here for a hand who needs the dark? */
 export function darkEnough(env: Pick<CrewEnv, 'hour' | 'fog'>): boolean { return isNight(env.hour) || env.fog >= FOG_ENOUGH; }
 /** Would this hand fish here and now (basket room aside)? */
-export function working(def: CrewDef, env: CrewEnv): boolean { return env.still && (def.when !== 'dark' || darkEnough(env)); }
+export function working(def: CrewDef, env: CrewEnv): boolean { return env.still && !sheltering(env) && (def.when !== 'dark' || darkEnough(env)); }
+/** A storm is blowing over the boat: nobody aboard fishes in it but the keeper (they take it up again in the eye). */
+export function sheltering(env: Pick<CrewEnv, 'region' | 'hour'>): boolean { return inWeather(env.region, env.hour, 'storm'); }
 
 /** What a hand can bring up here: fish of the water under the boat that are in the journal, at this hour, up to their limit. */
 export function crewTable(s: GameState, def: CrewDef, env: Pick<CrewEnv, 'region' | 'zone' | 'hour'>): FishDef[] {

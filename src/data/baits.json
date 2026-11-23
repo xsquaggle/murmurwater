@@ -75,31 +75,28 @@
     },
     { "id": "lugworm",
       "name": "Lugworm",
-      "price": 55,
+      "price": 40,
       "from": "reached:saltbone-reach",
       "biteSpeed": 1.15,
       "affinity": {
-        "slate-pout": 1.5,
-        "kettle-cod": 1.7,
-        "lantern-ling": 1.5,
-        "thunderback": 2.2
+        "kettle-cod": 2.0,
+        "lantern-ling": 1.8,
+        "thunderback": 2.4
       },
-      "blurb": "Reach bottom feeders: pout, cod, the Thunderback",
+      "blurb": "Reach bottom feeders: cod, ling, the Thunderback",
       "desc": "Dug at low water from under the shingle. It leaves its own little coils behind, like rope put away."
     },
     { "id": "sand-eel",
       "name": "Sand Eel",
-      "price": 85,
+      "price": 60,
       "from": "reached:saltbone-reach",
       "biteSpeed": 1.2,
       "affinity": {
-        "bonefin-herring": 1.4,
-        "thrift-wrasse": 1.3,
-        "ribfish": 1.8,
-        "squall-mackerel": 2.0,
-        "old-greyback": 1.4
+        "ribfish": 2.0,
+        "squall-mackerel": 2.2,
+        "old-greyback": 1.6
       },
-      "blurb": "Reach fish that chase: ribfish, mackerel",
+      "blurb": "Reach fish that chase: ribfish, mackerel, Old Greyback",
       "desc": "A silver sliver that will not lie still. Everything on the Reach that hunts, hunts these."
     }
   ]

@@ -2,7 +2,7 @@
  * Typed access to the JSON content in src/data. All content is validated once at load;
  * tests call validateContent() so broken data fails CI, not the player.
  */
-import type { GroveDef } from './flora';
+import type { BonesDef, GroveDef, RibsDef } from './flora';
 import fishJson from '../data/fish.json';
 import rodsJson from '../data/rods.json';
 import baitsJson from '../data/baits.json';
@@ -84,6 +84,9 @@ export interface RegionContent extends RegionDef {
   props?: PropDef[];
   /** The storms of this water, each at its own hours (core/weather.ts). */
   storms?: StormDef[];
+  /** The great ribs standing in the sea, and the vertebrae lying about (see flora.ts). */
+  ribs?: RibsDef;
+  bones?: BonesDef[];
 }
 
 /**

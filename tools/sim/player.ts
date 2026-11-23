@@ -96,6 +96,11 @@ export interface SimOptions {
   noHunts?: boolean;
   /** Nothing on the bottom but fish (to measure what finds do to the rest). */
   noFinds?: boolean;
+  /**
+   * Jobs she is never offered (by id). `['hb-14-whale-road']` keeps her in the first two waters, as the game
+   * was before Saltbone Reach: the bands those hours were tuned to are still tested that way.
+   */
+  without?: string[];
 }
 export interface Mark { t: number; what: string }
 export interface Bucket { coins: number; pot: number; crew: number; catches: number; lost: number; /** Coins out of crates and chests. */ finds: number }
@@ -278,7 +283,7 @@ export class SimPlayer {
   /** Coins a second this place pays with this bait and today's gear, sell trips and bait included. Measured by fishing it. */
   rate(place: Place, baitId: string, casts = 36): number {
     const s = this.s, lvl = s.gear.rodLevels[s.gear.rod] ?? 0;
-    const key = [place.id, baitId, s.gear.rod, lvl >> 1, s.gear.lure, isNight(s.hour), s.gear.creel, s.boats.current, s.crew.hired.length, Object.keys(s.journal).length >> 1, s.flags.includes('hb-lighthouse-lit'), s.flags.includes('fen-heard'), s.flags.includes('reach-counted'), Math.floor(s.hour / 3), this.weatherKey(place.region), s.echoes ? JSON.stringify(s.echoUpgrades) : ''].join('|');
+    const key = [place.id, baitId, s.gear.rod, lvl >> 1, s.gear.lure, isNight(s.hour), s.gear.creel, s.boats.current, s.crew.hired.length, Object.keys(s.journal).length >> 1, s.flags.includes('hb-lighthouse-lit'), s.flags.includes('fen-heard'), Math.floor(s.hour / 3), s.echoes ? JSON.stringify(s.echoUpgrades) : '', ...this.reachKey(place.region)].join('|');
     const hit = this.rates.get(key);
     if (hit !== undefined && casts <= 36) return hit;
     const t = new SimPlayer({ ...this.opts, seed: hashString(key) % 100000 }, structuredClone(s));
@@ -296,6 +301,12 @@ export class SimPlayer {
     return r;
   }
 
+  /**
+   * What only the Reach adds to a rate's key: the count at the Tally Stone, and the weather. Nothing at all where
+   * neither applies, so that a rate measured in the older waters is the same measurement it always was (a trial
+   * is seeded by its key, and the bands in tests/sim.test.ts were set on those).
+   */
+  private reachKey(region: string): string[] { const w = this.weatherKey(region); return [...(this.s.flags.includes('reach-counted') && region === REACH ? ['counted'] : []), ...(w ? [w] : [])]; }
   /** The weather as far as a place's fishing goes: which storm, and whether it is in its eye. */
   private weatherKey(region: string): string { const w = weatherAt(region, this.s.hour); return w.storm ? `${w.storm.id}${w.eye > 0.5 ? '-eye' : ''}` : ''; }
 
@@ -337,7 +348,7 @@ export class SimPlayer {
     if (o) return fishDef(o.o.fish!);
     // With the story told as far as it goes she fills the journal: the commonest fish of these waters not yet in it that is about now.
     const s = this.s;
-    this.hunting = !this.trial && !QUESTS.some((q) => q.chain === 'main' && ['active', 'ready', 'available'].includes(questStatus(s, q.id)));
+    this.hunting = !this.trial && !QUESTS.some((q) => q.chain === 'main' && !this.opts.without?.includes(q.id) && ['active', 'ready', 'available'].includes(questStatus(s, q.id)));
     if (!this.hunting) return null;
     // She does not sit up for a fish that keeps hours while there is still a better rod to earn.
     const rod = this.wishlist().some((w) => w.goal);
@@ -416,7 +427,7 @@ export class SimPlayer {
       }
     }
     // Nothing in hand: somebody with a job to give.
-    for (const q of QUESTS) if (q.chain === 'main' && questStatus(s, q.id) === 'available') { const r = regionOfNpc(q.giver); if (r) return r; }
+    for (const q of QUESTS) if (q.chain === 'main' && !this.opts.without?.includes(q.id) && questStatus(s, q.id) === 'available') { const r = regionOfNpc(q.giver); if (r) return r; }
     return null;
   }
 
@@ -461,6 +472,7 @@ export class SimPlayer {
         const offer = npcOffer(s, n.id);
         // Somebody who signs on is not taken on by a keeper told to sail alone.
         if (this.opts.noCrew && offer.kind !== 'none' && offer.quest.rewards.crew) continue;
+        if (offer.kind !== 'none' && this.opts.without?.includes(offer.quest.id)) continue;
         if (offer.kind === 'turnIn') {
           // Somebody who waits out on the sea-road is sailed out to.
           if (this.region().hails?.some((h) => h.npc === n.id)) { this.sail(COSTS.hail / 2, null); this.sail(COSTS.hail / 2, this.mooringZone()); }

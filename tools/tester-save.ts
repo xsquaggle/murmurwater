@@ -33,7 +33,8 @@ const BOAT = 'puffin';
  * both hands are aboard: on the home dock as the dark comes down, when the first of the relics can be fished for.
  */
 function findsKeeper(): GameState {
-  const p = new SimPlayer({ seed: 1, skill: 0.7, minutes: 1200, noFinds: true });
+  // (She is not offered the whale-road: that is the next slice's, and waits for whoever takes this start up.)
+  const p = new SimPlayer({ seed: 1, skill: 0.7, minutes: 1200, noFinds: true, without: ['hb-14-whale-road'] });
   const there = () => p.s.boats.current === BOAT && isAboard(p.s, 'biscuit') && isAboard(p.s, 'hollis');
   for (let i = 0; i < 3000 && !there(); i++) p.outing();
   if (!there()) throw new Error('the keeper never had the Puffin afloat with both hands aboard');

@@ -500,7 +500,7 @@
         "reach-swell",
         "reach-jaw"
       ],
-      "baseValue": 150,
+      "baseValue": 120,
       "weight": [
         0.2,
         0.8
@@ -527,7 +527,7 @@
         "reach-tally",
         "reach-open"
       ],
-      "baseValue": 180,
+      "baseValue": 140,
       "weight": [
         0.4,
         1.6
@@ -554,7 +554,7 @@
         "reach-tally",
         "reach-kettles"
       ],
-      "baseValue": 210,
+      "baseValue": 160,
       "weight": [
         0.2,
         0.9
@@ -572,20 +572,20 @@
     {
       "id": "ribfish",
       "name": "Ribfish",
-      "rarity": "uncommon",
+      "rarity": "rare",
       "region": "saltbone-reach",
       "zones": [
         "reach-ribs",
         "reach-jaw"
       ],
-      "baseValue": 650,
+      "baseValue": 1500,
       "weight": [
         2.0,
         7.0
       ],
       "fight": {
-        "strength": 2.6,
-        "stamina": 2.0,
+        "strength": 3.0,
+        "stamina": 2.4,
         "temper": 1.0,
         "thrash": 0.15
       },
@@ -604,7 +604,7 @@
         "reach-open",
         "reach-landing"
       ],
-      "baseValue": 740,
+      "baseValue": 900,
       "weight": [
         2.0,
         9.0
