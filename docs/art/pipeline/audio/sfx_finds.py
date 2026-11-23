@@ -1,5 +1,7 @@
 """sfx_finds.py : the sounds of "things fished up" (v0.6.0): the float drawn under by a dead weight, the thing on the line knocking on
-the sea bed, catching fast and coming free, and a heavy box swung up out of the sea.
+the sea bed, catching fast and coming free, a heavy box swung up out of the sea, a crate prised open, a relic in the hands, a rumour,
+and a Moonpearl set into its hollow and lifted out again. The first six are layered recordings; the last four are synthesised glass
+(glass() below, the struck note of sfx_fen.py with a pitch that can fall), two of them with a recorded page or tick.
 Called from sfx_manifest.build(); the recordings it names are in PACKS there.
 
 Every sound is a list of parts, as in sfx_crew.py: the dicts sfx_build.part() takes, with `at` (where the part starts, s) and `lv`
@@ -10,10 +12,14 @@ Every sound is a list of parts, as in sfx_crew.py: the dicts sfx_build.part() ta
 resonance, if not 1 and 0.5): what a struck plank goes on doing."""
 import numpy as np
 from scipy import signal, ndimage
-from sfx_crew import SR, WS
+from sfx_crew import SR, WS, ease, peak, room, far
 
 RD = 'oga/40-cc0-water-splash-slime-sfx/water-splash-slime-sfx.x/%s.ogg'
 BM = 'oga/bubble-sound-effects/bubbles-%s.wav'
+WI = 'oga/35-wooden-crackshitsdestructions/independent_nu_ljudbank-wood_crack_hit_destruction.x/wood_impact/%s.mp3.flac'
+GLASS = ((1, 1.0, 1.0), (2.32, 0.22, 0.44), (4.25, 0.08, 0.22), (6.63, 0.03, 0.12))      # the partials of a struck glass, and how soon each dies beside the first (as in sfx_fen.py)
+A5, E6, A6, B6 = 880.0, 1318.51, 1760.0, 1975.53
+D3_FLAT = 146.83 * 2 ** (-35 / 1200)      # the bell's note, 35 cents under: the fifth below the glass, and not quite
 MORE = ('at', 'lv', 'glide', 'die', 'ring')
 
 
@@ -32,10 +38,28 @@ def die(x, t0, d):
     t = np.arange(len(x)) / SR; return x * np.exp(-np.clip(t - t0, 0, None) / d)
 
 
+def glass(f, seconds, attack=0.004, decay=0.8, beat=0.9, fall=0.0, over=None):
+    """One struck note of glass: each partial a pair a fraction of a hertz apart, so it shimmers as it rings down.
+    With `fall`, the pitch sinks by that many semitones over `over` seconds."""
+    n = int(seconds * SR); t = np.arange(n) / SR; y = np.zeros(n); ph = 2 * np.pi * np.cumsum(f * 2 ** (-fall / 12 * ease(t / (over or seconds)))) / SR
+    for k, (m, g, d) in enumerate(GLASS):
+        e = np.exp(-t / (decay * d)); bt = np.pi * beat * (1 + 0.6 * k) * t
+        y += g * e * (0.78 * np.sin(m * ph - bt) + 0.22 * np.sin(m * ph + bt + 4.2 + k))
+    return y * (1 - np.exp(-t / attack))
+
+
+def tick(seed, ms=4):
+    """A few milliseconds of bright noise: something hard touching something hard."""
+    k = int(ms / 1000 * SR); x = np.random.default_rng(seed).standard_normal(8 * k); X = np.fft.rfft(x); X[np.fft.rfftfreq(len(x), 1 / SR) < 3500] = 0
+    return peak(np.fft.irfft(X, len(x))[:k] * np.hanning(k))
+
+
 def build(B, add, label, M):
     """M is what the manifest shares: its source paths (M['DROPS'] ...) and the single drops M['DRIP']."""
     assert B.SR == SR
-    KR, WM, DROPS, DRIP, TREE = (M[k] for k in ('KR', 'WM', 'DROPS', 'DRIP', 'TREE'))
+    KR, KU, WM, DROPS, DRIP, TREE, PAPER = (M[k] for k in ('KR', 'KU', 'WM', 'DROPS', 'DRIP', 'TREE', 'PAPER'))
+    synth = lambda what: [{'kind': 'synth', 'what': what}]
+    level = lambda x, lv: x * 10 ** ((lv - 20 - B.loud100(x)) / 20)
 
     def tame(x, crest):
         """A limiter: nothing in x stands more than `crest` dB over its loudest tenth of a second (the gain dips for a few ms round a spike)."""
@@ -115,3 +139,54 @@ def build(B, add, label, M):
     for i, parts in enumerate(U, 1):
         add(f'find-surface_{i}', make=(lambda parts=parts: lay(parts, 1.58, 15)), sources=log(parts), trim=False, fo=0.12,
             how='a splash played a little slower, with itself again an octave down and dulled under it for the weight; a second of running water that starts 0.2 s in and dies away; then three single drops, each quieter than the last; cut at 1.58 s')
+
+    # ---- crate-open: a wet wooden crate prised open. The lid levered, a nail squealing out, a plank giving, what is inside shifting ----
+    C = ([dict(src=KR % 'creak1', a=0.14, b=0.5), dict(src=WI % 'crack01', a=0.15, b=0.75, fo=0.15, at=0.28, lv=1),
+          dict(src=WM % 'wood_misc_09', speed=0.9, lp=4000, at=0.56, lv=-8), drip(1, 0.76, 1.0, -12)],
+         [dict(src=KR % 'creak3', speed=0.9), dict(src=WI % 'crack04', a=0.15, b=0.5, fo=0.1, at=0.3, lv=0),
+          dict(src=WM % 'wood_misc_09', speed=1.12, lp=4000, at=0.56, lv=-6), drip(3, 0.78, 1.1, -12)])
+    for i, parts in enumerate(C, 1):
+        add(f'crate-open_{i}', make=(lambda parts=parts: lay(parts, 0.95, 15)), sources=log(parts), trim=False, fo=0.12,
+            how='a short high creak for the lid levered up and a nail squealing, a crack of wood as it gives 0.3 s in, a wooden rattle after it for what is inside shifting, and one quiet drip; no coins; cut at 0.95 s')
+
+    # ---- relic-found: a relic in the hands. One struck glass with a long tail, and from far down one low note that is not quite in tune with it ----
+    def relic():
+        T = 3.3; n = int(T * SR); t = np.arange(n) / SR; r = np.random.default_rng(61)
+        g = glass(A5, T, attack=0.003, decay=1.25, beat=0.9); k = tick(62); g[:len(k)] += 0.3 * k
+        g = room(peak(g), decay=0.45, wet=0.3, lp=4000, seed=63)[:n]
+        swell = ease((t - 0.45) / 0.7) * (1 - ease((t - 1.5) / 1.7)) ** 1.3                         # the answer comes up after the strike and is gone by the end
+        fr = np.fft.rfftfreq(n, 1 / SR); drift = lambda: peak(np.fft.irfft(np.fft.rfft(r.standard_normal(n)) * (fr < 1.5), n))      # a slow wander, so the answer is not a test tone
+        ph = [2 * np.pi * np.cumsum((D3_FLAT + d) * 2 ** (5 * drift() / 1200)) / SR + r.uniform(0, 6.28) for d in (-0.35, 0.35)]
+        low = sum(a * (np.sin(h * ph[0]) + np.sin(h * ph[1])) for h, a in ((1, 1.0), (2, 0.35), (3, 0.12)))
+        low = room(peak(far(low * swell, 500)), decay=0.5, wet=0.5, lp=900, seed=64)[:n]
+        return level(g, 0) + level(low, -4)
+    add('relic-found_1', make=relic, trim=False, fo=0.5, level=-3,
+        sources=synth('one struck note of glass (A5: a tone with the upper partials of glass, each a pair a hertz or two apart, a tick at the strike and a tail of room) that rings for three seconds, and from 0.45 s a low hum 35 cents under D3 (two voices 0.7 Hz apart, each wandering a few cents, with a little second and third harmonic, dulled and in a longer room) that swells for a second and fades with the glass'),
+        how='synthesised in sfx_finds.py; the glass is on A and the answer is the bell\'s D, the fifth below, 35 cents flat')
+
+    # ---- rumour: word of a thing still in the water. A page turned, and one soft high note after it ----
+    def rumour():
+        page = tame(B.part(dict(src=KR % 'bookFlip1', a=0.3, fo=0.08)), 12); o = int(0.3 * SR)
+        note = room(far(glass(E6, 0.7, attack=0.03, decay=0.32, beat=0.7), 2400), decay=0.25, wet=0.4, lp=2400, seed=65)[:int(0.72 * SR)]
+        y = np.zeros(o + len(note)); y[:len(page)] += level(page, 0); y[o:] += level(note, -3)
+        return y
+    add('rumour_1', make=rumour, trim=False, fo=0.3, level=-6,
+        sources=[dict(label(KR % 'bookFlip1'), cut=[0.3, 0.77])] + synth('one soft far note of glass (E6) with a slow start, 0.3 s after the start, 3 dB under the page, with a short tail of room'),
+        how='the page of page-turn_1, then a synthesised note as the page settles; levelled 6 dB under the other sounds so that it does not startle')
+
+    # ---- pearl-set, pearl-lift: a Moonpearl set into a hollow in wood, and lifted out again ----
+    def pearl(f, kind, seed):
+        ring = glass(f, 0.68, attack=0.002, decay=0.26, beat=1.3); ring = room(peak(ring), decay=0.16, wet=0.22, lp=5000, seed=seed)[:int(0.7 * SR)]
+        tk = B.part(dict(src=KU % kind)); o = int(0.012 * SR); y = np.zeros(o + len(ring)); y[:len(tk)] += level(tk, -3); y[o:] += level(ring, 0)
+        return y
+    for i, (f, nm, kind) in enumerate(((A6, 'A6', 'tick_002'), (B6, 'B6', 'tick_001')), 1):
+        add(f'pearl-set_{i}', make=(lambda f=f, kind=kind, i=i: pearl(f, kind, 66 + i)), trim=False, fo=0.25, level=-4,
+            sources=[dict(label(KU % kind))] + synth(f'one clear note of struck glass ({nm}), 12 ms after the tick, with a short tail of room'),
+            how='a recorded tick for the pearl touching the wood, then a synthesised ring; levelled 4 dB under the other sounds, since a clear note near 2 kHz is heard as louder than it measures')
+
+    def lifted():
+        ring = glass(A6, 0.42, attack=0.004, decay=0.15, beat=1.3, fall=3, over=0.3); k = tick(69, 3); ring[:len(k)] += 0.12 * k
+        return room(peak(ring), decay=0.14, wet=0.2, lp=5000, seed=70)[:int(0.45 * SR)]
+    add('pearl-lift_1', make=lifted, trim=False, fo=0.2, level=-4,
+        sources=synth('the note of pearl-set_1 (A6), shorter, its pitch sinking three semitones in 0.3 s, with a faint tick at the start'),
+        how='synthesised in sfx_finds.py; levelled 4 dB under the other sounds like pearl-set')

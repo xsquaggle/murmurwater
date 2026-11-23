@@ -1,7 +1,7 @@
 {
  "bell-toll_1.ogg": {
-  "rank": 1,
-  "top": "bell-toll",
+  "rank": 2,
+  "top": "relic-found",
   "tags": [
    [
     "Clang",
@@ -22,7 +22,7 @@
   ]
  },
  "bite-dunk_1.ogg": {
-  "rank": 10,
+  "rank": 11,
   "top": "find-surface",
   "tags": [
    [
@@ -374,7 +374,7 @@
   ]
  },
  "cat-catch_1.ogg": {
-  "rank": 14,
+  "rank": 15,
   "top": "pot-set",
   "tags": [
    [
@@ -725,8 +725,52 @@
    ]
   ]
  },
+ "crate-open_1.ogg": {
+  "rank": 1,
+  "top": "crate-open",
+  "tags": [
+   [
+    "Crack",
+    0.15
+   ],
+   [
+    "Breaking",
+    0.07
+   ],
+   [
+    "Crackle",
+    0.04
+   ],
+   [
+    "Scrape",
+    0.03
+   ]
+  ]
+ },
+ "crate-open_2.ogg": {
+  "rank": 1,
+  "top": "crate-open",
+  "tags": [
+   [
+    "Crack",
+    0.42
+   ],
+   [
+    "Sound effect",
+    0.12
+   ],
+   [
+    "Breaking",
+    0.1
+   ],
+   [
+    "Smash, crash",
+    0.05
+   ]
+  ]
+ },
  "crew-basket-full_1.ogg": {
-  "rank": 3,
+  "rank": 5,
   "top": "chest-open",
   "tags": [
    [
@@ -770,8 +814,8 @@
   ]
  },
  "dock-creak_2.ogg": {
-  "rank": 1,
-  "top": "dock-creak",
+  "rank": 2,
+  "top": "crate-open",
   "tags": [
    [
     "Knock",
@@ -792,8 +836,8 @@
   ]
  },
  "dock-creak_3.ogg": {
-  "rank": 2,
-  "top": "boat-board",
+  "rank": 3,
+  "top": "crate-open",
   "tags": [
    [
     "Knock",
@@ -836,7 +880,7 @@
   ]
  },
  "echo-buy_1.ogg": {
-  "rank": 6,
+  "rank": 8,
   "top": "ui-open",
   "tags": [
    [
@@ -880,8 +924,8 @@
   ]
  },
  "fen-night_1.ogg": {
-  "rank": 1,
-  "top": "fen-night",
+  "rank": 2,
+  "top": "fen-day",
   "tags": [
    [
     "Insect",
@@ -1100,8 +1144,8 @@
   ]
  },
  "fog-lamp-light_1.ogg": {
-  "rank": 8,
-  "top": "ui-open",
+  "rank": 12,
+  "top": "pearl-lift",
   "tags": [
    [
     "Ding",
@@ -1320,8 +1364,8 @@
   ]
  },
  "haul-snag_1.ogg": {
-  "rank": 5,
-  "top": "cast-swish",
+  "rank": 6,
+  "top": "pearl-lift",
   "tags": [
    [
     "Sound effect",
@@ -1738,7 +1782,7 @@
   ]
  },
  "line-snap_1.ogg": {
-  "rank": 15,
+  "rank": 17,
   "top": "cast-swish",
   "tags": [
    [
@@ -1760,7 +1804,7 @@
   ]
  },
  "line-snap_2.ogg": {
-  "rank": 37,
+  "rank": 39,
   "top": "cast-swish",
   "tags": [
    [
@@ -1782,7 +1826,7 @@
   ]
  },
  "line-snap_3.ogg": {
-  "rank": 38,
+  "rank": 42,
   "top": "cast-swish",
   "tags": [
    [
@@ -2089,6 +2133,72 @@
    ]
   ]
  },
+ "pearl-lift_1.ogg": {
+  "rank": 2,
+  "top": "ui-open",
+  "tags": [
+   [
+    "Sound effect",
+    0.04
+   ],
+   [
+    "Whistling",
+    0.04
+   ],
+   [
+    "Owl",
+    0.02
+   ],
+   [
+    "Whistle",
+    0.02
+   ]
+  ]
+ },
+ "pearl-set_1.ogg": {
+  "rank": 8,
+  "top": "relic-found",
+  "tags": [
+   [
+    "Ding",
+    0.81
+   ],
+   [
+    "Clang",
+    0.21
+   ],
+   [
+    "Ping",
+    0.02
+   ],
+   [
+    "Sound effect",
+    0.02
+   ]
+  ]
+ },
+ "pearl-set_2.ogg": {
+  "rank": 6,
+  "top": "relic-found",
+  "tags": [
+   [
+    "Ding",
+    0.76
+   ],
+   [
+    "Clang",
+    0.17
+   ],
+   [
+    "Sound effect",
+    0.02
+   ],
+   [
+    "Ping",
+    0.01
+   ]
+  ]
+ },
  "pot-haul_1.ogg": {
   "rank": 2,
   "top": "find-surface",
@@ -2375,6 +2485,28 @@
    ]
   ]
  },
+ "relic-found_1.ogg": {
+  "rank": 1,
+  "top": "relic-found",
+  "tags": [
+   [
+    "Ding",
+    0.83
+   ],
+   [
+    "Clang",
+    0.36
+   ],
+   [
+    "Ding-dong",
+    0.02
+   ],
+   [
+    "Sound effect",
+    0.02
+   ]
+  ]
+ },
  "rope-creak_1.ogg": {
   "rank": 2,
   "top": "lamp-ignite",
@@ -2438,6 +2570,28 @@
    [
     "Bird",
     0.02
+   ]
+  ]
+ },
+ "rumour_1.ogg": {
+  "rank": 6,
+  "top": "chart-open",
+  "tags": [
+   [
+    "Ding",
+    0.15
+   ],
+   [
+    "Coin (dropping)",
+    0.05
+   ],
+   [
+    "Music",
+    0.04
+   ],
+   [
+    "Speech",
+    0.03
    ]
   ]
  },
@@ -2508,8 +2662,8 @@
   ]
  },
  "sea-road-chime_1.ogg": {
-  "rank": 6,
-  "top": "ui-close",
+  "rank": 8,
+  "top": "relic-found",
   "tags": [
    [
     "Ding",
@@ -2530,8 +2684,8 @@
   ]
  },
  "sea-road-chime_2.ogg": {
-  "rank": 6,
-  "top": "ui-close",
+  "rank": 8,
+  "top": "relic-found",
   "tags": [
    [
     "Ding",
@@ -2552,8 +2706,8 @@
   ]
  },
  "sea-road-chime_3.ogg": {
-  "rank": 5,
-  "top": "ui-close",
+  "rank": 8,
+  "top": "relic-found",
   "tags": [
    [
     "Ding",
