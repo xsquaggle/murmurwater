@@ -31,8 +31,10 @@ const SFX = {
   'cat-catch': [2, 1], 'cat-eat': [1, 1], 'hollis-catch': [2, 0.75], 'hollis-thin': [1, 0.8], 'hollis-thick': [1, 0.8],
   'crew-basket-full': [1, 0.8], 'boatyard': [1, 0.9], 'sloop-sail': [1, 0.75],
   // Things fished up, the Keeper's Shelf and Moonpearls
-  'find-drag': [2, 0.85], 'haul-knock': [3, 0.9], 'haul-snag': [2, 0.9], 'haul-free': [2, 0.7], 'find-surface': [2, 0.85],
-  'crate-open': [2, 0.8], 'relic-found': [1, 0.9], 'rumour': [1, 0.7], 'pearl-set': [2, 0.8], 'pearl-lift': [1, 0.7],
+  // The knock is the cue to let go of the reel: full gain. The rumour and the pearls were recorded 4 to 6 dB under
+  // the rest on purpose, so they are not turned down a second time here.
+  'find-drag': [2, 0.85], 'haul-knock': [3, 1], 'haul-snag': [2, 0.9], 'haul-free': [2, 0.7], 'find-surface': [2, 0.85],
+  'crate-open': [2, 0.8], 'relic-found': [1, 0.9], 'rumour': [1, 0.9], 'pearl-set': [2, 0.9], 'pearl-lift': [1, 0.85],
 } as const satisfies Record<string, readonly [number, number]>;
 export type Sfx = keyof typeof SFX;
 /** Seamless loops (first variation is used). */
@@ -44,8 +46,7 @@ type Loop = (typeof LOOPS)[number];
  * after they land it is used, with nothing to change here.
  */
 const PENDING: ReadonlySet<string> = new Set<string>([
-  // docs/briefs/finds-assets.md: the five heard on every haul are in; these five are still to come
-  'crate-open', 'relic-found', 'rumour', 'pearl-set', 'pearl-lift',
+  // Nothing is owed: the ten sounds of docs/briefs/finds-assets.md are all in.
 ]);
 const BUILT_IN: ReadonlySet<string> = new Set(present);
 /** Is this sound to be loaded? Everything is, but a pending one whose first file is not in the build. */
@@ -372,9 +373,9 @@ export class AudioEngine {
   /** A relic in the hands: a glass note, and under it something that is not quite in tune. */
   relicFound() {
     if (this.sfx('relic-found')) return;
-    [622.25, 932.33, 1244.5, 1864.66].forEach((f, i) => this.tone(f, 1.1, 0.1, 'sine', i * 0.13));
-    for (let i = 0; i < 3; i++) this.tone(311 * (1 + i * 0.5), 1.6, 0.07, 'sine', 0.35 + i * 0.12);
-    this.tone(2489, 0.5, 0.04, 'triangle', 0.5);
+    // Only if the recording will not play: one struck note and a low one a little under its fifth. Not a tune.
+    this.tone(880, 2.2, 0.1, 'sine'); this.tone(1760, 0.6, 0.03, 'triangle');
+    this.tone(144, 1.8, 0.07, 'sine', 0.45);
   }
   /** Something is said of a thing still in the water. */
   rumour() {
