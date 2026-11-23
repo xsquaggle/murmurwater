@@ -1132,6 +1132,612 @@
           "until": "puffin-afloat"
         }
       ]
+    },
+    {
+      "id": "saltbone-reach",
+      "name": "Saltbone Reach",
+      "center": [
+        1141,
+        -829
+      ],
+      "radius": 700,
+      "seaDepth": 30,
+      "grade": "slate",
+      "islands": [
+        {
+          "id": "tryworks-landing",
+          "name": "Tryworks Landing",
+          "x": 874,
+          "z": -635,
+          "rx": 66,
+          "rz": 46,
+          "rot": -0.5,
+          "height": 8,
+          "seed": 41,
+          "profile": "hill"
+        },
+        {
+          "id": "ribs-bank-w",
+          "name": "ribs-bank-w",
+          "x": 1113.9,
+          "z": -864.7,
+          "rx": 150,
+          "rz": 8,
+          "rot": 1.249,
+          "height": 0.5,
+          "seed": 42,
+          "profile": "bar",
+          "place": "the-ribs"
+        },
+        {
+          "id": "ribs-bank-e",
+          "name": "ribs-bank-e",
+          "x": 1148.1,
+          "z": -853.3,
+          "rx": 150,
+          "rz": 8,
+          "rot": 1.249,
+          "height": 0.5,
+          "seed": 43,
+          "profile": "bar",
+          "place": "the-ribs"
+        },
+        {
+          "id": "jaw-rock",
+          "name": "The Jaw",
+          "x": 1211,
+          "z": -1077,
+          "rx": 22,
+          "rz": 15,
+          "rot": 0.2,
+          "height": 4.5,
+          "seed": 44,
+          "profile": "hill",
+          "place": "the-jaw"
+        },
+        {
+          "id": "the-anvil",
+          "name": "The Anvil",
+          "x": 1441,
+          "z": -869,
+          "rx": 30,
+          "rz": 22,
+          "rot": 0.3,
+          "height": 15,
+          "seed": 45,
+          "profile": "stack"
+        },
+        {
+          "id": "anvil-chip-1",
+          "name": "anvil-chip-1",
+          "x": 1403,
+          "z": -909,
+          "rx": 9,
+          "rz": 7,
+          "rot": 1,
+          "height": 6,
+          "seed": 46,
+          "profile": "stack",
+          "place": "the-anvil"
+        },
+        {
+          "id": "anvil-chip-2",
+          "name": "anvil-chip-2",
+          "x": 1482,
+          "z": -838,
+          "rx": 11,
+          "rz": 8,
+          "rot": 0.4,
+          "height": 8,
+          "seed": 47,
+          "profile": "stack",
+          "place": "the-anvil"
+        },
+        {
+          "id": "kettle-bank",
+          "name": "The Kettles",
+          "x": 1311,
+          "z": -579,
+          "rx": 80,
+          "rz": 26,
+          "rot": 0.3,
+          "height": 1,
+          "seed": 48,
+          "profile": "bar",
+          "place": "the-kettles"
+        },
+        {
+          "id": "tally-stone",
+          "name": "The Tally Stone",
+          "x": 1471,
+          "z": -1159,
+          "rx": 28,
+          "rz": 22,
+          "rot": -0.3,
+          "height": 6,
+          "seed": 49,
+          "profile": "hill"
+        },
+        {
+          "id": "reach-stack-1",
+          "name": "reach-stack-1",
+          "x": 1012,
+          "z": -702,
+          "rx": 11,
+          "rz": 8,
+          "rot": 0.7,
+          "height": 9,
+          "seed": 50,
+          "profile": "stack",
+          "place": "tryworks-landing"
+        },
+        {
+          "id": "reach-stack-2",
+          "name": "reach-stack-2",
+          "x": 1262,
+          "z": -722,
+          "rx": 9,
+          "rz": 7,
+          "rot": 0.1,
+          "height": 7,
+          "seed": 51,
+          "profile": "stack",
+          "place": "the-kettles"
+        },
+        {
+          "id": "reach-stack-3",
+          "name": "reach-stack-3",
+          "x": 1018,
+          "z": -962,
+          "rx": 10,
+          "rz": 8,
+          "rot": 1.4,
+          "height": 10,
+          "seed": 52,
+          "profile": "stack",
+          "place": "the-ribs"
+        }
+      ],
+      "carves": [
+        {
+          "x": 1351.1,
+          "z": -591.4,
+          "r": 15,
+          "depth": 22
+        },
+        {
+          "x": 1311,
+          "z": -579,
+          "r": 16,
+          "depth": 26
+        },
+        {
+          "x": 1270.9,
+          "z": -566.6,
+          "r": 14,
+          "depth": 20
+        },
+        {
+          "x": 891,
+          "z": -1059,
+          "r": 150,
+          "depth": 55
+        }
+      ],
+      "landmarks": {
+        "dock": {
+          "x": 831.1,
+          "z": -604.5,
+          "rot": -0.9423,
+          "length": 16
+        },
+        "spawn": {
+          "x": 824.6,
+          "z": -599.8,
+          "facing": -0.9423
+        }
+      },
+      "shapes": [
+        {
+          "type": "flat",
+          "x": 845.7,
+          "z": -615.1,
+          "r": 16,
+          "h": 1.55,
+          "soft": 6,
+          "surface": "cobble"
+        },
+        {
+          "type": "flat",
+          "x": 1207,
+          "z": -1062,
+          "r": 14,
+          "h": -1.8,
+          "soft": 12,
+          "bed": true
+        },
+        {
+          "type": "flat",
+          "x": 1467,
+          "z": -1155,
+          "r": 4.5,
+          "h": 6.6,
+          "soft": 4,
+          "surface": "dirt"
+        }
+      ],
+      "zones": [
+        {
+          "id": "reach-landing",
+          "name": "Tryworks Landing",
+          "x": 874,
+          "z": -635,
+          "r": 95,
+          "priority": 3,
+          "hint": "off Tryworks Landing"
+        },
+        {
+          "id": "reach-ribs",
+          "name": "The Ribs",
+          "x": 1131,
+          "z": -859,
+          "r": 115,
+          "priority": 3,
+          "hint": "under the Ribs"
+        },
+        {
+          "id": "reach-jaw",
+          "name": "The Jaw",
+          "x": 1211,
+          "z": -1059,
+          "r": 80,
+          "priority": 3,
+          "hint": "by the Jaw"
+        },
+        {
+          "id": "reach-anvil",
+          "name": "The Anvil",
+          "x": 1441,
+          "z": -869,
+          "r": 85,
+          "priority": 3,
+          "hint": "off the Anvil"
+        },
+        {
+          "id": "reach-kettles",
+          "name": "The Kettles",
+          "x": 1311,
+          "z": -579,
+          "r": 85,
+          "priority": 3,
+          "hint": "in the Kettles"
+        },
+        {
+          "id": "reach-swell",
+          "name": "The Long Swell",
+          "x": 891,
+          "z": -1059,
+          "r": 150,
+          "priority": 2,
+          "hint": "out on the Long Swell, in the north-west"
+        },
+        {
+          "id": "reach-tally",
+          "name": "The Tally Stone",
+          "x": 1471,
+          "z": -1159,
+          "r": 85,
+          "priority": 3,
+          "hint": "by the Tally Stone"
+        },
+        {
+          "id": "reach-open",
+          "name": "Saltbone Reach",
+          "x": 1141,
+          "z": -829,
+          "r": 700,
+          "priority": 0,
+          "hint": "in the open Reach"
+        }
+      ],
+      "places": [
+        {
+          "id": "packet-box",
+          "name": "Mara's packet box",
+          "x": 833.4,
+          "z": -609.9,
+          "r": 2.4
+        },
+        {
+          "id": "notice-board",
+          "name": "Notice board",
+          "x": 838.6,
+          "z": -604.4,
+          "r": 2.2
+        },
+        {
+          "id": "rib-mark",
+          "name": "The mark on the ninth rib",
+          "x": 1174,
+          "z": -937.4,
+          "r": 9,
+          "prompt": "Read the plate on the rib",
+          "flag": "rib-read",
+          "fromBoat": true,
+          "text": [
+            "A brass plate let into the bone at the height of your head. Somebody has kept it bright.",
+            "NINE. And under it, cut smaller with a knife: in for nine, out for nine. Count it yourself. I.F.",
+            "The swell lifts the boat while you read. You find you have been counting."
+          ]
+        },
+        {
+          "id": "tally-stone",
+          "name": "The Tally Stone",
+          "x": 1466.5,
+          "z": -1154.5,
+          "r": 2.8,
+          "prompt": "Count with the swell",
+          "flag": "reach-counted",
+          "dark": true,
+          "text": [
+            "You put your hand flat on the slate, on the strokes, and shut your eyes.",
+            "The swell comes in. One, two, three. Nine. It goes out. Nine. The stone is warm on the side away from the sun.",
+            "Somewhere under the count there is another one, slower, and it has just missed a beat. As if it had noticed yours."
+          ]
+        }
+      ],
+      "npcSpots": [
+        {
+          "npc": "oake",
+          "island": "tryworks-landing",
+          "x": 840.3,
+          "z": -610.6,
+          "yaw": -0.94
+        }
+      ],
+      "critters": [],
+      "edgeHint": "The Murmur Fog closes in. The whale-road is the only way through it.",
+      "tagline": "Grey water, and the bones of something",
+      "chart": [
+        {
+          "id": "tryworks-landing",
+          "name": "Tryworks Landing",
+          "kind": "island",
+          "x": 874,
+          "z": -635,
+          "r": 170,
+          "coins": 600,
+          "note": "Where the whale-road comes in. A stone quay, a house with a boat for a roof, and two iron pots gone cold."
+        },
+        {
+          "id": "the-ribs",
+          "name": "The Ribs",
+          "kind": "rocks",
+          "x": 1131,
+          "z": -859,
+          "r": 130,
+          "coins": 900,
+          "note": "Nine pairs, standing in the sea. You can sail up the middle. Nobody says what they are the ribs of."
+        },
+        {
+          "id": "the-jaw",
+          "name": "The Jaw",
+          "kind": "rocks",
+          "x": 1211,
+          "z": -1059,
+          "r": 95,
+          "coins": 1100,
+          "note": "A skull on a reef with a cove in its mouth. The gulls will not nest in it."
+        },
+        {
+          "id": "the-anvil",
+          "name": "The Anvil",
+          "kind": "rocks",
+          "x": 1441,
+          "z": -869,
+          "r": 100,
+          "coins": 1300,
+          "note": "A stack with a flat top. Every storm hits it at least once, as if to make sure."
+        },
+        {
+          "id": "the-kettles",
+          "name": "The Kettles",
+          "kind": "bar",
+          "x": 1311,
+          "z": -579,
+          "r": 100,
+          "coins": 1300,
+          "note": "Three round holes in a shingle bank. The swell goes into them and booms."
+        },
+        {
+          "id": "tally-stone",
+          "name": "The Tally Stone",
+          "kind": "island",
+          "x": 1471,
+          "z": -1159,
+          "r": 95,
+          "coins": 2000,
+          "note": "A slab on the far side, cut with strokes in fives. Somebody stood here a long time, counting."
+        }
+      ],
+      "moorings": [
+        {
+          "id": "tryworks-quay",
+          "name": "Tryworks Landing quay",
+          "place": "tryworks-landing",
+          "x": 812,
+          "z": -597.6,
+          "heading": -0.9423
+        }
+      ],
+      "chests": [
+        {
+          "id": "jaw-chest",
+          "x": 1211,
+          "z": -1077,
+          "yaw": 0.6,
+          "coins": 2500,
+          "items": {
+            "sand-eel": 12
+          },
+          "text": "A sea chest jammed under the lip of the rock, out of the weather. The lid is scratched all over with gull tracks, or with writing."
+        },
+        {
+          "id": "kettle-chest",
+          "x": 1331,
+          "z": -585.2,
+          "yaw": 1.9,
+          "coins": 3500,
+          "items": {
+            "lugworm": 14
+          },
+          "text": "A chest half buried in the shingle of the bank. Every stone on top of it is the same size."
+        },
+        {
+          "id": "tally-chest",
+          "x": 1478,
+          "z": -1166,
+          "yaw": 2.6,
+          "coins": 5000,
+          "items": {
+            "glowgrub": 12
+          },
+          "text": "A chest behind the cairn, packed with oilcloth. Whoever counted here meant to come back for it."
+        }
+      ],
+      "ribs": {
+        "a": [
+          1101,
+          -769
+        ],
+        "b": [
+          1161,
+          -949
+        ],
+        "pairs": 9,
+        "half": 13.5,
+        "broken": [
+          2,
+          6,
+          14
+        ]
+      },
+      "props": [
+        {
+          "model": "packetBox",
+          "x": 833.4,
+          "z": -609.9,
+          "yaw": -0.94,
+          "block": 0.75
+        },
+        {
+          "model": "noticeBoard",
+          "x": 838.6,
+          "z": -604.4,
+          "yaw": -0.5,
+          "block": 0.7
+        },
+        {
+          "model": "whaleboatHouse",
+          "x": 852.1,
+          "z": -619.8,
+          "yaw": -0.9423,
+          "block": 3.4
+        },
+        {
+          "model": "tryworks",
+          "x": 851.9,
+          "z": -607.3,
+          "yaw": 0.5,
+          "block": 1.9
+        },
+        {
+          "model": "stormMast",
+          "x": 831.5,
+          "z": -615.9,
+          "yaw": -0.9423,
+          "block": 0.35
+        },
+        {
+          "model": "harpoonRack",
+          "x": 843.1,
+          "z": -623.7,
+          "yaw": 2.2,
+          "block": 0.9
+        },
+        {
+          "model": "barrel",
+          "x": 852.2,
+          "z": -613.7,
+          "yaw": 0.4,
+          "block": 0.5
+        },
+        {
+          "model": "crate",
+          "x": 838.7,
+          "z": -600.8,
+          "yaw": -0.75,
+          "block": 0.6
+        },
+        {
+          "model": "tallyStone",
+          "x": 1467.8,
+          "z": -1156,
+          "yaw": 0.9,
+          "block": 1.1
+        },
+        {
+          "model": "theJaw",
+          "x": 1203,
+          "z": -1052,
+          "yaw": -0.39
+        },
+        {
+          "model": "ribMark",
+          "x": 1174,
+          "z": -937.4,
+          "yaw": 0
+        }
+      ],
+      "storms": [
+        {
+          "id": "margit",
+          "name": "Old Margit",
+          "hours": [
+            5.5,
+            7.5
+          ],
+          "strength": 0.7,
+          "note": "Wind and rain at first light. She never stays for breakfast."
+        },
+        {
+          "id": "deacon",
+          "name": "the Deacon",
+          "hours": [
+            14,
+            18.5
+          ],
+          "strength": 1,
+          "thunder": true,
+          "eye": [
+            15.5,
+            17
+          ],
+          "note": "The long one. Lightning, and a quiet in the middle of him you could hear a pin in."
+        },
+        {
+          "id": "wren",
+          "name": "Little Wren",
+          "hours": [
+            22.5,
+            1
+          ],
+          "strength": 0.6,
+          "thunder": true,
+          "dry": true,
+          "note": "Dry lightning in the night, and hardly rain enough to wet a hat."
+        }
+      ]
     }
   ],
   "roads": [
@@ -1151,6 +1757,25 @@
         -535.1
       ],
       "halfWidth": 42
+    },
+    {
+      "id": "hearthbay-reach",
+      "name": "the whale-road",
+      "between": [
+        "hearthbay",
+        "saltbone-reach"
+      ],
+      "a": [
+        404.5,
+        -293.9
+      ],
+      "b": [
+        736.5,
+        -535.1
+      ],
+      "halfWidth": 42,
+      "hull": 2,
+      "tooRough": "The swell on the whale-road stands the skiff on her end. This is a road for a bigger boat."
     }
   ]
 }

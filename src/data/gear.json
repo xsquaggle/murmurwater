@@ -23,7 +23,9 @@
     { "id": "glass-bead", "name": "Glass Bead", "price": 5000, "from": "reached:mossglass-fen", "effect": { "luck": 0.16 },
       "blurb": "Rarer fish", "desc": "A bead of fen glass. A fish looks into it and sees a bigger fish looking back." },
     { "id": "mirror-spoon", "name": "Mirror Spoon", "effect": { "strange": 0.02 },
-      "blurb": "Stranger fish", "desc": "A spoon lure polished on one side only. A fish that takes it has had a look at itself first." }
+      "blurb": "Stranger fish", "desc": "A spoon lure polished on one side only. A fish that takes it has had a look at itself first." },
+    { "id": "petrel-feather", "name": "Petrel Feather", "price": 30000, "from": "reached:saltbone-reach", "when": "storm", "effect": { "biteSpeed": 0.35, "luck": 0.12 },
+      "blurb": "In a storm: faster bites, rarer fish", "desc": "A storm petrel's feather on a bare hook. It will not lie flat until the wind gets up." }
   ],
   "wearables": [
     { "id": "wool-cap", "name": "Wool Cap", "slot": "hat", "price": 250, "effect": { "biteSpeed": 0.05 },
@@ -47,7 +49,13 @@
     { "id": "fen-waders", "name": "Fen Waders", "slot": "boots", "effect": { "control": 0.09 },
       "blurb": "9% more line control", "desc": "Found folded in a chest, as if for a drawer. They come up to here." },
     { "id": "dowsers-bob", "name": "Dowser's Bob", "slot": "charm", "effect": { "finds": 0.3 },
-      "blurb": "Things on the bottom come to the line more often", "desc": "A lead bob on a hair string. It leans toward anything that has been under water long enough to be missed." }
+      "blurb": "Things on the bottom come to the line more often", "desc": "A lead bob on a hair string. It leans toward anything that has been under water long enough to be missed." },
+    { "id": "oakes-sea-boots", "name": "Oake's Sea Boots", "slot": "boots", "effect": { "control": 0.1, "grace": 0.15 },
+      "blurb": "10% more line control, and the line forgives more", "desc": "Forty years on one quay. They know which way the deck is going before it goes." },
+    { "id": "pilot-coat", "name": "The Second Pilot Coat", "slot": "coat", "effect": { "value": 0.12, "hold": 6 },
+      "blurb": "Fish sell for 12% more, 6 more hold slots", "desc": "Dark blue, brass buttons, never worn. It hung beside Captain Oake's own for forty years. In the pocket, the handle of a cup." },
+    { "id": "st-elmos-bead", "name": "St. Elmo's Bead", "slot": "charm", "effect": { "strikes": 0.4 },
+      "blurb": "Lightning comes down nearer and oftener", "desc": "A bead of blue glass that stands a small flame of its own in a storm. The lightning seems to like to know where it is." }
   ],
   "sets": [
     { "id": "keepers-things", "name": "The Keeper's Things",
@@ -64,7 +72,11 @@
     { "id": "fen-page", "name": "The Mossglass page", "region": "mossglass-fen", "skipRarity": "uncanny",
       "rewards": { "relics": ["calloway-tape"] },
       "tease": "Dr. Calloway has something put by for whoever fills it.",
-      "text": "Every fish of the Fen, drawn and named. Dr. Calloway counts them twice and gets nine both times. She is delighted, and a little afraid. She gives you the tape." }
+      "text": "Every fish of the Fen, drawn and named. Dr. Calloway counts them twice and gets nine both times. She is delighted, and a little afraid. She gives you the tape." },
+    { "id": "reach-page", "name": "The Saltbone page", "region": "saltbone-reach", "skipRarity": "uncanny",
+      "rewards": { "wearables": ["pilot-coat"] },
+      "tease": "Captain Oake has something put by for whoever fills it.",
+      "text": "Every fish of the Reach, drawn and named. Captain Oake reads the page twice, takes down the second coat from behind her door and holds it out. 'It was never mine,' she says. 'It's only been hanging here.'" }
   ],
   "pots": {
     "interval": 50, "capacity": 3, "value": 0.5, "rarityFalloff": 0.5, "maxOwned": 3,

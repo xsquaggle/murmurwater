@@ -96,7 +96,7 @@ describe('story quests', () => {
     expect(s.moonpearls).toBe(1);
   });
 
-  it('the whole story so far can be finished in order: Hearthbay, the lamp, the road and the Fen', () => {
+  it('the whole story so far can be finished in order: Hearthbay, the lamp, the road, the Fen and the Reach', () => {
     const s = newGame(7);
     const play: Record<string, () => void> = {
       'hb-01-salt': () => { for (let i = 0; i < 3; i++) onQuestEvent(s, catchEv('butterperch')); },
@@ -125,8 +125,20 @@ describe('story quests', () => {
       'fen-04-glows': () => onQuestEvent(s, catchEv('glowbelly')),
       'fen-05-sump': () => onQuestEvent(s, catchEv('bottomless-eel')),
       'fen-06-post': () => onQuestEvent(s, { type: 'visit', place: 'ear-trumpet' }),
+      // Tryworks Landing goes on the chart as the Puffin comes out of the fog.
+      'hb-14-whale-road': () => { s.flags.push('reached:saltbone-reach'); s.world.charted.push('tryworks-landing'); onQuestEvent(s, { type: 'visit', place: 'tryworks-landing' }); },
+      'reach-01-hours': () => { onQuestEvent(s, catchEv('reedling')); expect(s.quests.active['reach-01-hours'][0] ?? 0).toBe(0); for (const f of ['slate-pout', 'slate-pout', 'bonefin-herring', 'thrift-wrasse', 'kettle-cod', 'slate-pout', 'ribfish', 'bonefin-herring']) onQuestEvent(s, catchEv(f)); },
+      'reach-02-ribs': () => { onQuestEvent(s, { type: 'visit', place: 'rib-mark' }); onQuestEvent(s, catchEv('ribfish')); },
+      'reach-03-margit': () => onQuestEvent(s, catchEv('squall-mackerel')),
+      // Only fish out of struck water count.
+      'reach-04-lightning': () => {
+        onQuestEvent(s, catchEv('slate-pout')); expect(s.quests.active['reach-04-lightning'][0] ?? 0).toBe(0);
+        for (const f of ['kettle-cod', 'squall-mackerel', 'slate-pout', 'thunderback', 'kettle-cod']) onQuestEvent(s, { ...catchEv(f), struck: true });
+      },
+      'reach-05-anvil': () => onQuestEvent(s, catchEv('thunderback')),
+      'reach-06-count': () => onQuestEvent(s, { type: 'visit', place: 'tally-stone' }),
     };
-    for (let guard = 0; guard < 40 && s.quests.done.length < QUESTS.length; guard++) {
+    for (let guard = 0; guard < 60 && s.quests.done.length < QUESTS.length; guard++) {
       const q = QUESTS.find((x) => questStatus(s, x.id) === 'available');
       if (!q) break;
       accept(s, q.id); play[q.id](); expect(turnIn(s, q.id), q.id).not.toBeNull();
@@ -135,7 +147,9 @@ describe('story quests', () => {
     expect(currentGoal(s).text).toMatch(/journal/i);
     expect(s.flags).toEqual(expect.arrayContaining(['pots-open', 'bell-found', 'tide-turned']));
     expect(s.gear.wearables).toEqual(expect.arrayContaining(['keepers-souwester', 'keepers-whistle', 'field-hat']));
-    expect(s.relics).toContain('isolde-log-fen');
+    expect(s.relics).toEqual(expect.arrayContaining(['isolde-log-fen', 'isolde-log-reach']));
+    expect(s.flags).toContain('almanac');
+    expect(s.gear.wearables).toContain('oakes-sea-boots');
     // Both hands aboard, in the Puffin, with the skiff kept.
     expect(s.crew.hired).toEqual(expect.arrayContaining(['biscuit', 'hollis']));
     expect(s.boats.owned).toEqual(['skiff', 'puffin']);

@@ -68,6 +68,35 @@
       "lore": "The return half of a packet ticket, Sedge Landing to Hearthbay, never given up. Mister Hollis looked at it for some time and handed it back. 'I believe that is mine. Pray keep it. One of us should have somewhere to go back to.'",
       "hint": { "text": "Mister Hollis: 'I had the return half in my glove when I stepped down at the Landing. I have the glove still. I cannot answer for the ticket.'", "after": "crew:hollis" },
       "where": { "zones": ["fen-landing"], "needs": "crew:hollis" }
+    },
+    {
+      "id": "scrimshaw-tooth", "name": "A Scrimshaw Tooth", "region": "saltbone-reach", "effect": { "value": 0.06 },
+      "lore": "A tooth as long as a forearm, cut fine with a sail needle: the lighthouse, lit, and two moons over it. On the root, B.O., and a year that has not come yet.",
+      "hint": { "text": "Captain Oake: 'I'd a tooth I was cutting a picture on, forty years back. I let it fall in the Jaw's cove one night and never fished for it. I didn't care for what I'd drawn.'", "after": "quest:reach-01-hours" },
+      "where": { "zones": ["reach-jaw"], "hours": [19, 5] }
+    },
+    {
+      "id": "ribboned-iron", "name": "A Harpoon Head With a Ribbon", "region": "saltbone-reach", "effect": { "power": 0.06 },
+      "lore": "Never thrown: the edge is as the smith left it. A ribbon is tied through the eye in a bow, the way you would mark your place in a book.",
+      "hint": { "text": "Captain Oake: 'The day I gave it up I let my best iron go over the side, under the Ribs. I tied a ribbon on it first. I couldn't tell you why. It seemed owed.'", "after": "quest:reach-02-ribs" },
+      "where": { "zones": ["reach-ribs"] }
+    },
+    {
+      "id": "storm-glass", "name": "A Storm Glass", "region": "saltbone-reach", "effect": { "biteSpeed": 0.06 },
+      "lore": "A sealed glass of cloudy spirit, meant to show tomorrow's weather. The crystals have set in the shape of a fork, and have not moved since it came up.",
+      "hint": { "text": "Captain Oake: 'There was a storm glass on a post on the Anvil. Fenn's, I think. The Deacon had it off inside a week. It'll come up in weather or not at all.'", "after": "quest:reach-03-margit" },
+      "where": { "zones": ["reach-anvil"], "weather": "storm" }
+    },
+    {
+      "id": "ferry-nameboard", "name": "A Boat's Nameboard", "region": "saltbone-reach", "effect": { "rhythmCap": 1 },
+      "lore": "KEEPER'S FERRY, cut deep and gilded, off a boat nobody has built. Under it in pencil, in a careful hand: back by supper.",
+      "hint": { "text": "Pell: 'There's a board adrift on the Long Swell at first light. Off my ferry. Not this one. The next. Don't ask me how. I only remember it.'", "after": "quest:reach-04-lightning" },
+      "where": { "zones": ["reach-swell"], "hours": [5, 9] }
+    },
+    {
+      "id": "isolde-log-reach", "name": "A Third Page of Isolde's Logbook", "region": "saltbone-reach", "effect": { "luck": 0.05 },
+      "lore": "Salt-stiff, written with a pencil kept on a string. 'The Reach breathes. In for nine, out for nine. I counted till dark and it never once hurried. Nothing that size is asleep by accident.'",
+      "hint": { "text": "Captain Oake: 'There's a tin in the cairn at the Tally Stone. I've let it be forty years. It isn't for me.'", "after": "quest:reach-05-anvil" }
     }
   ]
 }

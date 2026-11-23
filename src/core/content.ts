@@ -17,8 +17,16 @@ export interface FishDef {
   id: string; name: string; rarity: Rarity; region: string; zones: string[];
   baseValue: number; weight: [number, number]; /** typical nose-to-tail length in metres (models are scaled to it) */ length: number; fight: FightStats; biteWindow: number;
   hours?: [number, number]; requires?: string; lore: string;
+  /** Bites only in this weather (core/weather.ts): any storm, a storm with lightning, or the eye of one. */ weather?: WeatherNeed;
   /** The journal's riddle for a fish that `requires` something, shown until that has happened. */ hint?: string;
 }
+/** Weather a fish or a relic waits for: any storm (but not its eye), a storm with lightning, or the eye of one. */
+export type WeatherNeed = 'storm' | 'thunder' | 'eye';
+/**
+ * A storm that keeps hours: it blows from hours[0] to hours[1] every day (it may run past midnight). `strength`
+ * 0..1 is how hard; `thunder` brings lightning; `dry` means hardly any rain; `eye` is a calm inside it.
+ */
+export interface StormDef { id: string; name: string; hours: [number, number]; strength: number; thunder?: boolean; dry?: boolean; eye?: [number, number]; /** A line for the almanac. */ note?: string }
 export interface RodDef {
   id: string; name: string; tier: number; rarity: string; price: number;
   reach: number; power: number; control: number; luck: number; grace: number; desc: string;
@@ -74,6 +82,8 @@ export interface RegionContent extends RegionDef {
   /** Still, shallow water where lilies lie: [x, z, radius]. */
   lilies?: [number, number, number][];
   props?: PropDef[];
+  /** The storms of this water, each at its own hours (core/weather.ts). */
+  storms?: StormDef[];
 }
 
 /**
@@ -81,7 +91,11 @@ export interface RegionContent extends RegionDef {
  * `a` lies inside the first region of `between` and `b` inside the second; the road is the straight line
  * between them, `halfWidth` to either side.
  */
-export interface RoadDef { id: string; name: string; between: [string, string]; a: [number, number]; b: [number, number]; halfWidth: number }
+export interface RoadDef {
+  id: string; name: string; between: [string, string]; a: [number, number]; b: [number, number]; halfWidth: number;
+  /** The least hull that can take the sea on this road (a boat's `hull`); a lesser one is turned back as if it had no lamp. */ hull?: number;
+  /** What the keeper is told when a boat with the lamp but too little hull is turned back here. */ tooRough?: string;
+}
 
 /** Metres between one light of a sea-road and the next on the same side, and how far inside the road's edge each line stands. */
 export const ROAD_LIGHTS = { spacing: 44, inset: 12 };
@@ -136,6 +150,9 @@ export function zoneAt(region: RegionContent, x: number, z: number): ZoneDef | n
   return best ?? openZone(region);
 }
 
+/** How the journal and the notice board say what weather a fish waits for. */
+export const WEATHER_WORDS: Record<WeatherNeed, string> = { storm: ', in a storm', thunder: ', while there is lightning', eye: ', in the eye of a storm' };
+
 /**
  * The journal's line for a fish not yet caught: its home water (the first zone it is listed in) and when it is
  * about. A fish that waits on something keeps its own riddle until that thing has happened.
@@ -145,7 +162,7 @@ export function fishHint(f: FishDef, flags: readonly string[]): string {
   const zone = REGIONS_BY_ID.get(f.region)?.zones.find((z) => z.id === f.zones[0]);
   const hr = (h: number) => (h % 24 === 0 ? 'midnight' : h === 12 ? 'noon' : `${h}:00`);
   const time = f.hours ? (f.hours[0] > f.hours[1] ? ' after dark' : ` between ${hr(f.hours[0])} and ${hr(f.hours[1])}`) : '';
-  return `Bites ${zone?.hint ?? 'in open water'}${time}`;
+  return `Bites ${zone?.hint ?? 'in open water'}${time}${f.weather ? WEATHER_WORDS[f.weather] : ''}`;
 }
 
 /** Is this on the shelf yet? Goods from further waters wait until the keeper has been there. */
@@ -175,11 +192,17 @@ export function roadOpen(r: RoadDef, x: number, z: number): number {
   return t * t * (3 - 2 * t);
 }
 
-/** How far the roads out of `region` lift the murmur at (x, z). */
-export function roadsOpen(region: string, x: number, z: number): number {
+/** How far the roads out of `region` lift the murmur at (x, z), for a boat of this `hull` (every road, if it is not given). */
+export function roadsOpen(region: string, x: number, z: number, hull = Infinity): number {
   let best = 0;
-  for (const r of ROADS) if (r.between.includes(region)) best = Math.max(best, roadOpen(r, x, z));
+  for (const r of ROADS) if (r.between.includes(region) && hull >= (r.hull ?? 0)) best = Math.max(best, roadOpen(r, x, z));
   return best;
+}
+
+/** The road under (x, z) out of `region` that this `hull` is too slight for, if there is one. */
+export function roadTooRough(region: string, x: number, z: number, hull: number): RoadDef | null {
+  for (const r of ROADS) if (r.between.includes(region) && hull < (r.hull ?? 0) && roadOpen(r, x, z) > 0) return r;
+  return null;
 }
 
 /**
@@ -298,6 +321,11 @@ export function validateContent(): string[] {
     if (f.biteWindow < 0.3 || f.biteWindow > 2) errs.push(`${f.id}: biteWindow out of range`);
     for (const k of ['strength', 'stamina', 'temper', 'thrash'] as const) if (typeof f.fight[k] !== 'number') errs.push(`${f.id}: fight.${k} missing`);
     if (f.hours && (f.hours[0] < 0 || f.hours[0] > 24 || f.hours[1] < 0 || f.hours[1] > 24)) errs.push(`${f.id}: bad hours`);
+    if (f.weather) {
+      const storms = REGIONS_BY_ID.get(f.region)?.storms ?? [];
+      const ok = f.weather === 'storm' ? storms.length > 0 : f.weather === 'thunder' ? storms.some((s) => s.thunder) : storms.some((s) => s.eye);
+      if (!ok) errs.push(`${f.id}: waits for weather (${f.weather}) its region never has`);
+    }
   }
   const stocked = (who: string, from?: string) => { if (from && !(from.startsWith('reached:') && REGIONS_BY_ID.has(from.slice(8)))) errs.push(`${who}: stocked from an unknown place (${from})`); };
   for (const r of RODS) { if (r.reach <= 0 || r.power <= 0 || r.control <= 0) errs.push(`rod ${r.id}: stats must be > 0`); stocked(`rod ${r.id}`, r.from); }
@@ -318,6 +346,12 @@ export function validateContent(): string[] {
     for (const c of r.chests ?? []) {
       for (const id of Object.keys(c.items ?? {})) if (!BAITS_BY_ID.has(id)) errs.push(`region ${r.id}: chest ${c.id} holds unknown bait ${id}`);
     }
+  }
+  for (const r of REGIONS) for (const st of r.storms ?? []) {
+    const bad = (h: number) => !(h >= 0 && h <= 24);
+    if (bad(st.hours[0]) || bad(st.hours[1]) || !(st.strength > 0 && st.strength <= 1)) errs.push(`region ${r.id}: storm ${st.id} has bad hours or strength`);
+    if (st.eye && !(inHours(st.eye[0], st.hours) && inHours((st.eye[1] + 23.99) % 24, st.hours))) errs.push(`region ${r.id}: the eye of ${st.id} lies outside it`);
+    for (const o of r.storms ?? []) if (o !== st && (inHours(st.hours[0], o.hours) || inHours(o.hours[0], st.hours))) errs.push(`region ${r.id}: storms ${st.id} and ${o.id} overlap`);
   }
   const places = REGIONS.flatMap((r) => (r.chart ?? []).map((c) => c.id));
   if (new Set(places).size !== places.length) errs.push('a chart place id is used in two regions');

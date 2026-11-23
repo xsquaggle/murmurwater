@@ -14,10 +14,10 @@ import type { GameState } from './state';
 
 export type StatKey =
   | 'power' | 'control' | 'reach' | 'grace' | 'luck' | 'biteSpeed' | 'biteWindow' | 'strange' | 'value' | 'size'
-  | 'hold' | 'rhythmCap' | 'potSpeed' | 'potSlots' | 'tuneCost' | 'finds';
+  | 'hold' | 'rhythmCap' | 'potSpeed' | 'potSlots' | 'tuneCost' | 'finds' | 'strikes';
 export type Effect = Partial<Record<StatKey, number>>;
-/** A condition on an effect: the hour of the day, or whether the player is in a boat. */
-export type When = 'night' | 'day' | 'afloat' | 'ashore';
+/** A condition on an effect: the hour of the day, whether the player is in a boat, or a storm blowing. */
+export type When = 'night' | 'day' | 'afloat' | 'ashore' | 'storm';
 export type Slot = 'hat' | 'coat' | 'boots' | 'charm';
 export const SLOTS: Slot[] = ['hat', 'coat', 'boots', 'charm'];
 
@@ -46,7 +46,8 @@ const BOAT_DEFS = new Map((boatsJson.boats as { id: string; hold: number; price:
 
 export const RHYTHM_CAP = 10;
 
-export interface Env { hour?: number; afloat?: boolean }
+/** `storm`: a storm is blowing where the keeper is (the game and the simulator work it out with core/weather.ts). */
+export interface Env { hour?: number; afloat?: boolean; storm?: boolean }
 export { isNight };
 function applies(when: When | undefined, env: Env): boolean {
   switch (when) {
@@ -55,6 +56,7 @@ function applies(when: When | undefined, env: Env): boolean {
     case 'day': return env.hour !== undefined && !isNight(env.hour);
     case 'afloat': return !!env.afloat;
     case 'ashore': return !env.afloat;
+    case 'storm': return !!env.storm;
   }
 }
 
@@ -75,6 +77,7 @@ export interface Stats {
   /** How many pots can be in the water. */ potCount: number;
   /** Multiplies rod tuning prices. */ tuneCost: number;
   /** Multiplies how often a crate or a chest comes to the line (core/finds.ts). */ finds: number;
+  /** Multiplies how often lightning comes down near the keeper in a storm that has it (core/weather.ts). */ strikes: number;
 }
 
 function add(acc: Effect, e: Effect | undefined, n = 1) {
@@ -140,6 +143,7 @@ export function stats(s: GameState, env: Env = {}): Stats {
     potCount: s.pots.owned > 0 ? s.pots.owned + (b.potSlots ?? 0) : 0,
     tuneCost: Math.max(0.2, 1 + (b.tuneCost ?? 0)),
     finds: 1 + (b.finds ?? 0),
+    strikes: 1 + (b.strikes ?? 0),
   };
 }
 
@@ -321,7 +325,7 @@ export function claimCollections(s: GameState): CollectionDef[] {
 
 // ---------------------------------------------------------------- validation
 
-const STAT_KEYS: StatKey[] = ['power', 'control', 'reach', 'grace', 'luck', 'biteSpeed', 'biteWindow', 'strange', 'value', 'size', 'hold', 'rhythmCap', 'potSpeed', 'potSlots', 'tuneCost', 'finds'];
+const STAT_KEYS: StatKey[] = ['power', 'control', 'reach', 'grace', 'luck', 'biteSpeed', 'biteWindow', 'strange', 'value', 'size', 'hold', 'rhythmCap', 'potSpeed', 'potSlots', 'tuneCost', 'finds', 'strikes'];
 export function validateGear(): string[] {
   const errs: string[] = [];
   const effect = (who: string, e: Effect | undefined) => { for (const k of Object.keys(e ?? {})) if (!STAT_KEYS.includes(k as StatKey)) errs.push(`${who}: unknown stat ${k}`); };

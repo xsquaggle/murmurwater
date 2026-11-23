@@ -5,6 +5,7 @@
  * a pot's timer moves only when `tickPots` is called from the running game, so nothing is earned while closed.
  */
 import { FISH, RARITIES, REGIONS_BY_ID, inHours, openZone, type FishDef } from './content';
+import { inWeather } from './weather';
 import { RARITY_WEIGHT } from './fishing';
 import { POTS, stats, type Stats } from './gear';
 import { earn } from './economy';
@@ -38,7 +39,7 @@ function zoneOf(zone: string | null, region: string): string | null { const r = 
 export function potTable(s: GameState, pot: PotState, hour: number): FishDef[] {
   const zone = zoneOf(pot.zone, pot.region);
   return FISH.filter((f) => f.region === pot.region && (!zone || f.zones.includes(zone)) && f.rarity !== 'uncanny'
-    && !!s.journal[f.id] && inHours(hour, f.hours) && (!f.requires || s.flags.includes(f.requires)));
+    && !!s.journal[f.id] && inHours(hour, f.hours) && inWeather(f.region, hour, f.weather) && (!f.requires || s.flags.includes(f.requires)));
 }
 
 /** How many kinds of fish a pot here could ever trap (any hour): 0 means it sits in water the journal knows nothing of. */

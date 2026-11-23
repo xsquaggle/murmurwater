@@ -827,6 +827,261 @@
           "hollis"
         ]
       }
+    },
+    {
+      "id": "hb-14-whale-road",
+      "chain": "main",
+      "giver": "pell",
+      "receiver": "oake",
+      "title": "The Whale-Road",
+      "summary": "Sail the Puffin along the whale-road, north-east of Hearthbay, to Saltbone Reach, and find the captain on the quay.",
+      "requires": [
+        "hb-13-refit"
+      ],
+      "intro": [
+        "There's another road. East about, round the back of the island, between two lights like the last. I'd forgotten it. It hadn't forgotten me.",
+        "It goes to the Reach. Grey water, and a swell on it that would stand your aunt's skiff on her nose. The Puffin will take it. She's been before.",
+        "There's a captain on the quay at the far end. Brannagh Oake. Tell her the ferryman says the tide's not turned yet. She'll know what I owe her."
+      ],
+      "objectives": [
+        {
+          "type": "visit",
+          "place": "tryworks-landing",
+          "label": "Sail the Puffin along the whale-road, north-east of Hearthbay, to Saltbone Reach"
+        }
+      ],
+      "reminder": "North-east, round the back of the island, between the two lights. Take the Puffin. The skiff won't live on that road.",
+      "outro": [
+        "The Puffin. I knew her by the way she carries her head, before I knew anybody was aboard. Brannagh Oake. Captain, once. It stuck.",
+        "Pell says the tide's not turned? Then he still owes me a harpoon line, and a day I can't account for.",
+        "Come up out of the wet. There's weather due. There's always weather due. Here it keeps hours."
+      ],
+      "rewards": {
+        "coins": 2000,
+        "items": {
+          "lugworm": 10
+        }
+      }
+    },
+    {
+      "id": "reach-01-hours",
+      "chain": "main",
+      "giver": "oake",
+      "title": "Storms Keep Hours",
+      "summary": "Catch eight fish of the Reach while Captain Oake finds her almanac.",
+      "requires": [
+        "hb-14-whale-road"
+      ],
+      "requiresFlags": [
+        "reached:saltbone-reach"
+      ],
+      "intro": [
+        "First thing. We've three storms here and they keep hours, like a packet. Margit at first light. The Deacon after dinner. Little Wren in the night.",
+        "The same storms. I don't mean the same sort. I mean the same. I've known the Deacon forty years and he's not a day older.",
+        "Catch me eight fish of this water, any sort, while I find you my almanac. It's only the one page. It's never wanted another."
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "count": 8,
+          "region": "saltbone-reach",
+          "label": "Catch 8 fish in Saltbone Reach"
+        }
+      ],
+      "reminder": "Eight fish of the Reach, any sort. Mind the sky. When the cone's up on my mast, there's one coming.",
+      "outro": [
+        "Eight. Good. Here. Hours down the side, names along the top. You'll see it's in my hand. The ink's older than I am.",
+        "Fish the storms. Don't sit them out. Some of what swims here only comes up to look at the weather."
+      ],
+      "rewards": {
+        "coins": 3000,
+        "items": {
+          "sand-eel": 10
+        },
+        "flags": [
+          "almanac"
+        ]
+      }
+    },
+    {
+      "id": "reach-02-ribs",
+      "chain": "main",
+      "giver": "oake",
+      "title": "Through the Ribs",
+      "summary": "Read the plate on the ninth rib from the boat, and catch a Ribfish under the Ribs.",
+      "requires": [
+        "reach-01-hours"
+      ],
+      "intro": [
+        "You'll have seen the Ribs. Nine pair. You can sail up the middle with the mast standing. I'd take my hat off, if I were you.",
+        "There's a brass plate on the ninth, the east side, at the far end. Read it and tell me what it says. I know what it said when I screwed it on.",
+        "And bring me a Ribfish out from under them. Long, pale, barred. It'll take a sand eel."
+      ],
+      "objectives": [
+        {
+          "type": "visit",
+          "place": "rib-mark",
+          "label": "Read the plate on the ninth rib, at the north end of the Ribs (from the boat)"
+        },
+        {
+          "type": "catch",
+          "fish": "ribfish",
+          "count": 1,
+          "at": [
+            1131,
+            -859
+          ],
+          "label": "Catch a Ribfish under the Ribs"
+        }
+      ],
+      "reminder": "The ninth rib, east side, the north end. Read the plate from the boat. And a Ribfish from under them.",
+      "outro": [
+        "'In for nine, out for nine.' Is that what it says now. I put up a plate that said KEEP OFF.",
+        "I gave up the whaling the day I rowed under those. They were here before the whales, you see. I counted the rings in one.",
+        "That's a fine Ribfish. Count its bars for me. No. Don't tell me."
+      ],
+      "rewards": {
+        "coins": 6000,
+        "items": {
+          "sand-eel": 12
+        }
+      }
+    },
+    {
+      "id": "reach-03-margit",
+      "chain": "main",
+      "giver": "oake",
+      "title": "Margit's Leavings",
+      "summary": "Catch a Squall Mackerel in open water while a storm is blowing.",
+      "requires": [
+        "reach-02-ribs"
+      ],
+      "intro": [
+        "Now a storm fish. Squall Mackerel. You'll not find one in fair weather. They're not there. Any of the three storms will do, and Margit's the gentlest.",
+        "Half past five in the morning she comes in, and she's away by half past seven. Be out in open water with a line down."
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "fish": "squall-mackerel",
+          "count": 1,
+          "label": "Catch a Squall Mackerel in open water, during a storm"
+        }
+      ],
+      "reminder": "A Squall Mackerel. Only in a storm, out in the open. Margit comes at half past five, the Deacon at two, Wren at half past ten at night.",
+      "outro": [
+        "There. Look at the back of it. Like rain down a window. It'll be gone out of the bucket when the sky clears, so I'll have it now.",
+        "Take these. My sea boots. They've stood on this quay forty years, and it's the quay that's worn."
+      ],
+      "rewards": {
+        "coins": 9000,
+        "wearables": [
+          "oakes-sea-boots"
+        ]
+      }
+    },
+    {
+      "id": "reach-04-lightning",
+      "chain": "main",
+      "giver": "oake",
+      "title": "Where the Lightning Goes In",
+      "summary": "Catch five fish from struck water: cast into the pale ring where lightning has gone into the sea.",
+      "requires": [
+        "reach-03-margit"
+      ],
+      "intro": [
+        "The Deacon throws lightning, and so does Wren. Watch where it goes into the sea. The water stays lit a half minute after. Pale, like spirit burning.",
+        "Put your float in the ring. Whatever was lying deepest comes straight up to see what woke it. Five fish out of struck water. That's all I ask.",
+        "It won't hurt you. It's never once hit a boat. It's not boats it's aiming at."
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "count": 5,
+          "struck": true,
+          "label": "Catch 5 fish from struck water (cast into the pale ring where lightning went in)"
+        }
+      ],
+      "reminder": "Five fish from struck water. The Deacon from two till half past six, Wren from half past ten at night. Cast into the ring.",
+      "outro": [
+        "Five. And better fish than the water owed you, I'll be bound. That's the way of it.",
+        "I asked the Deacon once what he was aiming at. I was younger. Go and look at the Anvil when he's in, and then tell me it's weather."
+      ],
+      "rewards": {
+        "coins": 14000,
+        "moonpearls": 1
+      }
+    },
+    {
+      "id": "reach-05-anvil",
+      "chain": "main",
+      "giver": "oake",
+      "title": "The Anvil",
+      "summary": "Catch a Thunderback off the Anvil, east of the Ribs, while there is lightning.",
+      "requires": [
+        "reach-04-lightning"
+      ],
+      "intro": [
+        "East of the Ribs there's a stack with a flat top. The Anvil. Every storm with lightning in it strikes that rock before it does anything else. Like a man knocking.",
+        "There's a fish lies under it that only stirs while the knocking's going on. Thunderback. Big as a door, with the mark of it down its spine. Bring me one. Take lugworm."
+      ],
+      "objectives": [
+        {
+          "type": "catch",
+          "fish": "thunderback",
+          "count": 1,
+          "at": [
+            1441,
+            -869
+          ],
+          "label": "Catch a Thunderback off the Anvil, east of the Ribs, while there is lightning"
+        }
+      ],
+      "reminder": "A Thunderback, off the Anvil, east of the Ribs. Only while there's lightning: the Deacon, or Wren. Lugworm on the hook.",
+      "outro": [
+        "Lay it down. Mind the mark, it's warm. There. The same fork as the one on the rock. The same as the one on my arm, come to that.",
+        "One more thing, and then I've nothing left to send you for. It isn't a fish."
+      ],
+      "rewards": {
+        "coins": 20000,
+        "items": {
+          "lugworm": 14
+        }
+      }
+    },
+    {
+      "id": "reach-06-count",
+      "chain": "main",
+      "giver": "oake",
+      "title": "The Count",
+      "summary": "Put your hand on the Tally Stone, in the far north-east of the Reach, and count with the swell.",
+      "requires": [
+        "reach-05-anvil"
+      ],
+      "intro": [
+        "Far side of the Reach, north-east, there's a stone set up on a skerry. Cut all over with strokes, in fives. I didn't cut them, and I never saw it done.",
+        "The swell here comes in for nine and goes out for nine. Always has. Put your hand on that stone and count with it. Just the once.",
+        "There's a tin in the cairn. I've let it be forty years. I think it was waiting on somebody who could keep a count."
+      ],
+      "objectives": [
+        {
+          "type": "visit",
+          "place": "tally-stone",
+          "label": "Count with the swell at the Tally Stone, in the far north-east of the Reach"
+        }
+      ],
+      "reminder": "The Tally Stone. North-east, as far as the Reach goes. Hand on the slate, and count.",
+      "outro": [
+        "A page. 'I. Fenn.' I knew a Fenn. I must have. I've her cup.",
+        "Read me the end of it. 'Nothing that size is asleep by accident.' Well. No. Keep it. It was left for you.",
+        "If the Deacon goes quiet in his middle, and something comes up by that stone with its eyes shut, let it sleep if you can. You'll not be able to. I couldn't."
+      ],
+      "rewards": {
+        "coins": 10000,
+        "relics": [
+          "isolde-log-reach"
+        ]
+      }
     }
   ]
 }

@@ -3,7 +3,8 @@
  * and the Moonpearls set beside them. Pure functions over GameState; the data is src/data/relics.json.
  */
 import relicsJson from '../data/relics.json';
-import { REGIONS_BY_ID, inHours } from './content';
+import { REGIONS_BY_ID, inHours, type WeatherNeed } from './content';
+import { inWeather } from './weather';
 import type { Effect, StatKey } from './gear';
 import type { GameState } from './state';
 
@@ -16,7 +17,7 @@ export interface RelicDef {
    * Fished up: the zones it lies in, the hours it comes to a line, and what must have happened first.
    * A relic without this is given (a job, a journal page), not found.
    */
-  where?: { zones: string[]; hours?: [number, number]; needs?: string };
+  where?: { zones: string[]; hours?: [number, number]; needs?: string; /** Comes up only in this weather. */ weather?: WeatherNeed };
 }
 
 export const RELICS = relicsJson.relics as RelicDef[];
@@ -41,7 +42,7 @@ export function met(s: GameState, need: string | undefined): boolean {
  */
 export function relicsHere(s: GameState, region: string, zone: string | null, hour: number): RelicDef[] {
   if (!zone) return [];
-  return RELICS.filter((r) => r.where && r.region === region && !s.relics.includes(r.id) && r.where.zones.includes(zone) && inHours(hour, r.where.hours) && met(s, r.hint.after) && met(s, r.where.needs));
+  return RELICS.filter((r) => r.where && r.region === region && !s.relics.includes(r.id) && r.where.zones.includes(zone) && inHours(hour, r.where.hours) && inWeather(region, hour, r.where.weather) && met(s, r.hint.after) && met(s, r.where.needs));
 }
 
 // ---------------------------------------------------------------- the Shelf
@@ -116,6 +117,7 @@ const GIFT: Record<StatKey, (v: number) => string> = {
   potSlots: (v) => `${fmtN(v)} more Lantern Pots`,
   tuneCost: (v) => `Rod tuning costs ${pct(-v)} less`,
   finds: (v) => `Things come up ${pct(v)} more often`,
+  strikes: (v) => `Lightning comes down ${pct(v)} oftener near you`,
 };
 function fmtN(v: number): string { return String(Math.round(v * 10) / 10); }
 /** A relic's gift in words, as it stands with the pearls beside it. */
@@ -147,6 +149,7 @@ export function validateRelics(zoneIds: (region: string) => Set<string> | null, 
       for (const z of r.where.zones) if (!zones?.has(z)) errs.push(`relic ${r.id}: unknown zone ${z}`);
       if (r.where.hours && r.where.hours.some((h) => !(h >= 0 && h <= 24))) errs.push(`relic ${r.id}: bad hours`);
       known(r.id, r.where.needs);
+      if (r.where.weather && !Array.from({ length: 96 }, (_, i) => i / 4).some((h) => inHours(h, r.where!.hours) && inWeather(r.region, h, r.where!.weather))) errs.push(`relic ${r.id}: waits for weather that never comes at its hours`);
     }
   }
   return errs;

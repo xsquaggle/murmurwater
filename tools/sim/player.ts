@@ -12,8 +12,9 @@ import { FishingSession, NO_INPUT, type FishingInput } from '../../src/core/fish
 import { DAY_LENGTH_S, newGame, type GameState } from '../../src/core/state';
 import { addCatch, breakRhythm, earn, sellAll, RHYTHM } from '../../src/core/economy';
 import {
-  BAITS, FISH, RARITIES, REGIONS, REGIONS_BY_ID, RODS, bait as baitDef, fish as fishDef, inHours, onShelf, regionAt, regionOfNpc, regionOfPlace, zoneAt, type ChestDef, type FishDef,
+  BAITS, FISH, RARITIES, REGIONS, REGIONS_BY_ID, RODS, bait as baitDef, fish as fishDef, inHours, onShelf, regionAt, regionOfNpc, regionOfPlace, roadToward, zoneAt, type ChestDef, type FishDef,
 } from '../../src/core/content';
+import { inWeather, weatherAt } from '../../src/core/weather';
 import {
   LURES, WEARABLES, boatOnOffer, buyBait, buyBoat, buyCreel, buyLure, buyPot, buyRod, buyWearable, claimCollections, creelNext, fishingContext,
   grantLure, grantWearable, hasFogLamp, isNight, potPrice, potUpgradeCost, spendBait, stats, tuneCost, tuneRod, upgradePots, type PotUpgrade, type Stats,
@@ -32,7 +33,7 @@ import { humanFightPolicy, humanHaulPolicy } from '../../tests/helpers';
 
 /** Somewhere to fish. `trip` is the seconds it takes to get there from where the region's catch is sold (and back again). */
 export interface Place { id: string; name: string; region: string; needsBoat: boolean; afloat: boolean; trip: number; zone: (castDistance: number) => string; chart?: string }
-const HB = 'hearthbay', FEN = 'mossglass-fen';
+const HB = 'hearthbay', FEN = 'mossglass-fen', REACH = 'saltbone-reach';
 export const PLACES: Place[] = [
   { id: 'dock', name: 'the dock', region: HB, needsBoat: false, afloat: false, trip: 8, zone: (d) => (d > 16 ? 'hb-bay' : 'hb-dock') },
   { id: 'open', name: 'open water', region: HB, needsBoat: true, afloat: true, trip: 24, zone: () => 'hb-open' },
@@ -45,12 +46,21 @@ export const PLACES: Place[] = [
   { id: 'sump', name: 'the Sump', region: FEN, needsBoat: true, afloat: true, trip: 70, zone: () => 'fen-sump', chart: 'the-sump' },
   { id: 'grove', name: 'the Standing Trees', region: FEN, needsBoat: true, afloat: true, trip: 85, zone: () => 'fen-grove', chart: 'standing-trees' },
   { id: 'post', name: 'the Listening Post', region: FEN, needsBoat: true, afloat: true, trip: 118, zone: () => 'fen-post', chart: 'listening-post' },
+  // Saltbone Reach, from the packet box on Tryworks Landing: deep water and nothing to go round.
+  { id: 'quay', name: 'the Tryworks quay', region: REACH, needsBoat: false, afloat: false, trip: 8, zone: () => 'reach-landing', chart: 'tryworks-landing' },
+  { id: 'reach', name: 'the open Reach', region: REACH, needsBoat: true, afloat: true, trip: 22, zone: () => 'reach-open' },
+  { id: 'ribs', name: 'the Ribs', region: REACH, needsBoat: true, afloat: true, trip: 62, zone: () => 'reach-ribs', chart: 'the-ribs' },
+  { id: 'swell', name: 'the Long Swell', region: REACH, needsBoat: true, afloat: true, trip: 72, zone: () => 'reach-swell' },
+  { id: 'kettles', name: 'the Kettles', region: REACH, needsBoat: true, afloat: true, trip: 76, zone: () => 'reach-kettles', chart: 'the-kettles' },
+  { id: 'jaw', name: 'the Jaw', region: REACH, needsBoat: true, afloat: true, trip: 92, zone: () => 'reach-jaw', chart: 'the-jaw' },
+  { id: 'anvil', name: 'the Anvil', region: REACH, needsBoat: true, afloat: true, trip: 102, zone: () => 'reach-anvil', chart: 'the-anvil' },
+  { id: 'tally', name: 'the Tally Stone', region: REACH, needsBoat: true, afloat: true, trip: 128, zone: () => 'reach-tally', chart: 'tally-stone' },
 ];
 /** Seconds for the things that are not fishing. */
 export const COSTS = {
   sell: 4, talk: 14, board: 5, buy: 4, aim: 0.6, landed: 2.0, lost: 1.6, pot: 6,
   /** Errands, there and back: the ferry and the lighthouse stair, a sail to a place and a walk on it. */
-  visit: { 'lighthouse-lamp': 150, 'keepers-kettle': 115, 'drowned-bell': 110, 'survey-stake': 125, 'ear-trumpet': 250, 'puffin-wreck': 150 } as Record<string, number>,
+  visit: { 'lighthouse-lamp': 150, 'keepers-kettle': 115, 'drowned-bell': 110, 'survey-stake': 125, 'ear-trumpet': 250, 'puffin-wreck': 150, 'rib-mark': 135, 'tally-stone': 275 } as Record<string, number>,
   /** Out along the sea-road from the landing to somebody who waits by a light, and back. */
   hail: 85,
   /** A look at Pip's Bar and its chest on the way home, once the skiff is there. */
@@ -59,7 +69,7 @@ export const COSTS = {
   cross: 150, fastTravel: 12,
 };
 /** The chart place a quest's place lies at (reaching the one puts the other on the chart). */
-const CHART_OF: Record<string, string> = { 'lighthouse-lamp': 'gull-point', 'keepers-kettle': 'kettle-isle', 'drowned-bell': 'drowned-belfry', 'survey-stake': 'reed-maze', 'ear-trumpet': 'listening-post', 'puffin-wreck': 'reed-maze' };
+const CHART_OF: Record<string, string> = { 'lighthouse-lamp': 'gull-point', 'keepers-kettle': 'kettle-isle', 'drowned-bell': 'drowned-belfry', 'survey-stake': 'reed-maze', 'ear-trumpet': 'listening-post', 'puffin-wreck': 'reed-maze', 'rib-mark': 'the-ribs', 'tally-stone': 'tally-stone' };
 /** The speed the places table's sailing times were reckoned at (the skiff's). */
 const TABLE_SPEED = 7;
 
@@ -91,7 +101,7 @@ export interface Mark { t: number; what: string }
 export interface Bucket { coins: number; pot: number; crew: number; catches: number; lost: number; /** Coins out of crates and chests. */ finds: number }
 export interface SimReport {
   marks: Mark[]; buckets: Bucket[]; state: GameState;
-  totals: { casts: number; catches: number; snaps: number; slack: number; missed: number; coins: number; potCoins: number; crewCoins: number; fishing: number; away: number; finds: number; findCoins: number; hauling: number; haulSnaps: number; /** Outings made for a rumour, and the seconds they took. */ hunts: number; hunting: number };
+  totals: { casts: number; catches: number; snaps: number; slack: number; missed: number; coins: number; potCoins: number; crewCoins: number; fishing: number; away: number; finds: number; findCoins: number; hauling: number; haulSnaps: number; /** Outings made for a rumour, and the seconds they took. */ hunts: number; hunting: number; /** Fish out of struck water. */ struck: number };
   /** Seconds of play at each ringing of the Bell, and what it gave. */
   /** Each ringing of the Bell: when, for how many Echoes, on how many coins, and (`matched`) how many seconds into the tide after it the keeper had earned as much again. */
   rings: { t: number; echoes: number; coins: number; matched?: number }[];
@@ -109,7 +119,7 @@ export class SimPlayer {
   marks: Mark[] = [];
   buckets: Bucket[] = [];
   rings: { t: number; echoes: number; coins: number; matched?: number }[] = [];
-  totals = { casts: 0, catches: 0, snaps: 0, slack: 0, missed: 0, coins: 0, potCoins: 0, crewCoins: 0, fishing: 0, away: 0, finds: 0, findCoins: 0, hauling: 0, haulSnaps: 0, hunts: 0, hunting: 0 };
+  totals = { casts: 0, catches: 0, snaps: 0, slack: 0, missed: 0, coins: 0, potCoins: 0, crewCoins: 0, fishing: 0, away: 0, finds: 0, findCoins: 0, hauling: 0, haulSnaps: 0, hunts: 0, hunting: 0, struck: 0 };
   /** The water the boat lies in while she lies still (the crew fish it); null while she is under way. */
   private lying: string | null = null;
   private castSeed: number;
@@ -126,13 +136,15 @@ export class SimPlayer {
     this.s = state ?? newGame(opts.seed);
     this.rng = new Rng(opts.seed * 2654435761);
     this.castSeed = opts.seed * 7919 + 1;
-    this.st = stats(this.s, { hour: this.s.hour });
+    this.st = stats(this.s, this.env());
     this.lying = this.mooringZone();
   }
 
   private mark(what: string) { if (!this.trial) this.marks.push({ t: this.s.playTime, what }); }
   private bucket(): Bucket { const i = Math.floor(this.s.playTime / BUCKET_S); return (this.buckets[i] ??= { coins: 0, pot: 0, crew: 0, catches: 0, lost: 0, finds: 0 }); }
-  private refresh(afloat = false) { this.st = stats(this.s, { hour: this.s.hour, afloat }); }
+  /** What the gear is asked about: the hour, whether she is afloat, and whether a storm is blowing where she is. */
+  private env(afloat = false) { return { hour: this.s.hour, afloat, storm: inWeather(this.s.world.region, this.s.hour, 'storm') }; }
+  private refresh(afloat = false) { this.st = stats(this.s, this.env(afloat)); }
 
   /** Lets `dt` seconds of play go by. `busy` is fishing or sailing: Rhythm holds while the keeper is at it. */
   pass(dt: number, busy = false) {
@@ -170,7 +182,10 @@ export class SimPlayer {
     const s = this.s, dt = 1 / 60, skill = this.opts.skill;
     if (s.world.region !== place.region) throw new Error(`the keeper is in ${s.world.region}, not at ${place.name}`);
     this.refresh(place.afloat);
-    const ctx = fishingContext(s, { hour: s.hour, afloat: place.afloat }, (d) => ({ zoneId: place.zone(d), depth: 5, hotspot: false, distance: d }), this.st);
+    // While there is lightning a keeper who is looking puts most of her casts into struck water (there are a
+    // couple of rings alight within a cast of her at any time; the better the hand, the fewer she lets go by).
+    const struck = weatherAt(s.world.region, s.hour).thunder && this.rng.chance(Math.min(0.95, (0.3 + 0.45 * skill) * this.st.strikes));
+    const ctx = fishingContext(s, this.env(place.afloat), (d) => ({ zoneId: place.zone(d), depth: 5, hotspot: false, distance: d, struck }), this.st);
     // A trial measures what the fish of a place pay: what lies on the bottom is left out of it.
     const session = new FishingSession(this.trial || this.opts.noFinds ? ctx : withFinds(ctx, s, this.st), new Rng(this.castSeed++));
     this.totals.casts++;
@@ -219,7 +234,8 @@ export class SimPlayer {
           if (!this.trial) {
             this.bucket().catches++;
             if (first) { this.mark(`first ${fishDef(e.catch.fishId).name}`); for (const c of claimCollections(s)) this.mark(`journal page: ${c.name}`); }
-            if (res.item) onQuestEvent(s, { type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook });
+            if (e.catch.struck) this.totals.struck++;
+            if (res.item) onQuestEvent(s, { type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook, struck: e.catch.struck });
           }
         } else if (e.type === 'found') {
           const loot = takeFind(s, e.find);
@@ -262,7 +278,7 @@ export class SimPlayer {
   /** Coins a second this place pays with this bait and today's gear, sell trips and bait included. Measured by fishing it. */
   rate(place: Place, baitId: string, casts = 36): number {
     const s = this.s, lvl = s.gear.rodLevels[s.gear.rod] ?? 0;
-    const key = [place.id, baitId, s.gear.rod, lvl >> 1, s.gear.lure, isNight(s.hour), s.gear.creel, s.boats.current, s.crew.hired.length, Object.keys(s.journal).length >> 1, s.flags.includes('hb-lighthouse-lit'), s.flags.includes('fen-heard'), Math.floor(s.hour / 3), s.echoes ? JSON.stringify(s.echoUpgrades) : ''].join('|');
+    const key = [place.id, baitId, s.gear.rod, lvl >> 1, s.gear.lure, isNight(s.hour), s.gear.creel, s.boats.current, s.crew.hired.length, Object.keys(s.journal).length >> 1, s.flags.includes('hb-lighthouse-lit'), s.flags.includes('fen-heard'), s.flags.includes('reach-counted'), Math.floor(s.hour / 3), this.weatherKey(place.region), s.echoes ? JSON.stringify(s.echoUpgrades) : ''].join('|');
     const hit = this.rates.get(key);
     if (hit !== undefined && casts <= 36) return hit;
     const t = new SimPlayer({ ...this.opts, seed: hashString(key) % 100000 }, structuredClone(s));
@@ -279,6 +295,9 @@ export class SimPlayer {
     this.rates.set(key, r);
     return r;
   }
+
+  /** The weather as far as a place's fishing goes: which storm, and whether it is in its eye. */
+  private weatherKey(region: string): string { const w = weatherAt(region, this.s.hour); return w.storm ? `${w.storm.id}${w.eye > 0.5 ? '-eye' : ''}` : ''; }
 
   /** The baits worth thinking about: the free one, anything in the tin, anything on the stall the purse can stand. */
   private baitChoices(): string[] {
@@ -322,12 +341,14 @@ export class SimPlayer {
     if (!this.hunting) return null;
     // She does not sit up for a fish that keeps hours while there is still a better rod to earn.
     const rod = this.wishlist().some((w) => w.goal);
-    return FISH.filter((f) => f.region === s.world.region && !s.journal[f.id] && this.about(f) && (!f.requires || s.flags.includes(f.requires)) && !(rod && f.hours))
+    return FISH.filter((f) => f.region === s.world.region && !s.journal[f.id] && this.about(f) && (!f.requires || s.flags.includes(f.requires)) && !(rod && (f.hours || f.weather)))
       .sort((a, b) => RARITIES.indexOf(a.rarity) - RARITIES.indexOf(b.rarity))[0] ?? null;
   }
   private hunting = false;
   /** Is this fish about now? For a fish she is after for the journal, also: will it be by the time she is there? */
-  private about(f: FishDef): boolean { return inHours(this.s.hour, f.hours) || (this.hunting && inHours((this.s.hour + 2.5) % 24, f.hours)); }
+  private about(f: FishDef): boolean { return this.bites(f, this.s.hour) || (this.hunting && this.bites(f, (this.s.hour + 2.5) % 24)); }
+  /** Would this fish bite at `hour`: its own hours, and its weather. */
+  private bites(f: FishDef, hour: number): boolean { return inHours(hour, f.hours) && inWeather(f.region, hour, f.weather); }
   /** The place a job names with a spot on the chart: the one whose water that spot lies in. */
   private wantedAt(): string | null {
     const at = this.activeObjectives().find((x) => x.o.type === 'catch' && x.o.at)?.o.at;
@@ -342,7 +363,7 @@ export class SimPlayer {
   private goTo(region: string): boolean {
     const s = this.s, from = s.world.region;
     if (from === region) return true;
-    if (!s.boats.owned.length || !hasFogLamp(s)) return false;
+    if (!s.boats.owned.length || !hasFogLamp(s) || !this.canCross(from, region)) return false;
     // She does not leave her pots behind in waters she is leaving.
     if (!this.opts.noPots) for (const other of this.places(from)) {
       const there = s.pots.placed.filter((p) => this.potAt.get(p.id) === other);
@@ -366,6 +387,17 @@ export class SimPlayer {
     const landing = REGIONS_BY_ID.get(region)!.moorings?.[0]?.place;
     if (landing) this.chart(landing);
     this.rates.clear();
+    return true;
+  }
+
+  /** Will every sea-road on the way from one region to another take the boat she is in? */
+  private canCross(from: string, to: string): boolean {
+    const hull = BOATS_BY_ID.get(this.s.boats.current ?? '')?.hull ?? 0;
+    for (let at = from, guard = 0; at !== to && guard < 8; guard++) {
+      const step = roadToward(at, to);
+      if (!step || hull < (step.road.hull ?? 0)) return false;
+      at = step.next;
+    }
     return true;
   }
 
@@ -393,9 +425,10 @@ export class SimPlayer {
     const s = this.s;
     if (!hasFogLamp(s) || !s.boats.owned.length) return;
     const job = this.jobRegion();
-    if (job) { this.goTo(job); return; }
+    if (job && this.goTo(job)) return;
     let best = s.world.region, br = -Infinity;
     for (const id of s.world.discovered) {
+      if (!this.canCross(s.world.region, id)) continue;
       let r = -Infinity;
       for (const p of this.places(id)) for (const b of this.baitChoices()) r = Math.max(r, this.rate(p, b));
       if (id !== s.world.region) r *= 0.9;
@@ -673,12 +706,12 @@ export class SimPlayer {
     const worth = () => !!next && s.hold.length >= least && s.coins + s.hold.reduce((a, c) => a + c.value, 0) >= next.price;
     const toSell = () => worth() || this.activeObjectives().some((x) => x.o.type === 'sell' && s.hold.length >= objectiveTarget(x.o) - objectiveProgress(s, x.q, x.q.objectives.indexOf(x.o)));
     while (s.hold.length < this.st.hold && ready() === before && !toSell() && s.playTime < until && s.playTime < this.opts.minutes * 60) {
-      if (plan.want && !inHours(s.hour, plan.want.hours) !== !inHours(s.hour - 0.01, plan.want.hours)) break;
+      if (plan.want && this.bites(plan.want, s.hour) !== this.bites(plan.want, (s.hour + 23.99) % 24)) break;
       // The fish she came here for is in the hold (or, hunting for the journal, has gone off the bite): nobody
       // fishes on at the dock for the cat's sake once the cat has her fish.
       if ((this.hunting || plan.want) && this.wantedFish() !== plan.want) break;
       // The relic is up (or its hour has gone by): on with the day.
-      if (hunt && !stay && (s.relics.includes(hunt.relic.id) || !inHours(s.hour, hunt.relic.where!.hours))) break;
+      if (hunt && !stay && (s.relics.includes(hunt.relic.id) || !inHours(s.hour, hunt.relic.where!.hours) || !inWeather(hunt.relic.region, s.hour, hunt.relic.where!.weather))) break;
       this.cast(place);
       if (hunt && found === null && s.relics.includes(hunt.relic.id)) found = s.playTime;
       this.haul(true, place);
@@ -704,7 +737,8 @@ export class SimPlayer {
       const place = this.places().find((p) => w.zones.includes(p.zone(20)) || w.zones.includes(p.zone(5)));
       if (!place) continue;
       const there = (s.hour + this.trip(place) / (DAY_LENGTH_S / 24)) % 24;
-      if (inHours(there, w.hours) && inHours((there + 1) % 24, w.hours)) return { relic: r, place };
+      const then = (h: number) => inHours(h, w.hours) && inWeather(r.region, h, w.weather);
+      if (then(there) && then((there + 1) % 24)) return { relic: r, place };
     }
     return null;
   }

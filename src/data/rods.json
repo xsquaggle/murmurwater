@@ -11,6 +11,9 @@
       "desc": "Light as a feather because it is mostly feathers." },
     { "id": "fenwood-rod", "name": "Fenwood Rod", "tier": 3, "rarity": "epic", "price": 14000, "from": "reached:mossglass-fen",
       "reach": 34, "power": 4.5, "control": 1.75, "luck": 0.75, "grace": 0.82,
-      "desc": "Cut from a lantern tree that was asked first. It hums a little in fog." }
+      "desc": "Cut from a lantern tree that was asked first. It hums a little in fog." },
+    { "id": "whalebone-rod", "name": "Whalebone Rod", "tier": 4, "rarity": "legendary", "price": 120000, "from": "reached:saltbone-reach",
+      "reach": 38, "power": 5.4, "control": 2.05, "luck": 1.0, "grace": 0.9,
+      "desc": "Not whalebone, whatever Mara's ticket says. It came off the Ribs, and it bends toward them." }
   ]
 }

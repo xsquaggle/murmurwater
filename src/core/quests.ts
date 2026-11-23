@@ -10,7 +10,7 @@
 import questsJson from '../data/quests.json';
 import npcsJson from '../data/npcs.json';
 import boatsJson from '../data/boats.json';
-import { BAITS, BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, REGIONS, REGIONS_BY_ID, RODS_BY_ID, fish, inHours, regionOfNpc } from './content';
+import { BAITS, BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, REGIONS, REGIONS_BY_ID, RODS_BY_ID, WEATHER_WORDS, fish, inHours, regionOfNpc, type WeatherNeed } from './content';
 import { ECHOES_BY_ID, LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable, type StatKey } from './gear';
 import { RELICS, RELICS_BY_ID, relicGift, type RelicDef } from './relics';
 import { earn } from './economy';
@@ -25,6 +25,7 @@ export interface ObjectiveDef {
   type: ObjectiveType; label: string; count?: number;
   /** catch: a specific species, a minimum rarity, a minimum weight, a strange trait. */
   fish?: string; rarity?: string; minWeight?: number; strange?: boolean;
+  /** catch: only fish out of struck water count (core/weather.ts). */ struck?: boolean;
   /** catch: only fish of this region count. */ region?: string;
   /** own: a rod, bait, boat, lure or wearable id, or a thing bought with Echoes. */ item?: string;
   /** visit: a place id from a region's places, or a place on a chart (found by sailing close). */ place?: string;
@@ -76,7 +77,7 @@ export const handsInTo = (q: QuestDef): string => q.receiver ?? q.giver;
 export const readyText = (q: QuestDef): string => (q.receiver ? `${q.title}: now talk to ${npc(q.receiver).name}` : `${q.title}: done! Return to ${npc(q.giver).name}`);
 
 export type QuestEvent =
-  | { type: 'catch'; fishId: string; weight: number; trait: string | null; perfect: boolean }
+  | { type: 'catch'; fishId: string; weight: number; trait: string | null; perfect: boolean; struck?: boolean }
   | { type: 'sell'; count: number; coins: number }
   | { type: 'visit'; place: string }
   /** Fish brought up from a Lantern Pot. */ | { type: 'haul'; count: number }
@@ -166,6 +167,7 @@ function matchesCatch(o: ObjectiveDef, ev: Extract<QuestEvent, { type: 'catch' }
   if (o.rarity && RARITIES.indexOf(fish(ev.fishId).rarity) < RARITIES.indexOf(o.rarity as (typeof RARITIES)[number])) return false;
   if (o.minWeight && ev.weight < o.minWeight) return false;
   if (o.strange && !ev.trait) return false;
+  if (o.struck && !ev.struck) return false;
   return true;
 }
 
@@ -356,6 +358,9 @@ function catchable(s: GameState) {
   return FISH.filter((f) => f.region === s.world.region && (!f.requires || s.flags.includes(f.requires)) && RARITIES.indexOf(f.rarity) <= 2);
 }
 
+/** " (in a storm)" for a fish that waits for weather. */
+const when = (f: { weather?: WeatherNeed }) => (f.weather ? ` (${WEATHER_WORDS[f.weather].slice(2)})` : '');
+
 export function generateBoardQuest(s: GameState, rng: Rng, id: string): BoardQuest {
   const pool = catchable(s);
   const kinds = ['species', 'species', 'heavy', 'sell', 'perfect'] as const;
@@ -365,7 +370,7 @@ export function generateBoardQuest(s: GameState, rng: Rng, id: string): BoardQue
   if (kind === 'species' && pool.length) {
     const f = rng.weighted(pool, (x) => (x.rarity === 'common' ? 3 : x.rarity === 'uncommon' ? 2 : 1));
     const n = f.rarity === 'common' ? rng.int(3, 5) : f.rarity === 'uncommon' ? rng.int(2, 3) : 1;
-    const night = f.hours && !inHours(12, f.hours) ? ' (after dark)' : '';
+    const night = (f.hours && !inHours(12, f.hours) ? ' (after dark)' : '') + when(f);
     // Now and then a little of the local bait is thrown in.
     const local = BAITS.find((b) => b.from === `reached:${s.world.region}`)?.id ?? 'sandworm';
     return mk(`Wanted: ${f.name}`, { type: 'catch', fish: f.id, count: n, label: `Catch ${n} ${f.name}${night}` }, f.baseValue * n * 1.6,
@@ -374,7 +379,7 @@ export function generateBoardQuest(s: GameState, rng: Rng, id: string): BoardQue
   if (kind === 'heavy' && pool.length) {
     const f = rng.pick(pool);
     const w = Math.round((f.weight[0] + (f.weight[1] - f.weight[0]) * 0.65) * 10) / 10;
-    return mk(`A Big One`, { type: 'catch', fish: f.id, minWeight: w, count: 1, label: `Catch a ${f.name} over ${w} kg` }, f.baseValue * 4);
+    return mk(`A Big One`, { type: 'catch', fish: f.id, minWeight: w, count: 1, label: `Catch a ${f.name} over ${w} kg${when(f)}` }, f.baseValue * 4);
   }
   // Jobs that name no fish pay by what the fish of these waters are worth.
   const avg = pool.length ? pool.reduce((a, f) => a + f.baseValue, 0) / pool.length : 10;

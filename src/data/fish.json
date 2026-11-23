@@ -487,6 +487,270 @@
       "lore": "No eyes. Two fins like the horns of a gramophone, turned toward you. It heard the hook go in before you cast.",
       "length": 1.0,
       "hint": "Something is listening. It has not heard you yet."
+    },
+    {
+      "id": "bonefin-herring",
+      "name": "Bonefin Herring",
+      "rarity": "common",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-open",
+        "reach-landing",
+        "reach-ribs",
+        "reach-swell",
+        "reach-jaw"
+      ],
+      "baseValue": 150,
+      "weight": [
+        0.2,
+        0.8
+      ],
+      "fight": {
+        "strength": 1.7,
+        "stamina": 1.2,
+        "temper": 1.4,
+        "thrash": 0.05
+      },
+      "biteWindow": 0.9,
+      "lore": "Its fins are all bone and no web. It swims well enough. Nobody has told it.",
+      "length": 0.3
+    },
+    {
+      "id": "slate-pout",
+      "name": "Slate Pout",
+      "rarity": "common",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-landing",
+        "reach-kettles",
+        "reach-anvil",
+        "reach-tally",
+        "reach-open"
+      ],
+      "baseValue": 180,
+      "weight": [
+        0.4,
+        1.6
+      ],
+      "fight": {
+        "strength": 1.9,
+        "stamina": 1.5,
+        "temper": 0.6,
+        "thrash": 0.05
+      },
+      "biteWindow": 0.9,
+      "lore": "Sulks on the bottom with its lip out. Captain Oake calls it the only honest fish on the Reach.",
+      "length": 0.34
+    },
+    {
+      "id": "thrift-wrasse",
+      "name": "Thrift Wrasse",
+      "rarity": "common",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-ribs",
+        "reach-jaw",
+        "reach-landing",
+        "reach-tally",
+        "reach-kettles"
+      ],
+      "baseValue": 210,
+      "weight": [
+        0.2,
+        0.9
+      ],
+      "fight": {
+        "strength": 1.6,
+        "stamina": 1.2,
+        "temper": 1.5,
+        "thrash": 0.1
+      },
+      "biteWindow": 0.8,
+      "lore": "Spotted the pink of sea-thrift, and found wherever thrift grows on the rock above. The flowers were there first. Probably.",
+      "length": 0.26
+    },
+    {
+      "id": "ribfish",
+      "name": "Ribfish",
+      "rarity": "uncommon",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-ribs",
+        "reach-jaw"
+      ],
+      "baseValue": 650,
+      "weight": [
+        2.0,
+        7.0
+      ],
+      "fight": {
+        "strength": 2.6,
+        "stamina": 2.0,
+        "temper": 1.0,
+        "thrash": 0.15
+      },
+      "biteWindow": 0.75,
+      "lore": "Eleven bars a side, curved like the Ribs it lives under. Count them again and there are nine.",
+      "length": 0.85
+    },
+    {
+      "id": "kettle-cod",
+      "name": "Kettle Cod",
+      "rarity": "uncommon",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-kettles",
+        "reach-anvil",
+        "reach-open",
+        "reach-landing"
+      ],
+      "baseValue": 740,
+      "weight": [
+        2.0,
+        9.0
+      ],
+      "fight": {
+        "strength": 2.5,
+        "stamina": 2.4,
+        "temper": 0.6,
+        "thrash": 0.1
+      },
+      "biteWindow": 0.8,
+      "lore": "Pot-bellied and iron black. Held to the ear it booms a little, like the holes it comes out of.",
+      "length": 0.75
+    },
+    {
+      "id": "squall-mackerel",
+      "name": "Squall Mackerel",
+      "rarity": "rare",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-open",
+        "reach-swell",
+        "reach-landing",
+        "reach-ribs",
+        "reach-anvil"
+      ],
+      "baseValue": 1700,
+      "weight": [
+        0.8,
+        2.6
+      ],
+      "weather": "storm",
+      "fight": {
+        "strength": 3.0,
+        "stamina": 2.2,
+        "temper": 2.0,
+        "thrash": 0.3
+      },
+      "biteWindow": 0.6,
+      "lore": "Only there in a storm. It is not hiding the rest of the time. It is not there.",
+      "length": 0.55
+    },
+    {
+      "id": "lantern-ling",
+      "name": "Lantern Ling",
+      "rarity": "rare",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-jaw",
+        "reach-kettles"
+      ],
+      "baseValue": 1900,
+      "weight": [
+        3.0,
+        11.0
+      ],
+      "hours": [
+        19,
+        5
+      ],
+      "fight": {
+        "strength": 3.2,
+        "stamina": 2.8,
+        "temper": 1.1,
+        "thrash": 0.25
+      },
+      "biteWindow": 0.65,
+      "lore": "Carries a small light on its chin and keeps it low, like somebody reading under the blankets.",
+      "length": 1.2
+    },
+    {
+      "id": "thunderback",
+      "name": "Thunderback",
+      "rarity": "epic",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-anvil"
+      ],
+      "baseValue": 4600,
+      "weight": [
+        8.0,
+        30.0
+      ],
+      "weather": "thunder",
+      "fight": {
+        "strength": 4.2,
+        "stamina": 3.8,
+        "temper": 1.2,
+        "thrash": 0.35
+      },
+      "biteWindow": 0.55,
+      "lore": "The fork down its back is the one that struck the Anvil last. It is still warm.",
+      "length": 1.3
+    },
+    {
+      "id": "old-greyback",
+      "name": "Old Greyback",
+      "rarity": "legendary",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-swell"
+      ],
+      "baseValue": 14000,
+      "weight": [
+        10.0,
+        32.0
+      ],
+      "hours": [
+        11,
+        13
+      ],
+      "fight": {
+        "strength": 4.8,
+        "stamina": 4.4,
+        "temper": 1.3,
+        "thrash": 0.4
+      },
+      "biteWindow": 0.5,
+      "lore": "The colour of the swell and nearly as old. It comes up at noon to look at the sun. It carries a harpoon scar, and has plainly forgiven it. That is the unsettling part.",
+      "length": 1.7
+    },
+    {
+      "id": "the-lull",
+      "name": "The Lull",
+      "rarity": "uncanny",
+      "region": "saltbone-reach",
+      "zones": [
+        "reach-tally"
+      ],
+      "baseValue": 30000,
+      "weight": [
+        6.0,
+        16.0
+      ],
+      "weather": "eye",
+      "requires": "reach-counted",
+      "fight": {
+        "strength": 5.2,
+        "stamina": 4.8,
+        "temper": 0.8,
+        "thrash": 0.5
+      },
+      "biteWindow": 0.42,
+      "lore": "Its eyes are shut. It did not fight like a strong fish. It fought the way a sleeper pulls the blanket back.",
+      "length": 1.1,
+      "hint": "Something is asleep. It is waiting for the quiet."
     }
   ]
 }

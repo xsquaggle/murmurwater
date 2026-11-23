@@ -7,6 +7,7 @@
  */
 import { Rng } from './rng';
 import { FISH, inHours, type BaitDef, type FishDef, type RodDef, type Rarity, RARITIES } from './content';
+import { STRUCK, inWeather, weatherAt } from './weather';
 
 export const FEEL = {
   chargeTime: 0.95,          // s to go from 0 to full power
@@ -51,6 +52,9 @@ export const HAUL = {
   clearWater: 3,             // no snags in the last metres
 };
 
+/** How much harder a fish pulls when it is hooked at the height of a storm. */
+export const ROUGH = 0.15;
+
 export const RARITY_WEIGHT: Record<Rarity, number> = { common: 62, uncommon: 24, rare: 9.5, epic: 3.4, legendary: 1.0, uncanny: 0.35 };
 
 /** `bite` is the float gone under, for a fish or for a find; `hauling` is a find on the way up. */
@@ -90,6 +94,7 @@ export type FishingEvent =
 export interface CatchResult {
   fishId: string; weight: number; sizeFactor: number; trait: StrangeTrait | null;
   perfectHook: boolean; cleanCast: boolean; fightTime: number;
+  /** It came out of struck water. */ struck?: boolean;
 }
 
 export const STRANGE_TRAITS = [
@@ -110,7 +115,8 @@ export interface FishingInput {
 }
 export const NO_INPUT: FishingInput = { primary: false, primaryPressed: false, primaryReleased: false, steer: 0, cancel: false };
 
-export interface SpotInfo { zoneId: string | null; depth: number; hotspot: boolean; distance?: number }
+/** `struck`: the float has landed in struck water, where lightning went into the sea (core/weather.ts). */
+export interface SpotInfo { zoneId: string | null; depth: number; hotspot: boolean; distance?: number; struck?: boolean }
 
 export interface FishingContext {
   rod: RodDef;
@@ -147,6 +153,7 @@ export interface FightState {
   slack: number;
   time: number;
   perfect: boolean;
+  /** How much harder it pulls for the weather it was hooked in (1 in fair weather). */ rough?: number;
 }
 
 /** A find on its way up. */
@@ -281,6 +288,7 @@ export class FishingSession {
     let w = this.rng.range(FEEL.waitMin, FEEL.waitMax) / this.ctx.bait.biteSpeed;
     if (this.cleanCast && !afterMiss) w *= FEEL.cleanCastWait;
     if (this.spot.hotspot) w *= FEEL.hotspotWait;
+    if (this.spot.struck) w *= STRUCK.wait;
     this.wait = w;
     this.waitElapsed = 0;
     this.lastNibble = -99;
@@ -353,14 +361,14 @@ export class FishingSession {
     this.fight = {
       fish: f, distance: this.castDistance, tension: 0.25, stamina: perfect ? FEEL.perfectStamina : 1,
       run: 0, runTimer: 0, nextRunIn: this.rng.range(0.8, 1.8), warned: false, pendingRun: 1, thrash: 0,
-      overload: 0, slack: 0, time: 0, perfect,
+      overload: 0, slack: 0, time: 0, perfect, rough: 1 + ROUGH * weatherAt(this.ctx.region, this.ctx.hour).power,
     };
   }
 
   /** Effective pull of the fish right now (m/s-ish units). */
   static pull(fs: FightState): number {
     const f = fs.fish.fight;
-    let p = f.strength * (0.35 + 0.65 * fs.stamina);
+    let p = f.strength * (0.35 + 0.65 * fs.stamina) * (fs.rough ?? 1);
     if (fs.run !== 0) p *= 1.7;
     if (fs.thrash > 0) p *= 2.0;
     return p;
@@ -505,7 +513,7 @@ export class FishingSession {
     let trait: StrangeTrait | null = null;
     const chance = this.ctx.strangeChance * (fs.perfect ? STRANGE_PERFECT : 1) * (this.cleanCast ? STRANGE_CLEAN : 1);
     if (this.rng.chance(chance)) trait = this.rng.weighted(STRANGE_TRAITS, (t) => t.weight).id;
-    this.lastCatch = { fishId: f.id, weight, sizeFactor, trait, perfectHook: fs.perfect, cleanCast: this.cleanCast, fightTime: fs.time };
+    this.lastCatch = { fishId: f.id, weight, sizeFactor, trait, perfectHook: fs.perfect, cleanCast: this.cleanCast, fightTime: fs.time, ...(this.spot.struck ? { struck: true } : {}) };
     this.phase = 'landed';
     this.resultTimer = 2.2;
     this.events.push({ type: 'landed', catch: this.lastCatch });
@@ -540,9 +548,9 @@ export class FishingSession {
 /** The fish that could take this bait at this spot now, each with its weight in the draw. */
 export function fishTable(c: FishingContext, spot: SpotInfo, cleanCast = false): { fish: FishDef; weight: number }[] {
   const zone = spot.zoneId;
-  const luck = c.luck + c.rod.luck + (c.bait.rarityBoost ?? 0) + (cleanCast ? 0.08 : 0) + (spot.hotspot ? 0.15 : 0);
+  const luck = c.luck + c.rod.luck + (c.bait.rarityBoost ?? 0) + (cleanCast ? 0.08 : 0) + (spot.hotspot ? 0.15 : 0) + (spot.struck ? STRUCK.luck : 0);
   // Luck compounds with rarity: (1 + luck) per tier, so a lucky rod turns the rare into the regular.
-  return FISH.filter((f) => f.region === c.region && (!zone || f.zones.includes(zone)) && inHours(c.hour, f.hours) && (!f.requires || c.flags.has(f.requires)))
+  return FISH.filter((f) => f.region === c.region && (!zone || f.zones.includes(zone)) && inHours(c.hour, f.hours) && inWeather(c.region, c.hour, f.weather) && (!f.requires || c.flags.has(f.requires)))
     .map((f) => ({ fish: f, weight: RARITY_WEIGHT[f.rarity] * Math.pow(1 + luck, RARITIES.indexOf(f.rarity)) * (c.bait.affinity[f.id] ?? 1) }));
 }
 

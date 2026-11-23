@@ -95,6 +95,23 @@
       "barks": [
         "A stout sea crate with M.T. stencilled on the front. A note is pinned inside the lid: 'Fish in, coins out. Stall prices. Don't ask me how. M.'"
       ]
+    },
+    {
+      "id": "oake",
+      "name": "Captain Brannagh Oake",
+      "role": "Whaler, retired",
+      "region": "saltbone-reach",
+      "voice": "old woman, low and unhurried, dry, a north-coast accent",
+      "barks": [
+        "The glass is steady. That means nothing here. The storms don't read the glass.",
+        "Forty years on this quay. The quay's moved more than I have.",
+        "Margit had my washing line again. I've stopped pegging out before breakfast.",
+        "You don't whistle on the Reach. Not for luck. It joins in."
+      ],
+      "turned": [
+        "New, are you? You stand like somebody who's been rained on here before.",
+        "I've a second cup out. I put it out this morning. I couldn't have told you who for."
+      ]
     }
   ]
 }

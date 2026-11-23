@@ -20,6 +20,9 @@ export const KEY_MARKS: [string, string][] = [
   ['done: Clear as Glass', 'glassfin'], ['done: The Tape Runs Out', 'the tape'], ['done: What Glows', 'glowbelly'], ['bought Fenwood Rod', 'Fenwood Rod'],
   ['aboard: Biscuit', 'Biscuit aboard'], ['done: A Boat in the Reeds', 'the Puffin found'], ['bought The Puffin', 'the Puffin afloat'], ['aboard: Mister Hollis', 'Hollis aboard'],
   ['done: The Sump', 'the eel'], ['done: The Listening Post', 'the post'], ['first Old Mossglass', 'Old Mossglass'], ['first The Listener', 'the Listener'], ['journal page: The Mossglass', 'Mossglass page'],
+  ['reached Saltbone Reach', 'the Reach reached'], ['done: Storms Keep Hours', 'the almanac'], ['done: Through the Ribs', 'the ribs'], ["done: Margit's Leavings", 'storm mackerel'],
+  ['done: Where the Lightning', 'struck water'], ['bought Whalebone Rod', 'Whalebone Rod'], ['done: The Anvil', 'the Thunderback'], ['done: The Count', 'the count'],
+  ['first Old Greyback', 'Old Greyback'], ['first The Lull', 'the Lull'], ['journal page: The Saltbone', 'Saltbone page'],
 ];
 
 if (has('rates')) {

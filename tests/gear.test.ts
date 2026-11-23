@@ -106,6 +106,8 @@ describe('gear', () => {
     expect(buyBait(s, 'marsh-worm', 5)).toBe(false);
     s.flags.push('reached:mossglass-fen');
     expect(buyBait(s, 'marsh-worm', 5)).toBe(true);
+    expect(buyLure(s, 'petrel-feather')).toBe(false);
+    s.flags.push('reached:saltbone-reach');
     for (const l of LURES) if (l.price !== undefined) expect(buyLure(s, l.id), l.id).toBe(true);
     for (const w of WEARABLES) if (w.price !== undefined) expect(buyWearable(s, w.id), w.id).toBe(true);
     expect(buyRod(s, 'harbour-rod')).toBe(true);

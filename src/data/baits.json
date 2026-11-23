@@ -72,6 +72,35 @@
       },
       "blurb": "Fen fish that feed at the top: glassfin, gar",
       "desc": "Lives a day. Mara packs them by the dozen and does not say how she keeps them."
+    },
+    { "id": "lugworm",
+      "name": "Lugworm",
+      "price": 55,
+      "from": "reached:saltbone-reach",
+      "biteSpeed": 1.15,
+      "affinity": {
+        "slate-pout": 1.5,
+        "kettle-cod": 1.7,
+        "lantern-ling": 1.5,
+        "thunderback": 2.2
+      },
+      "blurb": "Reach bottom feeders: pout, cod, the Thunderback",
+      "desc": "Dug at low water from under the shingle. It leaves its own little coils behind, like rope put away."
+    },
+    { "id": "sand-eel",
+      "name": "Sand Eel",
+      "price": 85,
+      "from": "reached:saltbone-reach",
+      "biteSpeed": 1.2,
+      "affinity": {
+        "bonefin-herring": 1.4,
+        "thrift-wrasse": 1.3,
+        "ribfish": 1.8,
+        "squall-mackerel": 2.0,
+        "old-greyback": 1.4
+      },
+      "blurb": "Reach fish that chase: ribfish, mackerel",
+      "desc": "A silver sliver that will not lie still. Everything on the Reach that hunts, hunts these."
     }
   ]
 }

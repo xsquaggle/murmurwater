@@ -34,8 +34,8 @@ describe('the data', () => {
     for (const r of RELICS) expect(!!r.where || given.has(r.id), r.id).toBe(true);
     // And none both ways: a relic in the water is not also handed over.
     for (const r of RELICS) expect(!!r.where && given.has(r.id), r.id).toBe(false);
-    expect(RELICS.filter((r) => r.where).length).toBe(8);
-    expect(given.size).toBe(4);
+    expect(RELICS.filter((r) => r.where).length).toBe(12);
+    expect(given.size).toBe(5);
   });
 });
 
@@ -639,6 +639,8 @@ describe('the Shelf', () => {
     const s = newGame(1);
     expect(shelf(s).map((p) => p.relic.region)).toEqual(Array(6).fill('hearthbay'));
     s.world.discovered.push('mossglass-fen');
+    expect(shelf(s).length).toBe(12);
+    s.world.discovered.push('saltbone-reach');
     expect(shelf(s).length).toBe(RELICS.length);
   });
 

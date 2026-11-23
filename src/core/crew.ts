@@ -7,6 +7,7 @@
 import crewJson from '../data/crew.json';
 import boatsJson from '../data/boats.json';
 import { FISH, RARITIES, REGIONS_BY_ID, inHours, isNight, openZone, type FishDef, type Rarity } from './content';
+import { inWeather } from './weather';
 import { RARITY_WEIGHT } from './fishing';
 import { Rng, hashString } from './rng';
 import type { CatchItem, GameState } from './state';
@@ -83,7 +84,7 @@ export function crewTable(s: GameState, def: CrewDef, env: Pick<CrewEnv, 'region
   const r = REGIONS_BY_ID.get(env.region);
   const zone = env.zone ?? (r ? openZone(r)?.id ?? null : null), top = RARITIES.indexOf(def.maxRarity);
   return FISH.filter((f) => f.region === env.region && (!zone || f.zones.includes(zone)) && RARITIES.indexOf(f.rarity) <= top && f.rarity !== 'uncanny'
-    && !!s.journal[f.id] && inHours(env.hour, f.hours) && (!f.requires || s.flags.includes(f.requires)));
+    && !!s.journal[f.id] && inHours(env.hour, f.hours) && inWeather(f.region, env.hour, f.weather) && (!f.requires || s.flags.includes(f.requires)));
 }
 /** How many kinds of fish this hand could ever bring up in this water (any hour): 0 means the journal knows nothing here for them. */
 export function crewKnows(s: GameState, def: CrewDef, region: string, at: string | null): number {

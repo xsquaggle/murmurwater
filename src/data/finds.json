@@ -60,6 +60,33 @@
           "A chest that came up lighter than it went down. Whatever was let out of it left a pearl behind, for manners."
         ]
       }
+    },
+    "saltbone-reach": {
+      "crate": {
+        "name": "A salt crate", "heft": 3.4, "coins": [450, 900], "times": [1, 1.5],
+        "bait": [
+          { "id": "lugworm", "n": [4, 8], "w": 5 },
+          { "id": "sand-eel", "n": [3, 6], "w": 3 },
+          { "id": "glowgrub", "n": [4, 6], "w": 1 }
+        ],
+        "lines": [
+          "A salt crate, white right through. The nails have gone and it has not noticed.",
+          "A whaler's ditty box with a sliding lid. Needles, a thimble, and coins sewn into a sock.",
+          "A cask stave crate branded with a harpoon. Somebody has burned a line through the brand.",
+          "A biscuit crate. The biscuit has gone to stone and the coins under it have not.",
+          "A crate addressed to Captain B. Oake, Tryworks Landing, sent from Tryworks Landing."
+        ]
+      },
+      "chest": {
+        "name": "A sea chest", "heft": 4.2, "zones": ["reach-anvil", "reach-kettles"], "coins": [2200, 4000], "times": [2, 3.5], "pearls": 1,
+        "bait": [{ "id": "glowgrub", "n": [8, 12], "w": 1 }, { "id": "sand-eel", "n": [8, 12], "w": 1 }],
+        "gear": { "wearables": ["st-elmos-bead"] }, "gearChance": 0.25,
+        "lines": [
+          "A sea chest with a scorch down the lid in the shape of a fork. Nothing inside is so much as warm.",
+          "A chest lashed with harpoon line, every turn of it laid by somebody who meant it to be found.",
+          "A master's chest, the name planed off. A pearl in the till, and a log with every page torn out but the dates."
+        ]
+      }
     }
   }
 }
