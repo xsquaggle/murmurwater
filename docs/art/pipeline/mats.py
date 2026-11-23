@@ -23,6 +23,7 @@ from callomats import CALLO
 from boatmats import BOAT
 from hollismats import HOLLIS
 from reachmats import REACH
+from oakemats import OAKE
 
 ALGAE, SCUM, BARNACLE = hexc('#58724A'), hexc('#3B4734'), hexc('#DAD8C2')
 
@@ -433,6 +434,8 @@ PAINT.update(BOAT)                                                   # painted p
 PAINT.update(HOLLIS)                                                 # oilskin, knitting, carpet and a watch's dial for Mister Hollis (hollismats.py)
 assert not set(REACH) & set(PAINT), set(REACH) & set(PAINT)          # a name used twice would repaint an earlier model
 PAINT.update(REACH)                                                  # bone, limpets, a gull's nest and sea-thrift for Saltbone Reach (reachmats.py)
+assert not set(OAKE) & set(PAINT), set(OAKE) & set(PAINT)
+PAINT.update(OAKE)                                                   # an old face, a pilot coat's wool and a clay pipe for Captain Oake (oakemats.py)
 
 
 # ------------------------------------------------------------------------------------------------ what happens to a patch afterwards
