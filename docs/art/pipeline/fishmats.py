@@ -80,7 +80,7 @@ def _inner(H, W, poly, soft=6):
 
 def fishskin(H, W, seed=0, back='#3F6B4A', flank='#8FB36A', belly='#E9E3C2', split=(0.30, 0.66), blend=(0.10, 0.12), wob=0.03, vary=0.10,
              tail=None, head=None, bars=None, mottle=None, bark=None, spots=None, scales=None, line=None, gill=None, mouth=None, lip=None,
-             blobs=None, eye=None, socket=None, spine=None, inner=None, lantern=None, pores=None, sheen=0.10, under=0.14, ratio=1.0, **_):
+             blobs=None, eye=None, socket=None, spine=None, inner=None, lantern=None, pores=None, marks=None, sheen=0.10, under=0.14, sheen_colour=None, ratio=1.0, **_):
     """One side of a fish. Every part is optional:
     tail    {back, flank, belly, u: (from, to)}: the three colours change to these toward the tail
     head    {to, colour, amount}: the head, as far back as u = to, takes this colour
@@ -99,6 +99,9 @@ def fishskin(H, W, seed=0, back='#3F6B4A', flank='#8FB36A', belly='#E9E3C2', spl
     inner   {poly: [[u, v], ...], colour, amount, soft}: a shape inside the fish
     lantern {u, top, ribs, glass, core, frame}: a lantern for a belly
     pores   {v, n, u, r, colour, amount}: a row of round pores
+    marks   [{lines: [[[u, v], ...], ...], colour, w, amount, halo: {colour, w, soft, amount}}]: lines drawn on the skin
+            (ribs, zigzags, a scar, a fork of lightning), each with a soft halo under it if it has one
+    sheen_colour: the colour of the sheen along the upper flank (white if not given)
     """
     yy, xx, v = _grid(H, W)
     u = xx
@@ -189,6 +192,11 @@ def fishskin(H, W, seed=0, back='#3F6B4A', flank='#8FB36A', belly='#E9E3C2', spl
     for b in blobs or []:
         d = np.hypot((u - b['u']) * W, (v - b['v']) * H / ratio / b.get('squash', 1.0)) / (b['r'] * W)
         img = mix(img, hexc(b['colour']), b.get('amount', 0.6) * (1 - smooth(d, 1 - b.get('soft', 0.5), 1 + b.get('soft', 0.5))))
+    for mk in marks or []:
+        halo, line = _marks(H, W, mk)
+        if mk.get('halo'):
+            img = mix(img, hexc(mk['halo']['colour']), mk['halo'].get('amount', 0.4) * halo)
+        img = mix(img, hexc(mk['colour']), mk.get('amount', 0.9) * line)
     if gill:
         g = gill
         v0, v1 = g.get('v', (0.16, 0.80))
@@ -208,11 +216,20 @@ def fishskin(H, W, seed=0, back='#3F6B4A', flank='#8FB36A', belly='#E9E3C2', spl
         ts = np.linspace(0, 1, 18)
         pts = [(m['to'] * t, m['v'] + (m.get('v1', m['v']) - m['v']) * t + m.get('curl', 0.0) * t ** 3) for t in ts]
         img = mix(img, hexc(m.get('colour', '#2A1A1A')), m.get('amount', 0.85) * _line(H, W, pts, m.get('w', 2.4)))
-    img = mix(img, np.ones(3), sheen * np.exp(-((v - 0.76) / 0.05) ** 2) * smooth(u, 0.06, 0.2) * (1 - smooth(u, 0.7, 0.96)))
+    img = mix(img, hexc(sheen_colour) if sheen_colour else np.ones(3), sheen * np.exp(-((v - 0.76) / 0.05) ** 2) * smooth(u, 0.06, 0.2) * (1 - smooth(u, 0.7, 0.96)))
     return shade(img, 1 - under * np.exp(-(v / 0.09) ** 2))
 
 
-def skinglow(H, W, seed=0, allover=None, scales=None, rim=None, lantern=None, inner=None, pores=None, blobs=None, bars=None, ratio=1.0, **_):
+def _marks(H, W, mk):
+    """A mark's (halo, line) masks, 0..1; its lines are in patch units (u from the lips, v up from the belly line)."""
+    lines = [[(a * W, (1 - b) * H) for a, b in ln] for ln in mk['lines']]
+    line = linemask(H, W, lines, mk.get('w', 2.0))
+    h = mk.get('halo')
+    halo = blur(linemask(H, W, lines, h.get('w', 3 * mk.get('w', 2.0))), h.get('soft', 2.5)) if h else np.zeros((H, W))
+    return halo, line
+
+
+def skinglow(H, W, seed=0, allover=None, scales=None, rim=None, lantern=None, inner=None, pores=None, blobs=None, bars=None, marks=None, ratio=1.0, **_):
     """What a skin gives off after dark (black where nothing glows). allover {colour, amount, v: (lo, hi)}; rim {colour,
     amount} lights the edges of `scales`; lantern, inner, pores and blobs as in fishskin (inner darkens)."""
     yy, xx, v = _grid(H, W)
@@ -237,6 +254,11 @@ def skinglow(H, W, seed=0, allover=None, scales=None, rim=None, lantern=None, in
     for b in blobs or []:
         d = np.hypot((u - b['u']) * W, (v - b['v']) * H / ratio / b.get('squash', 1.0)) / (b['r'] * W)
         out = out + hexc(b['colour']) * (b.get('amount', 0.6) * (1 - smooth(d, 1 - b.get('soft', 0.5), 1 + b.get('soft', 0.5))))[..., None]
+    for mk in marks or []:                                               # a mark that glows: its line at `lit`, its halo at halo.amount
+        if 'glow' not in mk:
+            continue
+        halo, line = _marks(H, W, mk)
+        out = out + hexc(mk['glow']) * (mk.get('lit', 0.6) * line + (mk['halo'].get('lit', 0.25) * halo if mk.get('halo') else 0))[..., None]
     return np.clip(out, 0, 1)
 
 
@@ -300,6 +322,18 @@ def eyeglow(H, W, seed=0, colour='#DDF2E0', amount=0.7, r0=0.72, **_):
     return hexc(colour) * (amount * (1 - smooth(r, r0 - 0.05, r0 + 0.05)))[..., None]
 
 
+def lid(H, W, seed=0, colour='#E4DEEA', crease='#6A5890', w=1.6, **_):
+    """A shut eye seen face on (the nose to the left): a lid the colour of the skin, lit from above, and the line where
+    the lids meet, curving down."""
+    yy, xx, v = _grid(H, W)
+    X, Y = (xx - 0.5) / 0.48, (yy - 0.5) / 0.48
+    r = np.hypot(X, Y)
+    img = shade(hexc(colour) * np.ones((H, W, 3)), (1 - 0.16 * smooth(r, 0.4, 0.95)) * (1 + 0.08 * smooth(-Y, 0.0, 0.8)))
+    d = np.abs(Y - (0.12 - 0.3 * X ** 2)) * H * 0.48
+    img = shade(img, 1 - 0.12 * np.exp(-((Y - 0.12 + 0.3 * X ** 2 - 0.12) * H * 0.48 / 4.0) ** 2) * (np.abs(X) < 0.8))     # the lower lid's shadow
+    return mix(img, hexc(crease), 0.9 * np.exp(-(d / w) ** 2) * smooth(0.85 - np.abs(X), 0, 0.15))
+
+
 def maw(H, W, seed=0, colour='#9E3A40', deep='#3A1216', tongue='#D9777A', **_):
     """The inside of an open mouth seen from the front: red, darker down the throat, a tongue lying in it."""
     yy, xx, v = _grid(H, W)
@@ -339,5 +373,5 @@ def sprig(H, W, seed=0, tone=('#3E6A35', '#7FA64A', '#C9D68A'), **_):
     return shade(img, 0.92 + 0.12 * strokes(H, W, seed, 'y', 4, 40))
 
 
-FISH = {'fishskin': fishskin, 'skinglow': skinglow, 'fin': fin, 'finglow': finglow, 'eye': eye, 'eyeglow': eyeglow, 'maw': maw,
+FISH = {'fishskin': fishskin, 'skinglow': skinglow, 'fin': fin, 'finglow': finglow, 'eye': eye, 'eyeglow': eyeglow, 'lid': lid, 'maw': maw,
         'mosspad': mosspad, 'flower': flower, 'sprig': sprig}
