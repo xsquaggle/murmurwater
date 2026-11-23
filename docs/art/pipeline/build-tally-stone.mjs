@@ -1,8 +1,9 @@
 // build-tally-stone.mjs : Isolde's Tally Stone on Saltbone Reach, built in code (no generation job).
 // Usage: node build-tally-stone.mjs <out.glb> [texture.png] [--layout layout.json] [--uv uv.svg]     (paint with paint-atlas.py)
 // A slab of slate as tall as a door (2.1 m over the ground, 1.2 m wide), stood upright in a dry-stone cairn 2 m
-// across and leaning a little back, cut all over, both faces, with tallies in fives: some two thousand strokes, the
-// newest on the front (+Z), low down at the right of the last row, pale new cuts; the oldest worn shallow and grown
+// across and leaning a little back, cut on both faces with tallies in fives big enough to read from six metres (each
+// five about 15 cm square, six to a row in rows that drift): 27 fives on the front (+Z), the newest low down in the
+// last row, bright new cuts, and 30 older ones on the back, all cut pale into the grey; the oldest worn and grown
 // over. A dead hand lantern on a flat stone at its foot, in front; a tin box wedged in the front of the cairn, child
 // node `LogBox` (its pivot is the middle of the box's foot; the lid is on top). Origin on the ground under the middle
 // of the slab; the slab goes 0.15 m into it, the cairn 0.1 m. One material, `main`.
@@ -14,7 +15,7 @@ const OUT = [[-0.58, -0.15], [0.6, -0.15], [0.61, 0.9], [0.6, 1.7], [0.55, 1.98]
 const CROWN = OUT.slice(2).concat([OUT[0]]).filter(([, y]) => y > 0).sort((a, b) => a[0] - b[0]);
 const cut = { mat: 'slate', ppm: PPM, x0: X0, y0: Y0, floor: 0.7, side: 0.07, top: 0.08, lichen: 0.5, moss: 0.35 };
 const R = pack(...ATLAS, {
-  front: [Math.round(FW * PPM), Math.round(FH * PPM), { ...cut, crown: CROWN, era: [0.5, 1.0], fresh: 0.12, left: 3, part: 3 }],
+  front: [Math.round(FW * PPM), Math.round(FH * PPM), { ...cut, crown: CROWN, era: [0.5, 1.0], fresh: 0.12, left: 3, part: 3, lichen: 0.35 }],
   back: [Math.round(FW * PPM), Math.round(FH * PPM), { ...cut, crown: CROWN.map(([x, y]) => [-x, y]).reverse(), era: [0.0, 0.5], fresh: 0, seed: 9 }],
   edge: [72, 600, { mat: 'slate', cuts: false, layers: 'y', lichen: 0.4, moss: 0.2 }],
   cairn: [640, 200, { mat: 'drystone', ppm: 135, course: [0.06, 0.13], block: [0.1, 0.26], lichen: 0.45, moss: 0.65, tile_x: true }],
