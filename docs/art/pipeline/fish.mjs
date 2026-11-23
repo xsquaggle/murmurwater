@@ -37,7 +37,7 @@ export const aim = (at, axis, ref = [0, 0, 1]) => { const ey = norm(axis), ex = 
 export const membrane = (part, G, r, { thick = 0, nrm = null, u = [0, 1] } = {}) => {
   const n = G.length - 1, J = G[0].length - 1;
   const N0 = norm(nrm || cross(sub(G[n][0], G[0][0]), sub(G[Math.round(n / 2)][J], G[0][0])));
-  const P = (i, j, side) => add(G[i][j], mul(N0, side * 0.5 * thick * (1 - j / J) * Math.sqrt(Math.sin(Math.PI * i / n))));
+  const P = (i, j, side) => add(G[i][j], mul(N0, side * 0.5 * thick * (1 - j / J) * Math.sqrt(Math.max(0, Math.sin(Math.PI * i / n)))));     // max: pi * n / n can come out a hair over pi
   const C = (i, j, side) => [P(i, j, side), r.at(u[0] + (u[1] - u[0]) * i / n, j / J)];
   for (const side of [1, -1]) for (let i = 0; i < n; i++) for (let j = 0; j < J; j++) quadToward(part, C(i, j, side), C(i + 1, j, side), C(i + 1, j + 1, side), C(i, j + 1, side), mul(N0, side));
   return part;

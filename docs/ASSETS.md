@@ -85,6 +85,16 @@ Image-to-3D from the concepts above, then optimized with the scripts in `docs/ar
 | `fish/bottomless-eel.glb` | 2,206 | 0.12 x 0.12 x 1.00 | centre | the eyes, faintly | `bottomless-eel` | none: built and painted in code (see below) |
 | `fish/old-mossglass.glb` | 1,636 | 0.43 x 0.64 x 1.00 | centre | the whole fish faintly, scale rims brighter, the shape inside dark | `old-mossglass` | none: built and painted in code (see below) |
 | `fish/the-listener.glb` | 1,368 | 0.57 x 0.54 x 1.00 | centre | the inside of the horns, the pores along its side | `the-listener` | none: built and painted in code (see below) |
+| `fish/bonefin-herring.glb` | 1,168 | 0.19 x 0.32 x 1.00 | centre | no | `bonefin-herring` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/slate-pout.glb` | 1,732 | 0.36 x 0.44 x 1.00 | centre | no | `slate-pout` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/thrift-wrasse.glb` | 1,532 | 0.38 x 0.44 x 1.00 | centre | no | `thrift-wrasse` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/ribfish.glb` | 1,620 | 0.12 x 0.33 x 1.00 | centre | no | `ribfish` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/kettle-cod.glb` | 1,748 | 0.43 x 0.48 x 1.00 | centre | no | `kettle-cod` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/squall-mackerel.glb` | 1,684 | 0.20 x 0.33 x 1.00 | centre | no | `squall-mackerel` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/lantern-ling.glb` | 2,268 | 0.17 x 0.24 x 1.00 | centre | the light at the end of the chin barbel (amber) | `lantern-ling` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/thunderback.glb` | 2,244 | 0.51 x 0.14 x 1.00 (it lies flat) | centre | the fork of lightning on its back (pale blue-white) | `thunderback` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/old-greyback.glb` | 2,402 | 0.44 x 0.65 x 1.00 | centre | no | `old-greyback` | none: built and painted in code (see "The Reach fish" below) |
+| `fish/the-lull.glb` | 1,372 | 0.45 x 0.62 x 1.00 | centre | the whole fish, very faintly violet | `the-lull` | none: built and painted in code (see "The Reach fish" below) |
 | `boats/skiff.glb` | 5,728 | 2.33 x 2.16 x 4.00 | keel, centre | stern lantern | `skiff` | `be7b1c34-13e6-4d60-b9b6-e015989c1a9d` |
 | `props/crate.glb` | 1,856 | 0.59 x 0.60 x 0.79 | base | no | `crate` | `d8862a17-b399-468c-926e-7779d6c328de` |
 | `props/barrel.glb` | 1,886 | 0.82 x 0.90 x 0.83 | base | no | `barrel` | `622a5755-0592-42f7-a622-54827ad5f86a` |
@@ -141,6 +151,22 @@ The ten fish of Mossglass Fen (`reedling` to `the-listener` in the table) are or
 - Bottomless Eel: ink black at the head going to deep green at the tail, a row of small green pores, pale eyes with pin pupils; a fin runs along the back and the belly and stops short of the tail, which thins to a thread.
 - Old Mossglass: a deep carp of bottle green with large gold-rimmed scales, gold whiskers and gold fin rays, an open mouth, and a dark shape painted inside the body. Roughness 0.35.
 - The Listener: pale, smooth and eyeless, with a row of dark pores along its side and, in place of pectoral fins, two round horns 0.31 m across on short stems, violet inside.
+
+
+### The Reach fish
+
+The ten fish of Saltbone Reach (`bonefin-herring` to `the-lull` in the table, 2026-11-23) are original work built and painted in code like the Fen fish, with no generation job: `docs/art/pipeline/build-reach-fish.mjs` holds the ten on the same kit (`fish.mjs`, `fishmats.py`; `FISHB=build-reach-fish.mjs make-fish.sh <fish>` runs it all). Each is 1 m from nose (+Z) to tail with the middle of its bounds at the origin, one material `main`, single-sided, 1024 x 512 px base colour. They are cold-water fish, steel, pewter and bone, with one note of colour each. The three that glow have an `emissiveTexture` of their own (512 x 256 px, the Lantern Ling's 256 x 128, black where nothing glows) and an emissive factor of 1 with no strength extension. Sheets: `reach-fish.webp` (from the side), `reach-fish-34.webp` (three-quarter), `reach-fish-dark.webp` (the three that glow, lights off) and `reach-fish-detail.webp` (the Thunderback from above, the Lull's shut eye, the Greyback's scar and barnacles, the Ling's light). The kit gained painted marks (lines with a soft halo, which can glow), a tinted sheen and a shut eyelid; no Fen fish changed.
+
+- Bonefin Herring (0.30 m): slim and silver, blue along the back; every fin is bare white spines with no web, like a comb. Roughness 0.4.
+- Slate Pout (0.34 m): blunt and sulky, slate grey with a paler belly, a pushed-out lower lip and one whisker under the chin.
+- Thrift Wrasse (0.26 m): stout and grey-green with a scatter of thrift-pink spots and pink lips.
+- Ribfish (0.85 m): long and flat-sided, pale cream, eleven dark curved bars down each side like a ribcage and a line for the spine; a small head and a red eye.
+- Kettle Cod (0.75 m): pot-bellied, iron black above with rust freckles; its mouth is a short spout with a rim.
+- Squall Mackerel (0.55 m): steel blue with sixteen white zigzags along the back like rain on a window, finlets before the tail, which is forked deep and swept back. Roughness 0.45.
+- Lantern Ling (1.20 m): long, dark umber, with one barbel under the chin ending in a small amber bulb; the bulb is what glows.
+- Thunderback (1.30 m): a halibut lying flat, slate grey, both eyes on its upper side, a jagged white fork of lightning across its back that glows pale blue-white. It is built upright and turned on its side, so its back is +Y: it is 0.14 m thick and 0.51 m across with its fins.
+- Old Greyback (1.70 m): a huge deep-bodied bass the colour of the swell, thirty barnacles along the back, a bite out of the upper lobe of its tail, one long pale harpoon scar crossed by six short marks, a pale calm eye. Roughness 0.6.
+- The Lull (1.10 m): smooth, pale and almost round with a slow violet sheen; its eyes are shut (a curved crease on a pale lid) and it has no mouth. The whole fish glows very faintly violet. Roughness 0.5.
 
 Notes: the fish stall is the second run of its job (the first, `c941c034-4adf-48ff-b2f8-9cec702029ba`, came back with a blank grey texture and was discarded); its bounds were fitted to 2.6 x 2.4 x 1.45 m with a mild non-uniform scale (`--fit`), about 15 % shallower than generated. The sketchbook has a 512 px texture and was fitted to 0.24 x 0.25 x 0.055 m (thinner than generated) so it sits between Wick's hands. Biscuit is two sculpts, standing and sitting, because the two poses do not deform into each other cleanly; the game swaps models when the cat sits.
 
