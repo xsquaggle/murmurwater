@@ -116,6 +116,27 @@ Rods reset on prestige? **No** — see 8.2. Rod *upgrade levels* do reset.
 - **Relics** (~30 unique): permanent collectibles with a passive bonus and a lore line. Shelved in the lighthouse. Some fished up in specific conditions, some from story quests. Relics are the mystery's breadcrumbs.
 - **Moonpearls:** rare currency for gear star-ups and special purchases.
 
+### 7.1 Things fished up (designed 2026-11-23, for v0.6.0)
+**What it is for.** Until now nothing ever came up on the line but fish, there were four relics, and Moonpearls were given and never used. This slice makes the sea keep things: a wait can end in something that is not alive, relics become a hunt with rumours to follow, and pearls get a job.
+
+**A find on the line.** Once the keeper has landed a dozen fish, any cast may come down over something lying on the bottom. It is decided when the float lands, by dice counted in the save, so a find is never a fish dressed up.
+- **The tell.** No shadow circles and nothing nibbles. At the end of the wait the float is drawn slowly under and stays there. The keeper has about two and a half seconds to strike, and if they miss it the thing is still down there and draws the float under again a few seconds later.
+- **How often.** Never for four waits after a find, then 5 in a hundred, rising a little with every wait that brings nothing, so one comes about every five minutes of steady fishing and a long dry spell cannot happen. No bait is used.
+- **The haul.** It does not run and has no stamina: it is dead weight. Holding the reel brings it in and builds tension faster than a fish of that water would; letting go drops the tension quickly and lets the thing settle back a little, so the haul is pumped, a couple of seconds on and a breath off. Every few seconds it **catches on the bottom** (a knock and a judder on the line half a second before): while it is caught, reeling gains nothing and the tension climbs three times as fast, and it comes free when the reel has been let alone for a moment. Reeling through a snag breaks the line. Nothing is lost by resting, only by breaking. A find does not add to Rhythm and does not break it; a snapped line does, as always.
+- **Crates** (most finds, any water): coins and a handful of a bait of that water. Worth two or three common fish, so a crate is never a wasted cast.
+- **Sea chests** (about one find in three, and only in a region's chest water: the Teeth; the Standing Trees and the Sump): a Moonpearl, coins, more bait. The first chest fished up in a region also holds a piece of gear that is sold nowhere, and later ones may until the list is done: the Mirror Spoon (a lure that draws Strange fish) in Hearthbay, the Dowser's Bob (a charm: things on the bottom come to the line more often) in the Fen.
+- **Relics** come up only in their own water at their own hour, some only after a story beat, wrapped in oilcloth. In the right place at the right time a cast has about one chance in four of being the relic, and the chance grows with each cast that is not, so it takes about three casts and never more than eleven. The hunt is knowing where and when.
+
+**Relics (twelve now).** Eight new ones, all fished up: in Hearthbay the keeper's spectacles (Lantern Cove at night), a cork float with two names on it (the Teeth, once the pots are open), next year's tide table (open water, after a Turning), a packet ticket (the home dock at first light, once the Fen is reached); in the Fen a jar of fen light (the Standing Trees at night), a second page of Isolde's logbook (the Sump, after Calloway's job there), a stopped watch (the Listening Post in the small hours, after listening), and the return half of a ticket (Sedge Landing, once Mister Hollis is aboard). Each is one line more of Isolde.
+
+**The Keeper's Shelf** (a page of the satchel, from the first relic or rumour). Every relic of the waters the keeper has reached has a place on it. A found relic shows its gift and its line of lore. An unfound one shows a **rumour**, something somebody on the islands said, which names the water and the hour; a rumour arrives with a story beat and is announced when it does. A place nobody has spoken of yet is empty.
+
+**Moonpearls are set, not spent.** Each relic on the Shelf has two hollows. A pearl set in one adds half the relic's gift again, two double it, and a pearl can be lifted out and set beside another relic at any time, for nothing. So pearls are a small loadout: luck for a legendary hunt, value for a day's selling. They come from story jobs and from fished-up sea chests, and are kept through a Turning with the relics.
+
+**What the simulator must hold.** Finds are a small part of income (under 6% of coins), hand-fishing stays the best coins a minute, a find comes every four to seven minutes of fishing, and the times in 8.3 do not move by more than a few minutes.
+
+**Not in this slice.** A shelf to walk up to in the lighthouse (it has no inside yet), things for pots or crew to find, crates as notice-board pay, anything bought with pearls.
+
 ## 8. Progression and prestige
 
 ### 8.1 Currencies

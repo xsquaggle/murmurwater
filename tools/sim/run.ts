@@ -61,5 +61,8 @@ for (const skill of skills) {
   const t = runs.map((r) => r.totals);
   console.log(`catches ${median(t.map((x) => x.catches))}, snaps ${median(t.map((x) => x.snaps))}, slack ${median(t.map((x) => x.slack))}, missed bites ${median(t.map((x) => x.missed))}, away from the water ${Math.round(median(t.map((x) => (100 * x.away) / (x.away + x.fishing))))}%`);
   console.log(`ringings: ${runs.map((r) => r.rings.map((x) => `${(x.t / 60).toFixed(0)}m +${x.echoes}`).join(', ') || 'none').join(' | ')}`);
+  console.log(`finds: ${runs.map((r) => `${r.totals.finds} (${r.state.finds.crates} crates, ${r.state.finds.chests} chests, ${r.state.relics.length} relics, ${r.state.moonpearls} pearls)`).join(' | ')}`);
+  console.log(`  coins from finds ${runs.map((r) => `${((100 * r.totals.findCoins) / r.totals.coins).toFixed(1)}%`).join(' ')}; minutes of fishing to a find ${runs.map((r) => (r.totals.fishing / 60 / Math.max(1, r.totals.finds)).toFixed(1)).join(' ')}; time hauling ${runs.map((r) => `${((100 * r.totals.hauling) / r.totals.fishing).toFixed(1)}%`).join(' ')}; lines broken on a haul ${runs.map((r) => r.totals.haulSnaps).join(' ')}`);
+  console.log(`  relics by minute: ${runs[0].marks.filter((m) => m.what.startsWith('relic:')).map((m) => `${(m.t / 60).toFixed(0)} ${m.what.slice(7)}`).join(', ') || 'none'}`);
   if (has('log')) for (const m of runs[0].marks) console.log(`  ${(m.t / 60).toFixed(1).padStart(6)}  ${m.what}`);
 }

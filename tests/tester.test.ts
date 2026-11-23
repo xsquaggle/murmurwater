@@ -7,6 +7,8 @@ import { boatOnOffer, hasFogLamp } from '../src/core/gear';
 import { berthFor, isAboard } from '../src/core/crew';
 import { BOATS_BY_ID, currentGoal, npcOffer, questStatus } from '../src/core/quests';
 import { regionOfNpc, regionOfPlace } from '../src/core/content';
+import { FINDS, findChance } from '../src/core/finds';
+import { newRumours, pearlsFree, relicsHere } from '../src/core/relics';
 
 /** Numbers to six places, so the last bit of a sum on another machine is not a difference. */
 const rounded = (text: string) => JSON.stringify(JSON.parse(text, (_k, v) => (typeof v === 'number' ? Math.round(v * 1e6) / 1e6 : v)));
@@ -17,6 +19,32 @@ describe("the tester's starts", () => {
       expect(rounded(readFileSync(testerFile(id), 'utf8'))).toBe(rounded(testerSaveText(id)));
     }, 120000);
   }
+
+  it('finds: loads on the home dock at nightfall with everything before it done, nothing found, and every rumour to hear', () => {
+    const s = deserialize(readFileSync(testerFile('finds'), 'utf8'));
+    expect(s.version).toBe(SAVE_VERSION);
+    expect(s.world.region).toBe('hearthbay');
+    expect(s.world.onBoat).toBe(false);
+    // The slice before is done: the Puffin floats, and both hands have their berths in her.
+    expect(s.boats.current).toBe('puffin');
+    expect(isAboard(s, 'biscuit')).toBe(true);
+    expect(isAboard(s, 'hollis')).toBe(true);
+    for (const id of ['hb-13-refit', 'fen-s1-gentleman', 'fen-06-post']) expect(questStatus(s, id), id).toBe('done');
+    // Nothing has ever come up but fish: the four relics that were given, pearls nobody has set, no cast counted.
+    expect(s.finds).toEqual({ casts: 0, dry: 0, crates: 0, chests: 0, near: {} });
+    expect(s.relics).toEqual(['wicks-drawing', 'keepers-kettle', 'isolde-log-fen', 'calloway-tape']);
+    expect(s.pearls).toEqual({});
+    expect(pearlsFree(s)).toBe(3);
+    expect(s.gear.lures).not.toContain('mirror-spoon');
+    expect(s.gear.wearables).not.toContain('dowsers-bob');
+    // Every rumour is still to hear, all eight, and the first can be followed where she stands: it is night,
+    // and the spectacles lie in the cove beside the dock.
+    expect(s.flags.filter((f) => f.startsWith('rumour:'))).toEqual([]);
+    expect(newRumours(s).length).toBe(8);
+    expect(relicsHere(s, 'hearthbay', 'hb-bay', s.hour).map((r) => r.id)).toEqual(['isoldes-spectacles']);
+    expect(findChance({ ...s, finds: { ...s.finds, dry: FINDS.gap } })).toBeGreaterThan(0);
+    for (const flag of ['met-mara', 'met-pell', 'met-wick', 'met-calloway', 'met-hollis', 'kettle-taken']) expect(s.flags).toContain(flag);
+  });
 
   it('fen: loads as a save of this version, on the home dock with the lamp and the road job', () => {
     const s = deserialize(readFileSync(testerFile('fen'), 'utf8'));

@@ -1,151 +1,148 @@
 {
  "format": "murmurwater-save",
- "version": 5,
+ "version": 6,
  "savedAt": "2026-11-16T00:00:00.000Z",
  "state": {
-  "version": 5,
+  "version": 6,
   "seed": 1,
-  "playTime": 13998.050782478902,
+  "playTime": 15736.990220710202,
   "hour": 16.5,
-  "coins": 85618,
-  "moonpearls": 2,
-  "echoes": 1,
+  "coins": 46572,
+  "moonpearls": 3,
+  "echoes": 3,
   "lifetime": {
-   "coins": 171063,
-   "catches": 239,
-   "perfectHooks": 138,
+   "coins": 158936,
+   "catches": 206,
+   "perfectHooks": 113,
    "snaps": 0,
-   "echoes": 40
+   "echoes": 48
   },
   "run": {
-   "number": 5,
-   "coins": 98630,
-   "startedAt": 10886.4475516047
+   "number": 6,
+   "coins": 55621,
+   "startedAt": 13081.162037291002
   },
-  "nextUid": 801,
+  "nextUid": 868,
   "hold": [],
   "journal": {
    "butterperch": {
-    "caught": 14,
-    "bestWeight": 1.24,
+    "caught": 15,
+    "bestWeight": 1.37,
     "traits": [],
     "firstAt": 43.56667007085739
    },
    "coral-snapper": {
-    "caught": 30,
+    "caught": 28,
     "bestWeight": 2.48,
     "traits": [
-     "hollow"
+     "hollow",
+     "glimmering"
     ],
     "firstAt": 69.18040055134594
    },
    "kettle-carp": {
-    "caught": 10,
-    "bestWeight": 2.99,
+    "caught": 7,
+    "bestWeight": 2.76,
     "traits": [],
     "firstAt": 94.01714974666194
    },
    "moss-eel": {
     "caught": 4,
-    "bestWeight": 2.82,
+    "bestWeight": 4.05,
     "traits": [],
     "firstAt": 241.850655933703
    },
    "pebble-goby": {
-    "caught": 8,
-    "bestWeight": 0.33,
+    "caught": 6,
+    "bestWeight": 0.29,
     "traits": [],
     "firstAt": 307.1240664396293
    },
    "lampjaw": {
-    "caught": 11,
+    "caught": 12,
     "bestWeight": 1.96,
-    "traits": [],
-    "firstAt": 1366.2659951459987
-   },
-   "twofold-flounder": {
-    "caught": 14,
-    "bestWeight": 5.42,
     "traits": [
      "glimmering"
     ],
-    "firstAt": 2050.0033773196833
+    "firstAt": 1066.7071431636562
+   },
+   "twofold-flounder": {
+    "caught": 13,
+    "bestWeight": 4.93,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 1781.4785584846306
    },
    "hollow-lantern": {
     "caught": 2,
     "bestWeight": 5.91,
     "traits": [],
-    "firstAt": 2538.843798625646
+    "firstAt": 2256.584271377786
    },
-   "mossback-tench": {
+   "mudlark": {
     "caught": 35,
-    "bestWeight": 3.96,
+    "bestWeight": 1.18,
+    "traits": [
+     "hollow"
+    ],
+    "firstAt": 5062.884739070794
+   },
+   "bottomless-eel": {
+    "caught": 11,
+    "bestWeight": 15.93,
     "traits": [
      "glimmering",
-     "two-faced"
+     "hollow"
     ],
-    "firstAt": 4938.1944260677665
+    "firstAt": 5181.541831926462
    },
    "reedling": {
-    "caught": 41,
+    "caught": 20,
     "bestWeight": 0.5,
     "traits": [
      "glimmering"
     ],
-    "firstAt": 4957.246612196403
+    "firstAt": 5622.05408930437
    },
    "glassfin": {
-    "caught": 36,
-    "bestWeight": 0.52,
-    "traits": [
-     "two-faced",
-     "inverted"
-    ],
-    "firstAt": 5327.4561375255935
-   },
-   "mudlark": {
-    "caught": 17,
-    "bestWeight": 1.04,
+    "caught": 20,
+    "bestWeight": 0.49,
     "traits": [],
-    "firstAt": 6251.490504027035
+    "firstAt": 5640.733185521084
+   },
+   "glowbelly": {
+    "caught": 2,
+    "bestWeight": 0.75,
+    "traits": [],
+    "firstAt": 6609.568181729419
+   },
+   "mossback-tench": {
+    "caught": 20,
+    "bestWeight": 3.92,
+    "traits": [
+     "hollow",
+     "glimmering"
+    ],
+    "firstAt": 8393.44213511307
    },
    "stilt-gar": {
     "caught": 6,
-    "bestWeight": 6.6,
+    "bestWeight": 5.06,
     "traits": [],
-    "firstAt": 6303.459003763801
-   },
-   "glowbelly": {
-    "caught": 1,
-    "bestWeight": 1.52,
-    "traits": [],
-    "firstAt": 7955.08188841381
-   },
-   "bottomless-eel": {
-    "caught": 1,
-    "bestWeight": 12.52,
-    "traits": [],
-    "firstAt": 8361.782111465289
+    "firstAt": 8426.878433945669
    },
    "sedge-pike": {
     "caught": 1,
-    "bestWeight": 4.34,
+    "bestWeight": 1.55,
     "traits": [],
-    "firstAt": 9472.859145922188
+    "firstAt": 10346.738631501707
    },
    "old-mossglass": {
-    "caught": 7,
-    "bestWeight": 15.11,
-    "traits": [
-     "glimmering"
-    ],
-    "firstAt": 9703.42712207052
-   },
-   "the-listener": {
-    "caught": 1,
-    "bestWeight": 9.49,
+    "caught": 4,
+    "bestWeight": 12.06,
     "traits": [],
-    "firstAt": 12141.826161820902
+    "firstAt": 10844.213396673516
    }
   },
   "gear": {
@@ -159,20 +156,22 @@
     "driftwood-rod": 0,
     "harbour-rod": 0,
     "gullwing-rod": 0,
-    "fenwood-rod": 1
+    "fenwood-rod": 0
    },
    "rod": "fenwood-rod",
    "baits": {
     "breadcrumb": "__inf__",
     "sandworm": 19,
-    "marsh-worm": 40,
-    "glass-mayfly": 27,
-    "glowgrub": 20
+    "glowgrub": 48,
+    "brine-shrimp": 47,
+    "glass-mayfly": 47,
+    "marsh-worm": 4
    },
    "bait": "glowgrub",
    "lures": [
     "tin-minnow",
     "brass-spinner",
+    "mirror-spoon",
     "moth-lure"
    ],
    "lure": "tin-minnow",
@@ -201,9 +200,9 @@
    "levels": {
     "speed": 3,
     "size": 3,
-    "quality": 3
+    "quality": 2
    },
-   "nextId": 20
+   "nextId": 35
   },
   "crew": {
    "hired": [
@@ -212,15 +211,15 @@
    "hold": [],
    "clocks": {
     "biscuit": {
-     "t": 9.933265873594022,
-     "n": 165
+     "t": 10.200562976343539,
+     "n": 157
     }
    },
    "tally": {
     "biscuit": {
-     "fish": 124,
-     "coins": 4387,
-     "eaten": 41
+     "fish": 118,
+     "coins": 3495,
+     "eaten": 39
     }
    }
   },
@@ -252,10 +251,10 @@
     "the-teeth",
     "drowned-belfry",
     "sedge-landing",
+    "the-sump",
     "glasswater",
     "reed-maze",
     "standing-trees",
-    "the-sump",
     "listening-post"
    ],
    "onBoat": false
@@ -292,6 +291,23 @@
    "board": {
     "quests": [
      {
+      "id": "board-22",
+      "title": "A Big One",
+      "objective": {
+       "type": "catch",
+       "fish": "kettle-carp",
+       "minWeight": 2.4,
+       "count": 1,
+       "label": "Catch a Kettle Carp over 2.4 kg"
+      },
+      "reward": {
+       "coins": 35
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
       "id": "board-23",
       "title": "Wanted: Pebble Goby",
       "objective": {
@@ -325,26 +341,10 @@
       "accepted": true,
       "progress": 0,
       "done": false
-     },
-     {
-      "id": "board-25",
-      "title": "Wanted: Kettle Carp",
-      "objective": {
-       "type": "catch",
-       "fish": "kettle-carp",
-       "count": 4,
-       "label": "Catch 4 Kettle Carp"
-      },
-      "reward": {
-       "coins": 60
-      },
-      "accepted": true,
-      "progress": 0,
-      "done": false
      }
     ],
-    "timer": 326.40000000000003,
-    "serial": 25
+    "timer": 378.00000000000006,
+    "serial": 24
    }
   },
   "flags": [
@@ -364,6 +364,7 @@
    "bell-found",
    "tide-turned",
    "reached:mossglass-fen",
+   "chest:sump-chest",
    "chest:glass-bar-chest",
    "seen:survey-stake",
    "seen:puffin-wreck",
@@ -371,7 +372,6 @@
    "reached:hearthbay",
    "boatyard-open",
    "chest:grove-chest",
-   "chest:sump-chest",
    "seen:ear-trumpet",
    "fen-heard",
    "page:fen-page",
@@ -381,12 +381,30 @@
    "met-calloway",
    "kettle-taken"
   ],
+  "finds": {
+   "casts": 216,
+   "dry": 3,
+   "crates": 14,
+   "chests": 1,
+   "near": {}
+  },
   "relics": [
    "wicks-drawing",
+   "isoldes-spectacles",
    "keepers-kettle",
+   "cork-float",
+   "tide-table",
+   "packet-ticket",
    "isolde-log-fen",
-   "calloway-tape"
+   "fen-light-jar",
+   "isolde-log-sump",
+   "calloway-tape",
+   "stopped-watch"
   ],
+  "pearls": {
+   "calloway-tape": 2,
+   "packet-ticket": 1
+  },
   "echoUpgrades": {
    "fog-lamp": 1,
    "tidewise": 3,
@@ -394,11 +412,12 @@
    "steady-line": 2,
    "patient-float": 3,
    "deep-pockets": 2,
-   "maras-ledger": 1,
+   "maras-ledger": 2,
    "second-sight": 2,
    "old-habits": 1,
-   "warm-lanterns": 1
+   "warm-lanterns": 1,
+   "lamp-minder": 1
   },
-  "rhythm": 12
+  "rhythm": 13
  }
 }

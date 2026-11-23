@@ -1,8 +1,73 @@
 {
+  "pearls": { "hollows": 2, "each": 0.5 },
   "relics": [
-    { "id": "wicks-drawing", "name": "Wick's Drawing", "effect": { "luck": 0.03 }, "lore": "A crayon fish with too many legs. On the back, in a grown-up's handwriting: 'He draws them before they come.'" },
-    { "id": "keepers-kettle", "name": "The Keeper's Kettle", "effect": { "biteSpeed": 0.06 }, "lore": "Dented tin, a rope handle. It has sat on a bare rock for twelve winters and it is warm. It is always nearly boiling." },
-    { "id": "isolde-log-fen", "name": "A Page of Isolde's Logbook", "effect": { "luck": 0.04 }, "lore": "Tin-box damp, a careful hand. 'The fen hears. Sat at the post till four. It is not the fish that listen, it is what the fish are for. I have stopped saying her name out loud here.'" },
-    { "id": "calloway-tape", "name": "Calloway's Tape Measure", "effect": { "value": 0.06 }, "lore": "Brass case, linen tape. It gave the same answer twice in a row, once, and she handed it over at once. 'I should rather not know which of us was right.'" }
+    {
+      "id": "wicks-drawing", "name": "Wick's Drawing", "region": "hearthbay", "effect": { "luck": 0.03 },
+      "lore": "A crayon fish with too many legs. On the back, in a grown-up's handwriting: 'He draws them before they come.'",
+      "hint": { "text": "Wick is drawing a fish he wants caught. He pays in drawings." }
+    },
+    {
+      "id": "isoldes-spectacles", "name": "The Keeper's Spectacles", "region": "hearthbay", "effect": { "strange": 0.01 },
+      "lore": "Wire rims, gone sea-green. One lens is plain glass. Through the other the moon on the water has a twin, a little to the left, and the twin is the brighter.",
+      "hint": { "text": "Wick: 'There's glasses in Lantern Cove. At night they look up. I drew them. I'm not going in.'", "after": "quest:hb-04-drawing" },
+      "where": { "zones": ["hb-bay"], "hours": [20, 5] }
+    },
+    {
+      "id": "keepers-kettle", "name": "The Keeper's Kettle", "region": "hearthbay", "effect": { "biteSpeed": 0.06 },
+      "lore": "Dented tin, a rope handle. It has sat on a bare rock for twelve winters and it is warm. It is always nearly boiling.",
+      "hint": { "text": "Pell: 'The keeper took her tea on an isle to the south-west, tides she wanted quiet. The kettle will be there yet.'", "after": "hb-lighthouse-lit" }
+    },
+    {
+      "id": "cork-float", "name": "A Cork Float With Two Names", "region": "hearthbay", "effect": { "potSpeed": 0.08 },
+      "lore": "Off a child's pot line. MARA, in knife-cut capitals, and under it, smaller and neater, I. Somebody has started to sand the I away and thought better of it.",
+      "hint": { "text": "Mara: 'We had a pot line off the Teeth, as girls. I had. One of the floats went adrift and I never looked very hard.'", "after": "pots-open" },
+      "where": { "zones": ["hb-teeth"], "needs": "pots-open" }
+    },
+    {
+      "id": "tide-table", "name": "Next Year's Tide Table", "region": "hearthbay", "effect": { "rhythmCap": 1 },
+      "lore": "Pell's hand, ruled in pencil, for a year that has not happened. Every tide in it so far has been right. One date is underlined twice and he will not say whose it is.",
+      "hint": { "text": "Pell: 'I let my tables go over the side, out in the open water. Next year's. You'll find them last spring.'", "after": "tide-turned" },
+      "where": { "zones": ["hb-open"], "needs": "tide-turned" }
+    },
+    {
+      "id": "packet-ticket", "name": "A Ticket for the Fen Packet", "region": "hearthbay", "effect": { "value": 0.04 },
+      "lore": "One single, Hearthbay to Sedge Landing, first boat. It has been punched. The date on it is the day after tomorrow, and by the look of the card it has been the day after tomorrow for forty years.",
+      "hint": { "text": "Mara: 'The packet went at first light, off the end of our dock. People dropped all sorts, getting aboard half asleep.'", "after": "reached:mossglass-fen" },
+      "where": { "zones": ["hb-dock", "hb-bay"], "hours": [4.5, 9], "needs": "reached:mossglass-fen" }
+    },
+    {
+      "id": "fen-light-jar", "name": "A Jar of Fen Light", "region": "mossglass-fen", "effect": { "biteSpeed": 0.05 },
+      "lore": "A preserving jar, the lid waxed down. It was empty when it came up. It is brighter with the lid on, and brightest when you are not looking straight at it.",
+      "hint": { "text": "Dr. Calloway: 'Somebody was bottling the glow, under the Standing Trees. I found the wax and the string. Not the jars. I looked by day, of course.'", "after": "quest:fen-04-glows" },
+      "where": { "zones": ["fen-grove"], "hours": [20, 5] }
+    },
+    {
+      "id": "calloway-tape", "name": "Calloway's Tape Measure", "region": "mossglass-fen", "effect": { "value": 0.06 },
+      "lore": "Brass case, linen tape. It gave the same answer twice in a row, once, and she handed it over at once. 'I should rather not know which of us was right.'",
+      "hint": { "text": "Dr. Calloway has something put by for whoever fills the journal's Mossglass page." }
+    },
+    {
+      "id": "isolde-log-sump", "name": "A Second Page of Isolde's Logbook", "region": "mossglass-fen", "effect": { "grace": 0.12 },
+      "lore": "'Let the lead down the Sump. Ran out of line at ninety fathom and felt it taken, gently, the way you take a cup from someone who has fallen asleep holding it. It was not a fish. I think it was being kind.'",
+      "hint": { "text": "Dr. Calloway: 'My lead came up from the Sump once with ruled paper on the hook. Handwriting. I let it go down again before I could read it. On principle.'", "after": "quest:fen-05-sump" },
+      "where": { "zones": ["fen-sump"], "needs": "quest:fen-05-sump" }
+    },
+    {
+      "id": "isolde-log-fen", "name": "A Page of Isolde's Logbook", "region": "mossglass-fen", "effect": { "luck": 0.04 },
+      "lore": "Tin-box damp, a careful hand. 'The fen hears. Sat at the post till four. It is not the fish that listen, it is what the fish are for. I have stopped saying her name out loud here.'",
+      "hint": { "text": "Dr. Calloway: 'There is a tin box at the Listening Post, by the stool. I have not opened it. You have the look of somebody it was left for.'", "after": "quest:fen-05-sump" }
+    },
+    {
+      "id": "stopped-watch", "name": "The Stopped Watch", "region": "mossglass-fen", "effect": { "biteWindow": 0.06 },
+      "lore": "A keeper's watch on a tarred lanyard, stopped at ten to four. In a pocket it runs. Take it out and it is ten to four, and the second hand is just coming to rest.",
+      "hint": { "text": "Cut into a pile of the Listening Post, low down: 'Lost my watch over the side here at ten to four. It will not be found by day. I. F.'", "after": "fen-heard" },
+      "where": { "zones": ["fen-post"], "hours": [2, 5], "needs": "fen-heard" }
+    },
+    {
+      "id": "return-half", "name": "The Return Half", "region": "mossglass-fen", "effect": { "luck": 0.04 },
+      "lore": "The return half of a packet ticket, Sedge Landing to Hearthbay, never given up. Mister Hollis looked at it for some time and handed it back. 'I believe that is mine. Pray keep it. One of us should have somewhere to go back to.'",
+      "hint": { "text": "Mister Hollis: 'I had the return half in my glove when I stepped down at the Landing. I have the glove still. I cannot answer for the ticket.'", "after": "crew:hollis" },
+      "where": { "zones": ["fen-landing"], "needs": "crew:hollis" }
+    }
   ]
 }

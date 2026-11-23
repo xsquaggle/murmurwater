@@ -51,6 +51,15 @@ export const MIGRATIONS: Record<number, Migration> = {
     }
     return s;
   },
+  // v5 → v6: things fished up, and Moonpearls set beside relics on the Shelf. In an older save nothing has come
+  // up yet and no pearl is set; the pearls the keeper was given are all free to set. Finds wait on a dozen fish
+  // landed over all time, so a keeper who has those meets them at once, and the rumours their story has already
+  // earned are passed on together the first time the game looks (core/relics.ts newRumours).
+  5: (s) => {
+    s.finds = { casts: 0, dry: 0, crates: 0, chests: 0, near: {} };
+    s.pearls = {};
+    return s;
+  },
 };
 
 // JSON can't hold Infinity (the free breadcrumb stack); encode it.

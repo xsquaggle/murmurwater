@@ -128,6 +128,46 @@ describe('the first hours, by simulation', () => {
     }
   }, 240000);
 
+  it('things come up beside the fishing: one in a dozen casts or so, for a small share of the coins, and they are landed', () => {
+    for (const r of play(0.7)) {
+      const perFind = r.totals.casts / r.totals.finds;
+      expect(perFind, 'casts to a find').toBeGreaterThan(7);
+      expect(perFind, 'casts to a find').toBeLessThan(16);
+      const share = r.totals.findCoins / r.totals.coins;
+      expect(share, `coins out of crates and chests: ${(100 * share).toFixed(1)}%`).toBeGreaterThan(0.03);
+      expect(share).toBeLessThan(0.14);
+      expect(r.totals.hauling / r.totals.fishing, 'time spent hauling').toBeLessThan(0.05);
+      expect(r.totals.haulSnaps).toBeLessThanOrEqual(1);
+      expect(r.state.finds.crates).toBeGreaterThan(r.state.finds.chests);
+      // The first relic comes up within a night or two of the first rumour.
+      expect(when(r, 'relic:')!, 'the first relic fished up').toBeLessThan(45);
+    }
+    // A clumsy keeper lands nearly all of them too: a haul asks for patience, not quick hands.
+    for (const r of play(0.4)) expect(r.totals.haulSnaps, 'lines broken on a haul by a clumsy keeper').toBeLessThanOrEqual(3);
+  }, 120000);
+
+  it('a keeper who meets finds earns no less than one who never does', () => {
+    const none = SEEDS.map((seed) => simulate({ seed, skill: 0.7, minutes: 240, noFinds: true }));
+    const mean = (rs: SimReport[]) => rs.reduce((a, r) => a + r.totals.coins, 0) / rs.length;
+    // A crate is reckoned from the fish it came up instead of, so it is never a tax; following rumours takes time.
+    expect(mean(play(0.7)) / mean(none)).toBeGreaterThan(0.85);
+    expect(mean(play(0.7)) / mean(none)).toBeLessThan(1.3);
+  }, 240000);
+
+  it('the relics are found by following what is said of them: most in four hours, all but one or so in seven', () => {
+    for (const r of play(0.7)) expect(r.state.relics.length, 'relics in four hours').toBeGreaterThanOrEqual(8);
+    for (const r of long()) {
+      expect(r.state.relics.length, 'relics in seven hours').toBeGreaterThanOrEqual(11);
+      // Following rumours is an errand now and then, not the game.
+      expect(r.totals.hunting / (420 * 60), 'share of the time spent after rumours').toBeLessThan(0.1);
+      // Pearls: three from jobs, the rest out of sea chests; every one of them set beside something.
+      expect(r.state.moonpearls).toBeGreaterThanOrEqual(4);
+      expect(r.state.moonpearls).toBeLessThanOrEqual(16);
+      expect(Object.values(r.state.pearls).reduce((a, b) => a + b, 0)).toBe(Math.min(r.state.moonpearls, 2 * r.state.relics.length));
+    }
+    expect(median(long().map((r) => r.state.relics.length))).toBe(12);
+  }, 240000);
+
   it('a second tide is quicker than the first', () => {
     for (const r of play(0.7)) {
       const [a, b] = r.rings;
@@ -140,8 +180,10 @@ describe('the first hours, by simulation', () => {
     expect(slow).toBeLessThan(quick * 1.35);
     // Whoever is best with a rod is never behind. (Between a clumsy and a practised keeper the simulator's
     // totals differ by less than they differ from seed to seed, so the comparison is with the best.)
+    // The mean, not the median: with five seeds apiece the middle one of each moves by more than the two differ.
     const best = play(0.95);
-    expect(at(best, 'RANG THE BELL')).toBeLessThanOrEqual(slow);
+    const mean = (rs: SimReport[], what: string) => rs.reduce((a, r) => a + (when(r, what) ?? Infinity), 0) / rs.length;
+    expect(mean(best, 'RANG THE BELL')).toBeLessThanOrEqual(mean(play(0.4), 'RANG THE BELL'));
     expect(median(play(0.4).map((r) => r.totals.coins))).toBeLessThanOrEqual(median(best.map((r) => r.totals.coins)) * 1.1);
   }, 120000);
 

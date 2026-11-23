@@ -21,7 +21,9 @@
     { "id": "tin-minnow", "name": "Tin Minnow", "effect": { "luck": 0.1 },
       "blurb": "Rarer fish", "desc": "Somebody loved this once. The paint is worn away where a thumb would go." },
     { "id": "glass-bead", "name": "Glass Bead", "price": 5000, "from": "reached:mossglass-fen", "effect": { "luck": 0.16 },
-      "blurb": "Rarer fish", "desc": "A bead of fen glass. A fish looks into it and sees a bigger fish looking back." }
+      "blurb": "Rarer fish", "desc": "A bead of fen glass. A fish looks into it and sees a bigger fish looking back." },
+    { "id": "mirror-spoon", "name": "Mirror Spoon", "effect": { "strange": 0.02 },
+      "blurb": "Stranger fish", "desc": "A spoon lure polished on one side only. A fish that takes it has had a look at itself first." }
   ],
   "wearables": [
     { "id": "wool-cap", "name": "Wool Cap", "slot": "hat", "price": 250, "effect": { "biteSpeed": 0.05 },
@@ -43,7 +45,9 @@
     { "id": "field-hat", "name": "Calloway's Spare Field Hat", "slot": "hat", "effect": { "biteSpeed": 0.08, "luck": 0.04 },
       "blurb": "Bites come 8% sooner, rarer fish", "desc": "Wide brim, a pencil in the band, and a tape measure sewn in that has never given the same answer twice." },
     { "id": "fen-waders", "name": "Fen Waders", "slot": "boots", "effect": { "control": 0.09 },
-      "blurb": "9% more line control", "desc": "Found folded in a chest, as if for a drawer. They come up to here." }
+      "blurb": "9% more line control", "desc": "Found folded in a chest, as if for a drawer. They come up to here." },
+    { "id": "dowsers-bob", "name": "Dowser's Bob", "slot": "charm", "effect": { "finds": 0.3 },
+      "blurb": "Things on the bottom come to the line more often", "desc": "A lead bob on a hair string. It leans toward anything that has been under water long enough to be missed." }
   ],
   "sets": [
     { "id": "keepers-things", "name": "The Keeper's Things",

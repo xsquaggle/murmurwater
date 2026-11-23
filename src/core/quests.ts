@@ -9,10 +9,10 @@
  */
 import questsJson from '../data/quests.json';
 import npcsJson from '../data/npcs.json';
-import relicsJson from '../data/relics.json';
 import boatsJson from '../data/boats.json';
 import { BAITS, BAITS_BY_ID, FISH, FISH_BY_ID, RARITIES, REGIONS, REGIONS_BY_ID, RODS_BY_ID, fish, inHours, regionOfNpc } from './content';
-import { ECHOES_BY_ID, LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable } from './gear';
+import { ECHOES_BY_ID, LURES_BY_ID, WEARABLES_BY_ID, grantLure, grantWearable, type StatKey } from './gear';
+import { RELICS, RELICS_BY_ID, relicGift, type RelicDef } from './relics';
 import { earn } from './economy';
 import { CREW_BY_ID, berthFor, hire } from './crew';
 import { Rng, hashString } from './rng';
@@ -50,7 +50,6 @@ export interface NpcDef {
   id: string; name: string; /** What they are called in passing ("Calloway hands you…"); the first word of the name if not given. */ short?: string; role: string; region: string; voice: string; barks: string[]; /** Said once after each Turning. */ turned?: string[];
   /** Not a person: a box, a sign. It has no voice, and its one line is read the first time only. */ thing?: boolean;
 }
-export interface RelicDef { id: string; name: string; effect: { luck?: number; value?: number; biteSpeed?: number }; lore: string }
 /** speed m/s, turn rad/s, accel 1/s, draft/length/beam m (see core/boat.ts); hull and lamp are the ratings that open rougher and foggier seas. */
 export interface BoatDef {
   id: string; name: string; speed: number; turn: number; accel: number; draft: number; length: number; beam: number; hull: number; lamp: number; hold: number; price: number; desc: string;
@@ -63,11 +62,9 @@ export const DAWN = 6, DUSK = 17;
 
 export const QUESTS: QuestDef[] = questsJson.quests as QuestDef[];
 export const NPCS: NpcDef[] = npcsJson.npcs as NpcDef[];
-export const RELICS: RelicDef[] = relicsJson.relics as RelicDef[];
 export const BOATS: BoatDef[] = boatsJson.boats as BoatDef[];
 export const QUESTS_BY_ID = new Map(QUESTS.map((q) => [q.id, q]));
 export const NPCS_BY_ID = new Map(NPCS.map((n) => [n.id, n]));
-export const RELICS_BY_ID = new Map(RELICS.map((r) => [r.id, r]));
 export const BOATS_BY_ID = new Map(BOATS.map((b) => [b.id, b]));
 
 export function npc(id: string): NpcDef { const n = NPCS_BY_ID.get(id); if (!n) throw new Error(`Unknown npc ${id}`); return n; }
@@ -391,8 +388,10 @@ export function generateBoardQuest(s: GameState, rng: Rng, id: string): BoardQue
 
 // ---------------------------------------------------------------- relics
 
-export function relicBonus(s: GameState, key: keyof RelicDef['effect']): number {
-  return s.relics.reduce((a, id) => a + (RELICS_BY_ID.get(id)?.effect[key] ?? 0), 0);
+export { RELICS, RELICS_BY_ID, type RelicDef };
+/** What the keeper's relics add to one stat, pearls and all. */
+export function relicBonus(s: GameState, key: StatKey): number {
+  return s.relics.reduce((a, id) => a + (RELICS_BY_ID.get(id)?.effect[key] ?? 0) * relicGift(s, id), 0);
 }
 
 // ---------------------------------------------------------------- validation

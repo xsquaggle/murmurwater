@@ -72,3 +72,49 @@ export function playFightHuman(fish: FishDef, opts: { seed?: number; rodId?: str
   const ev = s.events.find((e) => e.type === 'landed' || e.type === 'lost');
   return { phase: s.phase, ev, time: s.lastCatch?.fightTime ?? -1 };
 }
+
+/** A careful hand on a haul: pump the reel under the red, and let go at the knock until it has passed. */
+export function skilledHaulInput(s: FishingSession): FishingInput {
+  const h = s.haul!;
+  return { ...NO_INPUT, primary: !h.snag && !h.warned && h.tension < 0.72 };
+}
+
+/**
+ * A human-ish hand on a haul: decides at ~8 Hz, perceives tension with noise, feels the knock a little late
+ * and now and then not at all, and lets go once it knows the thing has caught.
+ */
+export function humanHaulPolicy(seed: number, skill = 0.7) {
+  const rng = new Rng(seed * 6007 + 5);
+  let next = 0, reel = false, warnAge = 0, snagAge = 0, deaf = false;
+  const reaction = 0.42 - 0.22 * skill;
+  return (s: FishingSession, t: number): FishingInput => {
+    const h = s.haul!;
+    if (h.warned) { if (warnAge === 0) deaf = rng.chance(0.3 * (1 - skill)); warnAge += 1 / 60; } else warnAge = 0;
+    snagAge = h.snag ? snagAge + 1 / 60 : 0;
+    if ((h.warned && !deaf && warnAge > reaction) || snagAge > reaction) reel = false;
+    else if (t >= next) {
+      next = t + rng.range(0.1, 0.16);
+      const perceived = h.tension + rng.range(-0.1, 0.1) * (1.2 - skill);
+      reel = !h.snag && perceived < 0.68 + 0.08 * skill;
+    }
+    return { ...NO_INPUT, primary: reel };
+  };
+}
+
+/** Plays a whole haul of a thing of this weight, from the strike, and says how it ended. */
+export function playHaul(heft: number, opts: { seed?: number; rodId?: string; policy?: 'skilled' | 'human' | 'mash' | 'idle'; skill?: number; distance?: number } = {}) {
+  const s = new FishingSession(ctx({ rod: rod(opts.rodId ?? 'driftwood-rod') }), new Rng(opts.seed ?? 1));
+  (s as any).castDistance = opts.distance ?? s.ctx.rod.reach * 0.8;
+  (s as any).startHaul({ id: 'crate:hearthbay', kind: 'crate', heft });
+  const human = humanHaulPolicy(opts.seed ?? 1, opts.skill ?? 0.7);
+  const dt = 1 / 60;
+  let t = 0, snags = 0, eased = 0;
+  for (let i = 0; i < 60 * 240 && s.phase === 'hauling'; i++, t += dt) {
+    const inp = opts.policy === 'mash' ? { ...NO_INPUT, primary: true } : opts.policy === 'idle' ? NO_INPUT : opts.policy === 'human' ? human(s, t) : skilledHaulInput(s);
+    s.update(dt, inp);
+    for (const e of s.events) { if (e.type === 'snag') snags++; else if (e.type === 'eased') eased++; }
+    if (s.phase === 'hauling') s.events.length = 0;
+  }
+  const ev = s.events.find((e) => e.type === 'found' || e.type === 'lost');
+  return { phase: s.phase, ev, time: t, snags, eased };
+}

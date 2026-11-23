@@ -1,0 +1,65 @@
+{
+  "after": 12,
+  "gap": 4,
+  "base": 0.07,
+  "ramp": 0.01,
+  "cap": 0.3,
+  "chestShare": 0.3,
+  "relic": { "chance": 0.22, "pity": 0.08, "heft": 0.75, "name": "Something wrapped in oilcloth" },
+  "regions": {
+    "hearthbay": {
+      "crate": {
+        "name": "A drift crate", "heft": 1.3, "coins": [18, 40], "times": [1, 1.5],
+        "bait": [
+          { "id": "sandworm", "n": [4, 8], "w": 5 },
+          { "id": "brine-shrimp", "n": [3, 6], "w": 3 },
+          { "id": "glowgrub", "n": [2, 3], "w": 1 }
+        ],
+        "lines": [
+          "A tea crate, stencilled HEARTHBAY PACKET. The tea went to the fish long ago.",
+          "A fish box with a rope handle. Somebody packed it carefully, and then the sea did.",
+          "A crate of lamp-oil tins, all empty but one, and that one full of coins.",
+          "A bait box with a brass catch. The catch is warm.",
+          "A crate addressed to the lighthouse, in ink that has not run. Nobody has written to the lighthouse in years."
+        ]
+      },
+      "chest": {
+        "name": "A sea chest", "heft": 1.7, "zones": ["hb-teeth"], "coins": [90, 160], "times": [2, 3.5], "pearls": 1,
+        "bait": [{ "id": "glowgrub", "n": [4, 7], "w": 1 }],
+        "gear": { "lures": ["mirror-spoon"] }, "gearChance": 0.25,
+        "lines": [
+          "A sea chest off the Teeth, bound in iron the rust has not found.",
+          "A chest with a rope becket, and initials burned out of the lid with a poker.",
+          "A chest packed for a long voyage: oilskins, a tin plate, a pearl in a twist of paper. The label says only BACK SOON."
+        ]
+      }
+    },
+    "mossglass-fen": {
+      "crate": {
+        "name": "A fen crate", "heft": 2.3, "coins": [100, 220], "times": [1, 1.5],
+        "bait": [
+          { "id": "marsh-worm", "n": [4, 8], "w": 5 },
+          { "id": "glass-mayfly", "n": [3, 6], "w": 3 },
+          { "id": "glowgrub", "n": [3, 5], "w": 1 }
+        ],
+        "lines": [
+          "A survey crate, lettered I.C. in a hand that is not Dr. Calloway's.",
+          "A reed-cutter's box, green right through. The moss has kept it shut.",
+          "A crate off the packet with the label still dry. It is addressed to Sedge Landing, and to nobody.",
+          "A tin trunk with a lily growing out of the lock.",
+          "A crate of preserving jars, every one of them empty, every lid waxed down."
+        ]
+      },
+      "chest": {
+        "name": "A sea chest", "heft": 3.0, "zones": ["fen-grove", "fen-sump"], "coins": [500, 900], "times": [2, 3.5], "pearls": 1,
+        "bait": [{ "id": "glowgrub", "n": [6, 10], "w": 1 }, { "id": "glass-mayfly", "n": [8, 12], "w": 1 }],
+        "gear": { "wearables": ["dowsers-bob"] }, "gearChance": 0.25,
+        "lines": [
+          "A chest gone green, the hinges sweet. It was fastened from the inside.",
+          "A chest roped round twice, with every knot on the underside.",
+          "A chest that came up lighter than it went down. Whatever was let out of it left a pearl behind, for manners."
+        ]
+      }
+    }
+  }
+}

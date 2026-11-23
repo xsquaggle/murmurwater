@@ -26,7 +26,9 @@ import { haulPot, placePot, potsInHand, takeUpPot, tickPots } from '../../src/co
 import { CREW_BY_ID, crewKit, tickCrew } from '../../src/core/crew';
 import { BELL_FLAG, buyEcho, echoCost, echoesFor, ringBell } from '../../src/core/bell';
 import { ECHO_UPGRADES } from '../../src/core/gear';
-import { humanFightPolicy } from '../../tests/helpers';
+import { FINDS, findName, takeFind, withFinds } from '../../src/core/finds';
+import { RELICS, RELICS_BY_ID, liftPearl, met, pearlsFree, setPearl, type RelicDef } from '../../src/core/relics';
+import { humanFightPolicy, humanHaulPolicy } from '../../tests/helpers';
 
 /** Somewhere to fish. `trip` is the seconds it takes to get there from where the region's catch is sold (and back again). */
 export interface Place { id: string; name: string; region: string; needsBoat: boolean; afloat: boolean; trip: number; zone: (castDistance: number) => string; chart?: string }
@@ -80,12 +82,16 @@ export interface SimOptions {
   noCrew?: boolean;
   /** Save for a boat as usual, but leave the buying of her undone (the tester's start stops with the price in the purse). */
   noBoat?: boolean;
+  /** Take what comes up, but go nowhere for a rumour (to measure what following them costs). */
+  noHunts?: boolean;
+  /** Nothing on the bottom but fish (to measure what finds do to the rest). */
+  noFinds?: boolean;
 }
 export interface Mark { t: number; what: string }
-export interface Bucket { coins: number; pot: number; crew: number; catches: number; lost: number }
+export interface Bucket { coins: number; pot: number; crew: number; catches: number; lost: number; /** Coins out of crates and chests. */ finds: number }
 export interface SimReport {
   marks: Mark[]; buckets: Bucket[]; state: GameState;
-  totals: { casts: number; catches: number; snaps: number; slack: number; missed: number; coins: number; potCoins: number; crewCoins: number; fishing: number; away: number };
+  totals: { casts: number; catches: number; snaps: number; slack: number; missed: number; coins: number; potCoins: number; crewCoins: number; fishing: number; away: number; finds: number; findCoins: number; hauling: number; haulSnaps: number; /** Outings made for a rumour, and the seconds they took. */ hunts: number; hunting: number };
   /** Seconds of play at each ringing of the Bell, and what it gave. */
   rings: { t: number; echoes: number; coins: number }[];
 }
@@ -102,7 +108,7 @@ export class SimPlayer {
   marks: Mark[] = [];
   buckets: Bucket[] = [];
   rings: { t: number; echoes: number; coins: number }[] = [];
-  totals = { casts: 0, catches: 0, snaps: 0, slack: 0, missed: 0, coins: 0, potCoins: 0, crewCoins: 0, fishing: 0, away: 0 };
+  totals = { casts: 0, catches: 0, snaps: 0, slack: 0, missed: 0, coins: 0, potCoins: 0, crewCoins: 0, fishing: 0, away: 0, finds: 0, findCoins: 0, hauling: 0, haulSnaps: 0, hunts: 0, hunting: 0 };
   /** The water the boat lies in while she lies still (the crew fish it); null while she is under way. */
   private lying: string | null = null;
   private castSeed: number;
@@ -124,7 +130,7 @@ export class SimPlayer {
   }
 
   private mark(what: string) { if (!this.trial) this.marks.push({ t: this.s.playTime, what }); }
-  private bucket(): Bucket { const i = Math.floor(this.s.playTime / BUCKET_S); return (this.buckets[i] ??= { coins: 0, pot: 0, crew: 0, catches: 0, lost: 0 }); }
+  private bucket(): Bucket { const i = Math.floor(this.s.playTime / BUCKET_S); return (this.buckets[i] ??= { coins: 0, pot: 0, crew: 0, catches: 0, lost: 0, finds: 0 }); }
   private refresh(afloat = false) { this.st = stats(this.s, { hour: this.s.hour, afloat }); }
 
   /** Lets `dt` seconds of play go by. `busy` is fishing or sailing: Rhythm holds while the keeper is at it. */
@@ -161,9 +167,9 @@ export class SimPlayer {
     const s = this.s, dt = 1 / 60, skill = this.opts.skill;
     if (s.world.region !== place.region) throw new Error(`the keeper is in ${s.world.region}, not at ${place.name}`);
     this.refresh(place.afloat);
-    const session = new FishingSession(
-      fishingContext(s, { hour: s.hour, afloat: place.afloat }, (d) => ({ zoneId: place.zone(d), depth: 5, hotspot: false, distance: d }), this.st),
-      new Rng(this.castSeed++));
+    const ctx = fishingContext(s, { hour: s.hour, afloat: place.afloat }, (d) => ({ zoneId: place.zone(d), depth: 5, hotspot: false, distance: d }), this.st);
+    // A trial measures what the fish of a place pay: what lies on the bottom is left out of it.
+    const session = new FishingSession(this.trial || this.opts.noFinds ? ctx : withFinds(ctx, s, this.st), new Rng(this.castSeed++));
     this.totals.casts++;
     this.pass(COSTS.aim, true);
     // The charge: a practised hand finds the sweet spot most of the time.
@@ -175,6 +181,7 @@ export class SimPlayer {
     }
     let react = 0, biteT = 0, fightT = 0;
     let policy: ((s: FishingSession, t: number) => FishingInput) | null = null;
+    let haul: ((s: FishingSession, t: number) => FishingInput) | null = null;
     for (let guard = 0; guard < 400000 && session.phase !== 'idle'; guard++) {
       switch (session.phase) {
         case 'casting': { const d = Math.max(dt, (session as unknown as { flight: number }).flight); session.update(d, NO_INPUT); this.pass(d, true); break; }
@@ -192,6 +199,11 @@ export class SimPlayer {
           session.update(dt, policy(session, fightT)); fightT += dt; this.pass(dt, true);
           break;
         }
+        case 'hauling': {
+          haul ??= humanHaulPolicy(this.castSeed * 37 + guard, skill);
+          session.update(dt, haul(session, fightT)); fightT += dt; this.pass(dt, true); this.totals.hauling += dt;
+          break;
+        }
         default: break;
       }
       for (const e of session.events.splice(0)) {
@@ -206,7 +218,17 @@ export class SimPlayer {
             if (first) { this.mark(`first ${fishDef(e.catch.fishId).name}`); for (const c of claimCollections(s)) this.mark(`journal page: ${c.name}`); }
             if (res.item) onQuestEvent(s, { type: 'catch', fishId: e.catch.fishId, weight: e.catch.weight, trait: e.catch.trait, perfect: e.catch.perfectHook });
           }
+        } else if (e.type === 'found') {
+          const loot = takeFind(s, e.find);
+          if (loot) {
+            this.totals.finds++; this.totals.findCoins += loot.coins; this.totals.coins += loot.coins; this.bucket().coins += loot.coins; this.bucket().finds += loot.coins;
+            if (loot.relic) { this.mark(`relic: ${loot.name}`); this.refresh(place.afloat); }
+            else if (loot.kind === 'chest') this.mark(`sea chest${loot.lures.length || loot.wearables.length ? ` (${[...loot.lures, ...loot.wearables].join(', ')})` : ''}`);
+            else if (s.finds.crates === 1) this.mark(`first crate (${findName(e.find)})`);
+            this.setPearls();
+          }
         } else if (e.type === 'lost') {
+          if (e.find && e.reason === 'snap') this.totals.haulSnaps++;
           if (e.reason === 'snap') { s.lifetime.snaps++; this.totals.snaps++; breakRhythm(s); }
           else if (e.reason === 'slack') { this.totals.slack++; breakRhythm(s); }
           if (!this.trial) this.bucket().lost++;
@@ -215,6 +237,19 @@ export class SimPlayer {
       if (session.phase === 'landed') { this.pass(COSTS.landed, true); break; }
       if (session.phase === 'lost') { this.pass(COSTS.lost, true); break; }
     }
+  }
+
+  /**
+   * Every pearl she has stands beside a relic: the ones that make fish sell for more first, then the lucky ones,
+   * then whatever is left. (A pearl costs nothing to move, so she simply sets them all again.)
+   */
+  private setPearls() {
+    const s = this.s;
+    if (!s.moonpearls || !s.relics.length) return;
+    const worth = (id: string) => { const e = RELICS_BY_ID.get(id)!.effect; return (e.value ?? 0) * 10 + (e.luck ?? 0) * 6 + (e.rhythmCap ?? 0) * 0.3 + (e.biteSpeed ?? 0) * 4 + (e.strange ?? 0) * 20 + 0.01; };
+    for (const id of Object.keys(s.pearls)) while (liftPearl(s, id)) { /* all up */ }
+    for (const id of [...s.relics].sort((a, b) => worth(b) - worth(a))) while (pearlsFree(s) > 0 && setPearl(s, id)) { /* set */ }
+    this.refresh();
   }
 
   // ------------------------------------------------------------------ judgement
@@ -582,12 +617,21 @@ export class SimPlayer {
   outing() {
     const s = this.s;
     this.townBusiness();
+    if (pearlsFree(s) > 0 && !this.opts.noFinds) this.setPearls(); // a pearl from a job goes straight to the Shelf
     if (this.ring()) return;
+    // A relic somebody has spoken of, in the waters she is in and at this hour: she fishes for that before she
+    // thinks of going anywhere else (the morning after a Turning finds her on the home dock at first light).
+    const hunt = this.rumoured(), t0 = s.playTime;
+    if (hunt) { this.totals.hunts++; this.mark(`after: ${hunt.relic.name}`); }
     const was = s.world.region;
-    this.chooseRegion();
+    if (!hunt) this.chooseRegion();
     if (s.world.region !== was) return; // new people to talk to before anything else
     if (this.errand()) return;
-    const plan = this.plan();
+    const usual = this.plan();
+    const plan = hunt ? { ...usual, place: hunt.place } : usual;
+    // Once the relic is up she fishes on where she is if the water there is worth the trip she has made.
+    let found: number | null = null;
+    const stay = !!hunt && !!usual.place && (hunt.place === usual.place || this.rate(hunt.place, plan.bait) >= 0.6 * this.rate(usual.place, usual.bait));
     this.stock(plan.bait);
     const place = plan.place;
     // A pot can only be hauled from beside it. Pots left full somewhere the keeper is not going today are
@@ -630,14 +674,38 @@ export class SimPlayer {
       // The fish she came here for is in the hold (or, hunting for the journal, has gone off the bite): nobody
       // fishes on at the dock for the cat's sake once the cat has her fish.
       if ((this.hunting || plan.want) && this.wantedFish() !== plan.want) break;
+      // The relic is up (or its hour has gone by): on with the day.
+      if (hunt && !stay && (s.relics.includes(hunt.relic.id) || !inHours(s.hour, hunt.relic.where!.hours))) break;
       this.cast(place);
+      if (hunt && found === null && s.relics.includes(hunt.relic.id)) found = s.playTime;
       this.haul(true, place);
     }
     this.haul(false, place);
     if (place.needsBoat) this.lying = null;
     this.pass(this.trip(place), place.afloat);
     this.lying = this.mooringZone();
+    // What the rumour cost: the whole outing if she came home for it, the time until it was up if she fished on.
+    if (hunt) this.totals.hunting += (stay && found !== null ? found : s.playTime) - t0;
   }
+  /**
+   * A relic the keeper has heard of that would come to a line in the water she is in, at the hour she would get
+   * there and for a little while after, and the place to fish for it. She does not cross the fog for one: the
+   * rumours of another water wait until something else takes her there.
+   */
+  private rumoured(): { relic: RelicDef; place: Place } | null {
+    const s = this.s;
+    if (this.opts.noHunts || this.opts.noFinds || s.lifetime.catches < FINDS.after) return null;
+    for (const r of RELICS) {
+      const w = r.where;
+      if (!w || s.relics.includes(r.id) || r.region !== s.world.region || !met(s, r.hint.after) || !met(s, w.needs)) continue;
+      const place = this.places().find((p) => w.zones.includes(p.zone(20)) || w.zones.includes(p.zone(5)));
+      if (!place) continue;
+      const there = (s.hour + this.trip(place) / (DAY_LENGTH_S / 24)) % 24;
+      if (inHours(there, w.hours) && inHours((there + 1) % 24, w.hours)) return { relic: r, place };
+    }
+    return null;
+  }
+
   /** Where each pot in the water was set. */
   private potAt = new Map<number, Place>();
 

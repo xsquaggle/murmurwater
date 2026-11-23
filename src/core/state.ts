@@ -4,7 +4,7 @@
  */
 import type { BoardQuest } from './quests';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 /** One in-game day lasts this many seconds of play. */
 export const DAY_LENGTH_S = 24 * 60;
 
@@ -51,7 +51,14 @@ export interface GameState {
   /** active: quest id → objective index → progress. board: the rotating notice-board jobs (v2). */
   quests: { active: Record<string, Record<string, number>>; done: string[]; board: { quests: BoardQuest[]; timer: number; serial: number } };
   flags: string[];
+  /**
+   * Things fished up (v6): casts counted for the dice, the waits since anything came up, how many crates and
+   * chests have come up over all time, and for each unfound relic the casts gone by in its water at its hour.
+   */
+  finds: { casts: number; dry: number; crates: number; chests: number; near: Record<string, number> };
   relics: string[];
+  /** Moonpearls set beside relics on the Shelf (v6): relic id → how many. They are still counted in `moonpearls`. */
+  pearls: Record<string, number>;
   echoUpgrades: Record<string, number>;
   rhythm: number;
 }
@@ -86,7 +93,9 @@ export function newGame(seed = Date.now() % 1_000_000): GameState {
     world: { region: START.region, pos: [...START.pos], yaw: START.yaw, discovered: ['hearthbay'], charted: ['hearthbay'], onBoat: false },
     quests: { active: {}, done: [], board: { quests: [], timer: 0, serial: 0 } },
     flags: [],
+    finds: { casts: 0, dry: 0, crates: 0, chests: 0, near: {} },
     relics: [],
+    pearls: {},
     echoUpgrades: {},
     rhythm: 0,
   };

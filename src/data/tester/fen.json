@@ -1,81 +1,84 @@
 {
  "format": "murmurwater-save",
- "version": 5,
+ "version": 6,
  "savedAt": "2026-11-16T00:00:00.000Z",
  "state": {
-  "version": 5,
+  "version": 6,
   "seed": 1,
-  "playTime": 4565.378919149049,
+  "playTime": 4429.520056533551,
   "hour": 8.5,
   "coins": 0,
-  "moonpearls": 2,
-  "echoes": 1,
+  "moonpearls": 3,
+  "echoes": 0,
   "lifetime": {
-   "coins": 10687,
-   "catches": 93,
-   "perfectHooks": 29,
+   "coins": 11313,
+   "catches": 84,
+   "perfectHooks": 22,
    "snaps": 0,
-   "echoes": 15
+   "echoes": 16
   },
   "run": {
    "number": 2,
    "coins": 0,
-   "startedAt": 4468.178919149048
+   "startedAt": 4332.32005653355
   },
-  "nextUid": 176,
+  "nextUid": 174,
   "hold": [],
   "journal": {
    "butterperch": {
     "caught": 14,
-    "bestWeight": 1.24,
+    "bestWeight": 1.37,
     "traits": [],
     "firstAt": 43.56667007085739
    },
    "coral-snapper": {
-    "caught": 30,
+    "caught": 28,
     "bestWeight": 2.48,
     "traits": [
-     "hollow"
+     "hollow",
+     "glimmering"
     ],
     "firstAt": 69.18040055134594
    },
    "kettle-carp": {
-    "caught": 10,
-    "bestWeight": 2.99,
+    "caught": 5,
+    "bestWeight": 2.76,
     "traits": [],
     "firstAt": 94.01714974666194
    },
    "moss-eel": {
     "caught": 4,
-    "bestWeight": 2.82,
+    "bestWeight": 4.05,
     "traits": [],
     "firstAt": 241.850655933703
    },
    "pebble-goby": {
-    "caught": 8,
-    "bestWeight": 0.33,
+    "caught": 6,
+    "bestWeight": 0.29,
     "traits": [],
     "firstAt": 307.1240664396293
    },
    "lampjaw": {
-    "caught": 11,
+    "caught": 12,
     "bestWeight": 1.96,
-    "traits": [],
-    "firstAt": 1366.2659951459987
-   },
-   "twofold-flounder": {
-    "caught": 14,
-    "bestWeight": 5.42,
     "traits": [
      "glimmering"
     ],
-    "firstAt": 2050.0033773196833
+    "firstAt": 1066.7071431636562
+   },
+   "twofold-flounder": {
+    "caught": 13,
+    "bestWeight": 4.93,
+    "traits": [
+     "glimmering"
+    ],
+    "firstAt": 1781.4785584846306
    },
    "hollow-lantern": {
     "caught": 2,
     "bestWeight": 5.91,
     "traits": [],
-    "firstAt": 2538.843798625646
+    "firstAt": 2256.584271377786
    }
   },
   "gear": {
@@ -98,6 +101,7 @@
    "lures": [
     "tin-minnow",
     "brass-spinner",
+    "mirror-spoon",
     "moth-lure"
    ],
    "lure": "tin-minnow",
@@ -126,7 +130,7 @@
     "size": 0,
     "quality": 0
    },
-   "nextId": 4
+   "nextId": 3
   },
   "crew": {
    "hired": [
@@ -134,33 +138,33 @@
    ],
    "hold": [
     {
-     "uid": 174,
-     "fishId": "pebble-goby",
-     "weight": 0.25,
+     "uid": 172,
+     "fishId": "coral-snapper",
+     "weight": 0.63,
      "trait": null,
-     "value": 3,
+     "value": 12,
      "perfect": false
     },
     {
-     "uid": 175,
-     "fishId": "butterperch",
-     "weight": 0.44,
+     "uid": 173,
+     "fishId": "pebble-goby",
+     "weight": 0.1,
      "trait": null,
-     "value": 3,
+     "value": 2,
      "perfect": false
     }
    ],
    "clocks": {
     "biscuit": {
      "t": 7.199999999999999,
-     "n": 32
+     "n": 21
     }
    },
    "tally": {
     "biscuit": {
-     "fish": 24,
-     "coins": 280,
-     "eaten": 8
+     "fish": 16,
+     "coins": 176,
+     "eaten": 5
     }
    }
   },
@@ -216,13 +220,45 @@
    "board": {
     "quests": [
      {
-      "id": "board-14",
-      "title": "Wanted: Kettle Carp",
+      "id": "board-6",
+      "title": "Market Day",
+      "objective": {
+       "type": "sell",
+       "count": 8,
+       "label": "Sell 8 fish"
+      },
+      "reward": {
+       "coins": 85
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-7",
+      "title": "A Big One",
       "objective": {
        "type": "catch",
-       "fish": "kettle-carp",
-       "count": 5,
-       "label": "Catch 5 Kettle Carp"
+       "fish": "lampjaw",
+       "minWeight": 1.5,
+       "count": 1,
+       "label": "Catch a Lampjaw over 1.5 kg"
+      },
+      "reward": {
+       "coins": 110
+      },
+      "accepted": true,
+      "progress": 0,
+      "done": false
+     },
+     {
+      "id": "board-8",
+      "title": "Wanted: Coral Snapper",
+      "objective": {
+       "type": "catch",
+       "fish": "coral-snapper",
+       "count": 2,
+       "label": "Catch 2 Coral Snapper"
       },
       "reward": {
        "coins": 70,
@@ -233,45 +269,10 @@
       "accepted": true,
       "progress": 0,
       "done": false
-     },
-     {
-      "id": "board-15",
-      "title": "Wanted: Moss Eel",
-      "objective": {
-       "type": "catch",
-       "fish": "moss-eel",
-       "count": 1,
-       "label": "Catch 1 Moss Eel"
-      },
-      "reward": {
-       "coins": 95,
-       "items": {
-        "sandworm": 5
-       }
-      },
-      "accepted": true,
-      "progress": 0,
-      "done": false
-     },
-     {
-      "id": "board-16",
-      "title": "Wanted: Butterperch",
-      "objective": {
-       "type": "catch",
-       "fish": "butterperch",
-       "count": 5,
-       "label": "Catch 5 Butterperch"
-      },
-      "reward": {
-       "coins": 50
-      },
-      "accepted": true,
-      "progress": 0,
-      "done": false
      }
     ],
     "timer": 406.79999999999995,
-    "serial": 16
+    "serial": 8
    }
   },
   "flags": [
@@ -295,13 +296,25 @@
    "met-pell",
    "kettle-taken"
   ],
+  "finds": {
+   "casts": 79,
+   "dry": 6,
+   "crates": 4,
+   "chests": 1,
+   "near": {}
+  },
   "relics": [
    "wicks-drawing",
-   "keepers-kettle"
+   "isoldes-spectacles",
+   "keepers-kettle",
+   "cork-float"
   ],
+  "pearls": {
+   "keepers-kettle": 2
+  },
   "echoUpgrades": {
    "fog-lamp": 1,
-   "tidewise": 1,
+   "tidewise": 2,
    "quick-hands": 1,
    "steady-line": 1,
    "patient-float": 1,

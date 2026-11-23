@@ -5,16 +5,16 @@
  */
 import gearJson from '../data/gear.json';
 import echoesJson from '../data/echoes.json';
-import relicsJson from '../data/relics.json';
 import boatsJson from '../data/boats.json';
 import { BAITS_BY_ID, FISH, REGIONS_BY_ID, RODS_BY_ID, bait, isNight, onShelf, rod, type RodDef } from './content';
 import { spotting } from './crew';
+import { RELICS_BY_ID, relicGift } from './relics';
 import type { FishingContext } from './fishing';
 import type { GameState } from './state';
 
 export type StatKey =
   | 'power' | 'control' | 'reach' | 'grace' | 'luck' | 'biteSpeed' | 'biteWindow' | 'strange' | 'value' | 'size'
-  | 'hold' | 'rhythmCap' | 'potSpeed' | 'potSlots' | 'tuneCost';
+  | 'hold' | 'rhythmCap' | 'potSpeed' | 'potSlots' | 'tuneCost' | 'finds';
 export type Effect = Partial<Record<StatKey, number>>;
 /** A condition on an effect: the hour of the day, or whether the player is in a boat. */
 export type When = 'night' | 'day' | 'afloat' | 'ashore';
@@ -42,7 +42,6 @@ export const WEARABLES_BY_ID = new Map(WEARABLES.map((w) => [w.id, w]));
 export const ECHOES_BY_ID = new Map(ECHO_UPGRADES.map((u) => [u.id, u]));
 /** The boat carries the Fog Lamp: the sea-roads through the Murmur Fog are open to her. */
 export function hasFogLamp(s: GameState): boolean { return (s.echoUpgrades['fog-lamp'] ?? 0) > 0; }
-const RELIC_EFFECTS = new Map((relicsJson.relics as { id: string; effect: Effect }[]).map((r) => [r.id, r.effect]));
 const BOAT_DEFS = new Map((boatsJson.boats as { id: string; hold: number; price: number; needs?: string; sets?: string }[]).map((b) => [b.id, b]));
 
 export const RHYTHM_CAP = 10;
@@ -75,6 +74,7 @@ export interface Stats {
   /** Multiplies the value of a fish from a pot (before `value`). */ potValue: number;
   /** How many pots can be in the water. */ potCount: number;
   /** Multiplies rod tuning prices. */ tuneCost: number;
+  /** Multiplies how often a crate or a chest comes to the line (core/finds.ts). */ finds: number;
 }
 
 function add(acc: Effect, e: Effect | undefined, n = 1) {
@@ -84,7 +84,8 @@ function add(acc: Effect, e: Effect | undefined, n = 1) {
 /** Every bonus in force, summed by stat. */
 export function bonuses(s: GameState, env: Env = {}): Effect {
   const acc: Effect = {};
-  for (const id of s.relics) add(acc, RELIC_EFFECTS.get(id));
+  // A relic gives its gift once, and half as much again for each Moonpearl set beside it.
+  for (const id of s.relics) add(acc, RELICS_BY_ID.get(id)?.effect, relicGift(s, id));
   const lure = s.gear.lure ? LURES_BY_ID.get(s.gear.lure) : undefined;
   if (lure && applies(lure.when, env)) add(acc, lure.effect);
   for (const set of SETS) {
@@ -138,6 +139,7 @@ export function stats(s: GameState, env: Env = {}): Stats {
     // Lamp Minder adds to the pots the keeper has; it does not hand out the first one (Mara's job does that).
     potCount: s.pots.owned > 0 ? s.pots.owned + (b.potSlots ?? 0) : 0,
     tuneCost: Math.max(0.2, 1 + (b.tuneCost ?? 0)),
+    finds: 1 + (b.finds ?? 0),
   };
 }
 
@@ -319,7 +321,7 @@ export function claimCollections(s: GameState): CollectionDef[] {
 
 // ---------------------------------------------------------------- validation
 
-const STAT_KEYS: StatKey[] = ['power', 'control', 'reach', 'grace', 'luck', 'biteSpeed', 'biteWindow', 'strange', 'value', 'size', 'hold', 'rhythmCap', 'potSpeed', 'potSlots', 'tuneCost'];
+const STAT_KEYS: StatKey[] = ['power', 'control', 'reach', 'grace', 'luck', 'biteSpeed', 'biteWindow', 'strange', 'value', 'size', 'hold', 'rhythmCap', 'potSpeed', 'potSlots', 'tuneCost', 'finds'];
 export function validateGear(): string[] {
   const errs: string[] = [];
   const effect = (who: string, e: Effect | undefined) => { for (const k of Object.keys(e ?? {})) if (!STAT_KEYS.includes(k as StatKey)) errs.push(`${who}: unknown stat ${k}`); };
@@ -341,7 +343,7 @@ export function validateGear(): string[] {
   for (const c of COLLECTIONS) {
     for (const id of c.rewards.wearables ?? []) if (!WEARABLES_BY_ID.has(id)) errs.push(`${c.id}: unknown wearable ${id}`);
     for (const id of c.rewards.lures ?? []) if (!LURES_BY_ID.has(id)) errs.push(`${c.id}: unknown lure ${id}`);
-    for (const id of c.rewards.relics ?? []) if (!RELIC_EFFECTS.has(id)) errs.push(`${c.id}: unknown relic ${id}`);
+    for (const id of c.rewards.relics ?? []) if (!RELICS_BY_ID.has(id)) errs.push(`${c.id}: unknown relic ${id}`);
     if (!FISH.some((f) => f.region === c.region)) errs.push(`${c.id}: no fish in region ${c.region}`);
   }
   for (const u of ECHO_UPGRADES) {
