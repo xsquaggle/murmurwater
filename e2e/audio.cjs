@@ -144,6 +144,28 @@ const { chromium } = require('playwright');
   await page.waitForTimeout(7000);
   const fenNight = await measure('bed: the Fen by night', '', 8);
   rows.push(fenDay, fenNight);
+  // Saltbone Reach: the bolt going in, thunder, the cone and the Kettles; then its own sea on a fair day, and the
+  // Deacon at his height with a bolt close by.
+  rows.push(await measure('a bolt into the sea 40 m off', 'a.lightning(40)', 6));
+  rows.push(await measure('thunder far off', 'a.thunder(600)', 7.5));
+  rows.push(await measure('the storm cone', 'a.stormCone()', 1.4));
+  rows.push(await measure('the Kettles boom', 'a.swellBoom(1)', 3.4));
+  const synthReach = await page.evaluate(() => { const p = window.__MW__.game.audio.played; return ['lightning-strike', 'thunder-near', 'thunder-far', 'storm-cone', 'swell-boom'].filter((n) => !(p[n] > 0)); });
+  check(synthReach.length === 0, `the Reach's recordings play (${synthReach.length ? 'stand-ins instead: ' + synthReach.join(', ') : 'all five'})`);
+  const atHour = (h) => page.evaluate((h) => { const g = window.__MW__.game; g.state.hour = h; g.world.hour = h; g.rushSky?.(0); for (let i = 0; i < 10; i++) { g.state.hour = h; g.simulate(1 / 30); g.presentOnce(1 / 30); } return { power: g.world.weather.power, rain: g.world.weather.rain, loops: ['reach-day', 'storm-rain', 'storm-wind'].filter((n) => g.audio.loops.has(n)) }; }, h);
+  const reach = await page.evaluate(() => {
+    const g = window.__MW__.game;
+    const ok = g.enterRegion('saltbone-reach', false);
+    const end = g.world.dockEnd; g.pos.set(end.x, g.groundAt(end.x, end.z) ?? 1.5, end.z); g.snapCamera();
+    return ok;
+  });
+  check(reach, 'the keeper is set down on the quay of Tryworks Landing');
+  await atHour(12); await page.waitForTimeout(7000);
+  const reachFair = await measure('bed: the Reach on a fair day', '', 8);
+  const blowing = await atHour(14.75); await page.waitForTimeout(7000);
+  const deacon = await measure('bed: the Deacon at his height', '', 8);
+  const bolt = await measure('a bolt 30 m off in the Deacon', 'a.lightning(30)', 6);
+  rows.push(reachFair, deacon, bolt);
   const db = (v) => (v > 0 ? (20 * Math.log10(v)).toFixed(1).padStart(6) : '  -inf');
   console.log('\nlevel at the master output          peak dBFS   RMS dBFS');
   for (const r of rows) console.log(`  ${r.label.padEnd(30)} ${db(r.peak)}     ${db(r.rms)}`);
@@ -151,9 +173,19 @@ const { chromium } = require('playwright');
   check(bed.rms > 0.004, `the music and sea bed is audible (RMS ${db(bed.rms)} dBFS)`);
   check(rows.every((r) => r.peak < 0.97), `nothing clips (loudest peak ${db(Math.max(...rows.map((r) => r.peak)))} dBFS)`);
   // Foreground sounds should peak well clear of the bed's average level (12 dB or more).
-  for (const r of rows.slice(1)) if (!/step|click|gulls|reel|bed:|reeds|chimes/.test(r.label)) check(r.peak > bed.rms * 4, `${r.label} stands out over the bed`);
+  for (const r of rows.slice(1)) if (!/step|click|gulls|reel|bed:|reeds|chimes|far off|cone/.test(r.label)) check(r.peak > bed.rms * 4, `${r.label} stands out over the bed`);
   // The Fen ashore has no music: its bed is the frogs and insects, heard but well under a voice or a catch.
   for (const r of [fenDay, fenNight]) check(r.rms > 0.0015 && r.rms < 0.12 && r.peak < 0.8, `${r.label} is there and is not loud (RMS ${db(r.rms)}, peak ${db(r.peak)} dBFS)`);
+
+  // The Reach has no music either: its sea is heard and is not loud; a storm is plainly louder without drowning
+  // the game; a bolt close by stands out of the storm and does not clip.
+  check(blowing.power > 0.9 && blowing.rain > 0.9 && blowing.loops.length === 3, `the Deacon is at his height, with the recorded sea, rain and wind (${JSON.stringify(blowing)})`);
+  check(reachFair.rms > 0.0015 && reachFair.rms < 0.12 && reachFair.peak < 0.8, `${reachFair.label} is there and is not loud (RMS ${db(reachFair.rms)}, peak ${db(reachFair.peak)} dBFS)`);
+  check(deacon.rms > reachFair.rms * 1.3 && deacon.rms < 0.25 && deacon.peak < 0.9, `${deacon.label} is louder than a fair day and does not drown the game (RMS ${db(deacon.rms)}, peak ${db(deacon.peak)} dBFS)`);
+  check(bolt.peak > deacon.rms * 2.5 && bolt.peak < 0.97, `${bolt.label} stands out of the storm and does not clip (peak ${db(bolt.peak)} dBFS)`);
+  // The bite is the sound the game is played by: it must stand clear of the storm's own peaks.
+  const bite = rows.find((r) => r.label === 'bite');
+  check(!!bite && bite.peak > deacon.peak * 1.25, `the bite stands clear of the storm (${db(bite?.peak ?? 0)} against the storm's peak of ${db(deacon.peak)} dBFS)`);
 
   if (errors.length) problems.push('page errors: ' + errors.join(' | '));
   console.log(problems.length ? 'AUDIO FAILED\n' + problems.join('\n') : 'AUDIO OK');

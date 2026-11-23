@@ -645,8 +645,10 @@ export class AudioEngine {
     this.loops.get('reach-day')?.gain.gain.setTargetAtTime(s.reach ? 0.8 * Math.min(1, Math.max(0, (day - 0.3) / 0.3)) : 0, now, 1.2);
     this.loops.get('reach-night')?.gain.gain.setTargetAtTime(s.reach ? 0.8 * Math.min(1, Math.max(0, (0.7 - day) / 0.3)) : 0, now, 1.2);
     const rainLoop = this.loops.get('storm-rain'), windLoop = this.loops.get('storm-wind'), struckLoop = this.loops.get('struck-water');
-    rainLoop?.gain.gain.setTargetAtTime(0.9 * wet, now, 0.8);
-    windLoop?.gain.gain.setTargetAtTime(0.85 * blow, now, 0.8);
+    // (Measured: at 0.9 and 0.85 the Deacon stood at -22.5 dBFS RMS with peaks a decibel under the bite's. A storm
+    // is loud, but the bite is the sound the game is played by: at these it stands about four decibels clear.)
+    rainLoop?.gain.gain.setTargetAtTime(0.6 * wet, now, 0.8);
+    windLoop?.gain.gain.setTargetAtTime(0.56 * blow, now, 0.8);
     this.rainGain.gain.setTargetAtTime(rainLoop ? 0 : 0.09 * wet, now, 0.8);
     this.windGain.gain.setTargetAtTime(windLoop ? 0 : 0.16 * blow * (0.6 + 0.4 * Math.sin(now * 0.37) * Math.sin(now * 0.13)), now, 0.4);
     this.windFilter.frequency.setTargetAtTime(300 + 260 * (0.5 + 0.5 * Math.sin(now * 0.21)) + 200 * blow, now, 0.6);
