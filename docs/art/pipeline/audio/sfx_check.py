@@ -27,7 +27,11 @@ WHAT = {
     'haul-snag': 'a heavy thud under water, then a taut line creaking tighter', 'haul-free': 'a soft scrape under water and a few bubbles rising',
     'find-surface': 'a heavy box lifted out of the sea, water streaming off it and then dripping',
     'crate-open': 'a wooden crate prised open: a lid creaking, wood cracking and things shifting inside', 'relic-found': 'a struck glass ringing for a long time, with a low hum under it',
-    'rumour': 'a page turned, then one soft high note', 'pearl-set': 'a tiny hard tick and a clear glassy ring', 'pearl-lift': 'a short glassy ring that falls in pitch'}
+    'rumour': 'a page turned, then one soft high note', 'pearl-set': 'a tiny hard tick and a clear glassy ring', 'pearl-lift': 'a short glassy ring that falls in pitch',
+    'reach-day': 'slow waves breaking on a pebble beach, wind, gulls far off', 'reach-night': 'slow waves on pebbles at night and a wire humming in the wind',
+    'storm-rain': 'hard rain falling on the sea', 'storm-wind': 'a gale moaning in the rigging of a ship', 'thunder-near': 'a close crack of thunder and a long roll',
+    'thunder-far': 'thunder rolling far away', 'lightning-strike': 'lightning striking water with a sharp crack and a hiss of steam', 'struck-water': 'a faint fizz and a high singing note',
+    'storm-cone': 'a pulley block squeaking and a soft thump of canvas', 'swell-boom': 'a deep hollow boom of a wave in a sea cave, then water sucked back out'}
 names = list(WHAT); T = ears.embed_text([WHAT[n] for n in names]); out = {}
 for f in sorted(os.listdir(D)):
     if not f.endswith('.ogg'): continue

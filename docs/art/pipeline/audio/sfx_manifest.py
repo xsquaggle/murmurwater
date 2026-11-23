@@ -42,6 +42,10 @@ PACKS = {   # path prefix -> (short name, title, author, page)
     'oga/40-cc0-water-splash-slime-sfx/': ('rubberduck-water', '40 CC0 water / splash / slime SFX', 'rubberduck', OGA + '40-cc0-water-splash-slime-sfx'),
     'oga/bubble-sound-effects/': ('bmaczero-bubbles', 'Bubble Sound Effects', 'BMacZero', OGA + 'bubble-sound-effects'),
     'oga/35-wooden-crackshitsdestructions/': ('independent-wood', '35 wooden cracks/hits/destructions', 'Independent.nu', OGA + '35-wooden-crackshitsdestructions'),
+    'oga/rain-long-thunder/': ('wuxiascrub-thunder', 'Rain + Long Thunder', 'WuxiaScrub', OGA + 'rain-long-thunder'),
+    'oga/storm-siren/': ('tinyworlds-storm', 'Storm & Siren', 'TinyWorlds', OGA + 'storm-siren'),
+    'oga/rain-loopable/': ('ylmir-rain', 'Rain (loopable)', 'Ylmir', OGA + 'rain-loopable'),
+    'oga/steam-release-sounds/': ('bart-steam', 'Steam release sounds', 'bart', OGA + 'steam-release-sounds'),
 }
 BAM = 'oga/swish-bamboo-stick-weapon-swhoshes/swoshes.x/swosh-%02d.flac'
 FISH = 'oga/fisheefects/FisheefectsComplete.x/'
@@ -283,4 +287,8 @@ def build(B):
     # ---- things fished up: the sounds of a find on the line, in sfx_finds.py ----
     import sfx_finds
     sfx_finds.build(B, add, label, dict(DROPS=DROPS, DRIP=DRIP, KR=KR, KU=KU, WM=WM, TREE=TREE, SKIP=SKIP, PEL=PEL, PAPER=PAPER, MIR=MIR))
+
+    # ---- Saltbone Reach: two beds, the storm's rain and wind, thunder, lightning, struck water, the storm cone, the Kettles, in sfx_reach.py ----
+    import sfx_reach
+    sfx_reach.build(B, add, label, dict(ALK=ALK, GULL=GULL, KR=KR, WM=WM, TK=TK, TREE=TREE, DROPS=DROPS))
     return items

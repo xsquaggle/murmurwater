@@ -4100,5 +4100,602 @@
   "peak_db": -14.8,
   "loud100_db": -21.1,
   "bytes": 6374
+ },
+ {
+  "name": "storm-rain_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "ylmir-rain",
+    "file": "2.ogg",
+    "cut": [
+     5.5,
+     25.5
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "ylmir-rain",
+    "file": "3.ogg",
+    "cut": [
+     12.0,
+     32.0
+    ]
+   }
+  ],
+  "how": "two recordings of rain, a dense one and one of rain on water 3 dB under it, each cut to 20 s with a crossfade into the audio before the cut, laid together with everything under 200 Hz taken out (one of them had a rumble in it)",
+  "file": "storm-rain_1.ogg",
+  "seconds": 20.0,
+  "samples": 882000,
+  "decoded": 882000,
+  "peak_db": -6.4,
+  "loud100_db": -20.6,
+  "bytes": 213537,
+  "rotated": 0
+ },
+ {
+  "name": "storm-wind_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "rustltd-wind",
+    "file": "wind3.wav",
+    "cut": [
+     20.0,
+     44.0
+    ]
+   }
+  ],
+  "how": "recorded wind, 24 s cut with a 3 s crossfade, rising and falling in two big gusts and a lesser one; laid with the same wind through three narrow resonances (near 168, 251 and 377 Hz, with weaker ones at twice and three times each) whose pitch climbs a sixth of itself with each gust: the rigging moaning. No synthesised noise: the moan is the recorded wind, filtered",
+  "file": "storm-wind_1.ogg",
+  "seconds": 24.0,
+  "samples": 1058400,
+  "decoded": 1058400,
+  "peak_db": -2.7,
+  "loud100_db": -12.7,
+  "bytes": 201799,
+  "rotated": 0
+ },
+ {
+  "name": "reach-day_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_01_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_02_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_03_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_04_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "rustltd-wind",
+    "file": "wind4.wav",
+    "cut": [
+     10.0,
+     46.0
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rangomango",
+    "file": "Seagull Ambient 1.wav",
+    "cut": [
+     0.0,
+     3.89
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rangomango",
+    "file": "Seagull Ambient 5.wav",
+    "cut": [
+     0.0,
+     1.45
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rangomango",
+    "file": "Seagull Ambient 7.wav",
+    "cut": [
+     0.0,
+     0.88
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rangomango",
+    "file": "Seagull Big Ambient 2.wav",
+    "cut": [
+     0.3,
+     3.2
+    ]
+   }
+  ],
+  "how": "five swells, one every 6.5 to 7 s: each is a recorded wave breaking on a pebble beach, played a little slower, after a second and a half of the same wave an octave down and dulled coming up under it (the swell arriving); a quiet bed of recorded wind between 160 and 2600 Hz, rising and falling; four gull calls far off, dulled and with a long tail. Laid round a 36 s ring",
+  "file": "reach-day_1.ogg",
+  "seconds": 36.0,
+  "samples": 1587600,
+  "decoded": 1587600,
+  "peak_db": -2.8,
+  "loud100_db": -14.2,
+  "bytes": 276017,
+  "rotated": 0
+ },
+ {
+  "name": "reach-night_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_01_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_02_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_03_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_04_cc0-18363__jasinski__alkaibeach.flac"
+   },
+   {
+    "kind": "cc0",
+    "pack": "rustltd-wind",
+    "file": "wind2.wav",
+    "cut": [
+     14.0,
+     50.0
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rustltd-wind",
+    "file": "wind5.wav",
+    "cut": [
+     12.0,
+     48.0
+    ]
+   },
+   {
+    "kind": "synth",
+    "what": "a faint pure note on E3 with a little of its octave, under the wire"
+   }
+  ],
+  "how": "the swell of the day loop at other times and duller (everything over 2400 Hz falling away); a quieter bed of recorded wind; and a stay wire humming: recorded wind through two very narrow resonances on E3 and B3 with a faint pure E3 under them, swelling and fading twice in the loop. Laid round a 36 s ring",
+  "file": "reach-night_1.ogg",
+  "seconds": 36.0,
+  "samples": 1587600,
+  "decoded": 1587600,
+  "peak_db": -3.1,
+  "loud100_db": -13.0,
+  "bytes": 202787,
+  "rotated": 0
+ },
+ {
+  "name": "thunder-near_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     20.95,
+     26.6
+    ]
+   }
+  ],
+  "how": "a recorded thunderclap and the first five seconds of its roll",
+  "file": "thunder-near_1.ogg",
+  "seconds": 5.654,
+  "samples": 249341,
+  "decoded": 249341,
+  "peak_db": -10.8,
+  "loud100_db": -17.0,
+  "bytes": 52312
+ },
+ {
+  "name": "thunder-near_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     20.95,
+     22.75
+    ],
+    "speed": 0.9
+   },
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     26.9,
+     30.4
+    ],
+    "speed": 0.9
+   }
+  ],
+  "how": "the same thunderclap played at 0.9 of its speed, so it is lower and longer, joined to a later stretch of its roll",
+  "file": "thunder-near_2.ogg",
+  "seconds": 5.543,
+  "samples": 244441,
+  "decoded": 244441,
+  "peak_db": -8.3,
+  "loud100_db": -17.0,
+  "bytes": 53889
+ },
+ {
+  "name": "thunder-far_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "tinyworlds-storm",
+    "file": "storm_3_siren.ogg",
+    "cut": [
+     73.6,
+     79.2
+    ],
+    "speed": 0.92
+   }
+  ],
+  "how": "a stretch of a recorded roll of thunder played at 0.92 of its speed, everything over 420 Hz falling away twice over, and a long dull tail",
+  "file": "thunder-far_1.ogg",
+  "seconds": 6.891,
+  "samples": 303892,
+  "decoded": 303892,
+  "peak_db": -7.9,
+  "loud100_db": -17.1,
+  "bytes": 23082
+ },
+ {
+  "name": "thunder-far_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "tinyworlds-storm",
+    "file": "storm_3_siren.ogg",
+    "cut": [
+     52.6,
+     58.2
+    ],
+    "speed": 0.9
+   }
+  ],
+  "how": "a stretch of a recorded roll of thunder played at 0.9 of its speed, everything over 380 Hz falling away twice over, and a long dull tail",
+  "file": "thunder-far_2.ogg",
+  "seconds": 7.026,
+  "samples": 309856,
+  "decoded": 309856,
+  "peak_db": -9.5,
+  "loud100_db": -17.1,
+  "bytes": 26241
+ },
+ {
+  "name": "thunder-far_3",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     27.8,
+     32.6
+    ],
+    "speed": 0.8
+   }
+  ],
+  "how": "a stretch of a recorded roll of thunder played at 0.8 of its speed, everything over 260 Hz falling away twice over, and a long dull tail",
+  "file": "thunder-far_3.ogg",
+  "seconds": 6.804,
+  "samples": 300056,
+  "decoded": 300056,
+  "peak_db": -8.0,
+  "loud100_db": -16.9,
+  "bytes": 18459
+ },
+ {
+  "name": "lightning-strike_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "independent-wood",
+    "file": "crack01.mp3.flac",
+    "cut": [
+     0.1,
+     0.7
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     21.2,
+     21.9
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "splash_02.ogg",
+    "speed": 1.05
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-steam",
+    "file": "steam hisses - Marker #2.wav",
+    "speed": 0.55
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-steam",
+    "file": "steam hisses - Marker #4.wav",
+    "speed": 0.7
+   },
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     3.0,
+     4.6
+    ]
+   }
+  ],
+  "how": "the first moment of a recorded thunderclap with a sharp wooden crack under it for the split, a slap of water, and from 0.06 s two recorded hisses of steam played slower, one after the other, with the fizz of rain on water dying under them; no roll (the game plays the thunder after it); cut at 1.62 s",
+  "file": "lightning-strike_1.ogg",
+  "seconds": 1.624,
+  "samples": 71618,
+  "decoded": 71618,
+  "peak_db": -3.8,
+  "loud100_db": -17.1,
+  "bytes": 20747
+ },
+ {
+  "name": "lightning-strike_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "independent-wood",
+    "file": "crack04.mp3.flac",
+    "cut": [
+     0.1,
+     0.6
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     21.2,
+     21.9
+    ],
+    "speed": 0.94
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-water",
+    "file": "splash_02.ogg",
+    "speed": 0.987
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-steam",
+    "file": "steam hisses - Marker #5.wav",
+    "speed": 0.6
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-steam",
+    "file": "steam hisses - Marker #3.wav",
+    "speed": 0.75
+   },
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     3.0,
+     4.6
+    ]
+   }
+  ],
+  "how": "the first moment of a recorded thunderclap with a sharp wooden crack under it for the split, a slap of water, and from 0.06 s two recorded hisses of steam played slower, one after the other, with the fizz of rain on water dying under them; no roll (the game plays the thunder after it); cut at 1.62 s",
+  "file": "lightning-strike_2.ogg",
+  "seconds": 1.624,
+  "samples": 71618,
+  "decoded": 71618,
+  "peak_db": -4.0,
+  "loud100_db": -17.2,
+  "bytes": 20763
+ },
+ {
+  "name": "struck-water_1",
+  "loop": true,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "wuxiascrub-thunder",
+    "file": "rain-thunder.ogg",
+    "cut": [
+     6.0,
+     12.0
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-steam",
+    "file": "steam hisses - Marker #1.wav"
+   },
+   {
+    "kind": "cc0",
+    "pack": "bart-steam",
+    "file": "steam hisses - Marker #3.wav"
+   },
+   {
+    "kind": "synth",
+    "what": "a singing note near E5 (659 Hz): two tones half a hertz apart, so it beats once every two seconds, with a faint octave, its pitch swaying a third of a percent twice a second, swelling and all but dying three times in the loop"
+   }
+  ],
+  "how": "rain on water with everything under 3800 Hz taken away, so only the fizz of it is left, and two soft hisses of steam; the same rain on water through a very narrow resonance near E5, so the water itself sings, with a faint pure note under it; quiet on purpose (7 dB under the other loops)",
+  "file": "struck-water_1.ogg",
+  "seconds": 6.0,
+  "samples": 264600,
+  "decoded": 264600,
+  "peak_db": -5.5,
+  "loud100_db": -27.8,
+  "bytes": 63890,
+  "rotated": 0
+ },
+ {
+  "name": "storm-cone_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak3.ogg",
+    "speed": 1.265
+   },
+   {
+    "kind": "cc0",
+    "pack": "kenney-rpg",
+    "file": "creak1.ogg",
+    "cut": [
+     0.14,
+     0.5
+    ],
+    "speed": 1.2
+   },
+   {
+    "kind": "cc0",
+    "pack": "glaucus-fabric",
+    "file": "rustling.ogg",
+    "cut": [
+     18.55,
+     18.95
+    ]
+   },
+   {
+    "kind": "cc0",
+    "pack": "rubberduck-wood",
+    "file": "wood_hit_09.ogg",
+    "speed": 0.75
+   }
+  ],
+  "how": "two short squeaks of a block as the line runs (wooden creaks played a little faster, the first rising), then at 0.5 s a flap of cloth and a dull wooden knock: the cone arriving at the masthead; cut at 1 s",
+  "file": "storm-cone_1.ogg",
+  "seconds": 1.004,
+  "samples": 44276,
+  "decoded": 44148,
+  "peak_db": -7.9,
+  "loud100_db": -17.0,
+  "bytes": 11512
+ },
+ {
+  "name": "swell-boom_1",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_01_cc0-18363__jasinski__alkaibeach.flac",
+    "cut": [
+     1.05,
+     2.0
+    ],
+    "speed": 0.45
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_03_cc0-18363__jasinski__alkaibeach.flac",
+    "speed": 0.75
+   },
+   {
+    "kind": "cc0",
+    "pack": "bmaczero-bubbles",
+    "file": "bubbles-single1.wav",
+    "speed": 0.35
+   }
+  ],
+  "how": "the break of a recorded wave played at about two fifths of its speed with the top taken off, so it is a boom 0.3 s in, ringing on in two low resonances of a cave (near 45 and 95 Hz) for the boom; from 1.0 s another wave, played slower with its low end taken out (only the hiss of the water left), dying away, for the water sucked back out over the stones, and one slow low gulp at the end; cut at 3.1 s",
+  "file": "swell-boom_1.ogg",
+  "seconds": 3.104,
+  "samples": 136886,
+  "decoded": 136886,
+  "peak_db": -9.6,
+  "loud100_db": -17.0,
+  "bytes": 20428
+ },
+ {
+  "name": "swell-boom_2",
+  "loop": false,
+  "sources": [
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_03_cc0-18363__jasinski__alkaibeach.flac",
+    "cut": [
+     0.15,
+     1.0
+    ],
+    "speed": 0.4
+   },
+   {
+    "kind": "cc0",
+    "pack": "jasinski-waves",
+    "file": "wave_02_cc0-18363__jasinski__alkaibeach.flac",
+    "speed": 0.75
+   },
+   {
+    "kind": "cc0",
+    "pack": "bmaczero-bubbles",
+    "file": "bubbles-single3.wav",
+    "speed": 0.35
+   }
+  ],
+  "how": "the break of a recorded wave played at about two fifths of its speed with the top taken off, so it is a boom 0.3 s in, ringing on in two low resonances of a cave (near 45 and 95 Hz) for the boom; from 1.0 s another wave, played slower with its low end taken out (only the hiss of the water left), dying away, for the water sucked back out over the stones, and one slow low gulp at the end; cut at 3.1 s",
+  "file": "swell-boom_2.ogg",
+  "seconds": 3.104,
+  "samples": 136886,
+  "decoded": 136886,
+  "peak_db": -7.1,
+  "loud100_db": -17.0,
+  "bytes": 20442
  }
 ]
