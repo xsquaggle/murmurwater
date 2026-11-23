@@ -9,7 +9,7 @@ one() { # one <name> <repo file> <builder and its first arguments...>
   "$@" $O/$n.glb $O/$n.png > /dev/null 2>&1
   if cmp -s $O/$n.glb $f; then echo "same     $n"; else echo "DIFFERS  $n"; bad=1; fi
 }
-for n in fog-lamp sea-road-light lantern-tree-a lantern-tree-b reeds-a reeds-b lily-glow stilt-hut field-kit packet-box listening-post pot-float belfry puffin-wreck rib-a rib-b vertebra sea-thrift; do one $n $REPO/public/models/props/$n.glb node build-$n.mjs; done
+for n in fog-lamp sea-road-light lantern-tree-a lantern-tree-b reeds-a reeds-b lily-glow stilt-hut field-kit packet-box listening-post pot-float belfry puffin-wreck rib-a rib-b vertebra sea-thrift whaleboat-house tryworks storm-mast harpoon-rack; do one $n $REPO/public/models/props/$n.glb node build-$n.mjs; done
 for n in reedling mudlark glassfin sedge-pike glowbelly stilt-gar mossback-tench old-mossglass bottomless-eel the-listener; do one $n $REPO/public/models/fish/$n.glb node build-fen-fish.mjs $n; done
 for n in puffin puffin-rig; do one $n $REPO/public/models/boats/$n.glb node build-$n.mjs; done
 PLAYER=${PLAYER:-$REPO/public/models/characters/player.glb} ./make-calloway.sh 128 > /dev/null 2>&1
